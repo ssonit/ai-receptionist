@@ -230,8 +230,8 @@
     "semantic_hash": "062e82faaff5214c0a770b9a4e728e36"
   },
   "components/bookings-table.tsx": {
-    "mtime": 1784716690.0605533,
-    "ast_hash": "9e6367cd43427dbed32f5aad134623df",
+    "mtime": 1784717231.9733334,
+    "ast_hash": "0a4125497fecdd849174729a8e0765f5",
     "semantic_hash": ""
   },
   "components/chart-area-interactive.tsx": {
@@ -430,9 +430,9 @@
     "semantic_hash": "31309c8fad1e9a91db2a4bdfb4988b45"
   },
   "components/ui/sheet.tsx": {
-    "mtime": 1784695235.6862838,
-    "ast_hash": "70f191fcbd262095ddd6afbcc8bbf99d",
-    "semantic_hash": "70f191fcbd262095ddd6afbcc8bbf99d"
+    "mtime": 1784717266.3738644,
+    "ast_hash": "fc4063ab29d0716671d24614a309af59",
+    "semantic_hash": ""
   },
   "components/ui/sidebar.tsx": {
     "mtime": 1784712933.6791985,
@@ -570,9 +570,9 @@
     "semantic_hash": "600df924032e25833f43d9368fbd10d7"
   },
   "package.json": {
-    "mtime": 1784701723.6359043,
-    "ast_hash": "e410a9ac73575db1fc63a79ceb9cd74b",
-    "semantic_hash": "e410a9ac73575db1fc63a79ceb9cd74b"
+    "mtime": 1784716858.7070048,
+    "ast_hash": "e0a002587637ee3ad6ae0e0b1ca21162",
+    "semantic_hash": ""
   },
   "postcss.config.mjs": {
     "mtime": 1784692412.1823401,

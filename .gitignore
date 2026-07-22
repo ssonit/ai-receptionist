@@ -8,6 +8,25 @@ node_modules
 dist
 .DS_Store
 *.tsbuildinfo
+Thumbs.db
+*.log
+.turbo
+coverage
+playwright-report
+test-results
 
-# graphify — commit graphify-out/ for team; keep local-only artifacts out
+# graphify — commit shared graph artifacts; keep local/cache/backups out
 graphify-out/cost.json
+graphify-out/cache/
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+graphify-out/.graphify_detect.json
+graphify-out/.graphify_ast.json
+graphify-out/.graphify_semantic.json
+graphify-out/.graphify_extract.json
+graphify-out/.graphify_chunk_*.json
+graphify-out/.graphify_cached.json
+graphify-out/.graphify_uncached.txt
+graphify-out/.graphify_semantic_new.json
+# dated backups created by graphify rebuilds (e.g. 2026-07-22/)
+graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
