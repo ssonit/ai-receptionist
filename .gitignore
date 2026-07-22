@@ -8,3 +8,6 @@ node_modules
 dist
 .DS_Store
 *.tsbuildinfo
+
+# graphify — commit graphify-out/ for team; keep local-only artifacts out
+graphify-out/cost.json

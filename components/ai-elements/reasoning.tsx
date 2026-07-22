@@ -20,6 +20,7 @@ import {
   useState,
 } from "react";
 import { Streamdown } from "streamdown";
+import { MarkdownLink } from "./markdown-link";
 
 import { Shimmer } from "./shimmer";
 
@@ -199,7 +200,14 @@ export const ReasoningContent = memo(({ className, children, ...props }: Reasoni
     )}
     {...props}
   >
-    <Streamdown plugins={streamdownPlugins}>{children}</Streamdown>
+    <Streamdown
+      className="[&_a]:!text-teal-300 [&_a]:hover:!text-teal-200 [&_a]:underline"
+      components={{ a: MarkdownLink }}
+      linkSafety={{ enabled: false }}
+      plugins={streamdownPlugins}
+    >
+      {children}
+    </Streamdown>
   </CollapsibleContent>
 ));
 

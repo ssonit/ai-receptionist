@@ -52,14 +52,26 @@ export function AgentMessage({
 
   return (
     <Message
+      className={cn(
+        message.role === "user" && "max-w-[85%] sm:max-w-[75%]",
+        message.role === "assistant" && "max-w-full",
+      )}
       data-optimistic={message.metadata?.optimistic ? "true" : undefined}
       from={message.role}
     >
-      <MessageContent>
+      <MessageContent
+        className={cn(
+          message.role === "user" &&
+            "border border-white/10 bg-white text-zinc-950 shadow-[0_10px_40px_-24px_rgba(255,255,255,0.35)]",
+          message.role === "assistant" &&
+            "rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-zinc-100 backdrop-blur-sm",
+        )}
+      >
         {message.parts.map((part, index) => (
           <AgentMessagePart
             canRespond={canRespond}
             key={partKey(part, index)}
+            messageRole={message.role}
             onInputResponses={onInputResponses}
             part={part}
             showCaret={isStreaming && message.role === "assistant" && index === lastTextIndex}
@@ -72,11 +84,13 @@ export function AgentMessage({
 
 function AgentMessagePart({
   canRespond,
+  messageRole,
   onInputResponses,
   part,
   showCaret,
 }: {
   readonly canRespond: boolean;
+  readonly messageRole: EveMessage["role"];
   readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
   readonly part: EveMessagePart;
   readonly showCaret: boolean;
@@ -86,7 +100,15 @@ function AgentMessagePart({
       return null;
     case "text":
       return (
-        <MessageResponse caret="block" isAnimating={showCaret}>
+        <MessageResponse
+          caret="block"
+          className={
+            messageRole === "user"
+              ? "[&_a]:!text-teal-700 [&_a]:hover:!text-teal-800"
+              : "[&_a]:!text-teal-300 [&_a]:hover:!text-teal-200"
+          }
+          isAnimating={showCaret}
+        >
           {part.text}
         </MessageResponse>
       );
