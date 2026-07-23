@@ -1,10 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { setAiBookingMeetingTypeAction } from "@/app/dashboard/meeting-types/actions";
-import { saveWorkspaceSettings } from "@/app/dashboard/settings/actions";
+import {
+  checkWorkspaceSlugAvailable,
+  saveWorkspaceSettings,
+} from "@/app/dashboard/settings/actions";
+import { CopyBookingLink } from "@/components/copy-booking-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,25 +28,47 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { TimezoneSelect } from "@/components/timezone-select";
+import { slugifyWorkspaceName } from "@/lib/workspace";
 import {
   type WorkspaceSettingsFormProps,
   type WorkspaceSettingsState,
 } from "@/lib/workspace-settings-types";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const initial: WorkspaceSettingsState = {};
 
 export type { WorkspaceSettingsValues } from "@/lib/workspace-settings-types";
 
+type SlugStatus = {
+  available: boolean;
+  slug: string;
+  message: string;
+} | null;
+
 export function WorkspaceSettingsForm({
   workspace,
   meetingTypes,
+  publicBookingUrl,
 }: WorkspaceSettingsFormProps) {
   const router = useRouter();
   const [state, action, pending] = useActionState(saveWorkspaceSettings, initial);
   const [selectPending, startSelect] = useTransition();
+  const [name, setName] = useState(workspace?.name ?? "");
+  const [slug, setSlug] = useState(workspace?.slug ?? "");
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>(null);
+  const [slugChecking, setSlugChecking] = useState(false);
 
   const aiRow = meetingTypes.find((r) => r.is_ai_booking) ?? null;
+
+  useEffect(() => {
+    setName(workspace?.name ?? "");
+    setSlug(workspace?.slug ?? "");
+    setSlugTouched(false);
+    setSlugStatus(null);
+  }, [workspace?.name, workspace?.slug]);
 
   useEffect(() => {
     if (state.success) {
@@ -53,8 +79,51 @@ export function WorkspaceSettingsForm({
     }
   }, [state, router]);
 
+  useEffect(() => {
+    const normalized = slugifyWorkspaceName(slug);
+    if (!normalized || normalized.length < 2) {
+      setSlugStatus(null);
+      return;
+    }
+
+    let cancelled = false;
+    setSlugChecking(true);
+    const timer = window.setTimeout(async () => {
+      const result = await checkWorkspaceSlugAvailable(normalized);
+      if (!cancelled) {
+        setSlugStatus(result);
+        setSlugChecking(false);
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [slug]);
+
   return (
     <div className="grid max-w-3xl gap-6 px-4 pb-8 lg:px-6">
+      {publicBookingUrl ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Trang đặt lịch công khai</CardTitle>
+            <CardDescription>
+              Gắn link này lên website, bio IG, Zalo hoặc QR. Khách chat và book
+              vào workspace của bạn.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <CopyBookingLink url={publicBookingUrl} />
+            <Button asChild size="sm" variant="secondary">
+              <Link href={publicBookingUrl} target="_blank">
+                Mở trang đặt lịch
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <form action={action} className="flex flex-col gap-6">
         <Card>
           <CardHeader>
@@ -67,12 +136,49 @@ export function WorkspaceSettingsForm({
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="name">Tên workspace</Label>
               <Input
-                defaultValue={workspace?.name ?? ""}
                 id="name"
                 name="name"
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setName(next);
+                  if (!slugTouched) setSlug(slugifyWorkspaceName(next));
+                }}
                 placeholder="Eve Pilot"
                 required
+                value={name}
               />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="slug">Slug trang đặt lịch</Label>
+              <Input
+                aria-invalid={slugStatus ? !slugStatus.available : undefined}
+                id="slug"
+                name="slug"
+                onChange={(e) => {
+                  setSlugTouched(true);
+                  setSlug(e.target.value);
+                }}
+                placeholder="phong-kham-hoa"
+                required
+                value={slug}
+              />
+              <p className="text-muted-foreground text-xs">
+                URL công khai: /b/{slugifyWorkspaceName(slug) || "…"}
+              </p>
+              {slugChecking ? (
+                <p className="text-muted-foreground text-xs">Đang kiểm tra slug…</p>
+              ) : slugStatus ? (
+                <p
+                  className={cn(
+                    "text-xs",
+                    slugStatus.available
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-destructive",
+                  )}
+                >
+                  {slugStatus.message}
+                </p>
+              ) : null}
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="tagline">Tagline</Label>
@@ -85,11 +191,10 @@ export function WorkspaceSettingsForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="timezone">Timezone</Label>
-              <Input
+              <TimezoneSelect
                 defaultValue={workspace?.timezone ?? "Asia/Ho_Chi_Minh"}
                 id="timezone"
                 name="timezone"
-                placeholder="Asia/Ho_Chi_Minh"
                 required
               />
             </div>
@@ -205,7 +310,10 @@ export function WorkspaceSettingsForm({
         ) : null}
 
         <div>
-          <Button disabled={pending} type="submit">
+          <Button
+            disabled={pending || slugChecking || slugStatus?.available === false}
+            type="submit"
+          >
             {pending ? "Đang lưu…" : "Lưu cấu hình"}
           </Button>
         </div>

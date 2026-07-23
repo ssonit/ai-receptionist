@@ -1,8 +1,12 @@
 import { MeetingTypesForm } from "@/app/_components/meeting-types-form";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { getCalMeProfile } from "@/lib/calcom";
+import { getCalMeProfile, withCalApiKey } from "@/lib/calcom";
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  getCalApiKeyForWorkspace,
+  getWorkspaceById,
+} from "@/lib/workspace";
 import { listWorkspaceMeetingTypes } from "@/lib/workspace-cal";
 import { redirect } from "next/navigation";
 
@@ -11,16 +15,20 @@ export default async function MeetingTypesPage() {
   if (!dashboard) {
     redirect("/login?next=/dashboard/meeting-types");
   }
+  if (!dashboard.workspaceId) {
+    redirect("/dashboard/setup");
+  }
 
-  const meetingTypes = dashboard.workspaceId
-    ? await listWorkspaceMeetingTypes(dashboard.workspaceId).catch(() => [])
-    : [];
+  const meetingTypes = await listWorkspaceMeetingTypes(
+    dashboard.workspaceId,
+  ).catch(() => []);
 
   let calUsername = "";
   try {
-    const me = await getCalMeProfile();
+    const apiKey = await getCalApiKeyForWorkspace(dashboard.workspaceId);
+    const me = await withCalApiKey(apiKey, () => getCalMeProfile());
     calUsername = me.username;
-    if (dashboard.workspaceId && me.username) {
+    if (me.username) {
       const admin = createAdminClient();
       await admin
         .from("workspaces")
@@ -28,7 +36,8 @@ export default async function MeetingTypesPage() {
         .eq("id", dashboard.workspaceId);
     }
   } catch {
-    // URL prefix stays empty until Cal.com is reachable; form shows a hint.
+    const ws = await getWorkspaceById(dashboard.workspaceId);
+    calUsername = ws?.cal_username ?? "";
   }
 
   return (

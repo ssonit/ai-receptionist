@@ -1,6 +1,5 @@
 import { bookingConfig } from "@/lib/booking-config";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getPilotWorkspaceId } from "@/lib/workspace";
 
 export type AiBookingEventType = {
   workspaceId: string;
@@ -36,8 +35,10 @@ export type WorkspaceMeetingTypeRow = WorkspaceEventTypeRow;
  * Prefer DB (`is_ai_booking` / workspaces.cal_event_type_id), else env bootstrap.
  */
 export async function getAiBookingEventType(
-  workspaceId: string = getPilotWorkspaceId(),
+  workspaceId?: string,
 ): Promise<AiBookingEventType | null> {
+  const { getDefaultWorkspaceId } = await import("@/lib/workspace");
+  const wsId = workspaceId ?? getDefaultWorkspaceId();
   const supabase = createAdminClient();
 
   const { data: aiRow } = await supabase
@@ -45,66 +46,72 @@ export async function getAiBookingEventType(
     .select(
       "id, workspace_id, cal_event_type_id, slug, title, length_minutes, minimum_notice_minutes, is_ai_booking",
     )
-    .eq("workspace_id", workspaceId)
+    .eq("workspace_id", wsId)
     .eq("is_ai_booking", true)
     .maybeSingle();
 
+  const { data: workspace } = await supabase
+    .from("workspaces")
+    .select("cal_event_type_id, cal_event_type_slug, cal_username")
+    .eq("id", wsId)
+    .maybeSingle();
+
+  const username =
+    workspace?.cal_username || bookingConfig.cal.username || "";
+
   if (aiRow) {
     return {
-      workspaceId,
+      workspaceId: wsId,
       id: aiRow.id,
       calEventTypeId: aiRow.cal_event_type_id,
       slug: aiRow.slug,
       title: aiRow.title,
       lengthMinutes: aiRow.length_minutes,
       minimumNoticeMinutes: aiRow.minimum_notice_minutes,
-      username: bookingConfig.cal.username,
+      username,
     };
   }
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("cal_event_type_id, cal_event_type_slug, cal_username")
-    .eq("id", workspaceId)
-    .maybeSingle();
-
   if (workspace?.cal_event_type_id) {
     return {
-      workspaceId,
+      workspaceId: wsId,
       id: "",
       calEventTypeId: workspace.cal_event_type_id,
       slug: workspace.cal_event_type_slug || bookingConfig.cal.eventTypeSlug,
       title: workspace.cal_event_type_slug || "AI booking",
       lengthMinutes: 30,
       minimumNoticeMinutes: bookingConfig.minNoticeHours * 60,
-      username: workspace.cal_username || bookingConfig.cal.username,
+      username,
     };
   }
 
-  if (bookingConfig.cal.eventTypeId) {
-    return {
-      workspaceId,
-      id: "",
-      calEventTypeId: bookingConfig.cal.eventTypeId,
-      slug: bookingConfig.cal.eventTypeSlug,
-      title: bookingConfig.cal.eventTypeSlug || "AI booking",
-      lengthMinutes: 30,
-      minimumNoticeMinutes: bookingConfig.minNoticeHours * 60,
-      username: bookingConfig.cal.username,
-    };
-  }
+  // Env bootstrap only for Eve Pilot (`/chat` demo) — tenants use DB meeting types
+  if (wsId === getDefaultWorkspaceId()) {
+    if (bookingConfig.cal.eventTypeId) {
+      return {
+        workspaceId: wsId,
+        id: "",
+        calEventTypeId: bookingConfig.cal.eventTypeId,
+        slug: bookingConfig.cal.eventTypeSlug,
+        title: bookingConfig.cal.eventTypeSlug || "AI booking",
+        lengthMinutes: 30,
+        minimumNoticeMinutes: bookingConfig.minNoticeHours * 60,
+        username: bookingConfig.cal.username,
+      };
+    }
 
-  if (bookingConfig.cal.username && bookingConfig.cal.eventTypeSlug) {
-    return {
-      workspaceId,
-      id: "",
-      calEventTypeId: 0,
-      slug: bookingConfig.cal.eventTypeSlug,
-      title: bookingConfig.cal.eventTypeSlug,
-      lengthMinutes: 30,
-      minimumNoticeMinutes: bookingConfig.minNoticeHours * 60,
-      username: bookingConfig.cal.username,
-    };
+    if (bookingConfig.cal.username && bookingConfig.cal.eventTypeSlug) {
+      return {
+        workspaceId: wsId,
+        id: "",
+        calEventTypeId: 0,
+        slug: bookingConfig.cal.eventTypeSlug,
+        title: bookingConfig.cal.eventTypeSlug,
+        lengthMinutes: 30,
+        minimumNoticeMinutes: bookingConfig.minNoticeHours * 60,
+        username: bookingConfig.cal.username,
+      };
+    }
   }
 
   return null;

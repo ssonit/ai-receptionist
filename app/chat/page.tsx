@@ -1,7 +1,18 @@
 import { AgentChat } from "@/app/_components/agent-chat";
 import { createClient } from "@/lib/supabase/server";
+import {
+  getDefaultWorkspaceId,
+  getWorkspaceById,
+} from "@/lib/workspace";
 
+/**
+ * Marketing product demo — always Eve Pilot (seeded sandbox).
+ * Real tenant booking lives at `/b/[slug]`.
+ */
 export default async function ChatPage() {
+  const workspaceId = getDefaultWorkspaceId();
+  const workspace = await getWorkspaceById(workspaceId);
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -19,5 +30,12 @@ export default async function ChatPage() {
       }
     : null;
 
-  return <AgentChat user={chatUser} />;
+  return (
+    <AgentChat
+      demoMode
+      user={chatUser}
+      workspaceName={workspace?.name ?? "Eve Pilot"}
+      workspaceSlug={workspace?.slug ?? "eve-pilot"}
+    />
+  );
 }

@@ -6,16 +6,22 @@ Eve + Next.js agent that answers FAQ, checks Cal.com availability, and creates b
 
 | Path | Purpose |
 |------|---------|
-| `/` | Landing |
-| `/chat` | Public booking chat |
+| `/` | SaaS marketing landing |
+| `/chat` | **Product demo** — always Eve Pilot sandbox (seeded FAQ / persona) |
+| `/b/[slug]` | Real tenant booking page (brand + chat) |
 | `/login` `/signup` | Auth |
 | `/dashboard` | Booking management (bookings, leads, stats) |
 
-## Data model (pilot)
+## Data model
 
-- `workspaces` — single-tenant seed workspace
-- `profiles.workspace_id` — linked on signup
-- `leads` / `bookings` / `conversation_logs` — agent mirrors
+- Multi-tenant: signup creates a **new** `workspaces` row; `profiles.workspace_id` links the owner
+- Marketing demo: Eve Pilot from `supabase/seed.sql` (`slug = eve-pilot`) — used only by `/chat`
+- Tenant public link: `/b/{slug}` (copy from Settings after setup)
+- Core tables: `leads`, `bookings`, `conversation_logs`, FAQ, event types, chat, notifications
+
+**Ops:** `/chat` (Eve Pilot) uses `CALCOM_API_KEY` / event type from **env** (your sandbox). Real workspaces use their own API key from Setup — never the shared env key.
+
+Migrations / baseline / seed workflow: [`docs/MIGRATIONS.md`](docs/MIGRATIONS.md).
 
 ## Env
 

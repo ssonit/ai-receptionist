@@ -5,7 +5,8 @@ import {
   type ChatSessionListItem,
 } from "@/lib/chat-sessions";
 import { createClient } from "@/lib/supabase/server";
-import { getPilotWorkspaceId } from "@/lib/workspace";
+import { getDefaultWorkspaceId } from "@/lib/workspace";
+import { getSessionWorkspaceId } from "@/lib/workspace-session";
 
 export type ConversationOutcome =
   | "booked"
@@ -55,8 +56,9 @@ function classifyOutcome(input: {
 export async function loadConversationsDashboard(limit = 100): Promise<{
   rows: ConversationListRow[];
 }> {
-  const sessions = await listWorkspaceChatSessions(limit);
-  const workspaceId = getPilotWorkspaceId();
+  const workspaceId =
+    (await getSessionWorkspaceId()) ?? getDefaultWorkspaceId();
+  const sessions = await listWorkspaceChatSessions(workspaceId, limit);
   const supabase = await createClient();
 
   const eveIds = sessions
@@ -135,7 +137,8 @@ export async function loadConversationDetail(
   id: string,
 ): Promise<ConversationDetail | null> {
   const supabase = await createClient();
-  const workspaceId = getPilotWorkspaceId();
+  const workspaceId =
+    (await getSessionWorkspaceId()) ?? getDefaultWorkspaceId();
 
   const { data: session, error } = await supabase
     .from("chat_sessions")

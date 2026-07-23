@@ -1,8 +1,13 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { logAgentToolEvent } from "@/lib/agent-tool-log";
-import { getAvailableSlots } from "@/lib/calcom";
+import { getAvailableSlots, withCalApiKey } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
+import {
+  getCalApiKeyForWorkspace,
+  getWorkspaceById,
+  resolveWorkspaceIdForAgentSession,
+} from "@/lib/workspace";
 import { getAiBookingEventType } from "@/lib/workspace-cal";
 import { addDaysYmd, compareYmd, toYmd, todayYmd } from "../date-context";
 
@@ -24,48 +29,60 @@ export default defineTool({
   async execute({ startDate, endDate, timeZone }, ctx) {
     const sessionId = ctx.session?.id ?? null;
     try {
-      const aiEvent = await getAiBookingEventType();
+      const workspaceId = await resolveWorkspaceIdForAgentSession(sessionId);
+      const aiEvent = await getAiBookingEventType(workspaceId);
       if (!aiEvent) {
         const error =
-          "Chưa cấu hình meeting type cho AI booking. Vào Dashboard → Settings để chọn, hoặc Meeting types để sync/tạo.";
+          "Chưa cấu hình meeting type cho AI booking. Vào Dashboard → Setup / Settings để chọn.";
         await logAgentToolEvent({
           toolName: "check_availability",
           ok: false,
           error,
           sessionId,
+          workspaceId,
         });
         return { ok: false as const, error };
       }
 
-      const tz = timeZone ?? bookingConfig.timezone;
+      const ws = await getWorkspaceById(workspaceId);
+      const tz = timeZone ?? ws?.timezone ?? bookingConfig.timezone;
       const today = todayYmd(tz);
       let start = toYmd(startDate);
       let end = toYmd(endDate);
       const notes: string[] = [];
 
       if (compareYmd(start, today) < 0) {
-        notes.push(`Clamped startDate from ${start} to ${today} (past dates are not allowed).`);
+        notes.push(
+          `Clamped startDate from ${start} to ${today} (past dates are not allowed).`,
+        );
         start = today;
       }
       if (compareYmd(end, start) < 0) {
         const next = addDaysYmd(start, 7, tz);
-        notes.push(`Clamped endDate from ${end} to ${next} (end was before start).`);
+        notes.push(
+          `Clamped endDate from ${end} to ${next} (end was before start).`,
+        );
         end = next;
       }
       const maxEnd = addDaysYmd(start, 60, tz);
       if (compareYmd(end, maxEnd) > 0) {
-        notes.push(`Clamped endDate from ${end} to ${maxEnd} (max 60-day window).`);
+        notes.push(
+          `Clamped endDate from ${end} to ${maxEnd} (max 60-day window).`,
+        );
         end = maxEnd;
       }
 
-      const slots = await getAvailableSlots({
-        startDate: start,
-        endDate: end,
-        timeZone: tz,
-        eventTypeId: aiEvent.calEventTypeId || undefined,
-        eventTypeSlug: aiEvent.slug,
-        username: aiEvent.username,
-      });
+      const apiKey = await getCalApiKeyForWorkspace(workspaceId);
+      const slots = await withCalApiKey(apiKey, () =>
+        getAvailableSlots({
+          startDate: start,
+          endDate: end,
+          timeZone: tz,
+          eventTypeId: aiEvent.calEventTypeId || undefined,
+          eventTypeSlug: aiEvent.slug,
+          username: aiEvent.username,
+        }),
+      );
 
       const byDay: Record<string, string[]> = {};
       for (const slot of slots.slice(0, 40)) {
@@ -92,6 +109,7 @@ export default defineTool({
         toolName: "check_availability",
         ok: true,
         sessionId,
+        workspaceId,
         meta: { count: slots.length, start, end },
       });
 

@@ -2,13 +2,18 @@ import {
   createChatSession,
   listChatSessionsForActor,
 } from "@/lib/chat-sessions";
-import { getChatActor, jsonError } from "@/lib/chat-api";
+import { getChatActor, getChatWorkspaceId, jsonError } from "@/lib/chat-api";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const { visitorId, userId } = await getChatActor();
-    const sessions = await listChatSessionsForActor({ visitorId, userId });
-    return Response.json({ sessions });
+    const workspaceId = await getChatWorkspaceId(request);
+    const sessions = await listChatSessionsForActor({
+      visitorId,
+      userId,
+      workspaceId,
+    });
+    return Response.json({ sessions, workspaceId });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to list sessions";
@@ -19,6 +24,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { visitorId, userId } = await getChatActor();
+    const workspaceId = await getChatWorkspaceId(request);
     let title: string | undefined;
     try {
       const body = (await request.json()) as { title?: string };
@@ -26,7 +32,12 @@ export async function POST(request: Request) {
     } catch {
       // empty body ok
     }
-    const session = await createChatSession({ visitorId, userId, title });
+    const session = await createChatSession({
+      visitorId,
+      userId,
+      title,
+      workspaceId,
+    });
     return Response.json({ session });
   } catch (error) {
     const message =

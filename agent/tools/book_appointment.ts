@@ -1,13 +1,16 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { logAgentToolEvent } from "@/lib/agent-tool-log";
-import { createBooking, getAvailableSlots } from "@/lib/calcom";
+import { createBooking, getAvailableSlots, withCalApiKey } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
 import { normalizeCalApiStatus } from "@/lib/booking-status";
 import { upsertLeadAsBooked } from "@/lib/leads";
-import { createNotification } from "@/lib/notifications";
+import { createNotification } from "@/lib/notifications-write";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getPilotWorkspaceId } from "@/lib/workspace";
+import {
+  getCalApiKeyForWorkspace,
+  resolveWorkspaceIdForAgentSession,
+} from "@/lib/workspace";
 import { getAiBookingEventType } from "@/lib/workspace-cal";
 
 export default defineTool({
@@ -18,22 +21,30 @@ export default defineTool({
     phone: z.string().min(6),
     email: z.string().email(),
     start: z.string().describe("ISO 8601 start time from check_availability"),
-    service: z.string().optional().describe("Requested service or reason for visit"),
+    service: z
+      .string()
+      .optional()
+      .describe("Requested service or reason for visit"),
     notes: z.string().optional(),
     sessionId: z.string().optional(),
   }),
-  async execute({ guestName, phone, email, start, service, notes, sessionId }, ctx) {
+  async execute(
+    { guestName, phone, email, start, service, notes, sessionId },
+    ctx,
+  ) {
     const sid = sessionId ?? ctx.session?.id ?? null;
     try {
-      const aiEvent = await getAiBookingEventType();
+      const workspaceId = await resolveWorkspaceIdForAgentSession(sid);
+      const aiEvent = await getAiBookingEventType(workspaceId);
       if (!aiEvent) {
         const error =
-          "Chưa cấu hình meeting type cho AI booking. Vào Dashboard → Settings để chọn, hoặc Meeting types để sync/tạo.";
+          "Chưa cấu hình meeting type cho AI booking. Vào Dashboard → Setup / Settings để chọn.";
         await logAgentToolEvent({
           toolName: "book_appointment",
           ok: false,
           error,
           sessionId: sid,
+          workspaceId,
         });
         return { ok: false as const, error };
       }
@@ -44,44 +55,55 @@ export default defineTool({
         username: aiEvent.username,
       };
 
+      const apiKey = await getCalApiKeyForWorkspace(workspaceId);
       const day = start.slice(0, 10);
-      const slots = await getAvailableSlots({
-        startDate: day,
-        endDate: day,
-        timeZone: bookingConfig.timezone,
-        ...eventRef,
-      });
+      const slots = await withCalApiKey(apiKey, () =>
+        getAvailableSlots({
+          startDate: day,
+          endDate: day,
+          timeZone: bookingConfig.timezone,
+          ...eventRef,
+        }),
+      );
       const targetMs = Date.parse(start);
       const stillOpen = slots.some((slot) => {
         if (slot.start === start) return true;
         const slotMs = Date.parse(slot.start);
-        return !Number.isNaN(targetMs) && !Number.isNaN(slotMs) && slotMs === targetMs;
+        return (
+          !Number.isNaN(targetMs) &&
+          !Number.isNaN(slotMs) &&
+          slotMs === targetMs
+        );
       });
       if (!stillOpen) {
-        const error = "Slot is no longer available. Call check_availability again.";
+        const error =
+          "Slot is no longer available. Call check_availability again.";
         await logAgentToolEvent({
           toolName: "book_appointment",
           ok: false,
           error,
           sessionId: sid,
+          workspaceId,
         });
         return { ok: false as const, error };
       }
 
-      const booking = await createBooking({
-        start,
-        attendeeName: guestName,
-        attendeeEmail: email,
-        attendeePhone: phone,
-        notes: [service, notes].filter(Boolean).join(" | ") || undefined,
-        ...eventRef,
-      });
+      const booking = await withCalApiKey(apiKey, () =>
+        createBooking({
+          start,
+          attendeeName: guestName,
+          attendeeEmail: email,
+          attendeePhone: phone,
+          notes: [service, notes].filter(Boolean).join(" | ") || undefined,
+          ...eventRef,
+        }),
+      );
 
       try {
         const supabase = createAdminClient();
         await supabase.from("bookings").upsert(
           {
-            workspace_id: getPilotWorkspaceId(),
+            workspace_id: workspaceId,
             cal_booking_uid: booking.uid,
             guest_name: guestName,
             guest_phone: phone,
@@ -98,7 +120,7 @@ export default defineTool({
         );
 
         await upsertLeadAsBooked({
-          workspaceId: getPilotWorkspaceId(),
+          workspaceId,
           fullName: guestName,
           phone,
           email,
@@ -116,6 +138,7 @@ export default defineTool({
           ok: true,
           error: warning,
           sessionId: sid,
+          workspaceId,
           meta: { uid: booking.uid, mirrorFailed: true },
         });
         await createNotification({
@@ -126,6 +149,7 @@ export default defineTool({
           href: "/dashboard/bookings",
           entityType: "booking",
           entityId: booking.uid,
+          workspaceId,
         });
         return { ok: true as const, booking, warning };
       }
@@ -134,6 +158,7 @@ export default defineTool({
         toolName: "book_appointment",
         ok: true,
         sessionId: sid,
+        workspaceId,
         meta: { uid: booking.uid },
       });
 
@@ -147,6 +172,7 @@ export default defineTool({
         href: "/dashboard/bookings",
         entityType: "booking",
         entityId: booking.uid,
+        workspaceId,
       });
 
       return {

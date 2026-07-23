@@ -4,38 +4,40 @@ import { Button } from "@/components/ui/button";
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { redirect } from "next/navigation";
 
-const steps = [
-  {
-    title: "1. Cấu hình workspace",
-    body: "Settings: thông tin doanh nghiệp, meeting type cho AI, hướng dẫn agent.",
-    href: "/dashboard/settings",
-    label: "Settings",
-  },
-  {
-    title: "2. Meeting types & FAQ",
-    body: "Đồng bộ / tạo meeting type trên Cal.com; thêm Q&A để chat trả lời đúng.",
-    href: "/dashboard/meeting-types",
-    label: "Meeting types",
-  },
-  {
-    title: "3. Chat với khách",
-    body: "Public chat thu thập lead, kiểm tra slot, đặt lịch. Xem lại ở Conversations.",
-    href: "/chat",
-    label: "Open chat",
-  },
-  {
-    title: "4. Vận hành",
-    body: "Leads & Bookings để follow-up; Analytics / Conversations để đánh giá AI.",
-    href: "/dashboard/leads",
-    label: "Leads",
-  },
-];
-
 export default async function HelpPage() {
   const dashboard = await getDashboardUser();
   if (!dashboard) {
     redirect("/login?next=/dashboard/help");
   }
+
+  const bookingHref = dashboard.bookingPagePath || "/b/eve-pilot";
+
+  const steps = [
+    {
+      title: "1. Cấu hình workspace",
+      body: "Settings: thông tin doanh nghiệp, meeting type cho AI, hướng dẫn agent.",
+      href: "/dashboard/settings",
+      label: "Settings",
+    },
+    {
+      title: "2. Meeting types & FAQ",
+      body: "Đồng bộ / tạo meeting type trên Cal.com; thêm Q&A để chat trả lời đúng.",
+      href: "/dashboard/meeting-types",
+      label: "Meeting types",
+    },
+    {
+      title: "3. Trang đặt lịch công khai",
+      body: "Gắn /b/{slug} lên website hoặc bio. Khách chat → Conversations / Leads / Bookings.",
+      href: bookingHref,
+      label: "Booking page",
+    },
+    {
+      title: "4. Vận hành",
+      body: "Leads & Bookings để follow-up; Analytics / Conversations để đánh giá AI.",
+      href: "/dashboard/leads",
+      label: "Leads",
+    },
+  ];
 
   return (
     <DashboardShell title="Get Help" user={dashboard.navUser}>
@@ -47,7 +49,7 @@ export default async function HelpPage() {
           </p>
           <div className="mt-4">
             <Button asChild>
-              <Link href="/chat">Open chat</Link>
+              <Link href={bookingHref}>Open booking page</Link>
             </Button>
           </div>
         </div>

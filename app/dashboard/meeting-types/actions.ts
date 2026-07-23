@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 import {
   createEventType,
   listEventTypes,
+  withCalApiKey,
   type CalEventType,
 } from "@/lib/calcom";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getCalApiKeyForWorkspace, slugifyWorkspaceName } from "@/lib/workspace";
 
 export type MeetingTypesActionState = {
   error?: string;
@@ -97,7 +99,8 @@ export async function syncMeetingTypesAction(): Promise<MeetingTypesActionState>
   if ("error" in auth) return { error: auth.error };
 
   try {
-    const remote = await listEventTypes();
+    const apiKey = await getCalApiKeyForWorkspace(auth.workspaceId);
+    const remote = await withCalApiKey(apiKey, () => listEventTypes());
     const admin = createAdminClient();
 
     const { data: existing } = await admin
@@ -170,23 +173,20 @@ export async function createMeetingTypeAction(
 
   const slug =
     slugRaw ||
-    title
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 48) ||
+    slugifyWorkspaceName(title) ||
     `meeting-${lengthMinutes}`;
 
   try {
-    const created = await createEventType({
-      title,
-      slug,
-      lengthInMinutes: lengthMinutes,
-      description: description || undefined,
-      locations: [{ type: "integration", integration: location }],
-    });
+    const apiKey = await getCalApiKeyForWorkspace(auth.workspaceId);
+    const created = await withCalApiKey(apiKey, () =>
+      createEventType({
+        title,
+        slug,
+        lengthInMinutes: lengthMinutes,
+        description: description || undefined,
+        locations: [{ type: "integration", integration: location }],
+      }),
+    );
 
     const admin = createAdminClient();
     const { data: aiExisting } = await admin

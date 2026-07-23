@@ -1,6 +1,6 @@
 import { bookingConfig } from "./booking-config";
 import { createAdminClient } from "./supabase/admin";
-import { getPilotWorkspaceId } from "./workspace";
+import { getDefaultWorkspaceId } from "./workspace";
 import { mapWorkspaceFaqRecord } from "./workspace-faq-map";
 import {
   WORKSPACE_FAQ_SELECT,
@@ -37,13 +37,15 @@ function blockSection(title: string, value: string | null | undefined): string[]
 }
 
 /** Load workspace + FAQ from Supabase (service role). Returns null if DB unavailable. */
-export async function fetchWorkspaceFaq(): Promise<WorkspaceFaqRecord | null> {
+export async function fetchWorkspaceFaq(
+  workspaceId: string = getDefaultWorkspaceId(),
+): Promise<WorkspaceFaqRecord | null> {
   try {
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("workspaces")
       .select(WORKSPACE_FAQ_SELECT)
-      .eq("id", getPilotWorkspaceId())
+      .eq("id", workspaceId)
       .maybeSingle();
 
     if (error || !data) return null;

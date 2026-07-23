@@ -1,4 +1,4 @@
-/** Hard-coded pilot booking config (single-tenant MVP). */
+/** Booking defaults — Eve Pilot / `/chat` demo uses Cal.com from env. */
 export const bookingConfig = {
   name: process.env.BOOKING_NAME ?? "Eve Pilot",
   timezone: process.env.BOOKING_TIMEZONE ?? "Asia/Ho_Chi_Minh",
@@ -29,6 +29,10 @@ export const bookingConfig = {
     /** Persist full Cal.com payload (heavier writes). */
     storeRaw: process.env.BOOKING_SYNC_STORE_RAW === "true",
   },
+  /**
+   * Shared Cal.com credentials for Eve Pilot marketing demo (`/chat`) only.
+   * Real workspaces store their own encrypted API key — never reuse this env key.
+   */
   cal: {
     apiKey: process.env.CALCOM_API_KEY ?? "",
     apiBaseUrl: process.env.CALCOM_API_BASE_URL ?? "https://api.cal.com/v2",

@@ -6,9 +6,9 @@ import {
   type LeadStatus,
 } from "@/lib/lead-status";
 import { findWorkspaceLead } from "@/lib/leads";
-import { createNotification } from "@/lib/notifications";
+import { createNotification } from "@/lib/notifications-write";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getPilotWorkspaceId } from "@/lib/workspace";
+import { resolveWorkspaceIdForAgentSession } from "@/lib/workspace";
 
 function nextStatusOnLog(current: string | undefined): LeadStatus {
   if (current === "booked" || current === "lost" || current === "qualified") {
@@ -33,7 +33,7 @@ export default defineTool({
     const sessionId = ctx.session?.id ?? null;
     try {
       const supabase = createAdminClient();
-      const workspaceId = getPilotWorkspaceId();
+      const workspaceId = await resolveWorkspaceIdForAgentSession(sessionId);
       const phone = input.phone?.trim() || null;
       const email = input.email?.trim() || null;
       const urgency = normalizeLeadUrgency(input.urgency);

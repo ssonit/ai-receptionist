@@ -10,7 +10,8 @@ import {
   type ToolErrorRow,
 } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/server";
-import { getPilotWorkspaceId } from "@/lib/workspace";
+import { getDefaultWorkspaceId } from "@/lib/workspace";
+import { getSessionWorkspaceId } from "@/lib/workspace-session";
 
 const RANGE_DAYS = 30;
 const SERIES_DAYS = 90;
@@ -32,7 +33,8 @@ function daysAgoIso(days: number): string {
 
 export async function loadAnalyticsDashboard(): Promise<AnalyticsDashboardData> {
   const supabase = await createClient();
-  const workspaceId = getPilotWorkspaceId();
+  const workspaceId =
+    (await getSessionWorkspaceId()) ?? getDefaultWorkspaceId();
   const rangeStart = daysAgoIso(RANGE_DAYS);
   const seriesStart = daysAgoIso(SERIES_DAYS);
   const day24h = daysAgoIso(1);

@@ -1,6 +1,9 @@
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { createClient } from "@/lib/supabase/server";
-import { getPilotWorkspaceId } from "@/lib/workspace";
+import {
+  getDefaultWorkspaceId,
+} from "@/lib/workspace";
+import { getSessionWorkspaceId } from "@/lib/workspace-session";
 import { NextResponse } from "next/server";
 
 function sanitizeIlike(q: string) {
@@ -31,7 +34,8 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createClient();
-  const workspaceId = getPilotWorkspaceId();
+  const workspaceId =
+    (await getSessionWorkspaceId()) ?? getDefaultWorkspaceId();
   const pattern = `%${q}%`;
 
   const leadSelect = "id, full_name, phone, email, status" as const;

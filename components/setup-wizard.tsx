@@ -1,0 +1,601 @@
+"use client";
+
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useTransition } from "react";
+import {
+  CalendarBlankIcon,
+  CheckCircleIcon,
+  SparkleIcon,
+  StorefrontIcon,
+} from "@phosphor-icons/react";
+import {
+  completeSetupAction,
+  finishSetupAction,
+  saveCalApiKeyAction,
+  saveSetupProfileAction,
+  setSetupAiMeetingTypeAction,
+  syncSetupMeetingTypesAction,
+  type SetupActionState,
+} from "@/app/dashboard/setup/actions";
+import { checkWorkspaceSlugAvailable } from "@/app/dashboard/settings/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { TimezoneSelect } from "@/components/timezone-select";
+import type { WorkspaceMeetingTypeRow } from "@/lib/workspace-cal";
+import { slugifyWorkspaceName } from "@/lib/workspace";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
+const empty: SetupActionState = {};
+
+const STEPS = [
+  {
+    id: 1 as const,
+    label: "Cal.com",
+    required: true,
+    title: "Kết nối lịch đặt hẹn",
+    question: "Dán API key Cal.com của bạn.",
+    hint: "Bắt buộc. Key được mã hoá trên server.",
+  },
+  {
+    id: 2 as const,
+    label: "Meeting type",
+    required: true,
+    title: "Chọn loại cuộc hẹn cho AI",
+    question: "Meeting type nào agent sẽ dùng để check slot và đặt lịch?",
+    hint: "Bắt buộc. Sync từ Cal.com, rồi chọn một type.",
+  },
+  {
+    id: 3 as const,
+    label: "Hồ sơ",
+    required: false,
+    title: "Tuỳ chỉnh trang đặt lịch",
+    question: "Chỉnh tên, slug và timezone — hoặc bỏ qua dùng mặc định từ signup.",
+    hint: "Không bắt buộc. FAQ / liên hệ cấu hình sau ở Dashboard.",
+  },
+];
+
+export type SetupWizardProps = {
+  initialStep: 1 | 2 | 3;
+  workspace: {
+    id: string;
+    name: string;
+    slug: string | null;
+    timezone: string;
+    about: string | null;
+    calUsername: string | null;
+    hasCalKey: boolean;
+    aiMeetingTypeId: string | null;
+  };
+  meetingTypes: WorkspaceMeetingTypeRow[];
+  chatBaseUrl: string;
+};
+
+export function SetupWizard({
+  initialStep,
+  workspace,
+  meetingTypes,
+  chatBaseUrl,
+}: SetupWizardProps) {
+  const router = useRouter();
+  const [step, setStep] = React.useState(initialStep);
+  const [calState, calAction, calPending] = useActionState(
+    saveCalApiKeyAction,
+    empty,
+  );
+  const [profileState, profileAction, profilePending] = useActionState(
+    saveSetupProfileAction,
+    empty,
+  );
+  const [finishState, finishAction, finishPending] = useActionState(
+    finishSetupAction,
+    empty,
+  );
+  const [pending, startTransition] = useTransition();
+  const [aiId, setAiId] = React.useState(workspace.aiMeetingTypeId ?? "");
+  const [name, setName] = React.useState(workspace.name ?? "");
+  const [slug, setSlug] = React.useState(workspace.slug ?? "");
+  const [slugTouched, setSlugTouched] = React.useState(false);
+  const [slugStatus, setSlugStatus] = React.useState<{
+    available: boolean;
+    message: string;
+  } | null>(null);
+  const [slugChecking, setSlugChecking] = React.useState(false);
+  const [calKeyDraft, setCalKeyDraft] = React.useState("");
+  const [profileDirty, setProfileDirty] = React.useState(false);
+
+  useEffect(() => {
+    setStep(initialStep);
+  }, [initialStep]);
+
+  useEffect(() => {
+    if (calState.success) {
+      toast.success(calState.success);
+      setCalKeyDraft("");
+      router.refresh();
+      setStep(2);
+    } else if (calState.error) toast.error(calState.error);
+  }, [calState, router]);
+
+  useEffect(() => {
+    if (profileState.success) {
+      toast.success(profileState.success);
+      setProfileDirty(false);
+      router.refresh();
+    } else if (profileState.error) toast.error(profileState.error);
+  }, [profileState, router]);
+
+  useEffect(() => {
+    if (finishState.error) toast.error(finishState.error);
+  }, [finishState]);
+
+  useEffect(() => {
+    setAiId(workspace.aiMeetingTypeId ?? "");
+  }, [workspace.aiMeetingTypeId]);
+
+  useEffect(() => {
+    if (step !== 3) return;
+    const normalized = slugifyWorkspaceName(slug);
+    if (!normalized || normalized.length < 2) {
+      setSlugStatus(null);
+      return;
+    }
+
+    let cancelled = false;
+    setSlugChecking(true);
+    const timer = window.setTimeout(async () => {
+      const result = await checkWorkspaceSlugAvailable(normalized);
+      if (!cancelled) {
+        setSlugStatus({
+          available: result.available,
+          message: result.message,
+        });
+        setSlugChecking(false);
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [slug, step]);
+
+  const formDirty =
+    (step === 1 && !workspace.hasCalKey && calKeyDraft.trim().length > 0) ||
+    (step === 3 && profileDirty);
+
+  useEffect(() => {
+    if (!formDirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [formDirty]);
+
+  const meta = STEPS[step - 1];
+  const canGoStep2 = workspace.hasCalKey;
+  const canGoStep3 = canGoStep2 && Boolean(workspace.aiMeetingTypeId || aiId);
+
+  const goBack = () => {
+    if (step === 2) setStep(1);
+    if (step === 3) setStep(2);
+  };
+
+  const selectMeetingType = (id: string) => {
+    setAiId(id);
+    startTransition(async () => {
+      const result = await setSetupAiMeetingTypeAction(id);
+      if (result.error) toast.error(result.error);
+      else {
+        toast.success(result.success ?? "Đã chọn");
+        router.refresh();
+      }
+    });
+  };
+
+  const skipProfileAndFinish = () => {
+    startTransition(async () => {
+      const result = await completeSetupAction();
+      if (result?.error) toast.error(result.error);
+    });
+  };
+
+  return (
+    <div className="flex min-h-[calc(100svh-5.5rem)] flex-col">
+      <div className="mx-auto mb-3 flex w-full max-w-xs gap-1.5">
+        {STEPS.map((s) => (
+          <button
+            key={s.id}
+            aria-label={`Bước ${s.id}: ${s.label}${s.required ? " (bắt buộc)" : " (tuỳ chọn)"}`}
+            className={cn(
+              "h-1 flex-1 rounded-full transition-colors",
+              step >= s.id ? "bg-white" : "bg-white/15",
+            )}
+            type="button"
+            onClick={() => {
+              if (s.id === 1) setStep(1);
+              if (s.id === 2 && canGoStep2) setStep(2);
+              if (s.id === 3 && canGoStep3) setStep(3);
+            }}
+          />
+        ))}
+      </div>
+      <p className="mb-8 text-center text-xs text-zinc-500">
+        Bước 1–2 bắt buộc · Bước 3 tuỳ chọn. Bạn có thể đóng trang và quay lại
+        sau — Cal & meeting type đã lưu sẽ được giữ.
+      </p>
+
+      <div className="mb-8 space-y-4">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-amber-600 shadow-[0_0_24px_-4px_rgba(251,146,60,0.55)]">
+            {step === 1 ? (
+              <CalendarBlankIcon className="size-4 text-white" weight="fill" />
+            ) : step === 2 ? (
+              <SparkleIcon className="size-4 text-white" weight="fill" />
+            ) : (
+              <StorefrontIcon className="size-4 text-white" weight="fill" />
+            )}
+          </span>
+          <div className="min-w-0 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-balance text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                {meta.title}
+              </h1>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase",
+                  meta.required
+                    ? "bg-orange-400/15 text-orange-200"
+                    : "bg-white/10 text-zinc-400",
+                )}
+              >
+                {meta.required ? "Bắt buộc" : "Tuỳ chọn"}
+              </span>
+            </div>
+            <p className="text-pretty text-sm leading-relaxed text-zinc-400">
+              <span className="font-medium text-zinc-200">{meta.question}</span>{" "}
+              {meta.hint}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1">
+        {step === 1 ? (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+            {workspace.hasCalKey ? (
+              <div className="space-y-5">
+                <div className="flex items-start gap-3">
+                  <CheckCircleIcon
+                    className="mt-0.5 size-5 shrink-0 text-emerald-400"
+                    weight="fill"
+                  />
+                  <div>
+                    <p className="font-medium text-white">Đã kết nối Cal.com</p>
+                    <p className="mt-1 text-sm text-zinc-400">
+                      {workspace.calUsername
+                        ? `@${workspace.calUsername}`
+                        : "API key đã lưu (mã hoá)."}
+                    </p>
+                  </div>
+                </div>
+                <details className="group text-sm">
+                  <summary className="cursor-pointer text-zinc-400 underline-offset-4 hover:text-zinc-200 hover:underline">
+                    Đổi API key
+                  </summary>
+                  <form action={calAction} className="mt-4 space-y-3">
+                    <Input
+                      autoComplete="off"
+                      className="h-11 border-white/10 bg-black/40 text-white placeholder:text-zinc-600"
+                      name="calApiKey"
+                      placeholder="cal_live_…"
+                      required
+                      type="password"
+                      value={calKeyDraft}
+                      onChange={(e) => setCalKeyDraft(e.target.value)}
+                    />
+                    <Button
+                      className="rounded-full"
+                      disabled={calPending}
+                      type="submit"
+                    >
+                      Lưu key mới
+                    </Button>
+                  </form>
+                </details>
+              </div>
+            ) : (
+              <form action={calAction} className="space-y-5" id="setup-cal-form">
+                <div className="space-y-2">
+                  <Label className="text-zinc-200" htmlFor="calApiKey">
+                    Cal.com API key
+                  </Label>
+                  <Input
+                    autoComplete="off"
+                    className="h-11 border-white/10 bg-black/40 text-white placeholder:text-zinc-600"
+                    id="calApiKey"
+                    name="calApiKey"
+                    placeholder="cal_live_… hoặc cal_test_…"
+                    required
+                    type="password"
+                    value={calKeyDraft}
+                    onChange={(e) => setCalKeyDraft(e.target.value)}
+                  />
+                </div>
+                <a
+                  className="inline-block text-sm text-zinc-400 underline underline-offset-4 transition hover:text-zinc-200"
+                  href="https://app.cal.com/settings/developer/api-keys"
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  Mở trang tạo API key trên Cal.com
+                </a>
+              </form>
+            )}
+          </div>
+        ) : null}
+
+        {step === 2 ? (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs tracking-wide text-zinc-500 uppercase">
+                {meetingTypes.length} meeting type
+                {meetingTypes.length === 1 ? "" : "s"}
+              </p>
+              <Button
+                className="rounded-full border-white/10 bg-white/5 text-zinc-200 hover:bg-white/10 hover:text-white"
+                disabled={pending}
+                size="sm"
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  startTransition(async () => {
+                    const result = await syncSetupMeetingTypesAction();
+                    if (result.error) toast.error(result.error);
+                    else {
+                      toast.success(result.success ?? "Đã sync");
+                      router.refresh();
+                    }
+                  });
+                }}
+              >
+                {pending ? "Đang sync…" : "Sync từ Cal.com"}
+              </Button>
+            </div>
+
+            {meetingTypes.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-5 py-10 text-center">
+                <p className="text-sm text-zinc-400">
+                  Chưa có meeting type. Tạo trên Cal.com rồi bấm Sync.
+                </p>
+              </div>
+            ) : (
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {meetingTypes.map((mt) => {
+                  const selected = aiId === mt.id || mt.is_ai_booking;
+                  return (
+                    <li key={mt.id}>
+                      <button
+                        className={cn(
+                          "flex w-full flex-col gap-1 rounded-xl border px-4 py-4 text-left transition",
+                          selected
+                            ? "border-orange-400/50 bg-orange-400/10 shadow-[0_0_0_1px_rgba(251,146,60,0.25)]"
+                            : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]",
+                        )}
+                        disabled={pending}
+                        type="button"
+                        onClick={() => selectMeetingType(mt.id)}
+                      >
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-white">
+                            {mt.title}
+                          </span>
+                          {selected ? (
+                            <CheckCircleIcon
+                              className="size-4 shrink-0 text-orange-300"
+                              weight="fill"
+                            />
+                          ) : null}
+                        </span>
+                        <span className="text-sm text-zinc-400">
+                          {mt.length_minutes} phút
+                          {mt.slug ? ` · ${mt.slug}` : ""}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        ) : null}
+
+        {step === 3 ? (
+          <form
+            action={finishAction}
+            className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6"
+            id="setup-profile-form"
+            onChange={() => setProfileDirty(true)}
+          >
+            <div className="space-y-2">
+              <Label className="text-zinc-200" htmlFor="name">
+                Tên workspace
+              </Label>
+              <Input
+                className="h-11 border-white/10 bg-black/40 text-white"
+                id="name"
+                name="name"
+                required
+                value={name}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setName(next);
+                  setProfileDirty(true);
+                  if (!slugTouched) setSlug(slugifyWorkspaceName(next));
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-zinc-200" htmlFor="slug">
+                Slug trang đặt lịch
+              </Label>
+              <Input
+                aria-invalid={slugStatus ? !slugStatus.available : undefined}
+                className="h-11 border-white/10 bg-black/40 text-white"
+                id="slug"
+                name="slug"
+                required
+                value={slug}
+                onChange={(e) => {
+                  setSlugTouched(true);
+                  setSlug(e.target.value);
+                  setProfileDirty(true);
+                }}
+              />
+              <p className="break-all text-xs text-zinc-500">
+                Link công khai: {chatBaseUrl}/b/
+                {encodeURIComponent(slugifyWorkspaceName(slug) || "…")}
+              </p>
+              {slugChecking ? (
+                <p className="text-xs text-zinc-500">Đang kiểm tra slug…</p>
+              ) : slugStatus ? (
+                <p
+                  className={cn(
+                    "text-xs",
+                    slugStatus.available ? "text-emerald-400" : "text-red-400",
+                  )}
+                >
+                  {slugStatus.message}
+                </p>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label className="text-zinc-200" htmlFor="timezone">
+                Timezone
+              </Label>
+              <TimezoneSelect
+                defaultValue={workspace.timezone || "Asia/Ho_Chi_Minh"}
+                id="timezone"
+                name="timezone"
+                required
+                triggerClassName="h-11 border-white/10 bg-black/40 text-white hover:bg-black/50 hover:text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-zinc-200" htmlFor="about">
+                Giới thiệu ngắn{" "}
+                <span className="font-normal text-zinc-500">(tuỳ chọn)</span>
+              </Label>
+              <Textarea
+                className="min-h-[88px] border-white/10 bg-black/40 text-white"
+                defaultValue={workspace.about ?? ""}
+                id="about"
+                name="about"
+                rows={3}
+              />
+            </div>
+          </form>
+        ) : null}
+      </div>
+
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-6">
+        {step > 1 ? (
+          <button
+            className="text-sm text-zinc-400 transition hover:text-white"
+            type="button"
+            onClick={goBack}
+          >
+            Back
+          </button>
+        ) : (
+          <span />
+        )}
+
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          {step === 1 && workspace.hasCalKey ? (
+            <Button
+              className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
+              type="button"
+              onClick={() => setStep(2)}
+            >
+              Continue →
+            </Button>
+          ) : null}
+
+          {step === 1 && !workspace.hasCalKey ? (
+            <Button
+              className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
+              disabled={calPending}
+              form="setup-cal-form"
+              type="submit"
+            >
+              {calPending ? "Đang xác minh…" : "Continue →"}
+            </Button>
+          ) : null}
+
+          {step === 2 ? (
+            <Button
+              className={cn(
+                "h-10 rounded-full px-5 font-medium",
+                canGoStep3
+                  ? "bg-white text-black hover:bg-zinc-200"
+                  : "bg-white/10 text-zinc-500",
+              )}
+              disabled={!canGoStep3}
+              type="button"
+              onClick={() => setStep(3)}
+            >
+              Continue →
+            </Button>
+          ) : null}
+
+          {step === 3 ? (
+            <>
+              <button
+                className="text-sm text-zinc-400 transition hover:text-white"
+                disabled={pending || finishPending}
+                type="button"
+                onClick={skipProfileAndFinish}
+              >
+                Bỏ qua, dùng mặc định →
+              </button>
+              <Button
+                className="h-10 rounded-full border-white/15 bg-transparent text-zinc-200 hover:bg-white/5"
+                disabled={
+                  profilePending ||
+                  slugChecking ||
+                  slugStatus?.available === false
+                }
+                form="setup-profile-form"
+                formAction={profileAction}
+                type="submit"
+                variant="outline"
+              >
+                {profilePending ? "Đang lưu…" : "Lưu hồ sơ"}
+              </Button>
+              <Button
+                className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
+                disabled={
+                  pending ||
+                  finishPending ||
+                  profilePending ||
+                  slugChecking ||
+                  slugStatus?.available === false
+                }
+                form="setup-profile-form"
+                type="submit"
+              >
+                {finishPending ? "Đang mở…" : "Hoàn tất → Dashboard"}
+              </Button>
+            </>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}

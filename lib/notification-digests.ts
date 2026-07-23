@@ -3,7 +3,7 @@ import {
   createNotificationDebounced,
   purgeOldNotifications,
 } from "@/lib/notifications";
-import { getPilotWorkspaceId } from "@/lib/workspace";
+import { getDefaultWorkspaceId } from "@/lib/workspace";
 
 function daysAgoIso(days: number): string {
   const d = new Date();
@@ -16,7 +16,7 @@ function daysAgoIso(days: number): string {
  * Safe to call from sync / API — debounced 24h per entity.
  */
 export async function ensureDigestNotifications(
-  workspaceId = getPilotWorkspaceId(),
+  workspaceId = getDefaultWorkspaceId(),
 ): Promise<void> {
   try {
     await Promise.all([

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { publicBookingPath } from "@/lib/workspace";
 
 export type DashboardNavUser = {
   name: string;
@@ -9,6 +10,8 @@ export type DashboardNavUser = {
 export async function getDashboardUser(): Promise<{
   navUser: DashboardNavUser;
   workspaceId: string | null;
+  workspaceSlug: string | null;
+  bookingPagePath: string | null;
 } | null> {
   const supabase = await createClient();
   const {
@@ -23,6 +26,16 @@ export async function getDashboardUser(): Promise<{
     .eq("id", user.id)
     .maybeSingle();
 
+  let workspaceSlug: string | null = null;
+  if (profile?.workspace_id) {
+    const { data: ws } = await supabase
+      .from("workspaces")
+      .select("slug")
+      .eq("id", profile.workspace_id)
+      .maybeSingle();
+    workspaceSlug = ws?.slug ?? null;
+  }
+
   return {
     navUser: {
       name: profile?.full_name || user.email?.split("@")[0] || "Account",
@@ -30,5 +43,7 @@ export async function getDashboardUser(): Promise<{
       avatar: "",
     },
     workspaceId: profile?.workspace_id ?? null,
+    workspaceSlug,
+    bookingPagePath: workspaceSlug ? publicBookingPath(workspaceSlug) : null,
   };
 }

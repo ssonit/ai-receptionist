@@ -9,18 +9,26 @@
 - [ ] On Windows: `npm run patch:eve` (also runs via postinstall) so Eve resolves its own `dist/` under Next `withEve`
 - [ ] Cal.com API key + meeting type (or username + slug) for booking tests
 - [ ] `npx supabase start` then paste URL/anon/service_role into `.env.local`
-- [ ] `npx supabase db reset` applies migrations + `supabase/seed.sql` (FAQ workspace)
+- [ ] `npx supabase db reset` applies `20260724000001_init_schema.sql` + `supabase/seed.sql`
+- [ ] Landing → **Dùng thử ngay** → `/chat` (Eve Pilot demo + banner)
+- [ ] Tenant booking page: `/b/{slug}` (Settings copy link); pilot layout preview: `/b/eve-pilot`
+- [ ] Eve Pilot `/chat` demo uses env `CALCOM_*` (sandbox calendar). Tenant workspaces use their own Setup API key only.
 
 ## Auth / profiles
 
 - [ ] Open `/signup`, create an account
-- [ ] Confirm row in `profiles` (id, email, workspace_id = pilot)
-- [ ] `/login` works and redirects to `/dashboard`
+- [ ] Confirm `profiles` row + **new** `workspaces` row (not the pilot id); incomplete setup → `/dashboard/setup`
+- [ ] Setup: bước 1 Cal + bước 2 meeting type **bắt buộc**; bước 3 hồ sơ **tuỳ chọn** (Skip dùng mặc định từ signup)
+- [ ] Đóng tab giữa setup (sau khi đã lưu Cal/type) → login lại → resume đúng step; không vào `/dashboard` đến khi Hoàn tất hoặc Skip hồ sơ
+- [ ] Skip hồ sơ (đủ Cal+type) → vào Dashboard; `/b/{slug}` mở được với slug signup
+- [ ] `/login` works and redirects to `/dashboard` (or setup)
 - [ ] `/dashboard` shows profile + stats; unauthenticated redirects to `/login`
+- [ ] Marketing demo `/chat` always uses Eve Pilot; your bookings appear under `/b/{your-slug}`
 
 ## Text agent FAQ
 
-- [ ] Open `/chat`
+- [ ] Open `/chat` (demo) or `/b/eve-pilot` (booking-page layout of pilot)
+- [ ] Demo banner visible on `/chat` only
 - [ ] Edit FAQ at `/dashboard/faq` (or Supabase Studio → `workspace_faq_items`); workspace contact at `/dashboard/settings`
 - [ ] Ask giá / dịch vụ → no invented advice; stay in booking scope
 
@@ -39,7 +47,7 @@
 
 - WhatsApp / Twilio
 - Retell voice
-- Multi-tenant onboarding / Stripe
+- Stripe billing / WhatsApp production channels
 
 ## Commands
 

@@ -1,8 +1,31 @@
+-- =============================================================================
+-- Local / demo seed ONLY — not for production schema
+-- =============================================================================
+-- Applied automatically after migrations on `npx supabase db reset`
+-- (see supabase/config.toml [db.seed]).
+--
+-- This is the canonical place for:
+--   • Eve Pilot workspace (id + slug eve-pilot) — marketing sandbox for `/chat`
+--   • Demo FAQ Q&A for that workspace
+--
+-- Ops: Eve Pilot Cal.com comes from env CALCOM_API_KEY (+ EVENT_TYPE / USERNAME)
+-- for the marketing `/chat` demo — use a sandbox calendar, not a customer one.
+-- Real workspaces paste their own API key in Setup (encrypted on workspaces row).
+--
+-- Production / multi-tenant signup creates a new empty workspace via
+-- handle_new_user() — it does NOT attach users to this pilot row.
+-- Real tenant public pages: `/b/{slug}` (not `/chat`).
+--
+-- Fresh clean-slate path: apply supabase/baseline/001_schema.sql, then this file.
+-- Active local/prod path: supabase/migrations/* then this file.
+-- =============================================================================
+
 -- Pilot workspace + FAQ items (re-applied on every `npx supabase db reset`)
 
 insert into public.workspaces (
   id,
   name,
+  slug,
   timezone,
   phone,
   address,
@@ -12,11 +35,13 @@ insert into public.workspaces (
   about,
   business_hours,
   services_summary,
-  agent_instructions
+  agent_instructions,
+  setup_completed_at
 )
 values (
   '00000000-0000-4000-8000-000000000001',
   'Eve Pilot',
+  'eve-pilot',
   'Asia/Ho_Chi_Minh',
   '0901234567',
   '123 Nguyễn Huệ, Quận 1, TP.HCM',
@@ -26,10 +51,12 @@ values (
   'Eve Pilot là workspace demo: chat AI giúp khách hỏi FAQ, chọn slot và đặt lịch thật qua Cal.com.',
   '- Thứ 2–Thứ 7: 08:00–20:00' || E'\n' || '- Chủ nhật: 08:00–12:00' || E'\n' || '- Nghỉ các ngày lễ lớn',
   '- Consultation 30 phút (đặt qua chat)' || E'\n' || '- Khám / điều trị dài hơn — nhân viên xếp lịch',
-  '- Xưng hô lịch sự, ưu tiên slot sớm nếu khách gấp.' || E'\n' || '- Không cam kết giá cuối nếu chưa xác nhận.' || E'\n' || '- Nếu ngoài phạm vi booking: đề nghị gọi SĐT workspace.'
+  '- Xưng hô lịch sự, ưu tiên slot sớm nếu khách gấp.' || E'\n' || '- Không cam kết giá cuối nếu chưa xác nhận.' || E'\n' || '- Nếu ngoài phạm vi booking: đề nghị gọi SĐT workspace.',
+  now()
 )
 on conflict (id) do update set
   name = excluded.name,
+  slug = excluded.slug,
   timezone = excluded.timezone,
   phone = excluded.phone,
   address = excluded.address,
@@ -40,6 +67,7 @@ on conflict (id) do update set
   business_hours = excluded.business_hours,
   services_summary = excluded.services_summary,
   agent_instructions = excluded.agent_instructions,
+  setup_completed_at = coalesce(public.workspaces.setup_completed_at, excluded.setup_completed_at),
   updated_at = now();
 
 delete from public.workspace_faq_items

@@ -44,6 +44,7 @@
     "@tailwindcss/postcss": "4.3.0",
     "@tanstack/react-table": "^8.21.3",
     "@vercel/connect": "0.4.0",
+    "@vvo/tzdb": "^6.198.0",
     "ai": "^7.0.26",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",

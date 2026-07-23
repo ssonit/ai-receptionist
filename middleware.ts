@@ -6,13 +6,29 @@ export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const path = request.nextUrl.pathname;
+  const bookingSlugMatch = path.match(/^\/b\/([^/]+)\/?$/);
+  const bookingSlug = bookingSlugMatch?.[1]
+    ? decodeURIComponent(bookingSlugMatch[1]).trim().toLowerCase()
+    : null;
+
   const needsVisitor =
     path === "/chat" ||
     path.startsWith("/chat/") ||
-    path.startsWith("/api/chat/");
+    path.startsWith("/api/chat/") ||
+    Boolean(bookingSlug);
 
   if (needsVisitor) {
     ensureVisitorIdOnResponse(request, supabaseResponse);
+  }
+
+  // Remember public chat tenant slug (?w= or /b/[slug])
+  const w = request.nextUrl.searchParams.get("w")?.trim() || bookingSlug;
+  if (needsVisitor && w) {
+    supabaseResponse.cookies.set("eve_w", w.toLowerCase(), {
+      path: "/",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
+    });
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -36,6 +52,13 @@ export async function middleware(request: NextRequest) {
         }
         if (needsVisitor) {
           ensureVisitorIdOnResponse(request, supabaseResponse);
+          if (w) {
+            supabaseResponse.cookies.set("eve_w", w.toLowerCase(), {
+              path: "/",
+              sameSite: "lax",
+              maxAge: 60 * 60 * 24 * 365,
+            });
+          }
         }
       },
     },
@@ -58,6 +81,38 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  if (user && path.startsWith("/dashboard")) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("workspace_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile?.workspace_id) {
+      const { data: ws } = await supabase
+        .from("workspaces")
+        .select("setup_completed_at")
+        .eq("id", profile.workspace_id)
+        .maybeSingle();
+
+      const incomplete = !ws?.setup_completed_at;
+      const onSetup = path === "/dashboard/setup";
+
+      if (incomplete && !onSetup) {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = "/dashboard/setup";
+        redirectUrl.search = "";
+        return NextResponse.redirect(redirectUrl);
+      }
+      if (!incomplete && onSetup) {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = "/dashboard";
+        redirectUrl.search = "";
+        return NextResponse.redirect(redirectUrl);
+      }
+    }
+  }
+
   if ((path === "/login" || path === "/signup") && user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
@@ -76,5 +131,6 @@ export const config = {
     "/chat",
     "/chat/:path*",
     "/api/chat/:path*",
+    "/b/:path*",
   ],
 };

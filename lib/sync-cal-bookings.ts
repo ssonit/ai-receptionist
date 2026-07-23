@@ -1,10 +1,14 @@
-import { fetchAllCalBookings } from "@/lib/calcom";
+import { fetchAllCalBookings, withCalApiKey } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
 import { isCancelledStatus, normalizeCalApiStatus } from "@/lib/booking-status";
 import { ensureDigestNotifications } from "@/lib/notification-digests";
 import { createNotification } from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getPilotWorkspaceId } from "@/lib/workspace";
+import {
+  getCalApiKeyForWorkspace,
+  getDefaultWorkspaceId,
+} from "@/lib/workspace";
+import { getSessionWorkspaceId } from "@/lib/workspace-session";
 
 export type SyncCalBookingsResult = {
   synced: number;
@@ -37,13 +41,29 @@ function formatWhen(iso: string) {
 }
 
 /** Full Cal.com mirror → upsert Supabase (preserves chat `session_id`). */
-export async function syncCalBookingsToSupabase(): Promise<SyncCalBookingsResult> {
-  if (!bookingConfig.cal.apiKey) {
-    return { synced: 0, skipped: true, error: "CALCOM_API_KEY chưa cấu hình" };
+export async function syncCalBookingsToSupabase(
+  workspaceId?: string,
+): Promise<SyncCalBookingsResult> {
+  const wsId =
+    workspaceId ??
+    (await getSessionWorkspaceId()) ??
+    getDefaultWorkspaceId();
+
+  let apiKey: string;
+  try {
+    apiKey = await getCalApiKeyForWorkspace(wsId);
+  } catch {
+    return {
+      synced: 0,
+      skipped: true,
+      error: "Cal.com API key chưa cấu hình cho workspace",
+    };
   }
 
   try {
-    const { items: calBookings, scope } = await fetchAllCalBookings();
+    const { items: calBookings, scope } = await withCalApiKey(apiKey, () =>
+      fetchAllCalBookings(),
+    );
     const truncHint =
       scope.truncatedFilters.length > 0
         ? ` · truncated: ${scope.truncatedFilters.join(",")}`
@@ -51,7 +71,7 @@ export async function syncCalBookingsToSupabase(): Promise<SyncCalBookingsResult
     const scopeLabel = `all filters · ≤${scope.pageLimit * scope.maxPages}/filter${truncHint}`;
 
     const supabase = createAdminClient();
-    const workspaceId = getPilotWorkspaceId();
+    const workspaceId = wsId;
     const uids = calBookings.map((b) => b.uid);
 
     const existingByUid = new Map<string, ExistingBooking>();

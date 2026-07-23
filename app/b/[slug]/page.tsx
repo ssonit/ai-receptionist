@@ -1,0 +1,66 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { WorkspaceBookingPage } from "@/app/_components/workspace-booking-page";
+import { createClient } from "@/lib/supabase/server";
+import { getPublicBookingWorkspace } from "@/lib/workspace";
+
+type PageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const workspace = await getPublicBookingWorkspace(slug);
+  if (!workspace?.setupCompletedAt) {
+    return { title: "Đặt lịch" };
+  }
+  return {
+    title: `${workspace.name} — Đặt lịch`,
+    description:
+      workspace.tagline?.trim() ||
+      `Chat đặt lịch với ${workspace.name}`,
+  };
+}
+
+export default async function PublicBookingSlugPage({ params }: PageProps) {
+  const { slug } = await params;
+  const workspace = await getPublicBookingWorkspace(slug);
+
+  if (!workspace) notFound();
+
+  if (!workspace.setupCompletedAt) {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
+        <h1 className="font-serif text-3xl tracking-tight">{workspace.name}</h1>
+        <p className="text-muted-foreground max-w-md text-pretty">
+          Trang đặt lịch chưa sẵn sàng. Chủ workspace đang hoàn tất thiết lập.
+        </p>
+        <Link className="text-sm underline underline-offset-4" href="/">
+          Về Eve
+        </Link>
+      </div>
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
+    : { data: null };
+
+  const chatUser = user
+    ? {
+        name: profile?.full_name || user.email?.split("@")[0] || "Account",
+        email: profile?.email || user.email || "",
+        avatar: "",
+      }
+    : null;
+
+  return <WorkspaceBookingPage user={chatUser} workspace={workspace} />;
+}

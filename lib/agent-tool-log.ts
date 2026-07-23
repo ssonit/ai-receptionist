@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createToolErrorNotificationDebounced } from "@/lib/notifications";
-import { getPilotWorkspaceId } from "@/lib/workspace";
+import { createToolErrorNotificationDebounced } from "@/lib/notifications-write";
+import { getDefaultWorkspaceId } from "@/lib/workspace";
 
 export async function logAgentToolEvent(input: {
   toolName: string;
@@ -11,7 +11,7 @@ export async function logAgentToolEvent(input: {
   workspaceId?: string;
 }): Promise<void> {
   try {
-    const workspaceId = input.workspaceId ?? getPilotWorkspaceId();
+    const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
     const supabase = createAdminClient();
     await supabase.from("agent_tool_events").insert({
       workspace_id: workspaceId,

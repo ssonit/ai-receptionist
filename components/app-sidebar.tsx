@@ -30,7 +30,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-const navMain = [
+const navMainBase = [
   { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
   { title: "Bookings", url: "/dashboard/bookings", icon: IconCalendarEvent },
   { title: "Meeting types", url: "/dashboard/meeting-types", icon: IconTags },
@@ -38,7 +38,6 @@ const navMain = [
   { title: "Leads", url: "/dashboard/leads", icon: IconUsers },
   { title: "Conversations", url: "/dashboard/conversations", icon: IconMessage },
   { title: "Analytics", url: "/dashboard/analytics", icon: IconChartBar },
-  { title: "Chat", url: "/chat", icon: IconMessageChatbot },
 ];
 
 const navSecondary = [
@@ -49,10 +48,17 @@ const navSecondary = [
 
 export function AppSidebar({
   user,
+  bookingPagePath = "/b/eve-pilot",
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   user: { name: string; email: string; avatar: string };
+  bookingPagePath?: string;
 }) {
+  const navMain = [
+    ...navMainBase,
+    { title: "Booking page", url: bookingPagePath, icon: IconMessageChatbot },
+  ];
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>

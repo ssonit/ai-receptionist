@@ -106,8 +106,25 @@ export type CalEventRef = {
 };
 
 /** API key only — enough for event-type list/create and unscoped booking lists. */
+let calApiKeyOverride: string | null = null;
+
+/** Run Cal.com calls with a workspace-specific API key. */
+export async function withCalApiKey<T>(
+  apiKey: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const prev = calApiKeyOverride;
+  calApiKeyOverride = apiKey;
+  try {
+    return await fn();
+  } finally {
+    calApiKeyOverride = prev;
+  }
+}
+
 export function requireCalApiKey() {
-  const { apiKey, apiBaseUrl } = bookingConfig.cal;
+  const apiKey = calApiKeyOverride ?? bookingConfig.cal.apiKey;
+  const { apiBaseUrl } = bookingConfig.cal;
   if (!apiKey) {
     throw new Error("CALCOM_API_KEY is not configured");
   }

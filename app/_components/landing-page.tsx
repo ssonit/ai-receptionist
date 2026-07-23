@@ -5,7 +5,6 @@ import {
   ChatCircleIcon,
   CheckIcon,
   SparkleIcon,
-  TagIcon,
   UserPlusIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
@@ -84,7 +83,7 @@ const plans = [
     price: 149,
     description: "Higher limits for teams that are scaling up.",
     features: ["Higher limits", "Custom FAQ", "Multi-location roadmap", "1:1 support"],
-    cta: "Contact us",
+    cta: "Try demo",
     href: "/chat",
     popular: false,
   },
@@ -98,7 +97,7 @@ const plans = [
       "Priority SLA",
       "Brand-customized agent",
     ],
-    cta: "Try chat",
+    cta: "Try demo",
     href: "/chat",
     popular: false,
   },
@@ -126,7 +125,7 @@ function SiteHeader() {
           <Link className="hidden text-sm text-zinc-300 transition hover:text-white sm:inline" href="/login">
             Log in
           </Link>
-          <Link href="/chat">
+          <Link href="/signup">
             <RainbowButton className="h-9 rounded-full px-4 text-xs font-semibold" size="sm">
               <SparkleIcon className="size-3.5" weight="fill" />
               Get Started
@@ -180,19 +179,19 @@ function Hero() {
 
         <BlurFade delay={0.28} inView>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/chat">
+            <Link href="/signup">
               <RainbowButton className="rounded-full px-6 font-semibold" size="lg">
-                <ChatCircleIcon className="size-4" weight="fill" />
-                Get Started for free
+                <UserPlusIcon className="size-4" weight="bold" />
+                Start free trial
                 <ArrowRightIcon className="size-4 transition group-hover:translate-x-0.5" />
               </RainbowButton>
             </Link>
             <Link
               className="inline-flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 text-sm font-medium text-white transition hover:bg-white/10"
-              href="#pricing"
+              href="/chat"
             >
-              <TagIcon className="size-4" weight="bold" />
-              View pricing
+              <ChatCircleIcon className="size-4" weight="fill" />
+              Dùng thử ngay
             </Link>
           </div>
         </BlurFade>
@@ -433,7 +432,7 @@ function FinalCta() {
           </BlurFade>
           <BlurFade delay={0.18} inView>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/chat">
+              <Link href="/signup">
                 <RainbowButton className="rounded-full px-6 font-semibold" size="lg">
                   <SparkleIcon className="size-4" weight="fill" />
                   Start free trial
@@ -442,10 +441,10 @@ function FinalCta() {
               </Link>
               <Link
                 className="inline-flex h-11 items-center gap-2 rounded-full border border-white/15 px-6 text-sm font-medium text-white transition hover:bg-white/10"
-                href="/signup"
+                href="/chat"
               >
-                <UserPlusIcon className="size-4" weight="bold" />
-                Create account
+                <ChatCircleIcon className="size-4" weight="bold" />
+                Dùng thử ngay
               </Link>
             </div>
           </BlurFade>
@@ -463,7 +462,10 @@ function SiteFooter() {
         <p>AI booking assistant. Not a substitute for a dentist.</p>
         <div className="flex gap-4">
           <Link className="hover:text-white" href="/chat">
-            Chat
+            Dùng thử
+          </Link>
+          <Link className="hover:text-white" href="/signup">
+            Sign up
           </Link>
           <Link className="hover:text-white" href="/login">
             Login

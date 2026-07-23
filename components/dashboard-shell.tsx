@@ -2,17 +2,20 @@ import type { CSSProperties, ReactNode } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { DashboardCommand } from "@/components/dashboard-command";
 import { DashboardCommandProvider } from "@/components/dashboard-command-context";
-import { SiteHeader } from "@/components/site-header";
+import { DashboardShellChrome } from "@/components/dashboard-shell-chrome";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { DashboardNavUser } from "@/lib/dashboard-user";
 
 export function DashboardShell({
   user,
   title,
+  bookingPagePath,
   children,
 }: {
   user: DashboardNavUser;
   title: string;
+  /** Optional override; defaults to layout context `/b/{slug}`. */
+  bookingPagePath?: string | null;
   children: ReactNode;
 }) {
   return (
@@ -25,13 +28,17 @@ export function DashboardShell({
           } as CSSProperties
         }
       >
-        <AppSidebar user={user} variant="inset" />
-        <SidebarInset>
-          <SiteHeader title={title} />
-          <div className="flex flex-1 flex-col">{children}</div>
-        </SidebarInset>
-        <DashboardCommand />
+        <DashboardShellChrome
+          bookingPagePath={bookingPagePath}
+          title={title}
+          user={user}
+        >
+          {children}
+        </DashboardShellChrome>
       </SidebarProvider>
     </DashboardCommandProvider>
   );
 }
+
+/** Re-export inset for typing consumers that imported from shell. */
+export { SidebarInset };

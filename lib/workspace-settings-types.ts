@@ -9,6 +9,7 @@ export type WorkspaceSettingsState = {
 
 export type WorkspaceSettingsValues = {
   name: string;
+  slug: string | null;
   timezone: string;
   phone: string | null;
   address: string | null;
@@ -24,4 +25,6 @@ export type WorkspaceSettingsValues = {
 export type WorkspaceSettingsFormProps = {
   workspace: WorkspaceSettingsValues | null;
   meetingTypes: WorkspaceMeetingTypeRow[];
+  /** Absolute public booking page URL, e.g. https://eve.app/b/slug */
+  publicBookingUrl?: string | null;
 };

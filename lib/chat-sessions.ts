@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getPilotWorkspaceId } from "@/lib/workspace";
+import { getDefaultWorkspaceId } from "@/lib/workspace";
 
 export type ChatSessionStatus = "active" | "closed";
 
@@ -59,10 +59,11 @@ const SESSION_FULL_SELECT =
 export async function listChatSessionsForActor(input: {
   visitorId: string;
   userId?: string | null;
+  workspaceId?: string;
   limit?: number;
 }): Promise<ChatSessionListItem[]> {
   const supabase = createAdminClient();
-  const workspaceId = getPilotWorkspaceId();
+  const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
   const limit = input.limit ?? 50;
 
   let query = supabase
@@ -89,21 +90,24 @@ export async function createChatSession(input: {
   visitorId: string;
   userId?: string | null;
   title?: string;
+  workspaceId?: string;
 }): Promise<ChatSessionRow> {
   const supabase = createAdminClient();
   const now = new Date().toISOString();
+  const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
 
   if (input.userId) {
     await claimVisitorSessions({
       visitorId: input.visitorId,
       userId: input.userId,
+      workspaceId,
     });
   }
 
   const { data, error } = await supabase
     .from("chat_sessions")
     .insert({
-      workspace_id: getPilotWorkspaceId(),
+      workspace_id: workspaceId,
       visitor_id: input.visitorId,
       user_id: input.userId ?? null,
       title: input.title?.trim() || "Chat mới",
@@ -123,12 +127,13 @@ export async function createChatSession(input: {
 export async function claimVisitorSessions(input: {
   visitorId: string;
   userId: string;
+  workspaceId?: string;
 }): Promise<void> {
   const supabase = createAdminClient();
   await supabase
     .from("chat_sessions")
     .update({ user_id: input.userId, updated_at: new Date().toISOString() })
-    .eq("workspace_id", getPilotWorkspaceId())
+    .eq("workspace_id", input.workspaceId ?? getDefaultWorkspaceId())
     .eq("visitor_id", input.visitorId)
     .is("user_id", null);
 }
@@ -137,13 +142,14 @@ export async function getChatSessionForActor(input: {
   id: string;
   visitorId: string;
   userId?: string | null;
+  workspaceId?: string;
 }): Promise<ChatSessionRow | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("chat_sessions")
     .select(SESSION_FULL_SELECT)
     .eq("id", input.id)
-    .eq("workspace_id", getPilotWorkspaceId())
+    .eq("workspace_id", input.workspaceId ?? getDefaultWorkspaceId())
     .maybeSingle();
 
   if (error) throw new Error(error.message);
@@ -184,6 +190,7 @@ export async function updateChatSessionState(input: {
   id: string;
   visitorId: string;
   userId?: string | null;
+  workspaceId?: string;
   eveSessionId?: string | null;
   continuationToken?: string | null;
   streamIndex?: number;
@@ -195,6 +202,7 @@ export async function updateChatSessionState(input: {
     id: input.id,
     visitorId: input.visitorId,
     userId: input.userId,
+    workspaceId: input.workspaceId,
   });
   if (!existing) return null;
 
@@ -276,14 +284,15 @@ export async function replaceChatMessages(input: {
 }
 
 /** Staff dashboard: list recent sessions for workspace. */
-export async function listWorkspaceChatSessions(limit = 100): Promise<
-  ChatSessionListItem[]
-> {
+export async function listWorkspaceChatSessions(
+  workspaceId: string = getDefaultWorkspaceId(),
+  limit = 100,
+): Promise<ChatSessionListItem[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("chat_sessions")
     .select(SESSION_LIST_SELECT)
-    .eq("workspace_id", getPilotWorkspaceId())
+    .eq("workspace_id", workspaceId)
     .order("last_message_at", { ascending: false, nullsFirst: false })
     .limit(limit);
 
@@ -293,13 +302,14 @@ export async function listWorkspaceChatSessions(limit = 100): Promise<
 
 export async function getWorkspaceChatSession(
   id: string,
+  workspaceId: string = getDefaultWorkspaceId(),
 ): Promise<ChatSessionRow | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("chat_sessions")
     .select(SESSION_FULL_SELECT)
     .eq("id", id)
-    .eq("workspace_id", getPilotWorkspaceId())
+    .eq("workspace_id", workspaceId)
     .maybeSingle();
 
   if (error) throw new Error(error.message);

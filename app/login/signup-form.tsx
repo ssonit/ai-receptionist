@@ -32,6 +32,19 @@ export function SignupForm() {
       </div>
 
       <div className="space-y-2">
+        <Label className="text-zinc-400" htmlFor="signup-workspace">
+          Workspace / business name
+        </Label>
+        <input
+          className={fieldClass}
+          id="signup-workspace"
+          name="workspaceName"
+          placeholder="Phòng khám ABC"
+          type="text"
+        />
+      </div>
+
+      <div className="space-y-2">
         <Label className="text-zinc-400" htmlFor="signup-email">
           Email
         </Label>

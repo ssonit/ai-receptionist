@@ -26,7 +26,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 
-const PAGES = [
+const PAGES_BASE = [
   { title: "Dashboard", href: "/dashboard", icon: IconDashboard },
   { title: "Bookings", href: "/dashboard/bookings", icon: IconCalendarEvent },
   { title: "Meeting types", href: "/dashboard/meeting-types", icon: IconTags },
@@ -41,7 +41,6 @@ const PAGES = [
   { title: "Settings", href: "/dashboard/settings", icon: IconSettings },
   { title: "Get Help", href: "/dashboard/help", icon: IconHelp },
   { title: "Account", href: "/dashboard/account", icon: IconUser },
-  { title: "Chat", href: "/chat", icon: IconMessageChatbot },
 ] as const;
 
 type LeadHit = {
@@ -61,13 +60,29 @@ type BookingHit = {
   status: string;
 };
 
-export function DashboardCommand() {
+export function DashboardCommand({
+  bookingPagePath = "/b/eve-pilot",
+}: {
+  bookingPagePath?: string;
+}) {
   const router = useRouter();
   const { open, setOpen } = useDashboardCommand();
   const [query, setQuery] = React.useState("");
   const [leads, setLeads] = React.useState<LeadHit[]>([]);
   const [bookings, setBookings] = React.useState<BookingHit[]>([]);
   const [searching, setSearching] = React.useState(false);
+
+  const pages = React.useMemo(
+    () => [
+      ...PAGES_BASE,
+      {
+        title: "Booking page",
+        href: bookingPagePath,
+        icon: IconMessageChatbot,
+      },
+    ],
+    [bookingPagePath],
+  );
 
   React.useEffect(() => {
     if (!open) {
@@ -137,7 +152,7 @@ export function DashboardCommand() {
           {searching ? "Đang tìm…" : "Không có kết quả."}
         </CommandEmpty>
         <CommandGroup heading="Pages">
-          {PAGES.map((page) => (
+          {pages.map((page) => (
             <CommandItem
               key={page.href}
               value={`${page.title} ${page.href}`}

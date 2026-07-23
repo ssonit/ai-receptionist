@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { slugifyWorkspaceName } from "@/lib/workspace";
 import {
   Select,
   SelectContent,
@@ -52,13 +53,7 @@ const LOCATIONS = [
 ] as const;
 
 function slugify(title: string) {
-  return title
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 48);
+  return slugifyWorkspaceName(title);
 }
 
 function formatDateTime(value: string | null | undefined) {

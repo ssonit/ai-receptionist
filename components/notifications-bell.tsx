@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { NotificationRow } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/client";
-import { getPilotWorkspaceId } from "@/lib/workspace";
 import { cn } from "@/lib/utils";
 
 function formatWhen(iso: string) {
@@ -61,11 +60,10 @@ export function NotificationsBell() {
     void load();
   }, [load]);
 
-  // Supabase Realtime: refresh on insert/update (mark read) for this workspace.
+  // Supabase Realtime: refresh on insert/update for notifications table.
   React.useEffect(() => {
     let cancelled = false;
     let debounceTimer: number | undefined;
-    const workspaceId = getPilotWorkspaceId();
     const supabase = createClient();
 
     const scheduleReload = () => {
@@ -76,14 +74,13 @@ export function NotificationsBell() {
     };
 
     const channel = supabase
-      .channel(`notifications:${workspaceId}`)
+      .channel(`notifications:bell`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "notifications",
-          filter: `workspace_id=eq.${workspaceId}`,
         },
         () => {
           scheduleReload();

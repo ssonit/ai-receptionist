@@ -15,6 +15,7 @@ export async function signUp(
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("fullName") ?? "").trim();
+  const workspaceName = String(formData.get("workspaceName") ?? "").trim();
 
   if (!email || !password) {
     return { error: "Email và mật khẩu là bắt buộc." };
@@ -28,7 +29,11 @@ export async function signUp(
     email,
     password,
     options: {
-      data: { full_name: fullName, role: "owner" },
+      data: {
+        full_name: fullName,
+        role: "owner",
+        workspace_name: workspaceName || fullName || undefined,
+      },
     },
   });
 
@@ -36,7 +41,7 @@ export async function signUp(
     return { error: error.message };
   }
 
-  redirect("/dashboard");
+  redirect("/dashboard/setup");
 }
 
 export async function signIn(

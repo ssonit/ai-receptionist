@@ -54,7 +54,21 @@ type ThreadBootstrap = {
   initialEvents?: readonly unknown[];
 };
 
-export function AgentChat({ user }: { user?: ChatUser | null }) {
+export function AgentChat({
+  user,
+  workspaceSlug,
+  workspaceName,
+  embedded = false,
+  demoMode = false,
+}: {
+  user?: ChatUser | null;
+  workspaceSlug?: string;
+  workspaceName?: string;
+  /** Fit parent (e.g. /b/[slug]) instead of full viewport page. */
+  embedded?: boolean;
+  /** Marketing sandbox at `/chat` — Eve Pilot only. */
+  demoMode?: boolean;
+}) {
   const [sessions, setSessions] = React.useState<ChatSessionListItem[]>([]);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [bootstrap, setBootstrap] = React.useState<ThreadBootstrap | null>(null);
@@ -63,16 +77,20 @@ export function AgentChat({ user }: { user?: ChatUser | null }) {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [busyAction, setBusyAction] = React.useState(false);
 
+  const tenantQs = workspaceSlug
+    ? `?w=${encodeURIComponent(workspaceSlug)}`
+    : "";
+
   const refreshSessions = React.useCallback(async () => {
-    const res = await fetch("/api/chat/sessions");
+    const res = await fetch(`/api/chat/sessions${tenantQs}`);
     if (!res.ok) throw new Error("Failed to list sessions");
     const data = (await res.json()) as { sessions: ChatSessionListItem[] };
     setSessions(data.sessions);
     return data.sessions;
-  }, []);
+  }, [tenantQs]);
 
   const loadThread = React.useCallback(async (id: string) => {
-    const res = await fetch(`/api/chat/sessions/${id}`);
+    const res = await fetch(`/api/chat/sessions/${id}${tenantQs}`);
     if (!res.ok) throw new Error("Failed to load session");
     const data = (await res.json()) as { session: ChatSessionRow };
     const session = data.session;
@@ -91,12 +109,12 @@ export function AgentChat({ user }: { user?: ChatUser | null }) {
       initialSession,
       initialEvents: events,
     });
-  }, []);
+  }, [tenantQs]);
 
   const createAndOpen = React.useCallback(async () => {
     setBusyAction(true);
     try {
-      const res = await fetch("/api/chat/sessions", { method: "POST" });
+      const res = await fetch(`/api/chat/sessions${tenantQs}`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to create session");
       const data = (await res.json()) as { session: ChatSessionRow };
       await refreshSessions();
@@ -106,7 +124,7 @@ export function AgentChat({ user }: { user?: ChatUser | null }) {
     } finally {
       setBusyAction(false);
     }
-  }, [refreshSessions]);
+  }, [refreshSessions, tenantQs]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -116,7 +134,9 @@ export function AgentChat({ user }: { user?: ChatUser | null }) {
         const list = await refreshSessions();
         if (cancelled) return;
         if (list.length === 0) {
-          const res = await fetch("/api/chat/sessions", { method: "POST" });
+          const res = await fetch(`/api/chat/sessions${tenantQs}`, {
+            method: "POST",
+          });
           if (!res.ok) throw new Error("Failed to create session");
           const data = (await res.json()) as { session: ChatSessionRow };
           if (cancelled) return;
@@ -142,9 +162,9 @@ export function AgentChat({ user }: { user?: ChatUser | null }) {
     return () => {
       cancelled = true;
     };
-    // Bootstrap once on mount.
+    // Re-bootstrap when tenant slug changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [tenantQs]);
 
   const onSelect = async (id: string) => {
     if (id === activeId) {
@@ -178,8 +198,15 @@ export function AgentChat({ user }: { user?: ChatUser | null }) {
     />
   );
 
+  const Root = embedded ? "div" : "main";
+
   return (
-    <main className="relative flex h-dvh overflow-hidden bg-black text-zinc-100">
+    <Root
+      className={cn(
+        "relative flex overflow-hidden bg-black text-zinc-100",
+        embedded ? "h-full min-h-[70dvh] lg:min-h-dvh" : "h-dvh",
+      )}
+    >
       <Particles
         className="pointer-events-none absolute inset-0 opacity-35"
         color="#ffffff"
@@ -214,7 +241,9 @@ export function AgentChat({ user }: { user?: ChatUser | null }) {
             <span className="flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-teal-300/30 to-white/10">
               <SparklesIcon className="size-3 text-teal-200" />
             </span>
-            <span className="truncate text-sm text-zinc-200">{AGENT_NAME}</span>
+            <span className="truncate text-sm text-zinc-200">
+              {workspaceName || AGENT_NAME}
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -233,6 +262,26 @@ export function AgentChat({ user }: { user?: ChatUser | null }) {
             )}
           </div>
         </header>
+
+        {demoMode ? (
+          <div className="flex shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2 text-center text-xs text-amber-100/90 sm:text-[13px]">
+            <span>
+              <span className="font-medium text-amber-50">Đây là bản demo</span>
+              {" — "}
+              doanh nghiệp thật có trang riêng tại{" "}
+              <code className="rounded bg-black/30 px-1 py-0.5 text-[11px] text-amber-50/90">
+                /b/ten-doanh-nghiep
+              </code>
+            </span>
+            <span className="text-amber-100/40">·</span>
+            <Link
+              className="font-medium text-teal-200 underline-offset-2 hover:underline"
+              href="/signup"
+            >
+              Tạo workspace của bạn
+            </Link>
+          </div>
+        ) : null}
 
         {loading ? (
           <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
@@ -263,7 +312,7 @@ export function AgentChat({ user }: { user?: ChatUser | null }) {
           </div>
         )}
       </div>
-    </main>
+    </Root>
   );
 }
 
