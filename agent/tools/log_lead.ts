@@ -6,6 +6,7 @@ import {
   type LeadStatus,
 } from "@/lib/lead-status";
 import { findWorkspaceLead } from "@/lib/leads";
+import { createNotification } from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPilotWorkspaceId } from "@/lib/workspace";
 
@@ -76,6 +77,20 @@ export default defineTool({
           workspaceId,
           meta: { leadId: existing.id, updated: true },
         });
+        if (urgency === "high" || urgency === "urgent") {
+          await createNotification({
+            type: "lead_urgent",
+            title: `Lead gấp: ${patch.full_name || phone || "Khách"}`,
+            body: [patch.service, urgency, patch.notes]
+              .filter(Boolean)
+              .join(" · "),
+            severity: "high",
+            href: "/dashboard/leads",
+            entityType: "lead",
+            entityId: existing.id,
+            workspaceId,
+          });
+        }
         return {
           ok: true as const,
           leadId: existing.id,
@@ -112,6 +127,32 @@ export default defineTool({
         workspaceId,
         meta: { leadId: data.id, updated: false },
       });
+
+      const leadLabel = patch.full_name || phone || email || "Khách";
+      await createNotification({
+        type: "lead_new",
+        title: `Lead mới: ${leadLabel}`,
+        body: [patch.service, patch.phone || patch.email]
+          .filter(Boolean)
+          .join(" · "),
+        severity: "high",
+        href: "/dashboard/leads",
+        entityType: "lead",
+        entityId: data.id,
+        workspaceId,
+      });
+      if (urgency === "high" || urgency === "urgent") {
+        await createNotification({
+          type: "lead_urgent",
+          title: `Lead gấp: ${leadLabel}`,
+          body: `Urgency: ${urgency}`,
+          severity: "high",
+          href: "/dashboard/leads",
+          entityType: "lead",
+          entityId: data.id,
+          workspaceId,
+        });
+      }
 
       return {
         ok: true as const,

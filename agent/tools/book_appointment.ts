@@ -5,6 +5,7 @@ import { createBooking, getAvailableSlots } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
 import { normalizeCalApiStatus } from "@/lib/booking-status";
 import { upsertLeadAsBooked } from "@/lib/leads";
+import { createNotification } from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPilotWorkspaceId } from "@/lib/workspace";
 import { getAiBookingEventType } from "@/lib/workspace-cal";
@@ -117,6 +118,15 @@ export default defineTool({
           sessionId: sid,
           meta: { uid: booking.uid, mirrorFailed: true },
         });
+        await createNotification({
+          type: "booking_mirror_failed",
+          title: `Booking Cal.com nhưng chưa mirror DB`,
+          body: `${guestName} · ${booking.start} · ${warning}`,
+          severity: "medium",
+          href: "/dashboard/bookings",
+          entityType: "booking",
+          entityId: booking.uid,
+        });
         return { ok: true as const, booking, warning };
       }
 
@@ -125,6 +135,18 @@ export default defineTool({
         ok: true,
         sessionId: sid,
         meta: { uid: booking.uid },
+      });
+
+      await createNotification({
+        type: "booking_created",
+        title: `Booking mới: ${guestName}`,
+        body: [service ?? aiEvent.title, booking.start, phone]
+          .filter(Boolean)
+          .join(" · "),
+        severity: "high",
+        href: "/dashboard/bookings",
+        entityType: "booking",
+        entityId: booking.uid,
       });
 
       return {

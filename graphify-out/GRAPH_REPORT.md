@@ -1,16 +1,16 @@
 # Graph Report - eve  (2026-07-23)
 
 ## Corpus Check
-- 217 files · ~214,108 words
+- 228 files · ~218,199 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1304 nodes · 2788 edges · 133 communities (70 shown, 63 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 42 edges (avg confidence: 0.75)
+- 1354 nodes · 2970 edges · 137 communities (72 shown, 65 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 42 edges (avg confidence: 0.75)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5dd2bf83`
+- Built from commit: `afc11f9b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -38,7 +38,6 @@
 - input-group.tsx
 - GSAP Core Skill
 - agent-message.tsx
-- layout.tsx
 - models.ts
 - login-form.tsx
 - @ai-sdk/deepseek
@@ -81,10 +80,10 @@
 - @dnd-kit/utilities
 - @shikijs/engine-javascript
 - @gsap/react
+- client.ts
 - lucide-react
 - motion
 - nanoid
-- next
 - next.config.ts
 - next-env.d.ts
 - next-themes
@@ -96,11 +95,10 @@
 - @shikijs/core
 - utils.ts
 - @shikijs/engine-oniguruma
-- blur-fade.tsx
 - streamdown
 - @streamdown/math
 - @supabase/ssr
-- layout.tsx
+- @ai-sdk/anthropic
 - @tabler/icons-react
 - tailwind-merge
 - tailwindcss
@@ -127,23 +125,29 @@
 - tw-animate-css
 - hover-card.tsx
 - 20260723000005_leads_status.sql
-- createAdminClient
-- button.tsx
+- clsx
+- @dnd-kit/modifiers
 - 20260723000006_agent_tool_events.sql
-- meeting-types/actions.ts
+- @gsap/react
 - chart.tsx
-- @ai-sdk/deepseek
+- next
+- 20260723000008_notifications.sql
+- meeting-types/actions.ts
+- account-profile-form.tsx
+- particles.tsx
+- @ai-sdk/google
+- 20260723000009_notifications_phase2.sql
 
 ## God Nodes (most connected - your core abstractions)
-1. `cn()` - 263 edges
-2. `createClient()` - 42 edges
-3. `createAdminClient()` - 34 edges
-4. `getPilotWorkspaceId()` - 26 edges
-5. `Button()` - 24 edges
-6. `getDashboardUser()` - 24 edges
-7. `react` - 23 edges
+1. `cn()` - 267 edges
+2. `createClient()` - 50 edges
+3. `createAdminClient()` - 42 edges
+4. `getPilotWorkspaceId()` - 37 edges
+5. `getDashboardUser()` - 28 edges
+6. `Button()` - 26 edges
+7. `react` - 25 edges
 8. `compilerOptions` - 16 edges
-9. `Badge()` - 13 edges
+9. `Badge()` - 15 edges
 10. `normalizeCalApiStatus()` - 13 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -172,31 +176,31 @@
 - **Design System Core Rules** — inline_image_typography, spring_physics, perpetual_micro_loops, skeletal_shimmer, no_overlapping, no_centered_hero, no_3_equal_cards, no_emojis, no_inter, no_pure_black [EXTRACTED 1.00]
 - **MVP Technology Stack** — supabase, cal_com, next_js, eve, node_js, docker, deepseek, google_generative_ai, anthropic [EXTRACTED 1.00]
 
-## Communities (133 total, 63 thin omitted)
+## Communities (137 total, 65 thin omitted)
 
 ### Community 0 - "prompt-input.tsx"
-Cohesion: 0.04
-Nodes (53): AttachmentsContext, captureScreenshot(), convertBlobUrlToDataUrl(), LocalAttachmentsContext, LocalReferencedSourcesContext, PromptInput(), PromptInputActionAddAttachments(), PromptInputActionAddAttachmentsProps (+45 more)
+Cohesion: 0.03
+Nodes (56): AttachmentsContext, captureScreenshot(), convertBlobUrlToDataUrl(), LocalAttachmentsContext, LocalReferencedSourcesContext, PromptInput(), PromptInputActionAddAttachments(), PromptInputActionAddAttachmentsProps (+48 more)
 
 ### Community 1 - "calcom.ts"
-Cohesion: 0.07
-Nodes (53): MeetingTypesForm(), syncBookingsAction(), SyncBookingsState, createMeetingTypeAction(), MeetingTypesActionState, mirrorRow(), requireWorkspaceId(), revalidateMeetingTypePaths() (+45 more)
+Cohesion: 0.06
+Nodes (69): addDaysYmd(), compareYmd(), nowHm(), todayLabel(), todayYmd(), toYmd(), buildMarkdown(), execute() (+61 more)
 
 ### Community 2 - "message.tsx"
-Cohesion: 0.06
-Nodes (36): metadata, mono, RootLayout(), sans, MessageActionProps, MessageActions(), MessageActionsProps, MessageBranch() (+28 more)
+Cohesion: 0.09
+Nodes (24): MessageActionProps, MessageActions(), MessageActionsProps, MessageBranch(), MessageBranchContent(), MessageBranchContentProps, MessageBranchContext, MessageBranchContextType (+16 more)
 
 ### Community 3 - "code-block.tsx"
 Cohesion: 0.06
 Nodes (33): CodeBlockActions(), CodeBlockBody, CodeBlockContainer(), CodeBlockContent(), CodeBlockContext, CodeBlockContextType, CodeBlockCopyButton(), CodeBlockCopyButtonProps (+25 more)
 
 ### Community 4 - "cn"
-Cohesion: 0.05
-Nodes (46): DetailRow(), PromptInputActionMenuContent(), PromptInputActionMenuItem(), PromptInputBody(), PromptInputButton(), PromptInputCommand(), PromptInputCommandEmpty(), PromptInputCommandGroup() (+38 more)
+Cohesion: 0.07
+Nodes (32): PromptInputActionMenuContent(), PromptInputActionMenuItem(), PromptInputBody(), PromptInputButton(), PromptInputCommand(), PromptInputCommandEmpty(), PromptInputCommandGroup(), PromptInputCommandInput() (+24 more)
 
 ### Community 5 - "createClient"
-Cohesion: 0.09
-Nodes (40): GET(), Params, GET(), sanitizeIlike(), uniqueById(), ChatPage(), WorkspaceSettingsForm(), AccountProfileForm() (+32 more)
+Cohesion: 0.07
+Nodes (48): GET(), Params, GET(), sanitizeIlike(), uniqueById(), ChatPage(), AgentChat(), AccountProfileForm() (+40 more)
 
 ### Community 6 - "scripts"
 Cohesion: 0.06
@@ -212,23 +216,27 @@ Nodes (13): features, Hero(), LandingPage(), logos, plans, Pricing(), Marquee(),
 
 ### Community 9 - "sidebar.tsx"
 Cohesion: 0.13
-Nodes (17): CodeBlock(), getStatusBadge(), statusIcons, statusLabels, Tool(), ToolContentProps, ToolHeader(), ToolHeaderProps (+9 more)
+Nodes (15): CodeBlock(), getStatusBadge(), statusIcons, statusLabels, Tool(), ToolContent(), ToolContentProps, ToolHeader() (+7 more)
 
 ### Community 10 - "agent-chat.tsx"
-Cohesion: 0.21
-Nodes (8): highlights, BorderBeam(), BorderBeamProps, AnimatedGridPattern(), AnimatedGridPatternProps, Square, AnimatedShinyText(), AnimatedShinyTextProps
+Cohesion: 0.24
+Nodes (9): Select(), SelectContent(), SelectItem(), SelectLabel(), SelectScrollDownButton(), SelectScrollUpButton(), SelectSeparator(), SelectTrigger() (+1 more)
+
+### Community 11 - "data-table.tsx"
+Cohesion: 0.23
+Nodes (10): ChartConfig, ChartContext, ChartContextProps, ChartLegendContent(), ChartTooltipContent(), getPayloadConfigFromPayload(), INITIAL_DIMENSION, THEMES (+2 more)
 
 ### Community 12 - "utils.ts"
-Cohesion: 0.14
-Nodes (27): addDaysYmd(), compareYmd(), nowHm(), todayLabel(), todayYmd(), toYmd(), buildMarkdown(), faqSkill() (+19 more)
+Cohesion: 0.07
+Nodes (65): execute(), execute(), nextStatusOnLog(), Params, POST(), GET(), Params, PATCH() (+57 more)
 
 ### Community 13 - "Smoke Checklist"
 Cohesion: 0.10
 Nodes (22): Booking Intake Skill, Anthropic, book_appointment, Cal.com, Chat, check_availability, Dashboard, DeepSeek (+14 more)
 
 ### Community 14 - "dropdown-menu.tsx"
-Cohesion: 0.23
-Nodes (13): signOut(), ChatUserMenu(), getInitials(), getInitials(), NavUser(), Avatar(), AvatarBadge(), AvatarFallback() (+5 more)
+Cohesion: 0.30
+Nodes (9): initial, WorkspaceSettingsForm(), optionalText(), requireWorkspaceId(), saveWorkspaceSettings(), WorkspaceMeetingTypeRow, WorkspaceSettingsFormProps, WorkspaceSettingsState (+1 more)
 
 ### Community 15 - "command.tsx"
 Cohesion: 0.12
@@ -243,36 +251,32 @@ Cohesion: 0.11
 Nodes (16): Eve Framework Documentation, Eve Framework, Next.js Agent Rules, Next.js Documentation, AI Booking Agent Project, Anthropic API Key, Bookings (Data Model), Cal.com Integration (+8 more)
 
 ### Community 18 - "chain-of-thought.tsx"
-Cohesion: 0.11
-Nodes (17): ChainOfThought, ChainOfThoughtContent, ChainOfThoughtContentProps, ChainOfThoughtContext, ChainOfThoughtContextValue, ChainOfThoughtHeader, ChainOfThoughtHeaderProps, ChainOfThoughtImage (+9 more)
+Cohesion: 0.10
+Nodes (20): ChainOfThought, ChainOfThoughtContent, ChainOfThoughtContentProps, ChainOfThoughtContext, ChainOfThoughtContextValue, ChainOfThoughtHeader, ChainOfThoughtHeaderProps, ChainOfThoughtImage (+12 more)
 
 ### Community 19 - "tool.tsx"
-Cohesion: 0.26
-Nodes (12): ConversationDetailSheet(), ConversationsTable(), formatWhen(), outcomeBadgeClass(), outcomeLabel(), ViewId, VIEWS, Tabs() (+4 more)
+Cohesion: 0.38
+Nodes (8): ensureVisitorId(), ensureVisitorIdOnResponse(), getVisitorId(), isVisitorId(), readVisitorIdFromRequest(), visitorCookieOptions(), config, middleware()
 
 ### Community 20 - "input-group.tsx"
-Cohesion: 0.28
-Nodes (8): InputGroup(), InputGroupAddon(), inputGroupAddonVariants, InputGroupButton(), inputGroupButtonVariants, InputGroupInput(), InputGroupText(), InputGroupTextarea()
+Cohesion: 0.21
+Nodes (10): InputGroup(), InputGroupAddon(), inputGroupAddonVariants, InputGroupButton(), inputGroupButtonVariants, InputGroupInput(), InputGroupText(), InputGroupTextarea() (+2 more)
 
 ### Community 21 - "GSAP Core Skill"
 Cohesion: 0.21
 Nodes (15): GSAP Core Skill, GSAP Frameworks Skill, GSAP Performance Skill, GSAP Plugins Skill, GSAP React Skill, GSAP ScrollTrigger Skill, GSAP Timeline Skill, GSAP Utils Skill (+7 more)
 
 ### Community 22 - "agent-message.tsx"
-Cohesion: 0.16
-Nodes (14): AgentInputResponse, AgentMessage(), AttachmentPart(), authorizationDescription(), AuthorizationPrompt(), authorizationTitle(), EveFilePart, formatAuthorizationOutcome() (+6 more)
-
-### Community 23 - "layout.tsx"
-Cohesion: 0.22
-Nodes (17): BookingDetailSheet(), BookingRow, BookingsTable(), bookingTitle(), extractEndIso(), extractMeetingUrl(), formatDay(), formatTime() (+9 more)
+Cohesion: 0.17
+Nodes (13): AgentInputResponse, AgentMessage(), AttachmentPart(), authorizationDescription(), AuthorizationPrompt(), authorizationTitle(), EveFilePart, formatAuthorizationOutcome() (+5 more)
 
 ### Community 24 - "models.ts"
 Cohesion: 0.23
 Nodes (14): anthropic, deepseek, defaultSlot(), envKeyFor(), extractLatestUserText(), forcedSlot(), google, hasProviderKey() (+6 more)
 
 ### Community 25 - "login-form.tsx"
-Cohesion: 0.18
-Nodes (11): AuthState, signIn(), signUp(), AuthShell(), initial, LoginForm(), initial, SignupForm() (+3 more)
+Cohesion: 0.17
+Nodes (12): AuthState, signIn(), signUp(), AuthShell(), initial, LoginForm(), initial, SignupForm() (+4 more)
 
 ### Community 27 - "reasoning.tsx"
 Cohesion: 0.15
@@ -283,8 +287,8 @@ Cohesion: 0.18
 Nodes (15): High-End Visual Design Skill, Image to Code Skill, Mobile App Image Generation Skill, Web Frontend Image Generation Skill, Industrial Brutalist UI Skill, Minimalist UI Skill, Redesign Existing Projects Skill, Anti-AI-Slop Patterns (+7 more)
 
 ### Community 29 - "dropdown-menu.tsx"
-Cohesion: 0.15
-Nodes (14): AgentChatThread(), AgentStatus, StatusDot(), suggestions, ThreadBootstrap, ChatSessionDrawer(), ChatSessionSidebar(), ChatSessionsToggle() (+6 more)
+Cohesion: 0.29
+Nodes (6): metadata, mono, RootLayout(), sans, Toaster(), TooltipProvider()
 
 ### Community 30 - "Graphify Skill"
 Cohesion: 0.15
@@ -300,7 +304,7 @@ Nodes (10): Bias Corrections (Anti-Slop Directives), Design Read (Brief Inferenc
 
 ### Community 34 - "dependencies"
 Cohesion: 0.18
-Nodes (11): ai, clsx, gsap, dependencies, ai, clsx, gsap, shiki (+3 more)
+Nodes (11): ai, @ai-sdk/deepseek, gsap, dependencies, ai, @ai-sdk/deepseek, gsap, shiki (+3 more)
 
 ### Community 36 - "chart.tsx"
 Cohesion: 0.40
@@ -323,8 +327,8 @@ Cohesion: 0.48
 Nodes (6): public.bookings, public.conversation_logs, public.leads, public.profiles, public.workspaces, workspaces_updated_at
 
 ### Community 42 - "particles.tsx"
-Cohesion: 0.47
-Nodes (5): Circle, hexToRgb(), MousePosition, Particles(), ParticlesProps
+Cohesion: 0.08
+Nodes (37): AppSidebar(), navMain, navSecondary, useDashboardCommand(), DashboardCommand(), NavMain(), NavSecondary(), NavSecondaryItem (+29 more)
 
 ### Community 43 - "patch-eve-package-resolve.mjs"
 Cohesion: 0.33
@@ -347,72 +351,80 @@ Cohesion: 0.50
 Nodes (4): AIDA Structure, Advanced GSAP Motion, Python-Driven Randomization, GPT Taste Skill
 
 ### Community 49 - "workspace-settings-form.tsx"
-Cohesion: 0.10
-Nodes (33): AgentChat(), AnalyticsTrendChart(), ChartAreaInteractive(), chartData, DataTable(), TableCellViewer(), CardAction(), ChartConfig (+25 more)
+Cohesion: 0.26
+Nodes (13): AiHealthPanel(), severityClass(), severityIcon(), chartData, Badge(), badgeVariants, Card(), CardAction() (+5 more)
 
 ### Community 51 - "middleware.ts"
-Cohesion: 0.09
-Nodes (47): execute(), execute(), nextStatusOnLog(), Params, POST(), GET(), Params, PATCH() (+39 more)
+Cohesion: 0.08
+Nodes (42): ChatSessionDrawer(), ChatSessionSidebar(), ChatSessionsToggle(), LeadActionState, requireWorkspace(), updateLeadNotesAction(), updateLeadStatusAction(), ConversationDetailSheet() (+34 more)
 
 ### Community 54 - "blur-fade.tsx"
-Cohesion: 0.15
-Nodes (20): FaqSettingsForm(), initial, toDraftItems(), initial, initial, Badge(), badgeVariants, Card() (+12 more)
+Cohesion: 0.21
+Nodes (10): AgentChatThread(), AgentStatus, StatusDot(), suggestions, ThreadBootstrap, ChatUser, PromptInputMessage, ChatSessionRow (+2 more)
 
 ### Community 55 - "bookings-table.tsx"
-Cohesion: 0.11
-Nodes (21): DashboardRefreshButton(), SiteHeader(), Separator(), SheetHeader(), Sidebar(), SidebarContext, SidebarContextProps, SidebarGroupAction() (+13 more)
+Cohesion: 0.16
+Nodes (12): DashboardRefreshButton(), ShimmerButton, ShimmerButtonProps, SiteHeader(), Button(), buttonVariants, ButtonGroup(), ButtonGroupSeparator() (+4 more)
 
 ### Community 56 - "auth-shell.tsx"
-Cohesion: 0.16
-Nodes (13): chartData, columns, schema, Checkbox(), Drawer(), DrawerClose(), DrawerContent(), DrawerDescription() (+5 more)
+Cohesion: 0.06
+Nodes (46): signOut(), ChatUserMenu(), getInitials(), chartData, columns, schema, getInitials(), NavUser() (+38 more)
 
 ### Community 59 - "clsx"
-Cohesion: 0.13
-Nodes (20): AppSidebar(), navMain, navSecondary, DashboardCommandContext, DashboardCommandContextValue, DashboardCommandProvider(), useDashboardCommand(), DashboardCommand() (+12 more)
+Cohesion: 0.21
+Nodes (8): highlights, BorderBeam(), BorderBeamProps, AnimatedGridPattern(), AnimatedGridPatternProps, Square, AnimatedShinyText(), AnimatedShinyTextProps
 
 ### Community 60 - "cmdk"
-Cohesion: 0.13
-Nodes (25): LeadActionState, requireWorkspace(), updateLeadNotesAction(), updateLeadStatusAction(), AiHealthAlert, AnalyticsDayPoint, AnalyticsKpis, buildAiHealthAlerts() (+17 more)
+Cohesion: 0.43
+Nodes (5): ToggleGroup(), ToggleGroupContext, ToggleGroupItem(), Toggle(), toggleVariants
 
-### Community 84 - "blur-fade.tsx"
+### Community 63 - "@dnd-kit/modifiers"
+Cohesion: 0.24
+Nodes (15): AiHealthAlert, AnalyticsDayPoint, AnalyticsKpis, buildAiHealthAlerts(), buildAnalyticsKpis(), buildDailySeries(), buildLeadFunnel(), AnalyticsDashboardData (+7 more)
+
+### Community 67 - "@gsap/react"
 Cohesion: 0.50
 Nodes (4): BlurFade(), BlurFadeProps, getFilter(), MarginType
 
-### Community 88 - "layout.tsx"
+### Community 82 - "utils.ts"
 Cohesion: 0.18
-Nodes (15): AiHealthPanel(), severityClass(), severityIcon(), formatWhen(), initialOf(), LeadDetailSheet(), LeadRow, LeadsTable() (+7 more)
+Nodes (20): faqSkill(), FaqSettingsForm(), initial, toDraftItems(), parseFaqItems(), saveFaqSettings(), blockSection(), buildBookingFaqMarkdown() (+12 more)
 
-### Community 127 - "createAdminClient"
-Cohesion: 0.18
-Nodes (7): DropdownMenuCheckboxItem(), DropdownMenuContent(), DropdownMenuGroup(), DropdownMenuRadioItem(), DropdownMenuShortcut(), DropdownMenuSubContent(), DropdownMenuSubTrigger()
+### Community 131 - "chart.tsx"
+Cohesion: 0.24
+Nodes (10): AnalyticsTrendChart(), ChartAreaInteractive(), DataTable(), TableCellViewer(), ChartContainer(), SidebarMenuSkeleton(), SidebarProvider(), useIsMobile() (+2 more)
 
-### Community 128 - "button.tsx"
-Cohesion: 0.14
-Nodes (19): CreateMeetingTypeSheet(), extractDescription(), extractLocationLabel(), formatDateTime(), formatDuration(), formatNotice(), initial, LOCATIONS (+11 more)
+### Community 134 - "meeting-types/actions.ts"
+Cohesion: 0.38
+Nodes (11): createMeetingTypeAction(), mirrorRow(), requireWorkspaceId(), revalidateMeetingTypePaths(), setAiBookingMeetingTypeAction(), setAiBookingOnWorkspace(), syncMeetingTypesAction(), CalEventType (+3 more)
 
-### Community 130 - "meeting-types/actions.ts"
-Cohesion: 0.50
-Nodes (3): HoverCard(), HoverCardContent(), HoverCardTrigger()
+### Community 136 - "account-profile-form.tsx"
+Cohesion: 0.23
+Nodes (13): CreateMeetingTypeSheet(), DetailRow(), extractDescription(), extractLocationLabel(), formatDateTime(), formatDuration(), formatNotice(), initial (+5 more)
+
+### Community 137 - "particles.tsx"
+Cohesion: 0.47
+Nodes (5): Circle, hexToRgb(), MousePosition, Particles(), ParticlesProps
 
 ## Knowledge Gaps
-- **430 isolated node(s):** `AgentStatus`, `suggestions`, `ThreadBootstrap`, `AgentInputResponse`, `EveFilePart` (+425 more)
+- **442 isolated node(s):** `AgentStatus`, `suggestions`, `ThreadBootstrap`, `AgentInputResponse`, `EveFilePart` (+437 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **63 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **65 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `cn()` connect `cn` to `button.tsx`, `calcom.ts`, `message.tsx`, `code-block.tsx`, `prompt-input.tsx`, `meeting-types/actions.ts`, `landing-page.tsx`, `sidebar.tsx`, `agent-chat.tsx`, `dropdown-menu.tsx`, `command.tsx`, `chain-of-thought.tsx`, `tool.tsx`, `input-group.tsx`, `agent-message.tsx`, `layout.tsx`, `login-form.tsx`, `reasoning.tsx`, `dropdown-menu.tsx`, `conversation.tsx`, `shimmer.tsx`, `particles.tsx`, `workspace-settings-form.tsx`, `blur-fade.tsx`, `bookings-table.tsx`, `auth-shell.tsx`, `clsx`, `utils.ts`, `layout.tsx`, `createAdminClient`?**
-  _High betweenness centrality (0.295) - this node is a cross-community bridge._
-- **Why does `dependencies` connect `dependencies` to `chart.tsx`, `@ai-sdk/deepseek`, `scripts`, `data-table.tsx`, `Smoke Checklist`, `auth-shell.tsx`, `chart.tsx`, `workspace-settings-form.tsx`, `class-variance-authority`, `@dnd-kit/core`, `@dnd-kit/modifiers`, `@dnd-kit/sortable`, `@dnd-kit/utilities`, `@shikijs/engine-javascript`, `@gsap/react`, `lucide-react`, `motion`, `nanoid`, `next`, `next-themes`, `@phosphor-icons/react`, `radix-ui`, `@radix-ui/react-use-controllable-state`, `faq/actions.ts`, `recharts`, `@shikijs/core`, `@shikijs/engine-oniguruma`, `streamdown`, `@streamdown/math`, `@supabase/ssr`, `@tabler/icons-react`, `tailwind-merge`, `tailwindcss`, `use-stick-to-bottom`, `vaul`, `@vercel/connect`, `zod`, `@streamdown/cjk`, `@streamdown/code`, `react-dom`, `@streamdown/mermaid`, `@supabase/supabase-js`, `tw-animate-css`, `hover-card.tsx`?**
-  _High betweenness centrality (0.124) - this node is a cross-community bridge._
-- **Why does `react` connect `workspace-settings-form.tsx` to `dependencies`, `tool.tsx`, `bookings-table.tsx`, `layout.tsx`, `layout.tsx`, `clsx`, `dropdown-menu.tsx`?**
-  _High betweenness centrality (0.119) - this node is a cross-community bridge._
+- **Why does `cn()` connect `cn` to `prompt-input.tsx`, `calcom.ts`, `message.tsx`, `code-block.tsx`, `chart.tsx`, `createClient`, `landing-page.tsx`, `account-profile-form.tsx`, `sidebar.tsx`, `data-table.tsx`, `utils.ts`, `particles.tsx`, `agent-chat.tsx`, `command.tsx`, `chain-of-thought.tsx`, `input-group.tsx`, `agent-message.tsx`, `login-form.tsx`, `reasoning.tsx`, `dropdown-menu.tsx`, `conversation.tsx`, `shimmer.tsx`, `particles.tsx`, `workspace-settings-form.tsx`, `middleware.ts`, `blur-fade.tsx`, `bookings-table.tsx`, `auth-shell.tsx`, `clsx`, `cmdk`?**
+  _High betweenness centrality (0.304) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `dependencies` to `@dnd-kit/modifiers`, `@gsap/react`, `chart.tsx`, `next`, `scripts`, `@ai-sdk/google`, `Smoke Checklist`, `auth-shell.tsx`, `chart.tsx`, `class-variance-authority`, `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`, `@shikijs/engine-javascript`, `lucide-react`, `motion`, `nanoid`, `next-themes`, `@phosphor-icons/react`, `radix-ui`, `@radix-ui/react-use-controllable-state`, `faq/actions.ts`, `recharts`, `@shikijs/core`, `@shikijs/engine-oniguruma`, `streamdown`, `@streamdown/math`, `@supabase/ssr`, `@ai-sdk/anthropic`, `@tabler/icons-react`, `tailwind-merge`, `tailwindcss`, `use-stick-to-bottom`, `vaul`, `@vercel/connect`, `zod`, `@streamdown/cjk`, `@streamdown/code`, `react-dom`, `@streamdown/mermaid`, `@supabase/supabase-js`, `tw-animate-css`, `hover-card.tsx`, `clsx`?**
+  _High betweenness centrality (0.134) - this node is a cross-community bridge._
+- **Why does `react` connect `chart.tsx` to `calcom.ts`, `dependencies`, `createClient`, `particles.tsx`, `data-table.tsx`, `utils.ts`, `middleware.ts`, `blur-fade.tsx`, `auth-shell.tsx`, `cmdk`?**
+  _High betweenness centrality (0.132) - this node is a cross-community bridge._
 - **What connects `AgentStatus`, `suggestions`, `ThreadBootstrap` to the rest of the system?**
-  _430 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _442 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `prompt-input.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.03521825396825397 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.03424056189640035 - nodes in this community are weakly interconnected._
 - **Should `calcom.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.06838106370543542 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05727605727605728 - nodes in this community are weakly interconnected._
 - **Should `message.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.0627177700348432 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09230769230769231 - nodes in this community are weakly interconnected._

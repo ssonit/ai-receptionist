@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  IconBell,
   IconLogout,
   IconSettings,
   IconUserCircle,
@@ -99,6 +100,12 @@ export function NavUser({
                 <Link href="/dashboard/account">
                   <IconUserCircle />
                   Account
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/notifications">
+                  <IconBell />
+                  Notifications
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

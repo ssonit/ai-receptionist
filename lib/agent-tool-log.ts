@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createToolErrorNotificationDebounced } from "@/lib/notifications";
 import { getPilotWorkspaceId } from "@/lib/workspace";
 
 export async function logAgentToolEvent(input: {
@@ -10,15 +11,25 @@ export async function logAgentToolEvent(input: {
   workspaceId?: string;
 }): Promise<void> {
   try {
+    const workspaceId = input.workspaceId ?? getPilotWorkspaceId();
     const supabase = createAdminClient();
     await supabase.from("agent_tool_events").insert({
-      workspace_id: input.workspaceId ?? getPilotWorkspaceId(),
+      workspace_id: workspaceId,
       tool_name: input.toolName,
       ok: input.ok,
       error: input.error?.trim() || null,
       session_id: input.sessionId ?? null,
       meta: input.meta ?? null,
     });
+
+    if (!input.ok && input.error?.trim()) {
+      await createToolErrorNotificationDebounced({
+        toolName: input.toolName,
+        error: input.error.trim(),
+        sessionId: input.sessionId,
+        workspaceId,
+      });
+    }
   } catch {
     // Never break the agent tool path because of telemetry.
   }

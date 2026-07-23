@@ -35,8 +35,8 @@
     "semantic_hash": "930750902f8cd91142b8e6a67e5af6bb"
   },
   "agent/tools/book_appointment.ts": {
-    "mtime": 1784778388.3826177,
-    "ast_hash": "a0af579f650be16f8b868778057d8d0d",
+    "mtime": 1784788498.2201436,
+    "ast_hash": "8d363bb2c07981fd64aa739d8c2f7a28",
     "semantic_hash": ""
   },
   "agent/tools/check_availability.ts": {
@@ -55,8 +55,8 @@
     "semantic_hash": "930750902f8cd91142b8e6a67e5af6bb"
   },
   "agent/tools/log_lead.ts": {
-    "mtime": 1784778357.6952193,
-    "ast_hash": "80d6ad59c7eb0cfc73f1a97aecdac5a7",
+    "mtime": 1784788495.2453287,
+    "ast_hash": "0197fa6e8c7b784c2efa98632f85b87a",
     "semantic_hash": ""
   },
   "agent/tools/read_file.ts": {
@@ -115,8 +115,8 @@
     "semantic_hash": "c29a649900c936293f61f6e30496de7d"
   },
   "app/dashboard/bookings/actions.ts": {
-    "mtime": 1784716520.560622,
-    "ast_hash": "5cade11f794301dff286dec46676783e",
+    "mtime": 1784788884.686452,
+    "ast_hash": "440ad2d80bc14c54f64e4617c8dd79a6",
     "semantic_hash": ""
   },
   "app/dashboard/bookings/page.tsx": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "components/nav-user.tsx": {
-    "mtime": 1784787432.7831173,
-    "ast_hash": "aee3d732119648adc5066aaa8be4dc32",
+    "mtime": 1784788634.1169226,
+    "ast_hash": "2747f6110e756e23a269cd377f2f541c",
     "semantic_hash": ""
   },
   "components/providers/lenis-provider.tsx": {
@@ -290,8 +290,8 @@
     "semantic_hash": "dbf3f19808c6f2c28c1fce7eb2ddc0b7"
   },
   "components/site-header.tsx": {
-    "mtime": 1784786813.5669007,
-    "ast_hash": "491d1eae7aea4398a82c2c7b2e7936ba",
+    "mtime": 1784788630.8976207,
+    "ast_hash": "474bc23fce930897fd2fcba056803a65",
     "semantic_hash": ""
   },
   "components/ui/animated-grid-pattern.tsx": {
@@ -525,8 +525,8 @@
     "semantic_hash": "6ec46ba5f923f69adf7bb20bbaf24939"
   },
   "lib/sync-cal-bookings.ts": {
-    "mtime": 1784716696.9151359,
-    "ast_hash": "9bd66ab9a14b5bbdfa92a2855db7b7d1",
+    "mtime": 1784788863.0402977,
+    "ast_hash": "ea07d812640e0bfaab4f2513b38e4a0a",
     "semantic_hash": ""
   },
   "lib/utils.ts": {
@@ -545,9 +545,9 @@
     "semantic_hash": ""
   },
   "lib/workspace.ts": {
-    "mtime": 1784712736.9924834,
-    "ast_hash": "4c67c91d5ad0b2e7a77cd560e8466138",
-    "semantic_hash": "4c67c91d5ad0b2e7a77cd560e8466138"
+    "mtime": 1784789033.7587154,
+    "ast_hash": "717d6593a67273263b753b044add8ac3",
+    "semantic_hash": ""
   },
   "middleware.ts": {
     "mtime": 1784780348.1044767,
@@ -960,8 +960,8 @@
     "semantic_hash": ""
   },
   "lib/agent-tool-log.ts": {
-    "mtime": 1784778317.195609,
-    "ast_hash": "01d6cdc867d92a3a3a76b311cb687499",
+    "mtime": 1784788476.727302,
+    "ast_hash": "caa8b72494af18cab3ab2d7e3926b266",
     "semantic_hash": ""
   },
   "lib/analytics-data.ts": {
@@ -1087,6 +1087,61 @@
   "components/dashboard-refresh-button.tsx": {
     "mtime": 1784786813.839673,
     "ast_hash": "6de915e3c3de72cf2cfefdd3eb23e295",
+    "semantic_hash": ""
+  },
+  "app/api/dashboard/notifications/route.ts": {
+    "mtime": 1784791784.886845,
+    "ast_hash": "a64ffcbf456065502c0ba3ce7aacb9be",
+    "semantic_hash": ""
+  },
+  "app/dashboard/notifications/actions.ts": {
+    "mtime": 1784788516.5885777,
+    "ast_hash": "756994346ab233892ca56cc9c39a3c00",
+    "semantic_hash": ""
+  },
+  "app/dashboard/notifications/page.tsx": {
+    "mtime": 1784791823.7039175,
+    "ast_hash": "b02631dca3cc44f2ed67849ead9e0c78",
+    "semantic_hash": ""
+  },
+  "components/notifications-bell.tsx": {
+    "mtime": 1784791824.713878,
+    "ast_hash": "180e17fb08cfc86aaabb6c02a074e3ae",
+    "semantic_hash": ""
+  },
+  "components/notifications-inbox.tsx": {
+    "mtime": 1784791858.3091607,
+    "ast_hash": "0db134748bc6ab4d74b1399b76fc0ca7",
+    "semantic_hash": ""
+  },
+  "lib/notifications.ts": {
+    "mtime": 1784791796.4587922,
+    "ast_hash": "4030db938ac6490d70af9630c2351d1d",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260723000008_notifications.sql": {
+    "mtime": 1784788453.0929396,
+    "ast_hash": "319382416d899312c3eb6439ad74fffe",
+    "semantic_hash": ""
+  },
+  "lib/notification-digests.ts": {
+    "mtime": 1784791784.499792,
+    "ast_hash": "3b35bbb638ed4c8d70c1dff0e8693a69",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260723000009_notifications_phase2.sql": {
+    "mtime": 1784788817.4496176,
+    "ast_hash": "8294aef3ed26da87d22c9aad8b4f2b5a",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260723000010_notifications_realtime.sql": {
+    "mtime": 1784789023.1845565,
+    "ast_hash": "815c1fa1192eef013a29baf85f7be5cc",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260723000011_notifications_scale.sql": {
+    "mtime": 1784791748.84556,
+    "ast_hash": "739f8d086e263f1583fa5aded03addb4",
     "semantic_hash": ""
   }
 }

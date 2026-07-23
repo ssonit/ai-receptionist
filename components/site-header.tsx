@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { IconHome } from "@tabler/icons-react";
 import { DashboardRefreshButton } from "@/components/dashboard-refresh-button";
+import { NotificationsBell } from "@/components/notifications-bell";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -16,6 +17,7 @@ export function SiteHeader({ title = "Dashboard" }: { title?: string }) {
         />
         <h1 className="text-base font-medium">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
+          <NotificationsBell />
           <DashboardRefreshButton />
           <Button asChild className="hidden sm:flex" size="sm" variant="outline">
             <Link href="/chat">Open chat</Link>
