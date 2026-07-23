@@ -19,6 +19,7 @@ import {
   type CalBookingView,
 } from "@/lib/booking-status";
 import { cn } from "@/lib/utils";
+import { openAfterMenuClose } from "@/lib/open-after-menu-close";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -318,7 +319,7 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                           className="shrink-0 self-start"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <DropdownMenu>
+                          <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
                               <Button
                                 size="icon"
@@ -331,12 +332,16 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => setSelectedId(row.id)}
+                                onSelect={() => {
+                                  openAfterMenuClose(() =>
+                                    setSelectedId(row.id),
+                                  );
+                                }}
                               >
                                 View details
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => {
+                                onSelect={() => {
                                   const email = row.guest_email?.trim();
                                   if (!email) {
                                     toast.error("Không có email");
@@ -349,7 +354,7 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                                 Copy email
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => {
+                                onSelect={() => {
                                   const phone = row.guest_phone?.trim();
                                   if (!phone) {
                                     toast.error("Không có SĐT");
@@ -364,7 +369,7 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 disabled={!row.cal_booking_uid}
-                                onClick={() => {
+                                onSelect={() => {
                                   if (!row.cal_booking_uid) return;
                                   void navigator.clipboard.writeText(
                                     row.cal_booking_uid,
@@ -584,7 +589,7 @@ function BookingDetailSheet({ booking }: { booking: BookingRow }) {
           <IconCopy className="size-4" />
           <span className="sr-only">Copy link</span>
         </Button>
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button
               type="button"
@@ -598,7 +603,7 @@ function BookingDetailSheet({ booking }: { booking: BookingRow }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
-              onClick={() => {
+              onSelect={() => {
                 const email = booking.guest_email?.trim();
                 if (!email) {
                   toast.error("Không có email");
@@ -611,7 +616,7 @@ function BookingDetailSheet({ booking }: { booking: BookingRow }) {
               Copy email
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => {
+              onSelect={() => {
                 const phone = booking.guest_phone?.trim();
                 if (!phone) {
                   toast.error("Không có SĐT");
@@ -626,7 +631,7 @@ function BookingDetailSheet({ booking }: { booking: BookingRow }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               disabled={!booking.cal_booking_uid}
-              onClick={() => {
+              onSelect={() => {
                 if (!booking.cal_booking_uid) return;
                 void navigator.clipboard.writeText(booking.cal_booking_uid);
                 toast.success("Đã copy Cal UID");

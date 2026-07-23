@@ -15,7 +15,9 @@ Sau khi có đủ thông tin:
 - Gọi `check_availability` cho khoảng ngày phù hợp — **chỉ ngày hôm nay hoặc tương lai**.
 - Đề xuất 2–3 slot thật.
 - Thu họ tên, số điện thoại, email trước khi `book_appointment` (`guestName`).
-- Có thể `log_lead` nếu khách chưa sẵn sàng book.
+- **Bắt buộc** gọi `log_lead` khi đã có tên + (SĐT hoặc email) mà khách chưa book / bỏ dở.
+- `urgency` nên là một trong: `low` | `normal` | `high` | `urgent`.
+- Sau khi `book_appointment` thành công, lead cùng session/SĐT sẽ được đánh dấu `booked` — không cần `log_lead` thêm.
 
 ## “Chiều nay” / cùng ngày sát giờ
 

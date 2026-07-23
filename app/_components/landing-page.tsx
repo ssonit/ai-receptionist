@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowRightIcon, CheckIcon } from "@phosphor-icons/react";
+import {
+  ArrowRightIcon,
+  ChatCircleIcon,
+  CheckIcon,
+  SparkleIcon,
+  TagIcon,
+  UserPlusIcon,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
 import { Marquee } from "@/components/magicui/marquee";
@@ -29,22 +36,22 @@ const features = [
   {
     title: "Chat 24/7",
     description:
-      "Agent trả lời FAQ, sàng lọc lead và giữ cuộc trò chuyện khi bạn đang bận.",
+      "The agent answers FAQs, qualifies leads, and keeps conversations going when you’re busy.",
   },
   {
-    title: "Booking thật",
+    title: "Real bookings",
     description:
-      "Kiểm tra slot trống rồi tạo lịch trên Cal.com. Một tool chung, không double-book.",
+      "Checks open slots and creates events on Cal.com. One shared calendar—no double-booking.",
   },
   {
-    title: "Dashboard rõ",
+    title: "Clear dashboard",
     description:
-      "Xem leads, booking và trạng thái lịch trong một bảng điều khiển gọn.",
+      "See leads, bookings, and schedule status in one clean control panel.",
   },
   {
-    title: "An toàn rõ",
+    title: "Safety first",
     description:
-      "Disclaimer rõ. Giữ quyền kiểm soát lịch và dữ liệu cho workspace của bạn.",
+      "Clear disclaimers. You stay in control of calendars and workspace data.",
   },
 ];
 
@@ -52,46 +59,46 @@ const plans = [
   {
     name: "Basic",
     price: 39,
-    description: "Cho team mới bắt đầu với chat đặt lịch.",
-    features: ["Chat web", "Cal.com booking", "FAQ + intake", "Dashboard cơ bản"],
-    cta: "Bắt đầu",
+    description: "For teams just getting started with booking chat.",
+    features: ["Web chat", "Cal.com booking", "FAQ + intake", "Basic dashboard"],
+    cta: "Get started",
     href: "/signup",
     popular: false,
   },
   {
     name: "Premium",
     price: 89,
-    description: "Cho team đang tăng lead và cần nhắc lịch.",
+    description: "For teams growing leads and needing reminders.",
     features: [
-      "Mọi thứ ở Basic",
-      "WhatsApp (sắp mở)",
-      "Outbound reminder",
-      "Onboarding ưu tiên",
+      "Everything in Basic",
+      "WhatsApp (coming soon)",
+      "Outbound reminders",
+      "Priority onboarding",
     ],
-    cta: "Chọn Premium",
+    cta: "Choose Premium",
     href: "/signup",
     popular: true,
   },
   {
     name: "Enterprise",
     price: 149,
-    description: "Hạn mức cao hơn cho team đang mở rộng.",
-    features: ["Hạn mức cao", "Custom FAQ", "Multi-location roadmap", "Hỗ trợ 1:1"],
-    cta: "Liên hệ",
+    description: "Higher limits for teams that are scaling up.",
+    features: ["Higher limits", "Custom FAQ", "Multi-location roadmap", "1:1 support"],
+    cta: "Contact us",
     href: "/chat",
     popular: false,
   },
   {
     name: "Ultimate",
     price: 199,
-    description: "Gói đầy đủ cho nhiều workspace và team vận hành.",
+    description: "Full suite for multiple workspaces and ops teams.",
     features: [
-      "Mọi thứ ở Enterprise",
-      "Voice agent Retell",
-      "SLA ưu tiên",
-      "Tùy biến agent theo brand",
+      "Everything in Enterprise",
+      "Retell voice agent",
+      "Priority SLA",
+      "Brand-customized agent",
     ],
-    cta: "Dùng thử chat",
+    cta: "Try chat",
     href: "/chat",
     popular: false,
   },
@@ -121,6 +128,7 @@ function SiteHeader() {
           </Link>
           <Link href="/chat">
             <RainbowButton className="h-9 rounded-full px-4 text-xs font-semibold" size="sm">
+              <SparkleIcon className="size-3.5" weight="fill" />
               Get Started
             </RainbowButton>
           </Link>
@@ -174,13 +182,16 @@ function Hero() {
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link href="/chat">
               <RainbowButton className="rounded-full px-6 font-semibold" size="lg">
+                <ChatCircleIcon className="size-4" weight="fill" />
                 Get Started for free
+                <ArrowRightIcon className="size-4 transition group-hover:translate-x-0.5" />
               </RainbowButton>
             </Link>
             <Link
-              className="inline-flex h-11 items-center rounded-full border border-white/15 bg-white/5 px-6 text-sm font-medium text-white transition hover:bg-white/10"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 text-sm font-medium text-white transition hover:bg-white/10"
               href="#pricing"
             >
+              <TagIcon className="size-4" weight="bold" />
               View pricing
             </Link>
           </div>
@@ -384,7 +395,7 @@ function Pricing() {
                   </ul>
                   <Link
                     className={cn(
-                      "inline-flex h-10 items-center justify-center rounded-full text-sm font-semibold transition",
+                      "inline-flex h-10 items-center justify-center gap-2 rounded-full text-sm font-semibold transition",
                       plan.popular
                         ? "bg-black text-white hover:bg-zinc-800"
                         : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
@@ -392,6 +403,7 @@ function Pricing() {
                     href={plan.href}
                   >
                     {plan.cta}
+                    <ArrowRightIcon className="size-4" weight="bold" />
                   </Link>
                 </article>
               </BlurFade>
@@ -423,13 +435,16 @@ function FinalCta() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link href="/chat">
                 <RainbowButton className="rounded-full px-6 font-semibold" size="lg">
+                  <SparkleIcon className="size-4" weight="fill" />
                   Start free trial
+                  <ArrowRightIcon className="size-4 transition group-hover:translate-x-0.5" />
                 </RainbowButton>
               </Link>
               <Link
-                className="inline-flex h-11 items-center rounded-full border border-white/15 px-6 text-sm font-medium text-white transition hover:bg-white/10"
+                className="inline-flex h-11 items-center gap-2 rounded-full border border-white/15 px-6 text-sm font-medium text-white transition hover:bg-white/10"
                 href="/signup"
               >
+                <UserPlusIcon className="size-4" weight="bold" />
                 Create account
               </Link>
             </div>

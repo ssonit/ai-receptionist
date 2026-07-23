@@ -6,8 +6,33 @@ import { Dialog as SheetPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
-function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />
+function clearBodyPointerEventsLock() {
+  // DropdownMenu (modal) + Sheet/Dialog opened in the same tick can leave
+  // `body { pointer-events: none }` stuck after the menu unmounts.
+  const clear = () => {
+    if (document.body.style.pointerEvents === "none") {
+      document.body.style.pointerEvents = ""
+    }
+  }
+  requestAnimationFrame(clear)
+  window.setTimeout(clear, 0)
+  window.setTimeout(clear, 150)
+}
+
+function Sheet({
+  onOpenChange,
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Root>) {
+  return (
+    <SheetPrimitive.Root
+      data-slot="sheet"
+      onOpenChange={(open) => {
+        if (!open) clearBodyPointerEventsLock()
+        onOpenChange?.(open)
+      }}
+      {...props}
+    />
+  )
 }
 
 function SheetTrigger({
@@ -76,7 +101,7 @@ function SheetContent({
       >
         {children}
         {showCloseButton && (
-          <SheetPrimitive.Close className="absolute top-4 right-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-secondary">
+          <SheetPrimitive.Close className="absolute top-4 right-4 z-10 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-secondary">
             <XIcon className="size-4" />
             <span className="sr-only">Close</span>
           </SheetPrimitive.Close>

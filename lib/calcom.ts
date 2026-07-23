@@ -5,9 +5,12 @@
  * - Bookings list: GET /v2/bookings header cal-api-version: 2026-05-01
  *   status filter: upcoming|recurring|past|cancelled|unconfirmed (one per request)
  *
+ * - Meeting types (Cal.com "event-types"): GET/POST /v2/event-types header cal-api-version: 2024-06-14
+ *
  * @see https://cal.com/docs/api-reference/v2/slots/get-available-time-slots-for-an-event-type
  * @see https://cal.com/docs/api-reference/v2/bookings/create-a-booking
  * @see https://cal.com/docs/api-reference/v2/bookings/get-all-bookings
+ * @see https://cal.com/docs/api-reference/v2/event-types/create-an-event-type
  */
 import { bookingConfig } from "@/lib/booking-config";
 import {
@@ -21,6 +24,10 @@ const SLOTS_API_VERSION = "2024-09-04";
 const BOOKINGS_API_VERSION = "2024-08-13";
 /** List endpoint requires 2026-05-01 for status filter enum (docs). */
 const BOOKINGS_LIST_API_VERSION = "2026-05-01";
+/** Meeting types CRUD via Cal.com /v2/event-types */
+const EVENT_TYPES_API_VERSION = "2024-06-14";
+/** GET /v2/me — profile (username for public booking URL) */
+const ME_API_VERSION = "2024-06-14";
 
 type CalErrorBody = {
   message?: string;
@@ -40,6 +47,9 @@ export type CreateBookingInput = {
   attendeePhone?: string;
   timeZone?: string;
   notes?: string;
+  eventTypeId?: number;
+  eventTypeSlug?: string;
+  username?: string;
 };
 
 export type CreateBookingResult = {
@@ -48,6 +58,30 @@ export type CreateBookingResult = {
   status: string;
   meetingUrl?: string;
   raw: unknown;
+};
+
+export type CalEventType = {
+  id: number;
+  slug: string;
+  title: string;
+  lengthInMinutes: number;
+  minimumBookingNotice?: number;
+  description?: string;
+  raw: unknown;
+};
+
+export type CreateEventTypeInput = {
+  title: string;
+  slug: string;
+  lengthInMinutes: number;
+  description?: string;
+  /** Minutes before event that a booking can be made (Cal.com field). */
+  minimumBookingNotice?: number;
+  /**
+   * Conferencing / location. Cal.com: `{ type: "integration", integration: "cal-video" | "google-meet" | ... }`.
+   * @see https://cal.com/docs/api-reference/v2/event-types/create-an-event-type
+   */
+  locations?: Array<{ type: "integration"; integration: string }>;
 };
 
 export type CalBookingListItem = {
@@ -65,17 +99,36 @@ export type CalBookingListItem = {
   raw: unknown;
 };
 
-function requireCalConfig() {
-  const { apiKey, eventTypeId, eventTypeSlug, username, apiBaseUrl } = bookingConfig.cal;
+export type CalEventRef = {
+  eventTypeId?: number;
+  eventTypeSlug?: string;
+  username?: string;
+};
+
+/** API key only — enough for event-type list/create and unscoped booking lists. */
+export function requireCalApiKey() {
+  const { apiKey, apiBaseUrl } = bookingConfig.cal;
   if (!apiKey) {
     throw new Error("CALCOM_API_KEY is not configured");
   }
+  return { apiKey, apiBaseUrl };
+}
+
+function resolveEventRef(override?: CalEventRef): Required<Pick<CalEventRef, "username">> & CalEventRef {
+  const eventTypeId = override?.eventTypeId ?? bookingConfig.cal.eventTypeId;
+  const eventTypeSlug = override?.eventTypeSlug ?? bookingConfig.cal.eventTypeSlug;
+  const username = override?.username ?? bookingConfig.cal.username;
   if (!eventTypeId && !(username && eventTypeSlug)) {
     throw new Error(
-      "Configure CALCOM_EVENT_TYPE_ID or both CALCOM_USERNAME and CALCOM_EVENT_TYPE_SLUG",
+      "Chưa chọn meeting type cho AI booking. Vào Settings để chọn, hoặc Meeting types để sync/tạo, hoặc set CALCOM_EVENT_TYPE_ID.",
     );
   }
-  return { apiKey, eventTypeId, eventTypeSlug, username, apiBaseUrl };
+  return { eventTypeId, eventTypeSlug, username };
+}
+
+function requireCalConfig(override?: CalEventRef) {
+  const { apiKey, apiBaseUrl } = requireCalApiKey();
+  return { apiKey, apiBaseUrl, ...resolveEventRef(override) };
 }
 
 const CAL_FETCH_TIMEOUT_MS = 12_000;
@@ -84,7 +137,7 @@ async function calFetch<T>(
   path: string,
   init: RequestInit & { apiVersion: string },
 ): Promise<T> {
-  const { apiKey, apiBaseUrl } = requireCalConfig();
+  const { apiKey, apiBaseUrl } = requireCalApiKey();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), CAL_FETCH_TIMEOUT_MS);
 
@@ -199,8 +252,11 @@ export async function getAvailableSlots(input: {
   startDate: string;
   endDate: string;
   timeZone?: string;
+  eventTypeId?: number;
+  eventTypeSlug?: string;
+  username?: string;
 }): Promise<AvailableSlot[]> {
-  const { eventTypeId, eventTypeSlug, username } = requireCalConfig();
+  const { eventTypeId, eventTypeSlug, username } = requireCalConfig(input);
   const params = new URLSearchParams({
     start: toSlotsQueryDate(input.startDate),
     end: toSlotsQueryDate(input.endDate),
@@ -212,8 +268,8 @@ export async function getAvailableSlots(input: {
   if (eventTypeId) {
     params.set("eventTypeId", String(eventTypeId));
   } else {
-    params.set("username", username);
-    params.set("eventTypeSlug", eventTypeSlug);
+    params.set("username", username ?? "");
+    params.set("eventTypeSlug", eventTypeSlug ?? "");
   }
 
   const body = await calFetch<unknown>(`/slots?${params.toString()}`, {
@@ -225,7 +281,7 @@ export async function getAvailableSlots(input: {
 }
 
 export async function createBooking(input: CreateBookingInput): Promise<CreateBookingResult> {
-  const { eventTypeId, eventTypeSlug, username } = requireCalConfig();
+  const { eventTypeId, eventTypeSlug, username } = requireCalConfig(input);
   const startUtc = toUtcBookingStart(input.start);
 
   const payload: Record<string, unknown> = {
@@ -278,6 +334,129 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
           : undefined,
     raw: body,
   };
+}
+
+function parseCalEventType(item: Record<string, unknown>): CalEventType | null {
+  const id = Number(item.id);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  const slug = String(item.slug ?? "").trim();
+  const title = String(item.title ?? "").trim();
+  const lengthInMinutes = Number(
+    item.lengthInMinutes ?? item.length ?? item.duration ?? 0,
+  );
+  if (!slug || !title || !Number.isFinite(lengthInMinutes) || lengthInMinutes <= 0) {
+    return null;
+  }
+  const notice = item.minimumBookingNotice;
+  return {
+    id,
+    slug,
+    title,
+    lengthInMinutes,
+    minimumBookingNotice:
+      typeof notice === "number" && Number.isFinite(notice) ? notice : undefined,
+    description: typeof item.description === "string" ? item.description : undefined,
+    raw: item,
+  };
+}
+
+export type CalMeProfile = {
+  id: number;
+  username: string;
+  email: string;
+  name: string | null;
+  timeZone: string;
+};
+
+/**
+ * GET /v2/me — username used in public booking URLs (`cal.com/{username}/{slug}`).
+ * @see https://cal.com/docs/api-reference/v2/me/get-my-profile
+ */
+export async function getCalMeProfile(): Promise<CalMeProfile> {
+  requireCalApiKey();
+  const body = await calFetch<{ data?: Record<string, unknown> } & Record<string, unknown>>(
+    "/me",
+    {
+      method: "GET",
+      apiVersion: ME_API_VERSION,
+    },
+  );
+
+  const data = (body.data ?? body) as Record<string, unknown>;
+  const username = String(data.username ?? "").trim();
+  const id = Number(data.id);
+  const email = String(data.email ?? "").trim();
+
+  if (!username || !Number.isFinite(id) || !email) {
+    throw new Error("Cal.com /me response missing username");
+  }
+
+  return {
+    id,
+    username,
+    email,
+    name: typeof data.name === "string" ? data.name : null,
+    timeZone: typeof data.timeZone === "string" ? data.timeZone : "",
+  };
+}
+
+/** GET /v2/event-types — cal-api-version 2024-06-14 */
+export async function listEventTypes(): Promise<CalEventType[]> {
+  requireCalApiKey();
+  const body = await calFetch<{ data?: unknown } | unknown[]>("/event-types", {
+    method: "GET",
+    apiVersion: EVENT_TYPES_API_VERSION,
+  });
+
+  const rawList = Array.isArray(body)
+    ? body
+    : Array.isArray((body as { data?: unknown }).data)
+      ? ((body as { data: unknown[] }).data)
+      : [];
+
+  const out: CalEventType[] = [];
+  for (const item of rawList) {
+    if (item && typeof item === "object") {
+      const parsed = parseCalEventType(item as Record<string, unknown>);
+      if (parsed) out.push(parsed);
+    }
+  }
+  return out.sort((a, b) => a.title.localeCompare(b.title));
+}
+
+/** POST /v2/event-types — cal-api-version 2024-06-14 */
+export async function createEventType(
+  input: CreateEventTypeInput,
+): Promise<CalEventType> {
+  requireCalApiKey();
+  const payload: Record<string, unknown> = {
+    title: input.title.trim(),
+    slug: input.slug.trim(),
+    lengthInMinutes: input.lengthInMinutes,
+    ...(input.description?.trim()
+      ? { description: input.description.trim() }
+      : {}),
+    ...(typeof input.minimumBookingNotice === "number"
+      ? { minimumBookingNotice: input.minimumBookingNotice }
+      : {}),
+    ...(input.locations?.length ? { locations: input.locations } : {}),
+  };
+
+  const body = await calFetch<{ data?: Record<string, unknown> } & Record<string, unknown>>(
+    "/event-types",
+    {
+      method: "POST",
+      apiVersion: EVENT_TYPES_API_VERSION,
+      body: JSON.stringify(payload),
+    },
+  );
+
+  const data = (body.data ?? body) as Record<string, unknown>;
+  const parsed = parseCalEventType(data);
+  if (!parsed) {
+    throw new Error("Cal.com create meeting type response missing id/slug/title");
+  }
+  return parsed;
 }
 
 function parseListBooking(
@@ -338,8 +517,8 @@ export async function listBookings(input?: {
   items: CalBookingListItem[];
   truncated: boolean;
 }> {
-  const { eventTypeId } = requireCalConfig();
-  const filterId = input?.eventTypeId ?? eventTypeId;
+  requireCalApiKey();
+  const filterId = input?.eventTypeId ?? bookingConfig.cal.eventTypeId;
   const maxPages = input?.maxPages ?? bookingConfig.sync.maxPages;
   const pageLimit = input?.limit ?? bookingConfig.sync.pageLimit;
   const all: CalBookingListItem[] = [];
@@ -414,7 +593,7 @@ export async function fetchAllCalBookings(): Promise<{
   items: CalBookingListItem[];
   scope: FetchCalBookingsScope;
 }> {
-  const { eventTypeId } = requireCalConfig();
+  requireCalApiKey();
   const pageLimit = Math.min(100, Math.max(1, bookingConfig.sync.pageLimit));
   const maxPages = Math.max(1, bookingConfig.sync.maxPages);
   const byUid = new Map<string, CalBookingListItem>();
@@ -423,7 +602,6 @@ export async function fetchAllCalBookings(): Promise<{
   const batches = await Promise.all(
     CAL_BOOKING_LIST_FILTERS.map(async (status) => {
       const result = await listBookings({
-        eventTypeId,
         status,
         maxPages,
         limit: pageLimit,

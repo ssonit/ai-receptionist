@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
-import { saveFaqSettings, type FaqSettingsState } from "@/app/dashboard/settings/actions";
+import { useActionState, useEffect, useId, useState } from "react";
+import { ArrowDownIcon, ArrowUpIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { saveFaqSettings } from "@/app/dashboard/faq/actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,63 +15,30 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { WorkspaceFaqRecord } from "@/lib/workspace-faq";
+import {
+  MAX_FAQ_ITEMS,
+  type FaqDraftItem,
+  type FaqSettingsFormProps,
+  type FaqSettingsState,
+  type WorkspaceFaqRecord,
+} from "@/lib/workspace-faq-types";
 
 const initial: FaqSettingsState = {};
 
-type FaqSettingsFormProps = {
-  faq: WorkspaceFaqRecord | null;
-  previewMarkdown: string;
-};
-
-const faqFields = [
-  {
-    name: "opening_hours",
-    label: "Giờ mở cửa",
-    description: "Markdown bullets — ví dụ: - Thứ 2–Thứ 7: 08:00–20:00",
-    rows: 4,
-    key: "openingHours" as const,
-  },
-  {
-    name: "services",
-    label: "Dịch vụ phổ biến",
-    description: "Các dịch vụ agent có thể gợi ý khi chat",
-    rows: 4,
-    key: "services" as const,
-  },
-  {
-    name: "pricing",
-    label: "Giá (tham khảo)",
-    description: "Hướng dẫn giá — agent không cam kết giá cuối qua chat",
-    rows: 3,
-    key: "pricing" as const,
-  },
-  {
-    name: "preparation",
-    label: "Đặt lịch",
-    description: "Quy trình đặt lịch, đến sớm bao lâu, v.v.",
-    rows: 3,
-    key: "preparation" as const,
-  },
-  {
-    name: "cancel_policy",
-    label: "Hủy / đổi lịch",
-    description: "Chính sách hủy hoặc đổi lịch",
-    rows: 3,
-    key: "cancelPolicy" as const,
-  },
-  {
-    name: "extra",
-    label: "Thêm (tuỳ chọn)",
-    description: "Nội dung bổ sung dưới mục “Thêm” trong skill FAQ",
-    rows: 4,
-    key: "extra" as const,
-  },
-];
+function toDraftItems(faq: WorkspaceFaqRecord | null): FaqDraftItem[] {
+  if (!faq?.items.length) return [];
+  return faq.items.map((item) => ({
+    key: item.id,
+    question: item.question,
+    answer: item.answer,
+  }));
+}
 
 export function FaqSettingsForm({ faq, previewMarkdown }: FaqSettingsFormProps) {
   const router = useRouter();
+  const formId = useId();
   const [state, action, pending] = useActionState(saveFaqSettings, initial);
+  const [items, setItems] = useState<FaqDraftItem[]>(() => toDraftItems(faq));
 
   useEffect(() => {
     if (state.success) {
@@ -78,82 +46,145 @@ export function FaqSettingsForm({ faq, previewMarkdown }: FaqSettingsFormProps) 
     }
   }, [state.success, router]);
 
+  useEffect(() => {
+    setItems(toDraftItems(faq));
+  }, [faq]);
+
+  function addItem() {
+    if (items.length >= MAX_FAQ_ITEMS) return;
+    setItems((prev) => [
+      ...prev,
+      { key: `${formId}-${Date.now()}-${prev.length}`, question: "", answer: "" },
+    ]);
+  }
+
+  function removeItem(key: string) {
+    setItems((prev) => prev.filter((item) => item.key !== key));
+  }
+
+  function moveItem(index: number, direction: -1 | 1) {
+    setItems((prev) => {
+      const next = [...prev];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return prev;
+      const tmp = next[index]!;
+      next[index] = next[target]!;
+      next[target] = tmp;
+      return next;
+    });
+  }
+
+  function updateItem(
+    key: string,
+    field: "question" | "answer",
+    value: string,
+  ) {
+    setItems((prev) =>
+      prev.map((item) => (item.key === key ? { ...item, [field]: value } : item)),
+    );
+  }
+
+  const faqItemsJson = JSON.stringify(
+    items.map(({ question, answer }) => ({ question, answer })),
+  );
+
   return (
-    <div className="grid gap-6 px-4 pb-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:px-6">
+    <div className="grid gap-6 px-4 pb-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)] lg:px-6">
       <form action={action} className="flex flex-col gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Thông tin workspace</CardTitle>
-            <CardDescription>
-              Agent dùng các trường này khi trả lời về liên hệ và địa chỉ.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="name">Tên workspace</Label>
-              <Input
-                defaultValue={faq?.name ?? ""}
-                id="name"
-                name="name"
-                placeholder="Eve Pilot"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="timezone">Timezone</Label>
-              <Input
-                defaultValue={faq?.timezone ?? "Asia/Ho_Chi_Minh"}
-                id="timezone"
-                name="timezone"
-                placeholder="Asia/Ho_Chi_Minh"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Số điện thoại</Label>
-              <Input
-                defaultValue={faq?.phone ?? ""}
-                id="phone"
-                name="phone"
-                placeholder="0901234567"
-              />
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="address">Địa chỉ</Label>
-              <Input
-                defaultValue={faq?.address ?? ""}
-                id="address"
-                name="address"
-                placeholder="123 Nguyễn Huệ, Quận 1, TP.HCM"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <input name="faq_items" type="hidden" value={faqItemsJson} />
 
         <Card>
-          <CardHeader>
-            <CardTitle>Nội dung FAQ</CardTitle>
-            <CardDescription>
-              Mỗi mục là markdown (gợi ý dùng bullet <code>-</code>). Agent load qua skill{" "}
-              <code>booking_faq</code> mỗi lượt chat.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+            <div className="space-y-1.5">
+              <CardTitle>Nội dung FAQ</CardTitle>
+              <CardDescription>
+                Mỗi mục là một câu hỏi / câu trả lời. Agent load qua skill{" "}
+                <code>booking_faq</code> mỗi lượt chat. Tối đa {MAX_FAQ_ITEMS} mục.
+              </CardDescription>
+            </div>
+            <Button
+              disabled={pending || items.length >= MAX_FAQ_ITEMS}
+              onClick={addItem}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <PlusIcon className="size-4" />
+              Thêm FAQ
+            </Button>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
-            {faqFields.map((field) => (
-              <div className="space-y-2" key={field.name}>
-                <div>
-                  <Label htmlFor={field.name}>{field.label}</Label>
-                  <p className="mt-1 text-xs text-muted-foreground">{field.description}</p>
+            {items.length === 0 ? (
+              <p className="rounded-lg border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+                Chưa có FAQ. Bấm “Thêm FAQ” để tạo mục đầu tiên.
+              </p>
+            ) : (
+              items.map((item, index) => (
+                <div
+                  className="flex flex-col gap-3 border-b border-border/60 pb-5 last:border-b-0 last:pb-0"
+                  key={item.key}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">FAQ #{index + 1}</p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        aria-label="Di chuyển lên"
+                        disabled={pending || index === 0}
+                        onClick={() => moveItem(index, -1)}
+                        size="icon-sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <ArrowUpIcon className="size-4" />
+                      </Button>
+                      <Button
+                        aria-label="Di chuyển xuống"
+                        disabled={pending || index === items.length - 1}
+                        onClick={() => moveItem(index, 1)}
+                        size="icon-sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <ArrowDownIcon className="size-4" />
+                      </Button>
+                      <Button
+                        aria-label="Xóa FAQ"
+                        disabled={pending}
+                        onClick={() => removeItem(item.key)}
+                        size="icon-sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Trash2Icon className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`question-${item.key}`}>Câu hỏi</Label>
+                    <Input
+                      id={`question-${item.key}`}
+                      onChange={(e) =>
+                        updateItem(item.key, "question", e.target.value)
+                      }
+                      placeholder="Ví dụ: Giờ mở cửa?"
+                      value={item.question}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`answer-${item.key}`}>Câu trả lời</Label>
+                    <Textarea
+                      id={`answer-${item.key}`}
+                      onChange={(e) =>
+                        updateItem(item.key, "answer", e.target.value)
+                      }
+                      placeholder="Markdown bullets được hỗ trợ — ví dụ: - Thứ 2–Thứ 7: 08:00–20:00"
+                      rows={3}
+                      value={item.answer}
+                    />
+                  </div>
                 </div>
-                <Textarea
-                  defaultValue={faq?.[field.key] ?? ""}
-                  id={field.name}
-                  name={field.name}
-                  placeholder={field.description}
-                  rows={field.rows}
-                />
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
 

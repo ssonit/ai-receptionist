@@ -7,7 +7,7 @@
 - [ ] Copy `.env.example` → `.env.local` and fill keys
 - [ ] At least one provider key: `DEEPSEEK_API_KEY` and/or `GOOGLE_GENERATIVE_AI_API_KEY` and/or `ANTHROPIC_API_KEY`
 - [ ] On Windows: `npm run patch:eve` (also runs via postinstall) so Eve resolves its own `dist/` under Next `withEve`
-- [ ] Cal.com API key + event type (or username + slug) for booking tests
+- [ ] Cal.com API key + meeting type (or username + slug) for booking tests
 - [ ] `npx supabase start` then paste URL/anon/service_role into `.env.local`
 - [ ] `npx supabase db reset` applies migrations + `supabase/seed.sql` (FAQ workspace)
 
@@ -21,7 +21,7 @@
 ## Text agent FAQ
 
 - [ ] Open `/chat`
-- [ ] Edit FAQ in Supabase Studio → `workspace_faq` (+ `workspaces` for phone/address)
+- [ ] Edit FAQ at `/dashboard/faq` (or Supabase Studio → `workspace_faq_items`); workspace contact at `/dashboard/settings`
 - [ ] Ask giá / dịch vụ → no invented advice; stay in booking scope
 
 ## Availability + booking
@@ -31,8 +31,9 @@
 - [ ] Confirm name + phone + email + slot → `book_appointment` (`guestName`)
 - [ ] Event appears on Cal.com calendar
 - [ ] `/dashboard/bookings` syncs Cal.com → Supabase on load
-- [ ] Row appears in Supabase `bookings` (+ optional `leads`)
-- [ ] `/dashboard` lists the new booking
+- [ ] Row appears in Supabase `bookings`; lead → status `booked` on `/dashboard/leads`
+- [ ] `/dashboard` lists the new booking; `/dashboard/leads` shows chat leads
+- [ ] Incomplete chat with name+phone → `log_lead` creates/updates lead (`new`)
 
 ## Out of scope (do not block MVP)
 

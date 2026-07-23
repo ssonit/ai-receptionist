@@ -1,7 +1,9 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
+import { logAgentToolEvent } from "@/lib/agent-tool-log";
 import { getAvailableSlots } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
+import { getAiBookingEventType } from "@/lib/workspace-cal";
 import { addDaysYmd, compareYmd, toYmd, todayYmd } from "../date-context";
 
 export default defineTool({
@@ -19,8 +21,22 @@ export default defineTool({
       .optional()
       .describe(`IANA timezone, default ${bookingConfig.timezone}`),
   }),
-  async execute({ startDate, endDate, timeZone }) {
+  async execute({ startDate, endDate, timeZone }, ctx) {
+    const sessionId = ctx.session?.id ?? null;
     try {
+      const aiEvent = await getAiBookingEventType();
+      if (!aiEvent) {
+        const error =
+          "Chưa cấu hình meeting type cho AI booking. Vào Dashboard → Settings để chọn, hoặc Meeting types để sync/tạo.";
+        await logAgentToolEvent({
+          toolName: "check_availability",
+          ok: false,
+          error,
+          sessionId,
+        });
+        return { ok: false as const, error };
+      }
+
       const tz = timeZone ?? bookingConfig.timezone;
       const today = todayYmd(tz);
       let start = toYmd(startDate);
@@ -36,22 +52,31 @@ export default defineTool({
         notes.push(`Clamped endDate from ${end} to ${next} (end was before start).`);
         end = next;
       }
-      // Keep ranges sane for Cal.com
       const maxEnd = addDaysYmd(start, 60, tz);
       if (compareYmd(end, maxEnd) > 0) {
         notes.push(`Clamped endDate from ${end} to ${maxEnd} (max 60-day window).`);
         end = maxEnd;
       }
 
-      const slots = await getAvailableSlots({ startDate: start, endDate: end, timeZone: tz });
-      // Group for the model — easier than a flat ISO list.
+      const slots = await getAvailableSlots({
+        startDate: start,
+        endDate: end,
+        timeZone: tz,
+        eventTypeId: aiEvent.calEventTypeId || undefined,
+        eventTypeSlug: aiEvent.slug,
+        username: aiEvent.username,
+      });
+
       const byDay: Record<string, string[]> = {};
       for (const slot of slots.slice(0, 40)) {
         const day = slot.start.slice(0, 10);
         byDay[day] ??= [];
         byDay[day].push(slot.start);
       }
-      const noticeHours = bookingConfig.minNoticeHours;
+      const noticeHours =
+        aiEvent.minimumNoticeMinutes != null
+          ? Math.max(1, Math.round(aiEvent.minimumNoticeMinutes / 60))
+          : bookingConfig.minNoticeHours;
       const todaySlots = byDay[today] ?? [];
       if (start === today && todaySlots.length === 0) {
         notes.push(
@@ -62,10 +87,24 @@ export default defineTool({
           `Minimum booking notice is ~${noticeHours} hours. If the guest asked for a same-day time that is missing here, explain the notice rule and offer the earliest remaining starts.`,
         );
       }
+
+      await logAgentToolEvent({
+        toolName: "check_availability",
+        ok: true,
+        sessionId,
+        meta: { count: slots.length, start, end },
+      });
+
       return {
         ok: true as const,
         timezone: tz,
         today,
+        eventType: {
+          id: aiEvent.calEventTypeId || null,
+          slug: aiEvent.slug,
+          title: aiEvent.title,
+          lengthMinutes: aiEvent.lengthMinutes,
+        },
         minNoticeHours: noticeHours,
         startDate: start,
         endDate: end,
@@ -77,10 +116,15 @@ export default defineTool({
         truncated: slots.length > 40,
       };
     } catch (error) {
-      return {
-        ok: false as const,
-        error: error instanceof Error ? error.message : "Failed to fetch availability",
-      };
+      const message =
+        error instanceof Error ? error.message : "Failed to fetch availability";
+      await logAgentToolEvent({
+        toolName: "check_availability",
+        ok: false,
+        error: message,
+        sessionId,
+      });
+      return { ok: false as const, error: message };
     }
   },
 });

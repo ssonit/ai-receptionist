@@ -1,4 +1,3 @@
-import { ChartAreaInteractive } from "@/components/chart-area-interactive";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { DataTable } from "@/components/data-table";
 import { SectionCards, type SectionCardStat } from "@/components/section-cards";
@@ -10,6 +9,12 @@ import { redirect } from "next/navigation";
 function startOfTodayIso() {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+function daysAgoIso(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
   return d.toISOString();
 }
 
@@ -29,15 +34,20 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  const { data: leads } = await supabase
+  const weekAgo = daysAgoIso(7);
+  const { data: newLeads } = await supabase
     .from("leads")
-    .select("id, full_name, phone, email, service, urgency, created_at")
-    .order("created_at", { ascending: false })
-    .limit(50);
+    .select("id")
+    .eq("status", "new")
+    .gte("created_at", weekAgo);
+
+  const { count: leadsTotal } = await supabase
+    .from("leads")
+    .select("id", { count: "exact", head: true });
 
   const todayIso = startOfTodayIso();
   const bookingsList = bookings ?? [];
-  const leadsList = leads ?? [];
+  const newLeadsCount = newLeads?.length ?? 0;
   const bookingsToday = bookingsList.filter((b) => b.start_time >= todayIso).length;
   const confirmed = bookingsList.filter((b) =>
     ["accepted", "pending"].includes(
@@ -56,11 +66,11 @@ export default async function DashboardPage() {
     },
     {
       label: "New leads",
-      value: String(leadsList.length),
-      delta: leadsList.length ? "+8%" : "0%",
-      trend: leadsList.length ? "up" : "down",
-      footnote: "Captured from chat",
-      detail: "Last 50 records",
+      value: String(newLeadsCount),
+      delta: leadsTotal ? `${leadsTotal} total` : "0 total",
+      trend: newLeadsCount ? "up" : "down",
+      footnote: "Status = new (7 ngày)",
+      detail: "Xem /dashboard/leads",
     },
     {
       label: "Total bookings",
@@ -82,48 +92,26 @@ export default async function DashboardPage() {
     },
   ];
 
-  const tableData = [
-    ...bookingsList.map((b, index) => ({
-      id: index + 1,
-      header: b.guest_name,
-      type: b.service || "Appointment",
-      status: getCalBookingViewLabel(String(b.status), b.start_time),
-      target: new Date(b.start_time).toLocaleString("vi-VN", {
-        dateStyle: "short",
-        timeStyle: "short",
-      }),
-      limit: b.guest_phone || "—",
-      reviewer: b.guest_email || "—",
-    })),
-    ...leadsList.map((lead, index) => ({
-      id: bookingsList.length + index + 1,
-      header: lead.full_name || "Lead",
-      type: lead.service || "Lead",
-      status: "Unconfirmed",
-      target: new Date(lead.created_at).toLocaleString("vi-VN", {
-        dateStyle: "short",
-        timeStyle: "short",
-      }),
-      limit: lead.phone || "—",
-      reviewer: lead.email?.trim() || "—",
-    })),
-  ];
-
-  const navUser = dashboard.navUser;
+  const tableData = bookingsList.map((b, index) => ({
+    id: index + 1,
+    header: b.guest_name,
+    type: b.service || "Appointment",
+    status: getCalBookingViewLabel(String(b.status), b.start_time),
+    target: new Date(b.start_time).toLocaleString("vi-VN", {
+      dateStyle: "short",
+      timeStyle: "short",
+    }),
+    limit: b.guest_phone || "—",
+    reviewer: b.guest_email || "—",
+  }));
 
   return (
-    <DashboardShell title="Overview" user={navUser}>
+    <DashboardShell title="Overview" user={dashboard.navUser}>
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <SectionCards stats={stats} />
-          <div className="px-4 lg:px-6" id="analytics">
-            <ChartAreaInteractive />
-          </div>
           <div id="bookings">
             <DataTable data={tableData} />
-          </div>
-          <div className="px-4 text-sm text-muted-foreground lg:px-6" id="leads">
-            Leads appear in the table above (type = Lead). Open chat to capture more.
           </div>
         </div>
       </div>

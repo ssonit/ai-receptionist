@@ -5,7 +5,7 @@ import {
 } from "../../lib/workspace-faq";
 
 const description =
-  "Use for booking FAQ — opening hours, address, phone, services, pricing, preparation, and policies.";
+  "Use for booking FAQ — workspace contact info and Q&A items (hours, services, pricing, policies, etc.).";
 
 async function faqSkill() {
   const workspace = await fetchWorkspaceFaq();

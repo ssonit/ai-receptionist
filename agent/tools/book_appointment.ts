@@ -1,10 +1,13 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
+import { logAgentToolEvent } from "@/lib/agent-tool-log";
 import { createBooking, getAvailableSlots } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
 import { normalizeCalApiStatus } from "@/lib/booking-status";
+import { upsertLeadAsBooked } from "@/lib/leads";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPilotWorkspaceId } from "@/lib/workspace";
+import { getAiBookingEventType } from "@/lib/workspace-cal";
 
 export default defineTool({
   description:
@@ -19,12 +22,33 @@ export default defineTool({
     sessionId: z.string().optional(),
   }),
   async execute({ guestName, phone, email, start, service, notes, sessionId }, ctx) {
+    const sid = sessionId ?? ctx.session?.id ?? null;
     try {
+      const aiEvent = await getAiBookingEventType();
+      if (!aiEvent) {
+        const error =
+          "Chưa cấu hình meeting type cho AI booking. Vào Dashboard → Settings để chọn, hoặc Meeting types để sync/tạo.";
+        await logAgentToolEvent({
+          toolName: "book_appointment",
+          ok: false,
+          error,
+          sessionId: sid,
+        });
+        return { ok: false as const, error };
+      }
+
+      const eventRef = {
+        eventTypeId: aiEvent.calEventTypeId || undefined,
+        eventTypeSlug: aiEvent.slug,
+        username: aiEvent.username,
+      };
+
       const day = start.slice(0, 10);
       const slots = await getAvailableSlots({
         startDate: day,
         endDate: day,
         timeZone: bookingConfig.timezone,
+        ...eventRef,
       });
       const targetMs = Date.parse(start);
       const stillOpen = slots.some((slot) => {
@@ -33,10 +57,14 @@ export default defineTool({
         return !Number.isNaN(targetMs) && !Number.isNaN(slotMs) && slotMs === targetMs;
       });
       if (!stillOpen) {
-        return {
-          ok: false as const,
-          error: "Slot is no longer available. Call check_availability again.",
-        };
+        const error = "Slot is no longer available. Call check_availability again.";
+        await logAgentToolEvent({
+          toolName: "book_appointment",
+          ok: false,
+          error,
+          sessionId: sid,
+        });
+        return { ok: false as const, error };
       }
 
       const booking = await createBooking({
@@ -45,6 +73,7 @@ export default defineTool({
         attendeeEmail: email,
         attendeePhone: phone,
         notes: [service, notes].filter(Boolean).join(" | ") || undefined,
+        ...eventRef,
       });
 
       try {
@@ -56,37 +85,47 @@ export default defineTool({
             guest_name: guestName,
             guest_phone: phone,
             guest_email: email,
-            service: service ?? null,
+            service: service ?? aiEvent.title ?? null,
             start_time: booking.start,
             status: normalizeCalApiStatus(booking.status),
             list_status: "upcoming",
             notes: notes ?? null,
-            session_id: sessionId ?? ctx.session?.id ?? null,
+            session_id: sid,
             raw: booking.raw,
           },
           { onConflict: "cal_booking_uid" },
         );
 
-        await supabase.from("leads").insert({
-          workspace_id: getPilotWorkspaceId(),
-          full_name: guestName,
+        await upsertLeadAsBooked({
+          workspaceId: getPilotWorkspaceId(),
+          fullName: guestName,
           phone,
           email,
-          service: service ?? null,
+          service: service ?? aiEvent.title ?? null,
           notes: notes ?? null,
-          session_id: sessionId ?? ctx.session?.id ?? null,
+          sessionId: sid,
         });
       } catch (dbError) {
-        // Booking on Cal.com succeeded; mirror failure should not undo confirmation.
-        return {
-          ok: true as const,
-          booking,
-          warning:
-            dbError instanceof Error
-              ? `Saved on Cal.com but failed to mirror to Supabase: ${dbError.message}`
-              : "Saved on Cal.com but failed to mirror to Supabase",
-        };
+        const warning =
+          dbError instanceof Error
+            ? `Saved on Cal.com but failed to mirror to Supabase: ${dbError.message}`
+            : "Saved on Cal.com but failed to mirror to Supabase";
+        await logAgentToolEvent({
+          toolName: "book_appointment",
+          ok: true,
+          error: warning,
+          sessionId: sid,
+          meta: { uid: booking.uid, mirrorFailed: true },
+        });
+        return { ok: true as const, booking, warning };
       }
+
+      await logAgentToolEvent({
+        toolName: "book_appointment",
+        ok: true,
+        sessionId: sid,
+        meta: { uid: booking.uid },
+      });
 
       return {
         ok: true as const,
@@ -95,13 +134,20 @@ export default defineTool({
           start: booking.start,
           status: booking.status,
           meetingUrl: booking.meetingUrl,
+          eventTypeId: aiEvent.calEventTypeId || null,
+          eventTypeSlug: aiEvent.slug,
         },
       };
     } catch (error) {
-      return {
-        ok: false as const,
-        error: error instanceof Error ? error.message : "Failed to create booking",
-      };
+      const message =
+        error instanceof Error ? error.message : "Failed to create booking";
+      await logAgentToolEvent({
+        toolName: "book_appointment",
+        ok: false,
+        error: message,
+        sessionId: sid,
+      });
+      return { ok: false as const, error: message };
     }
   },
 });

@@ -21,13 +21,17 @@ const mono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Eve — AI Booking",
   description:
-    "Agent chat đặt lịch: FAQ, kiểm tra slot trống, book vào calendar. Dashboard quản lý leads và bookings.",
+    "AI booking chat: FAQ, availability checks, and calendar bookings. Dashboard for leads and appointments.",
 };
 
 export default function RootLayout({ children }: { readonly children: ReactNode }) {
   return (
-    <html className={cn(sans.variable, mono.variable, "dark")} lang="vi">
-      <body className="font-sans antialiased">
+    <html
+      className={cn(sans.variable, mono.variable, "dark")}
+      lang="en"
+      suppressHydrationWarning
+    >
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <TooltipProvider>
           {children}
           <Toaster />

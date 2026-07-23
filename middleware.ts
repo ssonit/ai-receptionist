@@ -1,8 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { ensureVisitorIdOnResponse } from "@/lib/visitor";
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
+
+  const path = request.nextUrl.pathname;
+  const needsVisitor =
+    path === "/chat" ||
+    path.startsWith("/chat/") ||
+    path.startsWith("/api/chat/");
+
+  if (needsVisitor) {
+    ensureVisitorIdOnResponse(request, supabaseResponse);
+  }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -23,6 +34,9 @@ export async function middleware(request: NextRequest) {
         for (const { name, value, options } of cookiesToSet) {
           supabaseResponse.cookies.set(name, value, options);
         }
+        if (needsVisitor) {
+          ensureVisitorIdOnResponse(request, supabaseResponse);
+        }
       },
     },
   });
@@ -31,13 +45,16 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const path = request.nextUrl.pathname;
-  const isProtectedRoute = path.startsWith("/dashboard") || path.startsWith("/console");
+  const isProtectedRoute =
+    path.startsWith("/dashboard") || path.startsWith("/console");
 
   if (isProtectedRoute && !user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
-    redirectUrl.searchParams.set("next", path.startsWith("/console") ? "/dashboard" : path);
+    redirectUrl.searchParams.set(
+      "next",
+      path.startsWith("/console") ? "/dashboard" : path,
+    );
     return NextResponse.redirect(redirectUrl);
   }
 
@@ -51,5 +68,13 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/console/:path*", "/login", "/signup"],
+  matcher: [
+    "/dashboard/:path*",
+    "/console/:path*",
+    "/login",
+    "/signup",
+    "/chat",
+    "/chat/:path*",
+    "/api/chat/:path*",
+  ],
 };

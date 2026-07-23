@@ -3,7 +3,7 @@ export const bookingConfig = {
   name: process.env.BOOKING_NAME ?? "Eve Pilot",
   timezone: process.env.BOOKING_TIMEZONE ?? "Asia/Ho_Chi_Minh",
   /**
-   * Must match Cal.com event type "Minimum booking notice".
+   * Must match Cal.com meeting type "Minimum booking notice".
    * Used only for guest-facing explanations (Cal.com enforces the real cutoff).
    */
   minNoticeHours: process.env.BOOKING_MIN_NOTICE_HOURS

@@ -7,8 +7,30 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />;
+function Dialog({
+  onOpenChange,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Root>) {
+  return (
+    <DialogPrimitive.Root
+      data-slot="dialog"
+      onOpenChange={(open) => {
+        if (!open) {
+          // Same DropdownMenu + Dialog pointer-events race as Sheet.
+          const clear = () => {
+            if (document.body.style.pointerEvents === "none") {
+              document.body.style.pointerEvents = "";
+            }
+          };
+          requestAnimationFrame(clear);
+          window.setTimeout(clear, 0);
+          window.setTimeout(clear, 150);
+        }
+        onOpenChange?.(open);
+      }}
+      {...props}
+    />
+  );
 }
 
 function DialogTrigger({ ...props }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {

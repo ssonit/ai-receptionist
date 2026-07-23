@@ -2,24 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { WorkspaceSettingsState } from "@/lib/workspace-settings-types";
 
-export type FaqSettingsState = {
-  error?: string;
-  success?: string;
-};
+export type { WorkspaceSettingsState } from "@/lib/workspace-settings-types";
 
-export async function saveFaqSettings(
-  _prev: FaqSettingsState,
-  formData: FormData,
-): Promise<FaqSettingsState> {
+async function requireWorkspaceId() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Bạn cần đăng nhập." };
-  }
+  if (!user) return { error: "Bạn cần đăng nhập." as const };
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -27,57 +19,50 @@ export async function saveFaqSettings(
     .eq("id", user.id)
     .maybeSingle();
 
-  const workspaceId = profile?.workspace_id;
-  if (!workspaceId) {
-    return { error: "Tài khoản chưa được gán workspace." };
+  if (!profile?.workspace_id) {
+    return { error: "Tài khoản chưa được gán workspace." as const };
   }
+
+  return { supabase, workspaceId: profile.workspace_id as string };
+}
+
+function optionalText(formData: FormData, key: string) {
+  return String(formData.get(key) ?? "").trim() || null;
+}
+
+export async function saveWorkspaceSettings(
+  _prev: WorkspaceSettingsState,
+  formData: FormData,
+): Promise<WorkspaceSettingsState> {
+  const auth = await requireWorkspaceId();
+  if ("error" in auth) return { error: auth.error };
 
   const name = String(formData.get("name") ?? "").trim();
   const timezone = String(formData.get("timezone") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim();
-  const address = String(formData.get("address") ?? "").trim();
-  const openingHours = String(formData.get("opening_hours") ?? "").trim();
-  const services = String(formData.get("services") ?? "").trim();
-  const pricing = String(formData.get("pricing") ?? "").trim();
-  const preparation = String(formData.get("preparation") ?? "").trim();
-  const cancelPolicy = String(formData.get("cancel_policy") ?? "").trim();
-  const extra = String(formData.get("extra") ?? "").trim();
 
-  if (!name) {
-    return { error: "Tên workspace là bắt buộc." };
-  }
-  if (!timezone) {
-    return { error: "Timezone là bắt buộc." };
-  }
+  if (!name) return { error: "Tên workspace là bắt buộc." };
+  if (!timezone) return { error: "Timezone là bắt buộc." };
 
-  const { error: workspaceError } = await supabase
+  const { error } = await auth.supabase
     .from("workspaces")
     .update({
       name,
       timezone,
-      phone: phone || null,
-      address: address || null,
+      phone: optionalText(formData, "phone"),
+      address: optionalText(formData, "address"),
+      email: optionalText(formData, "email"),
+      website: optionalText(formData, "website"),
+      tagline: optionalText(formData, "tagline"),
+      about: optionalText(formData, "about"),
+      business_hours: optionalText(formData, "business_hours"),
+      services_summary: optionalText(formData, "services_summary"),
+      agent_instructions: optionalText(formData, "agent_instructions"),
     })
-    .eq("id", workspaceId);
+    .eq("id", auth.workspaceId);
 
-  if (workspaceError) {
-    return { error: workspaceError.message };
-  }
-
-  const { error: faqError } = await supabase.from("workspace_faq").upsert({
-    workspace_id: workspaceId,
-    opening_hours: openingHours || null,
-    services: services || null,
-    pricing: pricing || null,
-    preparation: preparation || null,
-    cancel_policy: cancelPolicy || null,
-    extra: extra || null,
-  });
-
-  if (faqError) {
-    return { error: faqError.message };
-  }
+  if (error) return { error: error.message };
 
   revalidatePath("/dashboard/settings");
-  return { success: "Đã lưu FAQ. Agent sẽ dùng nội dung mới ở lượt chat tiếp theo." };
+  revalidatePath("/dashboard/faq");
+  return { success: "Đã lưu cấu hình workspace." };
 }

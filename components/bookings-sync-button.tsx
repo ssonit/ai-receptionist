@@ -1,11 +1,13 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { syncBookingsAction } from "@/app/dashboard/bookings/actions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export function BookingsSyncButton() {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
 
   return (
@@ -16,9 +18,12 @@ export function BookingsSyncButton() {
           const result = await syncBookingsAction();
           if (result.error) {
             toast.error(result.error);
-          } else if (result.success) {
+            return;
+          }
+          if (result.success) {
             toast.success(result.success);
           }
+          router.refresh();
         });
       }}
       size="sm"

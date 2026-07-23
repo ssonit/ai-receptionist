@@ -1,80 +1,39 @@
 import { bookingConfig } from "./booking-config";
 import { createAdminClient } from "./supabase/admin";
 import { getPilotWorkspaceId } from "./workspace";
+import { mapWorkspaceFaqRecord } from "./workspace-faq-map";
+import {
+  WORKSPACE_FAQ_SELECT,
+  type WorkspaceFaqQueryRow,
+  type WorkspaceFaqRecord,
+} from "./workspace-faq-types";
 
-type WorkspaceFaqRow = {
-  opening_hours: string | null;
-  services: string | null;
-  pricing: string | null;
-  preparation: string | null;
-  cancel_policy: string | null;
-  extra: string | null;
-};
+export type {
+  FaqDraftItem,
+  FaqItemInput,
+  FaqSettingsFormProps,
+  FaqSettingsState,
+  WorkspaceFaqItem,
+  WorkspaceFaqItemRow,
+  WorkspaceFaqQueryRow,
+  WorkspaceFaqRecord,
+} from "./workspace-faq-types";
 
-export type WorkspaceFaqRecord = {
-  workspaceId: string;
-  name: string;
-  timezone: string;
-  phone: string | null;
-  address: string | null;
-  openingHours: string | null;
-  services: string | null;
-  pricing: string | null;
-  preparation: string | null;
-  cancelPolicy: string | null;
-  extra: string | null;
-};
+export { MAX_FAQ_ITEMS, WORKSPACE_FAQ_SELECT } from "./workspace-faq-types";
+export { mapFaqItems, mapWorkspaceFaqRecord } from "./workspace-faq-map";
 
 const UNCONFIGURED =
-  "*(chưa cấu hình — chạy `npx supabase db reset` hoặc sửa bảng `workspace_faq` trên Supabase)*";
+  "*(chưa cấu hình — chạy `npx supabase db reset` hoặc cập nhật ở FAQ / Settings)*";
 
 function contactLine(label: string, value: string | null | undefined): string {
   const v = value?.trim() ?? "";
   return v ? `- **${label}:** ${v}` : `- **${label}:** ${UNCONFIGURED}`;
 }
 
-function sectionOrPlaceholder(value: string | null | undefined): string {
-  return value?.trim() || UNCONFIGURED;
-}
-
-function hasStructuredSections(faq: WorkspaceFaqRow | null | undefined): boolean {
-  if (!faq) return false;
-  return Boolean(
-    faq.opening_hours?.trim() ||
-      faq.services?.trim() ||
-      faq.pricing?.trim() ||
-      faq.preparation?.trim() ||
-      faq.cancel_policy?.trim(),
-  );
-}
-
-function mapRecord(
-  workspace: {
-    id: string;
-    name: string;
-    timezone: string;
-    phone: string | null;
-    address: string | null;
-    workspace_faq: WorkspaceFaqRow | WorkspaceFaqRow[] | null;
-  },
-): WorkspaceFaqRecord {
-  const faq = Array.isArray(workspace.workspace_faq)
-    ? (workspace.workspace_faq[0] ?? null)
-    : workspace.workspace_faq;
-
-  return {
-    workspaceId: workspace.id,
-    name: workspace.name,
-    timezone: workspace.timezone,
-    phone: workspace.phone,
-    address: workspace.address,
-    openingHours: faq?.opening_hours ?? null,
-    services: faq?.services ?? null,
-    pricing: faq?.pricing ?? null,
-    preparation: faq?.preparation ?? null,
-    cancelPolicy: faq?.cancel_policy ?? null,
-    extra: faq?.extra ?? null,
-  };
+function blockSection(title: string, value: string | null | undefined): string[] {
+  const v = value?.trim() ?? "";
+  if (!v) return [`## ${title}`, UNCONFIGURED, ""];
+  return [`## ${title}`, v, ""];
 }
 
 /** Load workspace + FAQ from Supabase (service role). Returns null if DB unavailable. */
@@ -83,14 +42,12 @@ export async function fetchWorkspaceFaq(): Promise<WorkspaceFaqRecord | null> {
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("workspaces")
-      .select(
-        "id, name, timezone, phone, address, workspace_faq(opening_hours, services, pricing, preparation, cancel_policy, extra)",
-      )
+      .select(WORKSPACE_FAQ_SELECT)
       .eq("id", getPilotWorkspaceId())
       .maybeSingle();
 
     if (error || !data) return null;
-    return mapRecord(data);
+    return mapWorkspaceFaqRecord(data as WorkspaceFaqQueryRow);
   } catch {
     return null;
   }
@@ -106,20 +63,24 @@ export function buildBookingFaqSummary(row: WorkspaceFaqRecord | null): string {
     ].join("\n");
   }
 
-  const hoursFirst =
-    row.openingHours
-      ?.split("\n")
-      .find((l) => l.trim().startsWith("-"))
-      ?.trim() ?? row.openingHours?.split("\n")[0]?.trim();
+  const count = row.items.length;
+  const firstQuestion = row.items[0]?.question?.trim();
 
   return [
     contactLine("Workspace", row.name),
+    contactLine("Tagline", row.tagline),
     contactLine("Timezone", row.timezone),
     contactLine("SĐT", row.phone),
+    contactLine("Email", row.email),
+    contactLine("Website", row.website),
     contactLine("Địa chỉ", row.address),
-    `- **Giờ mở cửa (tóm tắt):** ${hoursFirst ?? UNCONFIGURED}`,
+    `- **Giờ làm việc:** ${row.businessHours?.trim() ? "đã cấu hình" : UNCONFIGURED}`,
+    `- **Dịch vụ:** ${row.servicesSummary?.trim() ? "đã cấu hình" : UNCONFIGURED}`,
+    `- **Hướng dẫn agent:** ${row.agentInstructions?.trim() ? "đã cấu hình" : UNCONFIGURED}`,
+    `- **FAQ:** ${count > 0 ? `${count} mục` : UNCONFIGURED}${
+      firstQuestion ? ` (vd: ${firstQuestion})` : ""
+    }`,
     `- **Đặt trước tối thiểu:** ${bookingConfig.minNoticeHours} giờ`,
-    `- **Nguồn FAQ:** Supabase \`workspace_faq\``,
     `- **Chi tiết:** \`load_skill\` → \`booking_faq\``,
   ].join("\n");
 }
@@ -127,51 +88,36 @@ export function buildBookingFaqSummary(row: WorkspaceFaqRecord | null): string {
 /** Full FAQ markdown for booking_faq skill. */
 export function buildBookingFaqMarkdown(row: WorkspaceFaqRecord | null): string {
   if (!row) {
-    return `# Booking FAQ\n\n${UNCONFIGURED}\n\nChạy \`npx supabase db reset\` để nạp seed FAQ, hoặc chỉnh bảng \`workspace_faq\` trên Supabase Studio.`;
-  }
-
-  const faqRow: WorkspaceFaqRow = {
-    opening_hours: row.openingHours,
-    services: row.services,
-    pricing: row.pricing,
-    preparation: row.preparation,
-    cancel_policy: row.cancelPolicy,
-    extra: row.extra,
-  };
-
-  if (row.extra?.trim() && !hasStructuredSections(faqRow)) {
-    return row.extra.trim();
+    return `# Booking FAQ\n\n${UNCONFIGURED}\n\nChạy \`npx supabase db reset\` để nạp seed FAQ, hoặc thêm FAQ ở trang FAQ.`;
   }
 
   const body = [
     `# Booking FAQ — ${row.name}`,
     "",
+    row.tagline?.trim() ? `> ${row.tagline.trim()}` : "",
+    row.tagline?.trim() ? "" : "",
     `**Timezone:** ${row.timezone}`,
     contactLine("SĐT", row.phone),
+    contactLine("Email", row.email),
+    contactLine("Website", row.website),
     contactLine("Địa chỉ", row.address),
     "",
-    "## Giờ mở cửa",
-    sectionOrPlaceholder(row.openingHours),
-    "",
-    "## Dịch vụ phổ biến",
-    sectionOrPlaceholder(row.services),
-    "",
-    "## Giá (tham khảo)",
-    sectionOrPlaceholder(row.pricing),
-    "",
-    "## Đặt lịch",
-    sectionOrPlaceholder(row.preparation),
-    "",
-    "## Hủy / đổi lịch",
-    sectionOrPlaceholder(row.cancelPolicy),
-  ];
+    ...blockSection("Giới thiệu", row.about),
+    ...blockSection("Giờ làm việc", row.businessHours),
+    ...blockSection("Dịch vụ", row.servicesSummary),
+    ...blockSection("Hướng dẫn cho agent", row.agentInstructions),
+  ].filter((line, i, arr) => !(line === "" && arr[i - 1] === ""));
 
-  if (row.extra?.trim()) {
-    body.push("", "## Thêm", row.extra.trim());
+  if (row.items.length === 0) {
+    body.push("## FAQ", UNCONFIGURED, "");
+  } else {
+    body.push("## FAQ", "");
+    for (const item of row.items) {
+      body.push(`### ${item.question.trim()}`, item.answer.trim(), "");
+    }
   }
 
   body.push(
-    "",
     "Nếu thông tin FAQ không đủ, nói rõ bạn sẽ chuyển câu hỏi cho nhân viên và vẫn giúp đặt lịch.",
   );
 

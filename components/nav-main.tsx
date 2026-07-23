@@ -42,7 +42,7 @@ export function NavMain({
               className="size-8 group-data-[collapsible=icon]:opacity-0"
               variant="outline"
             >
-              <Link href="/dashboard#leads" aria-label="Leads inbox">
+              <Link href="/dashboard/leads" aria-label="Leads inbox">
                 <IconMail />
                 <span className="sr-only">Inbox</span>
               </Link>
