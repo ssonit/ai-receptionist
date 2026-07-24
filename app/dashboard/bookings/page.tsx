@@ -33,8 +33,8 @@ export default async function BookingsPage() {
   }, null);
 
   const syncMessage = lastSyncedAt
-    ? `Dữ liệu Supabase — đồng bộ lần cuối ${new Date(lastSyncedAt).toLocaleString("vi-VN")}.`
-    : "Dữ liệu Supabase — nhấn Đồng bộ Cal.com để lấy lịch từ Cal.com.";
+    ? `Supabase data — last synced ${new Date(lastSyncedAt).toLocaleString("en-US")}.`
+    : "Supabase data — click Sync Cal.com to pull bookings from Cal.com.";
 
   return (
     <DashboardShell title="Bookings" user={dashboard.navUser}>
@@ -44,7 +44,7 @@ export default async function BookingsPage() {
             <div>
               <p className="text-sm text-muted-foreground">{syncMessage}</p>
               <p className="text-muted-foreground text-xs">
-                Cal.com là nguồn gốc — Supabase mirror để dashboard &amp; chat
+                Cal.com is the source of truth — Supabase mirrors it for dashboard &amp; chat
                 tracking.
               </p>
             </div>

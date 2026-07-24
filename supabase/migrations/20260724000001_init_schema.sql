@@ -93,6 +93,43 @@ before update on public.profiles
 for each row
 execute function public.handle_updated_at();
 
+-- -----------------------------------------------------------------------------
+-- Auth signup → workspace + profile
+-- -----------------------------------------------------------------------------
+
+create extension if not exists unaccent with schema extensions;
+
+-- KEEP IN SYNC with lib/workspace.ts → slugifyWorkspaceName() (npm slugify, locale vi).
+-- Signup trigger must stay pure SQL; TS is for live preview + server actions.
+create or replace function public.slugify_workspace_name(input text)
+returns text
+language plpgsql
+immutable
+set search_path = public, extensions
+as $$
+declare
+  s text;
+begin
+  -- Mirror npm slugify({ lower, strict, locale: 'vi', trim }) + lib/workspace.ts wrapper.
+  s := lower(trim(coalesce(input, '')));
+  s := replace(s, '&', ' and ');
+  s := replace(s, '@', ' at ');
+  -- đ/Đ: belt-and-suspenders (unaccent usually maps these too; locale vi requires d)
+  s := replace(replace(s, 'đ', 'd'), 'Đ', 'd');
+  s := extensions.unaccent(s);
+  s := regexp_replace(s, '[^a-z0-9]+', '-', 'g');
+  s := trim(both '-' from s);
+  s := regexp_replace(s, '-{2,}', '-', 'g');
+  if s is null or length(s) < 2 then
+    return 'ws';
+  end if;
+  return left(s, 48);
+end;
+$$;
+
+comment on function public.slugify_workspace_name(text) is
+  'Booking URL slug ≈ npm slugify locale=vi. KEEP IN SYNC with lib/workspace.ts slugifyWorkspaceName(). Signup auto-dedupes (-1,-2); Settings rejects collisions.';
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -117,14 +154,10 @@ begin
     ws_name := 'Workspace';
   end if;
 
-  base_slug := lower(regexp_replace(ws_name, '[^a-zA-Z0-9]+', '-', 'g'));
-  base_slug := trim(both '-' from base_slug);
-  if base_slug is null or length(base_slug) < 2 then
-    base_slug := 'ws';
-  end if;
-  base_slug := left(base_slug, 48);
+  base_slug := public.slugify_workspace_name(ws_name);
   final_slug := base_slug;
 
+  -- Signup: silent auto-dedupe (-1, -2…). Settings rejects collisions instead.
   while exists (select 1 from public.workspaces where slug = final_slug) loop
     n := n + 1;
     final_slug := left(base_slug, 40) || '-' || n::text;

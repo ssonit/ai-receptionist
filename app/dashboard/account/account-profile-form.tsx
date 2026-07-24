@@ -48,28 +48,28 @@ export function AccountProfileForm({
             className="bg-muted"
           />
           <p className="text-muted-foreground text-xs">
-            Email đăng nhập (không đổi tại đây). Đổi mật khẩu sẽ bổ sung sau.
+            Sign-in email (cannot be changed here). Password change coming later.
           </p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="fullName">Tên hiển thị</Label>
+          <Label htmlFor="fullName">Display name</Label>
           <Input
             id="fullName"
             name="fullName"
             defaultValue={fullName}
             required
             maxLength={120}
-            placeholder="Tên của bạn"
+            placeholder="Your name"
           />
         </div>
         <Button disabled={pending} type="submit">
-          {pending ? "Đang lưu…" : "Lưu thay đổi"}
+          {pending ? "Saving…" : "Save changes"}
         </Button>
       </form>
 
       <div className="border-t pt-6">
         <p className="text-muted-foreground mb-3 text-sm">
-          Đăng xuất khỏi workspace trên thiết bị này.
+          Log out of this workspace on this device.
         </p>
         <Button
           type="button"

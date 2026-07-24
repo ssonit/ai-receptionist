@@ -15,13 +15,12 @@ export async function signUp(
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("fullName") ?? "").trim();
-  const workspaceName = String(formData.get("workspaceName") ?? "").trim();
 
   if (!email || !password) {
-    return { error: "Email và mật khẩu là bắt buộc." };
+    return { error: "Email and password are required." };
   }
   if (password.length < 6) {
-    return { error: "Mật khẩu tối thiểu 6 ký tự." };
+    return { error: "Password must be at least 6 characters." };
   }
 
   const supabase = await createClient();
@@ -32,7 +31,8 @@ export async function signUp(
       data: {
         full_name: fullName,
         role: "owner",
-        workspace_name: workspaceName || fullName || undefined,
+        // Temporary workspace label until setup wizard sets the business name.
+        workspace_name: fullName || undefined,
       },
     },
   });
@@ -53,7 +53,7 @@ export async function signIn(
   const next = String(formData.get("next") ?? "/dashboard");
 
   if (!email || !password) {
-    return { error: "Email và mật khẩu là bắt buộc." };
+    return { error: "Email and password are required." };
   }
 
   const supabase = await createClient();

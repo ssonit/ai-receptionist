@@ -202,7 +202,9 @@ export const ReasoningContent = memo(({ className, children, ...props }: Reasoni
   >
     <Streamdown
       className="[&_a]:!text-teal-300 [&_a]:hover:!text-teal-200 [&_a]:underline"
-      components={{ a: MarkdownLink }}
+      components={{ a: MarkdownLink } as NonNullable<
+        ComponentProps<typeof Streamdown>["components"]
+      >}
       linkSafety={{ enabled: false }}
       plugins={streamdownPlugins}
     >

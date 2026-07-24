@@ -191,7 +191,7 @@ function Hero() {
               href="/chat"
             >
               <ChatCircleIcon className="size-4" weight="fill" />
-              Dùng thử ngay
+              Try it now
             </Link>
           </div>
         </BlurFade>
@@ -444,7 +444,7 @@ function FinalCta() {
                 href="/chat"
               >
                 <ChatCircleIcon className="size-4" weight="bold" />
-                Dùng thử ngay
+                Try it now
               </Link>
             </div>
           </BlurFade>
@@ -462,7 +462,7 @@ function SiteFooter() {
         <p>AI booking assistant. Not a substitute for a dentist.</p>
         <div className="flex gap-4">
           <Link className="hover:text-white" href="/chat">
-            Dùng thử
+            Try it
           </Link>
           <Link className="hover:text-white" href="/signup">
             Sign up

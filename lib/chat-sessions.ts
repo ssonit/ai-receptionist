@@ -110,7 +110,7 @@ export async function createChatSession(input: {
       workspace_id: workspaceId,
       visitor_id: input.visitorId,
       user_id: input.userId ?? null,
-      title: input.title?.trim() || "Chat mới",
+      title: input.title?.trim() || "New chat",
       status: "active",
       stream_index: 0,
       events: [],
@@ -318,6 +318,6 @@ export async function getWorkspaceChatSession(
 
 export function titleFromFirstUserMessage(content: string): string {
   const cleaned = content.replace(/\s+/g, " ").trim();
-  if (!cleaned) return "Chat mới";
+  if (!cleaned) return "New chat";
   return cleaned.length > 48 ? `${cleaned.slice(0, 48)}…` : cleaned;
 }

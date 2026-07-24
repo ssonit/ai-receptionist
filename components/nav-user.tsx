@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   IconBell,
   IconLogout,
@@ -48,6 +49,7 @@ export function NavUser({
     avatar: string;
   };
 }) {
+  const t = useTranslations();
   const { isMobile } = useSidebar();
   const initials = getInitials(user.name, user.email);
 
@@ -99,19 +101,19 @@ export function NavUser({
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/account">
                   <IconUserCircle />
-                  Account
+                  {t("dashboard.account")}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/notifications">
                   <IconBell />
-                  Notifications
+                  {t("dashboard.notifications")}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/settings">
                   <IconSettings />
-                  Settings
+                  {t("dashboard.settings")}
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -122,7 +124,7 @@ export function NavUser({
               }}
             >
               <IconLogout />
-              Log out
+              {t("common.signOut")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

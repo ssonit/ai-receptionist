@@ -66,7 +66,10 @@ export type BookingRow = {
   raw?: unknown;
 };
 
-const TAB_VIEWS = CAL_BOOKING_VIEWS.filter((v) => v.id !== "all");
+const TAB_VIEWS = CAL_BOOKING_VIEWS.filter(
+  (v): v is (typeof CAL_BOOKING_VIEWS)[number] & { id: CalBookingView } =>
+    v.id !== "all",
+);
 
 function rowView(row: BookingRow): CalBookingView {
   return getCalBookingView(row.status, row.start_time, {
@@ -250,7 +253,7 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
 
             {pageRows.length === 0 ? (
               <p className="text-muted-foreground px-4 py-12 text-center text-sm">
-                Không có lịch trong tab này. Đồng bộ Cal.com hoặc đổi tab.
+                No bookings in this tab. Sync Cal.com or switch tabs.
               </p>
             ) : (
               <ul className="divide-y">
@@ -344,11 +347,11 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                                 onSelect={() => {
                                   const email = row.guest_email?.trim();
                                   if (!email) {
-                                    toast.error("Không có email");
+                                    toast.error("No email");
                                     return;
                                   }
                                   void navigator.clipboard.writeText(email);
-                                  toast.success("Đã copy email");
+                                  toast.success("Email copied");
                                 }}
                               >
                                 Copy email
@@ -357,11 +360,11 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                                 onSelect={() => {
                                   const phone = row.guest_phone?.trim();
                                   if (!phone) {
-                                    toast.error("Không có SĐT");
+                                    toast.error("No phone number");
                                     return;
                                   }
                                   void navigator.clipboard.writeText(phone);
-                                  toast.success("Đã copy SĐT");
+                                  toast.success("Phone copied");
                                 }}
                               >
                                 Copy phone
@@ -374,7 +377,7 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                                   void navigator.clipboard.writeText(
                                     row.cal_booking_uid,
                                   );
-                                  toast.success("Đã copy Cal UID");
+                                  toast.success("Cal UID copied");
                                 }}
                               >
                                 Copy Cal UID
@@ -583,7 +586,7 @@ function BookingDetailSheet({ booking }: { booking: BookingRow }) {
           onClick={() => {
             if (!meetingUrl) return;
             void navigator.clipboard.writeText(meetingUrl);
-            toast.success("Đã copy link");
+            toast.success("Link copied");
           }}
         >
           <IconCopy className="size-4" />
@@ -606,11 +609,11 @@ function BookingDetailSheet({ booking }: { booking: BookingRow }) {
               onSelect={() => {
                 const email = booking.guest_email?.trim();
                 if (!email) {
-                  toast.error("Không có email");
+                  toast.error("No email");
                   return;
                 }
                 void navigator.clipboard.writeText(email);
-                toast.success("Đã copy email");
+                toast.success("Email copied");
               }}
             >
               Copy email
@@ -619,11 +622,11 @@ function BookingDetailSheet({ booking }: { booking: BookingRow }) {
               onSelect={() => {
                 const phone = booking.guest_phone?.trim();
                 if (!phone) {
-                  toast.error("Không có SĐT");
+                  toast.error("No phone number");
                   return;
                 }
                 void navigator.clipboard.writeText(phone);
-                toast.success("Đã copy SĐT");
+                toast.success("Phone copied");
               }}
             >
               Copy phone
@@ -634,7 +637,7 @@ function BookingDetailSheet({ booking }: { booking: BookingRow }) {
               onSelect={() => {
                 if (!booking.cal_booking_uid) return;
                 void navigator.clipboard.writeText(booking.cal_booking_uid);
-                toast.success("Đã copy Cal UID");
+                toast.success("Cal UID copied");
               }}
             >
               Copy Cal UID

@@ -40,8 +40,8 @@ function emptyAnalytics(): AnalyticsDashboardData {
       {
         id: "no-workspace",
         severity: "warning",
-        title: "Chưa gán workspace",
-        detail: "Tài khoản chưa có workspace_id — không tải được analytics.",
+        title: "No workspace assigned",
+        detail: "Account has no workspace_id — analytics cannot load.",
       },
     ],
     toolErrors: [],
@@ -172,9 +172,9 @@ export async function loadAnalyticsDashboard(): Promise<AnalyticsDashboardData> 
     withoutHealthy.unshift({
       id: "tool-events-missing",
       severity: "warning",
-      title: "Chưa bật telemetry tool",
+      title: "Tool telemetry not enabled",
       detail:
-        "Bảng agent_tool_events chưa có — chạy migration 20260723000006 rồi reload để theo dõi lỗi AI.",
+        "The agent_tool_events table is missing — run migration 20260723000006 then reload to track AI errors.",
     });
     return {
       rangeDays: RANGE_DAYS,

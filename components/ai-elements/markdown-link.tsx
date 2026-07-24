@@ -24,8 +24,10 @@ export function MarkdownLink({
   href,
   rel,
   target,
+  // hast node from streamdown / react-markdown — unused
+  node: _node,
   ...props
-}: ComponentProps<"a">) {
+}: ComponentProps<"a"> & { node?: unknown }) {
   const normalizedHref = normalizeChatLinkHref(href);
   const inApp = isInAppLink(normalizedHref);
 

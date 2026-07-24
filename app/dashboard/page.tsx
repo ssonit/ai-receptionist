@@ -77,7 +77,7 @@ export default async function DashboardPage() {
       value: String(newLeadsCount),
       delta: leadsTotal ? `${leadsTotal} total` : "0 total",
       trend: newLeadsCount ? "up" : "down",
-      footnote: "Status = new (7 ngày)",
+      footnote: "Status = new (7 days)",
       detail: "Xem /dashboard/leads",
     },
     {
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
     header: b.guest_name,
     type: b.service || "Appointment",
     status: getCalBookingViewLabel(String(b.status), b.start_time),
-    target: new Date(b.start_time).toLocaleString("vi-VN", {
+    target: new Date(b.start_time).toLocaleString("en-US", {
       dateStyle: "short",
       timeStyle: "short",
     }),

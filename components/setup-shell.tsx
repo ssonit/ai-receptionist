@@ -28,7 +28,7 @@ export function SetupShell({ children }: { children: React.ReactNode }) {
             void signOut();
           }}
         >
-          Đăng xuất
+          Log out
         </Button>
       </header>
       <main className="relative z-10 mx-auto flex w-full max-w-2xl flex-col px-5 pb-10 pt-2 sm:px-8">

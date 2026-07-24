@@ -284,7 +284,7 @@ export const MessageResponse = memo(
       )}
       components={{
         a: MarkdownLink,
-      }}
+      } as NonNullable<ComponentProps<typeof Streamdown>["components"]>}
       plugins={streamdownPlugins}
       {...props}
       linkSafety={{ enabled: false }}

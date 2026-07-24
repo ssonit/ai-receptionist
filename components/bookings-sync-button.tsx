@@ -30,7 +30,7 @@ export function BookingsSyncButton() {
       type="button"
       variant="outline"
     >
-      {pending ? "Đang đồng bộ…" : "Đồng bộ Cal.com"}
+      {pending ? "Syncing…" : "Sync Cal.com"}
     </Button>
   );
 }

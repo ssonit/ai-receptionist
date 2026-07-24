@@ -65,7 +65,7 @@ function outcomeLabel(outcome: ConversationOutcome) {
 
 function formatWhen(iso: string | null) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString("vi-VN", {
+  return new Date(iso).toLocaleString("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
   });
@@ -95,7 +95,7 @@ function ConversationDetailSheet({
     (async () => {
       try {
         const res = await fetch(`/api/dashboard/conversations/${sessionId}`);
-        if (!res.ok) throw new Error("Không tải được hội thoại");
+        if (!res.ok) throw new Error("Failed to load conversation");
         const data = await res.json();
         if (cancelled) return;
         setTitle(data.session?.title ?? "Conversation");
@@ -107,7 +107,7 @@ function ConversationDetailSheet({
         setEveSessionId(data.session?.eve_session_id ?? null);
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Lỗi tải");
+          setError(e instanceof Error ? e.message : "Failed to load");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -122,7 +122,7 @@ function ConversationDetailSheet({
     <div className="flex h-full flex-col">
       <SheetTitle className="sr-only">{title}</SheetTitle>
       <SheetDescription className="sr-only">
-        Transcript hội thoại {sessionId}
+        Conversation transcript {sessionId}
       </SheetDescription>
 
       <div className="flex-1 overflow-y-auto px-6 pt-6 pb-8 pr-14">
@@ -143,18 +143,18 @@ function ConversationDetailSheet({
         <div className="mt-4 flex flex-wrap gap-2">
           {leadId ? (
             <Button asChild size="sm" variant="outline">
-              <Link href="/dashboard/leads">Mở Leads</Link>
+              <Link href="/dashboard/leads">Open Leads</Link>
             </Button>
           ) : null}
           {bookingId ? (
             <Button asChild size="sm" variant="outline">
-              <Link href="/dashboard/bookings">Mở Bookings</Link>
+              <Link href="/dashboard/bookings">Open Bookings</Link>
             </Button>
           ) : null}
         </div>
 
         {loading ? (
-          <p className="text-muted-foreground mt-8 text-sm">Đang tải…</p>
+          <p className="text-muted-foreground mt-8 text-sm">Loading…</p>
         ) : error ? (
           <p className="text-destructive mt-8 text-sm">{error}</p>
         ) : (
@@ -162,7 +162,7 @@ function ConversationDetailSheet({
             <div className="mt-8 space-y-3">
               <h3 className="text-sm font-medium">Transcript</h3>
               {messages.length === 0 ? (
-                <p className="text-muted-foreground text-sm">Chưa có tin nhắn.</p>
+                <p className="text-muted-foreground text-sm">No messages yet.</p>
               ) : (
                 <ul className="space-y-3">
                   {messages.map((m) => (
@@ -187,7 +187,7 @@ function ConversationDetailSheet({
 
             {toolErrors.length > 0 ? (
               <div className="mt-8 space-y-2">
-                <h3 className="text-sm font-medium">Lỗi tool</h3>
+                <h3 className="text-sm font-medium">Tool errors</h3>
                 <ul className="divide-y rounded-lg border">
                   {toolErrors.map((row) => (
                     <li key={row.id} className="px-3 py-2 text-sm">
@@ -267,7 +267,7 @@ export function ConversationsTable({ rows }: { rows: ConversationListRow[] }) {
                       className="text-muted-foreground px-4 py-10 text-center"
                       colSpan={4}
                     >
-                      Chưa có hội thoại.
+                      No conversations yet.
                     </td>
                   </tr>
                 ) : (
@@ -282,7 +282,7 @@ export function ConversationsTable({ rows }: { rows: ConversationListRow[] }) {
                           <IconMessage className="text-muted-foreground mt-0.5 size-4 shrink-0" />
                           <div className="min-w-0">
                             <p className="truncate font-medium">
-                              {row.title || "Chat mới"}
+                              {row.title || "New chat"}
                             </p>
                             <p className="text-muted-foreground truncate font-mono text-[10px]">
                               {row.eve_session_id || row.id.slice(0, 8)}
@@ -316,7 +316,7 @@ export function ConversationsTable({ rows }: { rows: ConversationListRow[] }) {
 
           <div className="mt-3 flex items-center justify-between">
             <p className="text-muted-foreground text-xs">
-              {filtered.length} hội thoại · trang {page + 1}/{pageCount}
+              {filtered.length} conversations · page {page + 1}/{pageCount}
             </p>
             <div className="flex gap-1">
               <Button

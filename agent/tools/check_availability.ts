@@ -38,7 +38,7 @@ export default defineTool({
       const aiEvent = await getAiBookingEventType(workspaceId);
       if (!aiEvent) {
         const error =
-          "Chưa cấu hình meeting type cho AI booking. Vào Dashboard → Setup / Settings để chọn.";
+          "AI booking meeting type is not configured. Go to Dashboard → Setup / Settings to select one.";
         await logAgentToolEvent({
           toolName: "check_availability",
           ok: false,

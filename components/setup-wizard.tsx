@@ -25,7 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TimezoneSelect } from "@/components/timezone-select";
 import type { WorkspaceMeetingTypeRow } from "@/lib/workspace-cal";
-import { slugifyWorkspaceName } from "@/lib/workspace";
+import { resolveWorkspaceSlugField, slugifyWorkspaceName } from "@/lib/workspace";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -36,25 +36,25 @@ const STEPS = [
     id: 1 as const,
     label: "Cal.com",
     required: true,
-    title: "Kết nối lịch đặt hẹn",
-    question: "Dán API key Cal.com của bạn.",
-    hint: "Bắt buộc. Key được mã hoá trên server.",
+    title: "Connect your booking calendar",
+    question: "Paste your Cal.com API key.",
+    hint: "Required. The key is encrypted on the server.",
   },
   {
     id: 2 as const,
     label: "Meeting type",
     required: true,
-    title: "Chọn loại cuộc hẹn cho AI",
-    question: "Meeting type nào agent sẽ dùng để check slot và đặt lịch?",
-    hint: "Bắt buộc. Sync từ Cal.com, rồi chọn một type.",
+    title: "Choose a meeting type for AI",
+    question: "Which meeting type should the agent use to check slots and book?",
+    hint: "Required. Sync from Cal.com, then pick one type.",
   },
   {
     id: 3 as const,
-    label: "Hồ sơ",
+    label: "Profile",
     required: false,
-    title: "Tuỳ chỉnh trang đặt lịch",
-    question: "Chỉnh tên, slug và timezone — hoặc bỏ qua dùng mặc định từ signup.",
-    hint: "Không bắt buộc. FAQ / liên hệ cấu hình sau ở Dashboard.",
+    title: "Customize your booking page",
+    question: "Edit name, slug, and timezone — or skip and keep signup defaults.",
+    hint: "Optional. Configure FAQ / contact later in the Dashboard.",
   },
 ];
 
@@ -97,7 +97,9 @@ export function SetupWizard({
   const [pending, startTransition] = useTransition();
   const [aiId, setAiId] = React.useState(workspace.aiMeetingTypeId ?? "");
   const [name, setName] = React.useState(workspace.name ?? "");
-  const [slug, setSlug] = React.useState(workspace.slug ?? "");
+  const [slug, setSlug] = React.useState(() =>
+    resolveWorkspaceSlugField(workspace.name, workspace.slug),
+  );
   const [slugTouched, setSlugTouched] = React.useState(false);
   const [slugStatus, setSlugStatus] = React.useState<{
     available: boolean;
@@ -192,7 +194,7 @@ export function SetupWizard({
       const result = await setSetupAiMeetingTypeAction(id);
       if (result.error) toast.error(result.error);
       else {
-        toast.success(result.success ?? "Đã chọn");
+        toast.success(result.success ?? "Selected");
         router.refresh();
       }
     });
@@ -211,7 +213,7 @@ export function SetupWizard({
         {STEPS.map((s) => (
           <button
             key={s.id}
-            aria-label={`Bước ${s.id}: ${s.label}${s.required ? " (bắt buộc)" : " (tuỳ chọn)"}`}
+            aria-label={`Step ${s.id}: ${s.label}${s.required ? " (required)" : " (optional)"}`}
             className={cn(
               "h-1 flex-1 rounded-full transition-colors",
               step >= s.id ? "bg-white" : "bg-white/15",
@@ -226,8 +228,8 @@ export function SetupWizard({
         ))}
       </div>
       <p className="mb-8 text-center text-xs text-zinc-500">
-        Bước 1–2 bắt buộc · Bước 3 tuỳ chọn. Bạn có thể đóng trang và quay lại
-        sau — Cal & meeting type đã lưu sẽ được giữ.
+        Steps 1–2 are required · Step 3 is optional. You can close this page and
+        come back later — saved Cal & meeting type will be kept.
       </p>
 
       <div className="mb-8 space-y-4">
@@ -254,7 +256,7 @@ export function SetupWizard({
                     : "bg-white/10 text-zinc-400",
                 )}
               >
-                {meta.required ? "Bắt buộc" : "Tuỳ chọn"}
+                {meta.required ? "Required" : "Optional"}
               </span>
             </div>
             <p className="text-pretty text-sm leading-relaxed text-zinc-400">
@@ -276,17 +278,17 @@ export function SetupWizard({
                     weight="fill"
                   />
                   <div>
-                    <p className="font-medium text-white">Đã kết nối Cal.com</p>
+                    <p className="font-medium text-white">Cal.com connected</p>
                     <p className="mt-1 text-sm text-zinc-400">
                       {workspace.calUsername
                         ? `@${workspace.calUsername}`
-                        : "API key đã lưu (mã hoá)."}
+                        : "API key saved (encrypted)."}
                     </p>
                   </div>
                 </div>
                 <details className="group text-sm">
                   <summary className="cursor-pointer text-zinc-400 underline-offset-4 hover:text-zinc-200 hover:underline">
-                    Đổi API key
+                    Change API key
                   </summary>
                   <form action={calAction} className="mt-4 space-y-3">
                     <Input
@@ -304,7 +306,7 @@ export function SetupWizard({
                       disabled={calPending}
                       type="submit"
                     >
-                      Lưu key mới
+                      Save new key
                     </Button>
                   </form>
                 </details>
@@ -320,7 +322,7 @@ export function SetupWizard({
                     className="h-11 border-white/10 bg-black/40 text-white placeholder:text-zinc-600"
                     id="calApiKey"
                     name="calApiKey"
-                    placeholder="cal_live_… hoặc cal_test_…"
+                    placeholder="cal_live_… or cal_test_…"
                     required
                     type="password"
                     value={calKeyDraft}
@@ -333,7 +335,7 @@ export function SetupWizard({
                   rel="noreferrer"
                   target="_blank"
                 >
-                  Mở trang tạo API key trên Cal.com
+                  Open Cal.com API key settings
                 </a>
               </form>
             )}
@@ -358,20 +360,20 @@ export function SetupWizard({
                     const result = await syncSetupMeetingTypesAction();
                     if (result.error) toast.error(result.error);
                     else {
-                      toast.success(result.success ?? "Đã sync");
+                      toast.success(result.success ?? "Synced");
                       router.refresh();
                     }
                   });
                 }}
               >
-                {pending ? "Đang sync…" : "Sync từ Cal.com"}
+                {pending ? "Syncing…" : "Sync from Cal.com"}
               </Button>
             </div>
 
             {meetingTypes.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-5 py-10 text-center">
                 <p className="text-sm text-zinc-400">
-                  Chưa có meeting type. Tạo trên Cal.com rồi bấm Sync.
+                  No meeting types yet. Create one on Cal.com, then Sync.
                 </p>
               </div>
             ) : (
@@ -403,7 +405,7 @@ export function SetupWizard({
                           ) : null}
                         </span>
                         <span className="text-sm text-zinc-400">
-                          {mt.length_minutes} phút
+                          {mt.length_minutes} min
                           {mt.slug ? ` · ${mt.slug}` : ""}
                         </span>
                       </button>
@@ -424,7 +426,7 @@ export function SetupWizard({
           >
             <div className="space-y-2">
               <Label className="text-zinc-200" htmlFor="name">
-                Tên workspace
+                Workspace name
               </Label>
               <Input
                 className="h-11 border-white/10 bg-black/40 text-white"
@@ -442,7 +444,7 @@ export function SetupWizard({
             </div>
             <div className="space-y-2">
               <Label className="text-zinc-200" htmlFor="slug">
-                Slug trang đặt lịch
+                Booking page slug
               </Label>
               <Input
                 aria-invalid={slugStatus ? !slugStatus.available : undefined}
@@ -458,11 +460,11 @@ export function SetupWizard({
                 }}
               />
               <p className="break-all text-xs text-zinc-500">
-                Link công khai: {chatBaseUrl}/b/
+                Public link: {chatBaseUrl}/b/
                 {encodeURIComponent(slugifyWorkspaceName(slug) || "…")}
               </p>
               {slugChecking ? (
-                <p className="text-xs text-zinc-500">Đang kiểm tra slug…</p>
+                <p className="text-xs text-zinc-500">Checking slug…</p>
               ) : slugStatus ? (
                 <p
                   className={cn(
@@ -488,8 +490,8 @@ export function SetupWizard({
             </div>
             <div className="space-y-2">
               <Label className="text-zinc-200" htmlFor="about">
-                Giới thiệu ngắn{" "}
-                <span className="font-normal text-zinc-500">(tuỳ chọn)</span>
+                Short intro{" "}
+                <span className="font-normal text-zinc-500">(optional)</span>
               </Label>
               <Textarea
                 className="min-h-[88px] border-white/10 bg-black/40 text-white"
@@ -534,7 +536,7 @@ export function SetupWizard({
               form="setup-cal-form"
               type="submit"
             >
-              {calPending ? "Đang xác minh…" : "Continue →"}
+              {calPending ? "Verifying…" : "Continue →"}
             </Button>
           ) : null}
 
@@ -562,7 +564,7 @@ export function SetupWizard({
                 type="button"
                 onClick={skipProfileAndFinish}
               >
-                Bỏ qua, dùng mặc định →
+                Skip, use defaults →
               </button>
               <Button
                 className="h-10 rounded-full border-white/15 bg-transparent text-zinc-200 hover:bg-white/5"
@@ -576,7 +578,7 @@ export function SetupWizard({
                 type="submit"
                 variant="outline"
               >
-                {profilePending ? "Đang lưu…" : "Lưu hồ sơ"}
+                {profilePending ? "Saving…" : "Save profile"}
               </Button>
               <Button
                 className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
@@ -590,7 +592,7 @@ export function SetupWizard({
                 form="setup-profile-form"
                 type="submit"
               >
-                {finishPending ? "Đang mở…" : "Hoàn tất → Dashboard"}
+                {finishPending ? "Opening…" : "Finish → Dashboard"}
               </Button>
             </>
           ) : null}

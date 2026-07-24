@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   IconCalendarEvent,
   IconChartBar,
@@ -30,22 +31,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-const navMainBase = [
-  { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
-  { title: "Bookings", url: "/dashboard/bookings", icon: IconCalendarEvent },
-  { title: "Meeting types", url: "/dashboard/meeting-types", icon: IconTags },
-  { title: "FAQ", url: "/dashboard/faq", icon: IconQuestionMark },
-  { title: "Leads", url: "/dashboard/leads", icon: IconUsers },
-  { title: "Conversations", url: "/dashboard/conversations", icon: IconMessage },
-  { title: "Analytics", url: "/dashboard/analytics", icon: IconChartBar },
-];
-
-const navSecondary = [
-  { title: "Settings", url: "/dashboard/settings", icon: IconSettings },
-  { title: "Get Help", url: "/dashboard/help", icon: IconHelp },
-  { title: "Search", icon: IconSearch, action: "search" as const },
-];
-
 export function AppSidebar({
   user,
   bookingPagePath = "/b/eve-pilot",
@@ -54,9 +39,59 @@ export function AppSidebar({
   user: { name: string; email: string; avatar: string };
   bookingPagePath?: string;
 }) {
+  const t = useTranslations();
+
   const navMain = [
-    ...navMainBase,
-    { title: "Booking page", url: bookingPagePath, icon: IconMessageChatbot },
+    {
+      title: t("dashboard.nav.dashboard"),
+      url: "/dashboard",
+      icon: IconDashboard,
+    },
+    {
+      title: t("dashboard.nav.bookings"),
+      url: "/dashboard/bookings",
+      icon: IconCalendarEvent,
+    },
+    {
+      title: t("dashboard.nav.meetingTypes"),
+      url: "/dashboard/meeting-types",
+      icon: IconTags,
+    },
+    { title: t("dashboard.nav.faq"), url: "/dashboard/faq", icon: IconQuestionMark },
+    { title: t("dashboard.nav.leads"), url: "/dashboard/leads", icon: IconUsers },
+    {
+      title: t("dashboard.nav.conversations"),
+      url: "/dashboard/conversations",
+      icon: IconMessage,
+    },
+    {
+      title: t("dashboard.nav.analytics"),
+      url: "/dashboard/analytics",
+      icon: IconChartBar,
+    },
+    {
+      title: t("dashboard.bookingPage"),
+      url: bookingPagePath,
+      icon: IconMessageChatbot,
+    },
+  ];
+
+  const navSecondary = [
+    {
+      title: t("dashboard.settings"),
+      url: "/dashboard/settings",
+      icon: IconSettings,
+    },
+    {
+      title: t("dashboard.getHelp"),
+      url: "/dashboard/help",
+      icon: IconHelp,
+    },
+    {
+      title: t("dashboard.search"),
+      icon: IconSearch,
+      action: "search" as const,
+    },
   ];
 
   return (

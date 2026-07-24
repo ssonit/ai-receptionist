@@ -63,7 +63,7 @@ export type LeadRow = {
 };
 
 function formatWhen(iso: string) {
-  return new Date(iso).toLocaleString("vi-VN", {
+  return new Date(iso).toLocaleString("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
   });
@@ -138,7 +138,7 @@ function LeadDetailSheet({
     <div className="flex h-full flex-col">
       <SheetTitle className="sr-only">{lead.full_name || "Lead"}</SheetTitle>
       <SheetDescription className="sr-only">
-        Chi tiết lead {lead.id}
+        Lead details {lead.id}
       </SheetDescription>
 
       <div className="flex-1 overflow-y-auto px-6 pt-6 pb-8 pr-14">
@@ -158,7 +158,7 @@ function LeadDetailSheet({
           </div>
           <div className="min-w-0">
             <h2 className="text-foreground text-xl leading-snug font-semibold tracking-tight">
-              {lead.full_name || "Lead chưa có tên"}
+              {lead.full_name || "Untitled lead"}
             </h2>
             <p className="text-muted-foreground mt-1 text-sm">
               {formatWhen(lead.created_at)}
@@ -167,7 +167,7 @@ function LeadDetailSheet({
         </div>
 
         <section className="mb-8">
-          <h3 className="text-muted-foreground mb-1 text-sm">Chi tiết</h3>
+          <h3 className="text-muted-foreground mb-1 text-sm">Details</h3>
           <dl>
             <DetailRow label="Phone" value={lead.phone} />
             <DetailRow label="Email" value={lead.email} />
@@ -249,13 +249,13 @@ function LeadDetailSheet({
                 const result = await updateLeadNotesAction(lead.id, notes);
                 if (result.error) toast.error(result.error);
                 else {
-                  toast.success(result.success ?? "Đã lưu");
+                  toast.success(result.success ?? "Saved");
                   router.refresh();
                 }
               });
             }}
           >
-            {savingNotes ? "Đang lưu…" : "Lưu notes"}
+            {savingNotes ? "Saving…" : "Save notes"}
           </Button>
         </section>
       </div>
@@ -368,7 +368,7 @@ export function LeadsTable({ rows }: { rows: LeadRow[] }) {
 
             {pageRows.length === 0 ? (
               <p className="text-muted-foreground px-4 py-12 text-center text-sm">
-                Chưa có lead trong tab này. Chat với khách để `log_lead` ghi nhận.
+                No leads in this tab yet. Chat with customers so `log_lead` can capture them.
               </p>
             ) : (
               <ul className="divide-y">
@@ -398,7 +398,7 @@ export function LeadsTable({ rows }: { rows: LeadRow[] }) {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="truncate font-medium">
-                              {row.full_name || "Lead chưa có tên"}
+                              {row.full_name || "Untitled lead"}
                             </p>
                             <Badge
                               variant="outline"
@@ -422,7 +422,7 @@ export function LeadsTable({ rows }: { rows: LeadRow[] }) {
                             ) : null}
                           </div>
                           <p className="text-muted-foreground mt-0.5 text-sm">
-                            {row.phone || "Không có SĐT"}
+                            {row.phone || "No phone number"}
                             {row.service ? ` · ${row.service}` : ""}
                           </p>
                           <p className="text-muted-foreground mt-0.5 text-xs">
@@ -448,11 +448,11 @@ export function LeadsTable({ rows }: { rows: LeadRow[] }) {
                               onSelect={() => {
                                 const phone = row.phone?.trim();
                                 if (!phone) {
-                                  toast.error("Không có SĐT");
+                                  toast.error("No phone number");
                                   return;
                                 }
                                 void navigator.clipboard.writeText(phone);
-                                toast.success("Đã copy SĐT");
+                                toast.success("Phone copied");
                               }}
                             >
                               <IconCopy />
@@ -462,11 +462,11 @@ export function LeadsTable({ rows }: { rows: LeadRow[] }) {
                               onSelect={() => {
                                 const email = row.email?.trim();
                                 if (!email) {
-                                  toast.error("Không có email");
+                                  toast.error("No email");
                                   return;
                                 }
                                 void navigator.clipboard.writeText(email);
-                                toast.success("Đã copy email");
+                                toast.success("Email copied");
                               }}
                             >
                               <IconCopy />

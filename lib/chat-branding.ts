@@ -14,13 +14,13 @@ export type ChatBranding = {
 export const DEFAULT_CHAT_ASSISTANT_LABEL = "AI booking assistant";
 
 export const DEFAULT_CHAT_INTRO =
-  "Hỏi FAQ, kiểm tra slot trống, hoặc đặt lịch. Không thay thế bác sĩ — chỉ hỗ trợ đặt hẹn.";
+  "Ask FAQs, check open slots, or book an appointment. Not a substitute for a doctor — booking support only.";
 
 export const DEFAULT_CHAT_SUGGESTIONS: ChatSuggestion[] = [
-  { label: "Slot chiều mai", prompt: "Còn trống chiều mai không?" },
-  { label: "Giờ mở cửa", prompt: "Giờ mở cửa hôm nay?" },
-  { label: "Lấy cao răng", prompt: "Muốn đặt lịch lấy cao răng" },
-  { label: "Giá khám", prompt: "Khám tổng quát khoảng bao nhiêu?" },
+  { label: "Tomorrow afternoon", prompt: "Any openings tomorrow afternoon?" },
+  { label: "Business hours", prompt: "What are today's business hours?" },
+  { label: "Teeth cleaning", prompt: "I'd like to book a teeth cleaning" },
+  { label: "Exam pricing", prompt: "About how much is a general checkup?" },
 ];
 
 export const MAX_CHAT_SUGGESTIONS = 6;

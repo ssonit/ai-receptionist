@@ -21,7 +21,7 @@ export async function getSessionWorkspaceId(): Promise<string | null> {
 export async function requireSessionWorkspaceId(): Promise<string> {
   const id = await getSessionWorkspaceId();
   if (!id) {
-    throw new Error("Tài khoản chưa được gán workspace.");
+    throw new Error("Account is not assigned to a workspace.");
   }
   return id;
 }

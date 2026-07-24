@@ -1,6 +1,4 @@
 import type { CSSProperties, ReactNode } from "react";
-import { AppSidebar } from "@/components/app-sidebar";
-import { DashboardCommand } from "@/components/dashboard-command";
 import { DashboardCommandProvider } from "@/components/dashboard-command-context";
 import { DashboardShellChrome } from "@/components/dashboard-shell-chrome";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";

@@ -42,7 +42,7 @@ export function CopyBookingLink({
         ) : (
           <CopyIcon className="size-4" weight="bold" />
         )}
-        {copied ? "Đã copy" : "Copy link"}
+        {copied ? "Copied" : "Copy link"}
       </Button>
     </div>
   );

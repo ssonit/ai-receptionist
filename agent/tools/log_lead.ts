@@ -85,7 +85,7 @@ export default defineTool({
         if (urgency === "high" || urgency === "urgent") {
           await createNotification({
             type: "lead_urgent",
-            title: `Lead gấp: ${patch.full_name || phone || "Khách"}`,
+            title: `Urgent lead: ${patch.full_name || phone || "Guest"}`,
             body: [patch.service, urgency, patch.notes]
               .filter(Boolean)
               .join(" · "),
@@ -133,10 +133,10 @@ export default defineTool({
         meta: { leadId: data.id, updated: false },
       });
 
-      const leadLabel = patch.full_name || phone || email || "Khách";
+      const leadLabel = patch.full_name || phone || email || "Guest";
       await createNotification({
         type: "lead_new",
-        title: `Lead mới: ${leadLabel}`,
+        title: `New lead: ${leadLabel}`,
         body: [patch.service, patch.phone || patch.email]
           .filter(Boolean)
           .join(" · "),
@@ -149,7 +149,7 @@ export default defineTool({
       if (urgency === "high" || urgency === "urgent") {
         await createNotification({
           type: "lead_urgent",
-          title: `Lead gấp: ${leadLabel}`,
+          title: `Urgent lead: ${leadLabel}`,
           body: `Urgency: ${urgency}`,
           severity: "high",
           href: "/dashboard/leads",

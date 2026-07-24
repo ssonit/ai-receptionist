@@ -14,7 +14,7 @@ async function requireWorkspace() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Bạn cần đăng nhập." as const };
+  if (!user) return { error: "You need to sign in." as const };
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -23,7 +23,7 @@ async function requireWorkspace() {
     .maybeSingle();
 
   if (!profile?.workspace_id) {
-    return { error: "Tài khoản chưa được gán workspace." as const };
+    return { error: "Account is not assigned to a workspace." as const };
   }
 
   return { supabase, workspaceId: profile.workspace_id as string };
@@ -35,7 +35,7 @@ export async function updateLeadStatusAction(
 ): Promise<LeadActionState> {
   const auth = await requireWorkspace();
   if ("error" in auth) return { error: auth.error };
-  if (!isLeadStatus(status)) return { error: "Status không hợp lệ." };
+  if (!isLeadStatus(status)) return { error: "Invalid status." };
 
   const { error } = await auth.supabase
     .from("leads")
@@ -47,7 +47,7 @@ export async function updateLeadStatusAction(
 
   revalidatePath("/dashboard/leads");
   revalidatePath("/dashboard");
-  return { success: `Đã cập nhật status → ${status}.` };
+  return { success: `Updated status → ${status}.` };
 }
 
 export async function updateLeadNotesAction(
@@ -66,5 +66,5 @@ export async function updateLeadNotesAction(
   if (error) return { error: error.message };
 
   revalidatePath("/dashboard/leads");
-  return { success: "Đã lưu notes." };
+  return { success: "Notes saved." };
 }

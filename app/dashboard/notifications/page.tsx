@@ -24,8 +24,8 @@ export default async function NotificationsPage() {
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Lead mới/gấp/quá hạn, booking qua chat hoặc đổi/hủy trên Cal.com,
-            lỗi tool AI, và thiếu cấu hình agent. Đánh dấu đã đọc khi đã xử lý.
+            New/urgent/overdue leads, chat bookings or Cal.com reschedule/cancel,
+            AI tool errors, and missing agent config. Mark as read once handled.
           </p>
         </div>
         <NotificationsInbox

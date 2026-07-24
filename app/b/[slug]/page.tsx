@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { WorkspaceBookingPage } from "@/app/_components/workspace-booking-page";
 import { createClient } from "@/lib/supabase/server";
+import { readGuestLocale } from "@/lib/read-locale-cookie";
 import { getPublicBookingWorkspace } from "@/lib/workspace";
 
 type PageProps = {
@@ -15,13 +16,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const workspace = await getPublicBookingWorkspace(slug);
   if (!workspace?.setupCompletedAt) {
-    return { title: "Đặt lịch" };
+    return { title: "Book an appointment" };
   }
   return {
-    title: `${workspace.name} — Đặt lịch`,
+    title: `${workspace.name} — Book an appointment`,
     description:
       workspace.tagline?.trim() ||
-      `Chat đặt lịch với ${workspace.name}`,
+      `Book an appointment with ${workspace.name}`,
   };
 }
 
@@ -36,10 +37,10 @@ export default async function PublicBookingSlugPage({ params }: PageProps) {
       <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
         <h1 className="font-serif text-3xl tracking-tight">{workspace.name}</h1>
         <p className="text-muted-foreground max-w-md text-pretty">
-          Trang đặt lịch chưa sẵn sàng. Chủ workspace đang hoàn tất thiết lập.
+          Booking page isn&apos;t ready yet. The workspace owner is finishing setup.
         </p>
         <Link className="text-sm underline underline-offset-4" href="/">
-          Về Eve
+          Back to Eve
         </Link>
       </div>
     );
@@ -62,5 +63,11 @@ export default async function PublicBookingSlugPage({ params }: PageProps) {
       }
     : null;
 
-  return <WorkspaceBookingPage user={chatUser} workspace={workspace} />;
+  return (
+    <WorkspaceBookingPage
+      initialLocale={await readGuestLocale()}
+      user={chatUser}
+      workspace={workspace}
+    />
+  );
 }

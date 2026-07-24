@@ -16,7 +16,7 @@ export async function syncBookingsAction(): Promise<SyncBookingsState> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "Bạn cần đăng nhập." };
+    return { error: "You need to sign in." };
   }
 
   const { data: profile } = await supabase
@@ -26,7 +26,7 @@ export async function syncBookingsAction(): Promise<SyncBookingsState> {
     .maybeSingle();
 
   if (!profile?.workspace_id) {
-    return { error: "Tài khoản chưa được gán workspace." };
+    return { error: "Account is not assigned to a workspace." };
   }
 
   const result = await syncCalBookingsToSupabase(profile.workspace_id);
@@ -36,7 +36,7 @@ export async function syncBookingsAction(): Promise<SyncBookingsState> {
   }
 
   if (result.skipped) {
-    return { error: result.error ?? "Chưa cấu hình Cal.com." };
+    return { error: result.error ?? "Cal.com is not configured." };
   }
 
   revalidatePath("/dashboard/bookings");
@@ -45,17 +45,17 @@ export async function syncBookingsAction(): Promise<SyncBookingsState> {
 
   const windowHint = result.scopeLabel ? ` (${result.scopeLabel})` : "";
   const truncWarn = result.truncated
-    ? " — một số filter bị cắt bởi maxPages, tăng BOOKING_SYNC_MAX_PAGES."
+    ? " — some filters were truncated by maxPages; increase BOOKING_SYNC_MAX_PAGES."
     : "";
   const changeHint =
     (result.cancelledNotified ?? 0) + (result.rescheduledNotified ?? 0) > 0
-      ? ` · ${result.cancelledNotified ?? 0} hủy, ${result.rescheduledNotified ?? 0} đổi giờ → thông báo.`
+      ? ` · ${result.cancelledNotified ?? 0} cancelled, ${result.rescheduledNotified ?? 0} rescheduled → notifications.`
       : "";
 
   return {
     success:
       result.synced > 0
-        ? `Đã đồng bộ ${result.synced} lịch từ Cal.com${windowHint}.${truncWarn}${changeHint}`
-        : `Không có lịch trong phạm vi sync${windowHint}.${truncWarn}${changeHint}`,
+        ? `Synced ${result.synced} booking${result.synced === 1 ? "" : "s"} from Cal.com${windowHint}.${truncWarn}${changeHint}`
+        : `No bookings in sync scope${windowHint}.${truncWarn}${changeHint}`,
   };
 }

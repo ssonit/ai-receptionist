@@ -150,9 +150,9 @@ export function buildAiHealthAlerts(input: {
     alerts.push({
       id: "missing-ai-meeting-type",
       severity: "error",
-      title: "Chưa chọn meeting type cho AI",
+      title: "AI meeting type not selected",
       detail:
-        "Agent không check slot / đặt lịch được cho đến khi chọn type ở Settings.",
+        "The agent cannot check slots or book until you select a type in Settings.",
       href: "/dashboard/settings",
     });
   }
@@ -161,9 +161,9 @@ export function buildAiHealthAlerts(input: {
     alerts.push({
       id: "missing-cal-username",
       severity: "warning",
-      title: "Chưa lấy được Cal.com username",
+      title: "Cal.com username not available",
       detail:
-        "Mở Meeting types để sync profile, hoặc kiểm tra CALCOM_API_KEY.",
+        "Open Meeting types to sync the profile, or check CALCOM_API_KEY.",
       href: "/dashboard/meeting-types",
     });
   }
@@ -172,8 +172,8 @@ export function buildAiHealthAlerts(input: {
     alerts.push({
       id: "empty-faq",
       severity: "warning",
-      title: "FAQ trống",
-      detail: "Agent thiếu Q&A — khách hỏi dịch vụ/giờ dễ bị trả lời generic.",
+      title: "FAQ is empty",
+      detail: "Agent lacks Q&A — service/hours questions may get generic answers.",
       href: "/dashboard/faq",
     });
   }
@@ -182,8 +182,8 @@ export function buildAiHealthAlerts(input: {
     alerts.push({
       id: "thin-workspace-profile",
       severity: "info",
-      title: "Hồ sơ AI chưa đầy đủ",
-      detail: "Nên có Giới thiệu + Hướng dẫn agent ở Settings để trả lời ổn định hơn.",
+      title: "AI profile incomplete",
+      detail: "Add About + Agent instructions in Settings for more consistent answers.",
       href: "/dashboard/settings",
     });
   }
@@ -192,9 +192,9 @@ export function buildAiHealthAlerts(input: {
     alerts.push({
       id: "tool-errors",
       severity: "error",
-      title: `${input.toolErrorsLast24h} lỗi tool trong 24h`,
+      title: `${input.toolErrorsLast24h} tool errors in 24h`,
       detail:
-        "check_availability / book_appointment / log_lead đã fail — xem danh sách bên dưới.",
+        "check_availability / book_appointment / log_lead failed — see the list below.",
     });
   }
 
@@ -202,8 +202,8 @@ export function buildAiHealthAlerts(input: {
     alerts.push({
       id: "stale-leads",
       severity: "warning",
-      title: `${input.staleNewLeads} lead new quá 3 ngày`,
-      detail: "Nên chuyển contacted / lost hoặc gọi lại khách trên trang Leads.",
+      title: `${input.staleNewLeads} new leads older than 3 days`,
+      detail: "Move to contacted / lost or follow up on the Leads page.",
       href: "/dashboard/leads",
     });
   }
@@ -215,8 +215,8 @@ export function buildAiHealthAlerts(input: {
     alerts.push({
       id: "low-conversion",
       severity: "warning",
-      title: "Tỷ lệ lead → booked thấp",
-      detail: "Dưới 15% trong khoảng đang xem — kiểm tra intake, notice, hoặc slot trống.",
+      title: "Low lead → booked rate",
+      detail: "Under 15% in the selected range — check intake, notices, or open slots.",
       href: "/dashboard/leads",
     });
   }
@@ -225,8 +225,8 @@ export function buildAiHealthAlerts(input: {
     alerts.push({
       id: "no-chat-bookings",
       severity: "info",
-      title: "Có lead nhưng chưa có booking qua chat",
-      detail: "Khách dừng ở intake — xem notes / urgency trên Leads.",
+      title: "Leads exist but no chat bookings yet",
+      detail: "Customers stop at intake — review notes / urgency on Leads.",
       href: "/dashboard/leads",
     });
   }
@@ -235,8 +235,8 @@ export function buildAiHealthAlerts(input: {
     alerts.push({
       id: "healthy",
       severity: "info",
-      title: "AI booking đang ổn",
-      detail: "Không phát hiện lỗi cấu hình hoặc tool gần đây.",
+      title: "AI booking looks healthy",
+      detail: "No recent configuration or tool issues detected.",
     });
   }
 

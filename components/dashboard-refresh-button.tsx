@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { IconRefresh } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -9,16 +10,15 @@ import { toast } from "sonner";
 
 export function DashboardRefreshButton({
   className,
-  label = "Tải lại",
-  successMessage = "Đã tải lại dữ liệu.",
 }: {
   className?: string;
-  label?: string;
-  successMessage?: string;
 }) {
+  const t = useTranslations();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const wasPending = useRef(false);
+  const label = t("dashboard.reload");
+  const successMessage = t("dashboard.refreshed");
 
   useEffect(() => {
     if (wasPending.current && !pending) {
@@ -29,7 +29,7 @@ export function DashboardRefreshButton({
 
   return (
     <Button
-      aria-label={pending ? "Đang tải lại" : label}
+      aria-label={pending ? t("dashboard.reloading") : label}
       className={cn(className)}
       disabled={pending}
       onClick={() => {
@@ -44,7 +44,7 @@ export function DashboardRefreshButton({
     >
       <IconRefresh className={cn("size-4", pending && "animate-spin")} />
       <span className="hidden sm:inline">
-        {pending ? "Đang tải…" : label}
+        {pending ? t("dashboard.reloading") : label}
       </span>
     </Button>
   );

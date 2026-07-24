@@ -23,7 +23,7 @@ export { MAX_FAQ_ITEMS, WORKSPACE_FAQ_SELECT } from "./workspace-faq-types";
 export { mapFaqItems, mapWorkspaceFaqRecord } from "./workspace-faq-map";
 
 const UNCONFIGURED =
-  "*(chưa cấu hình — chạy `npx supabase db reset` hoặc cập nhật ở FAQ / Settings)*";
+  "*(not configured — run `npx supabase db reset` or update in FAQ / Settings)*";
 
 function contactLine(label: string, value: string | null | undefined): string {
   const v = value?.trim() ?? "";
@@ -60,8 +60,8 @@ export function buildBookingFaqSummary(row: WorkspaceFaqRecord | null): string {
   if (!row) {
     return [
       `- **FAQ:** ${UNCONFIGURED}`,
-      `- **Đặt trước tối thiểu:** ${bookingConfig.minNoticeHours} giờ (Cal.com)`,
-      `- **Chi tiết:** \`load_skill\` → \`booking_faq\``,
+      `- **Minimum booking notice:** ${bookingConfig.minNoticeHours} hours (Cal.com)`,
+      `- **Details:** \`load_skill\` → \`booking_faq\``,
     ].join("\n");
   }
 
@@ -72,25 +72,25 @@ export function buildBookingFaqSummary(row: WorkspaceFaqRecord | null): string {
     contactLine("Workspace", row.name),
     contactLine("Tagline", row.tagline),
     contactLine("Timezone", row.timezone),
-    contactLine("SĐT", row.phone),
+    contactLine("Phone", row.phone),
     contactLine("Email", row.email),
     contactLine("Website", row.website),
-    contactLine("Địa chỉ", row.address),
-    `- **Giờ làm việc:** ${row.businessHours?.trim() ? "đã cấu hình" : UNCONFIGURED}`,
-    `- **Dịch vụ:** ${row.servicesSummary?.trim() ? "đã cấu hình" : UNCONFIGURED}`,
-    `- **Hướng dẫn agent:** ${row.agentInstructions?.trim() ? "đã cấu hình" : UNCONFIGURED}`,
-    `- **FAQ:** ${count > 0 ? `${count} mục` : UNCONFIGURED}${
-      firstQuestion ? ` (vd: ${firstQuestion})` : ""
+    contactLine("Address", row.address),
+    `- **Business hours:** ${row.businessHours?.trim() ? "configured" : UNCONFIGURED}`,
+    `- **Services:** ${row.servicesSummary?.trim() ? "configured" : UNCONFIGURED}`,
+    `- **Agent instructions:** ${row.agentInstructions?.trim() ? "configured" : UNCONFIGURED}`,
+    `- **FAQ:** ${count > 0 ? `${count} items` : UNCONFIGURED}${
+      firstQuestion ? ` (e.g. ${firstQuestion})` : ""
     }`,
-    `- **Đặt trước tối thiểu:** ${bookingConfig.minNoticeHours} giờ`,
-    `- **Chi tiết:** \`load_skill\` → \`booking_faq\``,
+    `- **Minimum booking notice:** ${bookingConfig.minNoticeHours} hours`,
+    `- **Details:** \`load_skill\` → \`booking_faq\``,
   ].join("\n");
 }
 
 /** Full FAQ markdown for booking_faq skill. */
 export function buildBookingFaqMarkdown(row: WorkspaceFaqRecord | null): string {
   if (!row) {
-    return `# Booking FAQ\n\n${UNCONFIGURED}\n\nChạy \`npx supabase db reset\` để nạp seed FAQ, hoặc thêm FAQ ở trang FAQ.`;
+    return `# Booking FAQ\n\n${UNCONFIGURED}\n\nRun \`npx supabase db reset\` to load seed FAQ, or add FAQ on the FAQ page.`;
   }
 
   const body = [
@@ -99,15 +99,15 @@ export function buildBookingFaqMarkdown(row: WorkspaceFaqRecord | null): string 
     row.tagline?.trim() ? `> ${row.tagline.trim()}` : "",
     row.tagline?.trim() ? "" : "",
     `**Timezone:** ${row.timezone}`,
-    contactLine("SĐT", row.phone),
+    contactLine("Phone", row.phone),
     contactLine("Email", row.email),
     contactLine("Website", row.website),
-    contactLine("Địa chỉ", row.address),
+    contactLine("Address", row.address),
     "",
-    ...blockSection("Giới thiệu", row.about),
-    ...blockSection("Giờ làm việc", row.businessHours),
-    ...blockSection("Dịch vụ", row.servicesSummary),
-    ...blockSection("Hướng dẫn cho agent", row.agentInstructions),
+    ...blockSection("About", row.about),
+    ...blockSection("Business hours", row.businessHours),
+    ...blockSection("Services", row.servicesSummary),
+    ...blockSection("Agent instructions", row.agentInstructions),
   ].filter((line, i, arr) => !(line === "" && arr[i - 1] === ""));
 
   if (row.items.length === 0) {
@@ -120,7 +120,7 @@ export function buildBookingFaqMarkdown(row: WorkspaceFaqRecord | null): string 
   }
 
   body.push(
-    "Nếu thông tin FAQ không đủ, nói rõ bạn sẽ chuyển câu hỏi cho nhân viên và vẫn giúp đặt lịch.",
+    "If FAQ information is insufficient, say clearly that you will pass the question to staff and still help with booking.",
   );
 
   return body.join("\n");

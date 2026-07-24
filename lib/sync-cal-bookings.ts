@@ -48,7 +48,7 @@ export async function syncCalBookingsToSupabase(
     return {
       synced: 0,
       skipped: true,
-      error: "Thiếu workspace — không đồng bộ sang tenant khác.",
+      error: "Missing workspace — will not sync to another tenant.",
     };
   }
 
@@ -59,7 +59,7 @@ export async function syncCalBookingsToSupabase(
     return {
       synced: 0,
       skipped: true,
-      error: "Cal.com API key chưa cấu hình cho workspace",
+      error: "Cal.com API key is not configured for this workspace",
     };
   }
 
@@ -135,7 +135,7 @@ export async function syncCalBookingsToSupabase(
       if (!wasCancelled && nowCancelled) {
         const id = await createNotification({
           type: "booking_cancelled",
-          title: "Booking đã hủy trên Cal.com",
+          title: "Booking cancelled on Cal.com",
           body: `${guest} · ${formatWhen(row.start_time)}`,
           severity: "high",
           href: "/dashboard/bookings",
@@ -155,7 +155,7 @@ export async function syncCalBookingsToSupabase(
       ) {
         const id = await createNotification({
           type: "booking_rescheduled",
-          title: "Booking đổi giờ trên Cal.com",
+          title: "Booking rescheduled on Cal.com",
           body: `${guest}: ${formatWhen(prev.start_time)} → ${formatWhen(row.start_time)}`,
           severity: "high",
           href: "/dashboard/bookings",
@@ -209,7 +209,7 @@ export async function syncCalBookingsToSupabase(
   } catch (error) {
     return {
       synced: 0,
-      error: error instanceof Error ? error.message : "Đồng bộ Cal.com thất bại",
+      error: error instanceof Error ? error.message : "Cal.com sync failed",
     };
   }
 }

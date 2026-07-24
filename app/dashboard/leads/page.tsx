@@ -30,8 +30,8 @@ export default async function LeadsPage() {
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Lead từ chat agent (`log_lead`). Cập nhật status khi đã liên hệ hoặc
-            khách đã book.
+            Leads from the chat agent (`log_lead`). Update status when contacted or
+            when the customer has booked.
           </p>
         </div>
         <LeadsTable rows={leads ?? []} />

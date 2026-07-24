@@ -3,12 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { setAiBookingMeetingTypeAction } from "@/app/dashboard/meeting-types/actions";
 import {
   checkWorkspaceSlugAvailable,
   saveWorkspaceSettings,
 } from "@/app/dashboard/settings/actions";
 import { CopyBookingLink } from "@/components/copy-booking-link";
+import { LocaleToggle } from "@/components/locale-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +38,7 @@ import {
   MAX_CHAT_SUGGESTIONS,
   type ChatSuggestion,
 } from "@/lib/chat-branding";
-import { slugifyWorkspaceName } from "@/lib/workspace";
+import { resolveWorkspaceSlugField, slugifyWorkspaceName } from "@/lib/workspace";
 import {
   type WorkspaceSettingsFormProps,
   type WorkspaceSettingsState,
@@ -62,11 +64,14 @@ export function WorkspaceSettingsForm({
   meetingTypes,
   publicBookingUrl,
 }: WorkspaceSettingsFormProps) {
+  const t = useTranslations();
   const router = useRouter();
   const [state, action, pending] = useActionState(saveWorkspaceSettings, initial);
   const [selectPending, startSelect] = useTransition();
   const [name, setName] = useState(workspace?.name ?? "");
-  const [slug, setSlug] = useState(workspace?.slug ?? "");
+  const [slug, setSlug] = useState(() =>
+    resolveWorkspaceSlugField(workspace?.name, workspace?.slug),
+  );
   const [slugTouched, setSlugTouched] = useState(false);
   const [slugStatus, setSlugStatus] = useState<SlugStatus>(null);
   const [slugChecking, setSlugChecking] = useState(false);
@@ -81,7 +86,7 @@ export function WorkspaceSettingsForm({
 
   useEffect(() => {
     setName(workspace?.name ?? "");
-    setSlug(workspace?.slug ?? "");
+    setSlug(resolveWorkspaceSlugField(workspace?.name, workspace?.slug));
     setSlugTouched(false);
     setSlugStatus(null);
     setSuggestions(
@@ -134,14 +139,14 @@ export function WorkspaceSettingsForm({
         >
           <Card>
             <CardHeader>
-              <CardTitle>Liên hệ & nhận diện</CardTitle>
+              <CardTitle>Contact & identity</CardTitle>
               <CardDescription>
-                Thông tin khách thấy khi agent giới thiệu workspace.
+                Information customers see when the agent introduces the workspace.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <div className="space-y-2 sm:col-span-2 xl:col-span-2">
-                <Label htmlFor="name">Tên workspace</Label>
+                <Label htmlFor="name">Workspace name</Label>
                 <Input
                   id="name"
                   name="name"
@@ -165,7 +170,7 @@ export function WorkspaceSettingsForm({
                 />
               </div>
               <div className="space-y-2 sm:col-span-2 xl:col-span-3">
-                <Label htmlFor="slug">Slug trang đặt lịch</Label>
+                <Label htmlFor="slug">Booking page slug</Label>
                 <Input
                   aria-invalid={slugStatus ? !slugStatus.available : undefined}
                   id="slug"
@@ -179,11 +184,11 @@ export function WorkspaceSettingsForm({
                   value={slug}
                 />
                 <p className="text-muted-foreground text-xs">
-                  URL công khai: /b/{slugifyWorkspaceName(slug) || "…"}
+                  Public URL: /b/{slugifyWorkspaceName(slug) || "…"}
                 </p>
                 {slugChecking ? (
                   <p className="text-muted-foreground text-xs">
-                    Đang kiểm tra slug…
+                    Checking slug…
                   </p>
                 ) : slugStatus ? (
                   <p
@@ -204,11 +209,11 @@ export function WorkspaceSettingsForm({
                   defaultValue={workspace?.tagline ?? ""}
                   id="tagline"
                   name="tagline"
-                  placeholder="Trợ lý đặt lịch 24/7 cho phòng khám / studio"
+                  placeholder="24/7 booking assistant for clinics / studios"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Số điện thoại</Label>
+                <Label htmlFor="phone">Phone number</Label>
                 <Input
                   defaultValue={workspace?.phone ?? ""}
                   id="phone"
@@ -237,12 +242,12 @@ export function WorkspaceSettingsForm({
                 />
               </div>
               <div className="space-y-2 sm:col-span-2 xl:col-span-3">
-                <Label htmlFor="address">Địa chỉ</Label>
+                <Label htmlFor="address">Address</Label>
                 <Input
                   defaultValue={workspace?.address ?? ""}
                   id="address"
                   name="address"
-                  placeholder="123 Nguyễn Huệ, Quận 1, TP.HCM"
+                  placeholder="123 Nguyen Hue, District 1, Ho Chi Minh City"
                 />
               </div>
             </CardContent>
@@ -250,67 +255,67 @@ export function WorkspaceSettingsForm({
 
           <Card>
             <CardHeader>
-              <CardTitle>Hồ sơ cho AI</CardTitle>
+              <CardTitle>AI profile</CardTitle>
               <CardDescription>
-                Agent đọc các mục này qua skill <code>booking_faq</code> khi trả
-                lời khách. FAQ chi tiết quản lý ở trang{" "}
+                The agent reads these fields via the <code>booking_faq</code> skill
+                when answering customers. Manage detailed FAQ on the{" "}
                 <Link
                   className="underline underline-offset-4"
                   href="/dashboard/faq"
                 >
                   FAQ
-                </Link>
-                .
+                </Link>{" "}
+                page.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="about">Giới thiệu</Label>
+                <Label htmlFor="about">About</Label>
                 <Textarea
                   defaultValue={workspace?.about ?? ""}
                   id="about"
                   name="about"
-                  placeholder="Mô tả ngắn về workspace / dịch vụ / đối tượng khách…"
+                  placeholder="Short description of the workspace / services / customers…"
                   rows={4}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="business_hours">Giờ làm việc</Label>
+                <Label htmlFor="business_hours">Business hours</Label>
                 <Textarea
                   defaultValue={workspace?.businessHours ?? ""}
                   id="business_hours"
                   name="business_hours"
                   placeholder={
-                    "- Thứ 2–Thứ 7: 08:00–20:00\n- Chủ nhật: 08:00–12:00"
+                    "- Mon–Sat: 08:00–20:00\n- Sunday: 08:00–12:00"
                   }
                   rows={5}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="services_summary">Tóm tắt dịch vụ</Label>
+                <Label htmlFor="services_summary">Services summary</Label>
                 <Textarea
                   defaultValue={workspace?.servicesSummary ?? ""}
                   id="services_summary"
                   name="services_summary"
                   placeholder={
-                    "- Consultation 30 phút\n- Khám tổng quát 90 phút"
+                    "- Consultation 30 minutes\n- General checkup 90 minutes"
                   }
                   rows={5}
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="agent_instructions">Hướng dẫn cho agent</Label>
+                <Label htmlFor="agent_instructions">Agent instructions</Label>
                 <Textarea
                   defaultValue={workspace?.agentInstructions ?? ""}
                   id="agent_instructions"
                   name="agent_instructions"
                   placeholder={
-                    "- Giọng điệu, điều không được hứa\n- Quy tắc đặt / hủy lịch\n- Khi nào chuyển sang gọi SĐT"
+                    "- Tone, what not to promise\n- Booking / cancellation rules\n- When to hand off to a phone call"
                   }
                   rows={5}
                 />
                 <p className="text-muted-foreground text-xs">
-                  Ghi chú vận hành riêng — không thay FAQ hỏi–đáp.
+                  Operational notes only — does not replace Q&A FAQ.
                 </p>
               </div>
             </CardContent>
@@ -319,11 +324,11 @@ export function WorkspaceSettingsForm({
           <Card>
             <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
               <div className="space-y-1.5">
-                <CardTitle>Màn hình chat trống</CardTitle>
+                <CardTitle>Empty chat screen</CardTitle>
                 <CardDescription>
-                  Nhãn AI, mô tả và các nút câu hỏi mặc định trên trang đặt lịch.
-                  Để trống / xóa hết gợi ý để dùng nội dung mặc định chung của
-                  Eve.
+                  AI label, description, and default question buttons on the
+                  booking page. Leave blank / remove all suggestions to use Eve’s
+                  shared defaults.
                 </CardDescription>
               </div>
               <Button
@@ -343,7 +348,7 @@ export function WorkspaceSettingsForm({
                 variant="outline"
               >
                 <PlusIcon className="size-4" />
-                Thêm
+                Add
               </Button>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
@@ -355,7 +360,7 @@ export function WorkspaceSettingsForm({
                 )}
               />
               <div className="space-y-2">
-                <Label htmlFor="chat_assistant_label">Nhãn AI (eyebrow)</Label>
+                <Label htmlFor="chat_assistant_label">AI label (eyebrow)</Label>
                 <Input
                   defaultValue={workspace?.chatAssistantLabel ?? ""}
                   id="chat_assistant_label"
@@ -364,7 +369,7 @@ export function WorkspaceSettingsForm({
                 />
               </div>
               <div className="space-y-2 md:row-span-2">
-                <Label htmlFor="chat_intro">Mô tả dưới tên</Label>
+                <Label htmlFor="chat_intro">Description under name</Label>
                 <Textarea
                   defaultValue={workspace?.chatIntro ?? ""}
                   id="chat_intro"
@@ -374,10 +379,10 @@ export function WorkspaceSettingsForm({
                 />
               </div>
               <div className="space-y-3 md:col-span-2">
-                <Label>Câu hỏi mặc định (tối đa {MAX_CHAT_SUGGESTIONS})</Label>
+                <Label>Default questions (max {MAX_CHAT_SUGGESTIONS})</Label>
                 {suggestions.length === 0 ? (
                   <p className="rounded-lg border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
-                    Chưa có gợi ý — sẽ dùng bộ mặc định của Eve khi lưu trống.
+                    No suggestions yet — Eve defaults will be used if you save empty.
                   </p>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -388,10 +393,10 @@ export function WorkspaceSettingsForm({
                       >
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm font-medium">
-                            Gợi ý #{index + 1}
+                            Suggestion #{index + 1}
                           </p>
                           <Button
-                            aria-label="Xóa gợi ý"
+                            aria-label="Remove suggestion"
                             disabled={pending}
                             onClick={() =>
                               setSuggestions((prev) =>
@@ -415,7 +420,7 @@ export function WorkspaceSettingsForm({
                               ),
                             )
                           }
-                          placeholder="Nhãn nút — ví dụ: Giờ mở cửa"
+                          placeholder="Button label — e.g. Opening hours"
                           value={item.label}
                         />
                         <Input
@@ -428,7 +433,7 @@ export function WorkspaceSettingsForm({
                               ),
                             )
                           }
-                          placeholder="Nội dung gửi khi bấm — ví dụ: Giờ mở cửa hôm nay?"
+                          placeholder="Message sent on click — e.g. What are today’s hours?"
                           value={item.prompt}
                         />
                       </div>
@@ -452,27 +457,39 @@ export function WorkspaceSettingsForm({
               }
               type="submit"
             >
-              {pending ? "Đang lưu…" : "Lưu cấu hình"}
+              {pending ? "Saving…" : "Save settings"}
             </Button>
           </div>
         </form>
       </div>
 
       <aside className="flex flex-col gap-6 lg:sticky lg:top-20">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("dashboard.languageCardTitle")}</CardTitle>
+            <CardDescription>
+              {t("dashboard.languageCardBody")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LocaleToggle variant="light" />
+          </CardContent>
+        </Card>
+
         {publicBookingUrl ? (
           <Card>
             <CardHeader>
-              <CardTitle>Trang đặt lịch công khai</CardTitle>
+              <CardTitle>Public booking page</CardTitle>
               <CardDescription>
-                Gắn lên website, bio IG, Zalo hoặc QR. Khách chat và book vào
-                workspace này.
+                Link it on your website, IG bio, Zalo, or QR. Customers chat and
+                book into this workspace.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <CopyBookingLink url={publicBookingUrl} />
               <Button asChild className="w-full" size="sm" variant="secondary">
                 <Link href={publicBookingUrl} target="_blank">
-                  Mở trang đặt lịch
+                  Open booking page
                 </Link>
               </Button>
             </CardContent>
@@ -483,8 +500,8 @@ export function WorkspaceSettingsForm({
           <CardHeader>
             <CardTitle>AI booking meeting type</CardTitle>
             <CardDescription>
-              Meeting type Cal.com mà agent dùng khi check slot / đặt lịch.
-              Quản lý danh sách ở{" "}
+              Cal.com meeting type the agent uses to check slots / book. Manage
+              the list under{" "}
               <Link
                 className="underline underline-offset-4"
                 href="/dashboard/meeting-types"
@@ -497,20 +514,20 @@ export function WorkspaceSettingsForm({
           <CardContent className="space-y-4">
             {meetingTypes.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                Chưa có meeting type. Vào{" "}
+                No meeting types yet. Go to{" "}
                 <Link
                   className="underline underline-offset-4"
                   href="/dashboard/meeting-types"
                 >
                   Meeting types
                 </Link>{" "}
-                để sync hoặc tạo mới.
+                to sync or create one.
               </p>
             ) : (
               <>
                 <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-muted/20 p-3">
                   <span className="text-muted-foreground text-xs uppercase tracking-wide">
-                    Đang dùng
+                    In use
                   </span>
                   {aiRow ? (
                     <div className="space-y-1">
@@ -521,18 +538,18 @@ export function WorkspaceSettingsForm({
                         </Badge>
                       </div>
                       <p className="text-muted-foreground text-xs">
-                        {aiRow.length_minutes} phút · `{aiRow.slug}`
+                        {aiRow.length_minutes} min · `{aiRow.slug}`
                       </p>
                     </div>
                   ) : (
                     <span className="text-sm text-amber-600 dark:text-amber-400">
-                      Chưa chọn
+                      Not selected
                     </span>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="ai-meeting-type">Chọn meeting type</Label>
+                  <Label htmlFor="ai-meeting-type">Select meeting type</Label>
                   <Select
                     disabled={selectPending}
                     value={aiRow?.id ?? undefined}
@@ -548,12 +565,12 @@ export function WorkspaceSettingsForm({
                     }}
                   >
                     <SelectTrigger id="ai-meeting-type">
-                      <SelectValue placeholder="Chọn type cho AI…" />
+                      <SelectValue placeholder="Choose type for AI…" />
                     </SelectTrigger>
                     <SelectContent>
                       {meetingTypes.map((row) => (
                         <SelectItem key={row.id} value={row.id}>
-                          {row.title} ({row.length_minutes} phút)
+                          {row.title} ({row.length_minutes} min)
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -573,11 +590,11 @@ export function WorkspaceSettingsForm({
               form="workspace-settings-form"
               type="submit"
             >
-              {pending ? "Đang lưu…" : "Lưu cấu hình"}
+              {pending ? "Saving…" : "Save settings"}
             </Button>
             <p className="text-muted-foreground text-xs leading-relaxed">
-              Đổi slug sẽ đổi URL công khai. FAQ và meeting types quản lý ở
-              trang riêng.
+              Changing the slug changes the public URL. FAQ and meeting types are
+              managed on their own pages.
             </p>
           </CardContent>
         </Card>

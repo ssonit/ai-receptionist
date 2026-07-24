@@ -28,7 +28,7 @@ async function requireOwnerWorkspace() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Bạn cần đăng nhập." as const };
+  if (!user) return { error: "You need to sign in." as const };
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -37,7 +37,7 @@ async function requireOwnerWorkspace() {
     .maybeSingle();
 
   if (!profile?.workspace_id) {
-    return { error: "Tài khoản chưa được gán workspace." as const };
+    return { error: "Account is not assigned to a workspace." as const };
   }
 
   return { workspaceId: profile.workspace_id as string, userId: user.id };
@@ -51,7 +51,7 @@ export async function saveCalApiKeyAction(
   if ("error" in auth) return { error: auth.error };
 
   const apiKey = String(formData.get("calApiKey") ?? "").trim();
-  if (!apiKey) return { error: "Dán Cal.com API key để tiếp tục." };
+  if (!apiKey) return { error: "Paste a Cal.com API key to continue." };
 
   try {
     const me = await withCalApiKey(apiKey, () => getCalMeProfile());
@@ -71,13 +71,13 @@ export async function saveCalApiKeyAction(
     if (error) return { error: error.message };
 
     revalidatePath("/dashboard/setup");
-    return { success: `Đã kết nối Cal.com · @${me.username}` };
+    return { success: `Connected Cal.com · @${me.username}` };
   } catch (error) {
     return {
       error:
         error instanceof Error
           ? error.message
-          : "Không xác minh được API key Cal.com",
+          : "Could not verify Cal.com API key",
     };
   }
 }
@@ -94,7 +94,7 @@ export async function syncSetupMeetingTypesAction(): Promise<SetupActionState> {
     if (remote.length === 0) {
       return {
         error:
-          "Chưa có meeting type trên Cal.com. Tạo một event type rồi Sync lại.",
+          "No meeting types on Cal.com. Create an event type, then Sync again.",
       };
     }
 
@@ -115,10 +115,10 @@ export async function syncSetupMeetingTypesAction(): Promise<SetupActionState> {
     if (error) return { error: error.message };
 
     revalidatePath("/dashboard/setup");
-    return { success: `Đã sync ${remote.length} meeting type.` };
+    return { success: `Synced ${remote.length} meeting type${remote.length === 1 ? "" : "s"}.` };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Sync thất bại",
+      error: error instanceof Error ? error.message : "Sync failed",
     };
   }
 }
@@ -145,7 +145,7 @@ export async function saveSetupProfileAction(
   );
   const about = String(formData.get("about") ?? "").trim();
 
-  if (!name) return { error: "Tên workspace là bắt buộc." };
+  if (!name) return { error: "Workspace name is required." };
   if (!slug) slug = slugifyWorkspaceName(name);
   slug = slugifyWorkspaceName(slug);
 
@@ -158,7 +158,7 @@ export async function saveSetupProfileAction(
     .maybeSingle();
 
   if (clash) {
-    return { error: `Slug “${slug}” đã được dùng. Chọn slug khác.` };
+    return { error: `Slug “${slug}” is already taken. Choose another.` };
   }
 
   const { error } = await admin
@@ -169,7 +169,7 @@ export async function saveSetupProfileAction(
   if (error) return { error: error.message };
 
   revalidatePath("/dashboard/setup");
-  return { success: "Đã lưu hồ sơ workspace." };
+  return { success: "Workspace profile saved." };
 }
 
 export async function completeSetupAction(): Promise<SetupActionState> {
@@ -178,10 +178,10 @@ export async function completeSetupAction(): Promise<SetupActionState> {
 
   const ws = await getWorkspaceById(auth.workspaceId);
   if (!ws?.has_cal_key) {
-    return { error: "Chưa kết nối Cal.com API key." };
+    return { error: "Cal.com API key is not connected." };
   }
   if (!ws.cal_event_type_id) {
-    return { error: "Chưa chọn meeting type cho AI booking." };
+    return { error: "AI booking meeting type is not selected." };
   }
 
   const admin = createAdminClient();

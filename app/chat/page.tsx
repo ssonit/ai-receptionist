@@ -1,5 +1,6 @@
 import { WorkspaceBookingPage } from "@/app/_components/workspace-booking-page";
 import { createClient } from "@/lib/supabase/server";
+import { readGuestLocale } from "@/lib/read-locale-cookie";
 import {
   getDefaultWorkspaceId,
   getPublicBookingWorkspace,
@@ -11,6 +12,7 @@ import {
  * Same chat UI as tenant booking `/b/[slug]`, with a demo banner.
  */
 export default async function ChatPage() {
+  const initialLocale = await readGuestLocale();
   const tenant = await getWorkspaceById(getDefaultWorkspaceId());
   const workspace = tenant?.slug
     ? await getPublicBookingWorkspace(tenant.slug)
@@ -36,15 +38,20 @@ export default async function ChatPage() {
   if (!workspace?.setupCompletedAt) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-black px-6 text-center text-zinc-300">
-        <p className="text-sm">Demo Eve Pilot chưa sẵn sàng.</p>
+        <p className="text-sm">Eve Pilot demo isn&apos;t ready yet.</p>
         <a className="text-sm text-teal-200 underline-offset-2 hover:underline" href="/">
-          Về trang chủ
+          Back to home
         </a>
       </div>
     );
   }
 
   return (
-    <WorkspaceBookingPage demoMode user={chatUser} workspace={workspace} />
+    <WorkspaceBookingPage
+      demoMode
+      initialLocale={initialLocale}
+      user={chatUser}
+      workspace={workspace}
+    />
   );
 }

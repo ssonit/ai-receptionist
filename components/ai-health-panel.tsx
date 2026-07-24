@@ -46,7 +46,7 @@ export function AiHealthPanel({
           <CardTitle className="flex items-center gap-2">
             AI health
             {hasBlocking ? (
-              <Badge variant="destructive">Cần xử lý</Badge>
+              <Badge variant="destructive">Needs attention</Badge>
             ) : (
               <Badge
                 variant="outline"
@@ -58,8 +58,8 @@ export function AiHealthPanel({
             )}
           </CardTitle>
           <CardDescription>
-            Cấu hình agent + lỗi tool gần đây. Không thay thế log đầy đủ của Eve
-            runtime.
+            Agent config + recent tool errors. Does not replace full Eve
+            runtime logs.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -83,7 +83,7 @@ export function AiHealthPanel({
                         className="mt-2 inline-block underline underline-offset-4"
                         href={alert.href}
                       >
-                        Mở trang liên quan
+                        Open related page
                       </Link>
                     ) : null}
                   </div>
@@ -98,7 +98,7 @@ export function AiHealthPanel({
         <Card>
           <CardHeader>
             <CardTitle>Lead funnel</CardTitle>
-            <CardDescription>Phân bố status trong khoảng đang xem.</CardDescription>
+            <CardDescription>Status distribution for the selected range.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {LEAD_STATUSES.map((status) => {
@@ -127,16 +127,16 @@ export function AiHealthPanel({
 
         <Card>
           <CardHeader>
-            <CardTitle>Lỗi tool (24h)</CardTitle>
+            <CardTitle>Tool errors (24h)</CardTitle>
             <CardDescription>
-              Từ `agent_tool_events` — check_availability / book_appointment /
+              From `agent_tool_events` — check_availability / book_appointment /
               log_lead.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {toolErrors.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                Không có lỗi tool trong 24 giờ qua.
+                No tool errors in the last 24 hours.
               </p>
             ) : (
               <ul className="divide-y rounded-lg border">
@@ -147,7 +147,7 @@ export function AiHealthPanel({
                         {row.tool_name}
                       </Badge>
                       <span className="text-muted-foreground text-xs">
-                        {new Date(row.created_at).toLocaleString("vi-VN", {
+                        {new Date(row.created_at).toLocaleString("en-US", {
                           dateStyle: "short",
                           timeStyle: "short",
                         })}

@@ -96,10 +96,11 @@ export function FaqSettingsForm({ faq, previewMarkdown }: FaqSettingsFormProps) 
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
             <div className="space-y-1.5">
-              <CardTitle>Nội dung FAQ</CardTitle>
+              <CardTitle>FAQ content</CardTitle>
               <CardDescription>
-                Mỗi mục là một câu hỏi / câu trả lời. Agent load qua skill{" "}
-                <code>booking_faq</code> mỗi lượt chat. Tối đa {MAX_FAQ_ITEMS} mục.
+                Each item is a question / answer. The agent loads them via the{" "}
+                <code>booking_faq</code> skill on every chat turn. Max{" "}
+                {MAX_FAQ_ITEMS} items.
               </CardDescription>
             </div>
             <Button
@@ -110,13 +111,13 @@ export function FaqSettingsForm({ faq, previewMarkdown }: FaqSettingsFormProps) 
               variant="outline"
             >
               <PlusIcon className="size-4" />
-              Thêm FAQ
+              Add FAQ
             </Button>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
             {items.length === 0 ? (
               <p className="rounded-lg border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
-                Chưa có FAQ. Bấm “Thêm FAQ” để tạo mục đầu tiên.
+                No FAQ yet. Click “Add FAQ” to create the first item.
               </p>
             ) : (
               items.map((item, index) => (
@@ -128,7 +129,7 @@ export function FaqSettingsForm({ faq, previewMarkdown }: FaqSettingsFormProps) 
                     <p className="text-sm font-medium">FAQ #{index + 1}</p>
                     <div className="flex items-center gap-1">
                       <Button
-                        aria-label="Di chuyển lên"
+                        aria-label="Move up"
                         disabled={pending || index === 0}
                         onClick={() => moveItem(index, -1)}
                         size="icon-sm"
@@ -138,7 +139,7 @@ export function FaqSettingsForm({ faq, previewMarkdown }: FaqSettingsFormProps) 
                         <ArrowUpIcon className="size-4" />
                       </Button>
                       <Button
-                        aria-label="Di chuyển xuống"
+                        aria-label="Move down"
                         disabled={pending || index === items.length - 1}
                         onClick={() => moveItem(index, 1)}
                         size="icon-sm"
@@ -148,7 +149,7 @@ export function FaqSettingsForm({ faq, previewMarkdown }: FaqSettingsFormProps) 
                         <ArrowDownIcon className="size-4" />
                       </Button>
                       <Button
-                        aria-label="Xóa FAQ"
+                        aria-label="Delete FAQ"
                         disabled={pending}
                         onClick={() => removeItem(item.key)}
                         size="icon-sm"
@@ -160,24 +161,24 @@ export function FaqSettingsForm({ faq, previewMarkdown }: FaqSettingsFormProps) 
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`question-${item.key}`}>Câu hỏi</Label>
+                    <Label htmlFor={`question-${item.key}`}>Question</Label>
                     <Input
                       id={`question-${item.key}`}
                       onChange={(e) =>
                         updateItem(item.key, "question", e.target.value)
                       }
-                      placeholder="Ví dụ: Giờ mở cửa?"
+                      placeholder="e.g. Opening hours?"
                       value={item.question}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`answer-${item.key}`}>Câu trả lời</Label>
+                    <Label htmlFor={`answer-${item.key}`}>Answer</Label>
                     <Textarea
                       id={`answer-${item.key}`}
                       onChange={(e) =>
                         updateItem(item.key, "answer", e.target.value)
                       }
-                      placeholder="Markdown bullets được hỗ trợ — ví dụ: - Thứ 2–Thứ 7: 08:00–20:00"
+                      placeholder="Markdown bullets supported — e.g. - Mon–Sat: 08:00–20:00"
                       rows={3}
                       value={item.answer}
                     />
@@ -201,10 +202,10 @@ export function FaqSettingsForm({ faq, previewMarkdown }: FaqSettingsFormProps) 
 
         <div className="flex items-center gap-3">
           <Button disabled={pending} type="submit">
-            {pending ? "Đang lưu…" : "Lưu FAQ"}
+            {pending ? "Saving…" : "Save FAQ"}
           </Button>
           <p className="text-sm text-muted-foreground">
-            Thay đổi có hiệu lực ngay ở lượt chat tiếp theo.
+            Changes take effect on the next chat turn.
           </p>
         </div>
       </form>
@@ -214,7 +215,7 @@ export function FaqSettingsForm({ faq, previewMarkdown }: FaqSettingsFormProps) 
           <CardHeader>
             <CardTitle className="text-base">Preview skill</CardTitle>
             <CardDescription>
-              Nội dung agent nhận qua <code>booking_faq</code> sau khi lưu.
+              Content the agent receives via <code>booking_faq</code> after saving.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 function formatWhen(iso: string) {
-  return new Date(iso).toLocaleString("vi-VN", {
+  return new Date(iso).toLocaleString("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
   });
@@ -71,7 +71,7 @@ export function NotificationsInbox({
       const res = await fetch(
         `/api/dashboard/notifications?${params.toString()}`,
       );
-      if (!res.ok) throw new Error("Không tải được thông báo");
+      if (!res.ok) throw new Error("Failed to load notifications");
       const data = (await res.json()) as {
         items: NotificationRow[];
         nextCursor: NotificationCursor | null;
@@ -98,7 +98,7 @@ export function NotificationsInbox({
         await loadPage({ view: next, group, append: false });
       } catch (error) {
         toast.error(
-          error instanceof Error ? error.message : "Không tải được thông báo",
+          error instanceof Error ? error.message : "Failed to load notifications",
         );
       }
     });
@@ -111,7 +111,7 @@ export function NotificationsInbox({
         await loadPage({ view, group: next, append: false });
       } catch (error) {
         toast.error(
-          error instanceof Error ? error.message : "Không tải được thông báo",
+          error instanceof Error ? error.message : "Failed to load notifications",
         );
       }
     });
@@ -150,7 +150,7 @@ export function NotificationsInbox({
           <div className="bg-muted inline-flex rounded-lg p-0.5">
             {(
               [
-                ["all", "Tất cả"],
+                ["all", "All"],
                 ["leads", "Leads"],
                 ["bookings", "Bookings"],
                 ["ai", "AI"],
@@ -182,7 +182,7 @@ export function NotificationsInbox({
               const result = await markAllNotificationsReadAction();
               if (result.error) toast.error(result.error);
               else {
-                toast.success("Đã đánh dấu tất cả đã đọc");
+                toast.success("Marked all as read");
                 router.refresh();
                 try {
                   await loadPage({ view, group, append: false });
@@ -193,15 +193,15 @@ export function NotificationsInbox({
             });
           }}
         >
-          Đánh dấu đã đọc hết
+          Mark all as read
         </Button>
       </div>
 
       {items.length === 0 ? (
         <p className="text-muted-foreground rounded-xl border px-4 py-12 text-center text-sm">
           {view === "unread"
-            ? "Không còn thông báo chưa đọc."
-            : "Chưa có thông báo."}
+            ? "No unread notifications."
+            : "No notifications yet."}
         </p>
       ) : (
         <>
@@ -237,7 +237,7 @@ export function NotificationsInbox({
                     </Badge>
                     {!item.read_at ? (
                       <Badge variant="secondary" className="text-[10px]">
-                        Mới
+                        New
                       </Badge>
                     ) : null}
                   </div>
@@ -254,7 +254,7 @@ export function NotificationsInbox({
                         href={item.href}
                         onClick={(e) => e.stopPropagation()}
                       >
-                        Mở liên kết
+                        Open link
                       </Link>
                     ) : null}
                   </div>
@@ -283,7 +283,7 @@ export function NotificationsInbox({
                       toast.error(
                         error instanceof Error
                           ? error.message
-                          : "Không tải thêm được",
+                          : "Failed to load more",
                       );
                     } finally {
                       setLoadingMore(false);
@@ -291,7 +291,7 @@ export function NotificationsInbox({
                   })();
                 }}
               >
-                {loadingMore ? "Đang tải…" : "Xem thêm"}
+                {loadingMore ? "Loading…" : "Load more"}
               </Button>
             </div>
           ) : null}

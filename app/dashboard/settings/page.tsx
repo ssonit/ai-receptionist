@@ -73,8 +73,8 @@ export default async function SettingsPage() {
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
           <p className="text-sm text-muted-foreground">
-            Hồ sơ workspace, màn hình chat, link đặt lịch công khai và meeting
-            type cho AI.
+            Workspace profile, chat screen, public booking link, and meeting
+            type for AI.
           </p>
         </div>
         <WorkspaceSettingsForm

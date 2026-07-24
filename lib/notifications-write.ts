@@ -149,13 +149,13 @@ export async function createToolErrorNotificationDebounced(input: {
       .maybeSingle();
 
     if (unread?.id) {
-      const match = /^Lần (\d+)\s*·/.exec(unread.body ?? "");
+      const match = /^Attempt (\d+)\s*·/.exec(unread.body ?? "");
       const nextCount = match ? Number(match[1]) + 1 : 2;
       const { error } = await supabase
         .from("notifications")
         .update({
-          body: `Lần ${nextCount} · ${errorText}`,
-          title: `Lỗi tool: ${input.toolName}`,
+          body: `Attempt ${nextCount} · ${errorText}`,
+          title: `Tool error: ${input.toolName}`,
           severity: "high",
           created_at: new Date().toISOString(),
         })
@@ -172,7 +172,7 @@ export async function createToolErrorNotificationDebounced(input: {
 
     await createNotificationDebounced({
       type: "tool_error",
-      title: `Lỗi tool: ${input.toolName}`,
+      title: `Tool error: ${input.toolName}`,
       body: errorText,
       severity: "high",
       href: "/dashboard/conversations",

@@ -17,7 +17,7 @@ async function requireWorkspaceId() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Bạn cần đăng nhập." as const };
+  if (!user) return { error: "You need to sign in." as const };
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -26,7 +26,7 @@ async function requireWorkspaceId() {
     .maybeSingle();
 
   if (!profile?.workspace_id) {
-    return { error: "Tài khoản chưa được gán workspace." as const };
+    return { error: "Account is not assigned to a workspace." as const };
   }
 
   return { supabase, workspaceId: profile.workspace_id as string };
@@ -46,28 +46,28 @@ function parseSuggestionsFromForm(
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return { error: "Dữ liệu câu hỏi gợi ý không hợp lệ." };
+    return { error: "Invalid suggestion data." };
   }
 
   if (!Array.isArray(parsed)) {
-    return { error: "Dữ liệu câu hỏi gợi ý không hợp lệ." };
+    return { error: "Invalid suggestion data." };
   }
 
   if (parsed.length > MAX_CHAT_SUGGESTIONS) {
-    return { error: `Tối đa ${MAX_CHAT_SUGGESTIONS} câu hỏi gợi ý.` };
+    return { error: `Maximum ${MAX_CHAT_SUGGESTIONS} suggestions.` };
   }
 
   const items: ChatSuggestion[] = [];
   for (let i = 0; i < parsed.length; i++) {
     const entry = parsed[i];
     if (!entry || typeof entry !== "object") {
-      return { error: `Câu hỏi gợi ý #${i + 1} không hợp lệ.` };
+      return { error: `Suggestion #${i + 1} is invalid.` };
     }
     const label = String((entry as { label?: unknown }).label ?? "").trim();
     const prompt = String((entry as { prompt?: unknown }).prompt ?? "").trim();
     if (!label || !prompt) {
       return {
-        error: `Câu hỏi gợi ý #${i + 1}: cần cả nhãn nút và nội dung gửi.`,
+        error: `Suggestion #${i + 1}: both button label and message are required.`,
       };
     }
     items.push({ label, prompt });
@@ -86,8 +86,8 @@ export async function saveWorkspaceSettings(
   const timezone = String(formData.get("timezone") ?? "").trim();
   let slug = String(formData.get("slug") ?? "").trim();
 
-  if (!name) return { error: "Tên workspace là bắt buộc." };
-  if (!timezone) return { error: "Timezone là bắt buộc." };
+  if (!name) return { error: "Workspace name is required." };
+  if (!timezone) return { error: "Timezone is required." };
 
   const canonicalTimezone = canonicalizeTimezone(timezone);
 
@@ -105,7 +105,7 @@ export async function saveWorkspaceSettings(
     .maybeSingle();
 
   if (taken) {
-    return { error: `Slug “${slug}” đã được dùng. Chọn slug khác.` };
+    return { error: `Slug “${slug}” is already taken. Choose another.` };
   }
 
   const { error } = await auth.supabase
@@ -134,7 +134,7 @@ export async function saveWorkspaceSettings(
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard/faq");
   revalidatePath(`/b/${slug}`);
-  return { success: "Đã lưu cấu hình workspace." };
+  return { success: "Workspace settings saved." };
 }
 
 export async function checkWorkspaceSlugAvailable(
@@ -142,7 +142,7 @@ export async function checkWorkspaceSlugAvailable(
 ): Promise<{ available: boolean; slug: string; message: string }> {
   const auth = await requireWorkspaceId();
   if ("error" in auth) {
-    return { available: false, slug: "", message: auth.error ?? "Lỗi xác thực." };
+    return { available: false, slug: "", message: auth.error ?? "Authentication error." };
   }
 
   const slug = slugifyWorkspaceName(slugRaw);
@@ -150,7 +150,7 @@ export async function checkWorkspaceSlugAvailable(
     return {
       available: false,
       slug,
-      message: "Slug cần ít nhất 2 ký tự (a-z, 0-9).",
+      message: "Slug needs at least 2 characters (a-z, 0-9).",
     };
   }
 
@@ -165,7 +165,7 @@ export async function checkWorkspaceSlugAvailable(
     return {
       available: true,
       slug,
-      message: `“${slug}” đang là slug của bạn.`,
+      message: `“${slug}” is already your slug.`,
     };
   }
 
@@ -180,13 +180,13 @@ export async function checkWorkspaceSlugAvailable(
     return {
       available: false,
       slug,
-      message: `“${slug}” đã được dùng. Chọn slug khác.`,
+      message: `“${slug}” is already taken. Choose another.`,
     };
   }
 
   return {
     available: true,
     slug,
-    message: `“${slug}” có thể dùng.`,
+    message: `“${slug}” is available.`,
   };
 }

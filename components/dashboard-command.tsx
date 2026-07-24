@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   IconCalendarEvent,
   IconChartBar,
@@ -16,6 +17,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { useDashboardCommand } from "@/components/dashboard-command-context";
+import { useOptionalAppLocale } from "@/components/locale-provider";
 import {
   CommandDialog,
   CommandEmpty,
@@ -25,23 +27,6 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-
-const PAGES_BASE = [
-  { title: "Dashboard", href: "/dashboard", icon: IconDashboard },
-  { title: "Bookings", href: "/dashboard/bookings", icon: IconCalendarEvent },
-  { title: "Meeting types", href: "/dashboard/meeting-types", icon: IconTags },
-  { title: "FAQ", href: "/dashboard/faq", icon: IconQuestionMark },
-  { title: "Leads", href: "/dashboard/leads", icon: IconUsers },
-  {
-    title: "Conversations",
-    href: "/dashboard/conversations",
-    icon: IconMessage,
-  },
-  { title: "Analytics", href: "/dashboard/analytics", icon: IconChartBar },
-  { title: "Settings", href: "/dashboard/settings", icon: IconSettings },
-  { title: "Get Help", href: "/dashboard/help", icon: IconHelp },
-  { title: "Account", href: "/dashboard/account", icon: IconUser },
-] as const;
 
 type LeadHit = {
   id: string;
@@ -65,6 +50,9 @@ export function DashboardCommand({
 }: {
   bookingPagePath?: string;
 }) {
+  const t = useTranslations();
+  const localeCtx = useOptionalAppLocale();
+  const dateLocale = localeCtx?.locale === "vi" ? "vi-VN" : "en-US";
   const router = useRouter();
   const { open, setOpen } = useDashboardCommand();
   const [query, setQuery] = React.useState("");
@@ -74,14 +62,47 @@ export function DashboardCommand({
 
   const pages = React.useMemo(
     () => [
-      ...PAGES_BASE,
       {
-        title: "Booking page",
+        title: t("dashboard.nav.dashboard"),
+        href: "/dashboard",
+        icon: IconDashboard,
+      },
+      {
+        title: t("dashboard.nav.bookings"),
+        href: "/dashboard/bookings",
+        icon: IconCalendarEvent,
+      },
+      {
+        title: t("dashboard.nav.meetingTypes"),
+        href: "/dashboard/meeting-types",
+        icon: IconTags,
+      },
+      { title: t("dashboard.nav.faq"), href: "/dashboard/faq", icon: IconQuestionMark },
+      { title: t("dashboard.nav.leads"), href: "/dashboard/leads", icon: IconUsers },
+      {
+        title: t("dashboard.nav.conversations"),
+        href: "/dashboard/conversations",
+        icon: IconMessage,
+      },
+      {
+        title: t("dashboard.nav.analytics"),
+        href: "/dashboard/analytics",
+        icon: IconChartBar,
+      },
+      {
+        title: t("dashboard.settings"),
+        href: "/dashboard/settings",
+        icon: IconSettings,
+      },
+      { title: t("dashboard.getHelp"), href: "/dashboard/help", icon: IconHelp },
+      { title: t("dashboard.account"), href: "/dashboard/account", icon: IconUser },
+      {
+        title: t("dashboard.bookingPage"),
         href: bookingPagePath,
         icon: IconMessageChatbot,
       },
     ],
-    [bookingPagePath],
+    [bookingPagePath, t],
   );
 
   React.useEffect(() => {
@@ -139,19 +160,19 @@ export function DashboardCommand({
     <CommandDialog
       open={open}
       onOpenChange={setOpen}
-      title="Search"
-      description="Jump to pages or find leads and bookings"
+      title={t("dashboard.search")}
+      description={t("dashboard.searchDescription")}
     >
       <CommandInput
-        placeholder="Tìm trang, lead, booking…"
+        placeholder={t("dashboard.searchPlaceholder")}
         value={query}
         onValueChange={setQuery}
       />
       <CommandList>
         <CommandEmpty>
-          {searching ? "Đang tìm…" : "Không có kết quả."}
+          {searching ? t("dashboard.searching") : t("dashboard.noResults")}
         </CommandEmpty>
-        <CommandGroup heading="Pages">
+        <CommandGroup heading={t("dashboard.pages")}>
           {pages.map((page) => (
             <CommandItem
               key={page.href}
@@ -166,7 +187,7 @@ export function DashboardCommand({
         {leads.length > 0 ? (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Leads">
+            <CommandGroup heading={t("dashboard.nav.leads")}>
               {leads.map((lead) => (
                 <CommandItem
                   key={lead.id}
@@ -175,7 +196,7 @@ export function DashboardCommand({
                 >
                   <IconUsers />
                   <span className="truncate">
-                    {lead.full_name || "Lead"}
+                    {lead.full_name || t("dashboard.nav.leads")}
                     {lead.phone ? ` · ${lead.phone}` : ""}
                   </span>
                 </CommandItem>
@@ -186,7 +207,7 @@ export function DashboardCommand({
         {bookings.length > 0 ? (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Bookings">
+            <CommandGroup heading={t("dashboard.nav.bookings")}>
               {bookings.map((booking) => (
                 <CommandItem
                   key={booking.id}
@@ -197,7 +218,7 @@ export function DashboardCommand({
                   <span className="truncate">
                     {booking.guest_name}
                     {booking.start_time
-                      ? ` · ${new Date(booking.start_time).toLocaleString("vi-VN", {
+                      ? ` · ${new Date(booking.start_time).toLocaleString(dateLocale, {
                           dateStyle: "short",
                           timeStyle: "short",
                         })}`

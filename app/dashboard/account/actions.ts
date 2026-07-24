@@ -14,10 +14,10 @@ export async function updateAccountNameAction(
 ): Promise<AccountActionState> {
   const fullName = String(formData.get("fullName") ?? "").trim();
   if (!fullName) {
-    return { error: "Tên không được để trống." };
+    return { error: "Name cannot be empty." };
   }
   if (fullName.length > 120) {
-    return { error: "Tên tối đa 120 ký tự." };
+    return { error: "Name must be at most 120 characters." };
   }
 
   const supabase = await createClient();
@@ -26,7 +26,7 @@ export async function updateAccountNameAction(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "Bạn cần đăng nhập." };
+    return { error: "You need to sign in." };
   }
 
   const { error } = await supabase
@@ -41,5 +41,5 @@ export async function updateAccountNameAction(
   revalidatePath("/dashboard/account");
   revalidatePath("/dashboard", "layout");
 
-  return { success: "Đã cập nhật tên hiển thị." };
+  return { success: "Display name updated." };
 }

@@ -22,7 +22,7 @@ async function requireWorkspaceId() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return { error: "Bạn cần đăng nhập." as const };
+    return { error: "You need to sign in." as const };
   }
 
   const { data: profile } = await supabase
@@ -32,7 +32,7 @@ async function requireWorkspaceId() {
     .maybeSingle();
 
   if (!profile?.workspace_id) {
-    return { error: "Tài khoản chưa được gán workspace." as const };
+    return { error: "Account is not assigned to a workspace." as const };
   }
 
   return { workspaceId: profile.workspace_id as string, userId: user.id };
@@ -138,12 +138,12 @@ export async function syncMeetingTypesAction(): Promise<MeetingTypesActionState>
     return {
       success:
         remote.length > 0
-          ? `Đã sync ${remote.length} meeting type từ Cal.com.`
-          : "Cal.com không có meeting type nào.",
+          ? `Synced ${remote.length} meeting type${remote.length === 1 ? "" : "s"} from Cal.com.`
+          : "Cal.com has no meeting types.",
     };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Sync meeting types thất bại",
+      error: error instanceof Error ? error.message : "Failed to sync meeting types",
     };
   }
 }
@@ -161,14 +161,14 @@ export async function createMeetingTypeAction(
   const description = String(formData.get("description") ?? "").trim();
   const location = String(formData.get("location") ?? "cal-video").trim();
 
-  if (!title) return { error: "Title là bắt buộc." };
+  if (!title) return { error: "Title is required." };
   if (!Number.isFinite(lengthMinutes) || lengthMinutes < 1) {
-    return { error: "Duration không hợp lệ." };
+    return { error: "Invalid duration." };
   }
 
   const allowedLocations = new Set(["cal-video", "google-meet"]);
   if (!allowedLocations.has(location)) {
-    return { error: "Location không hợp lệ." };
+    return { error: "Invalid location." };
   }
 
   const slug =
@@ -213,12 +213,12 @@ export async function createMeetingTypeAction(
     revalidateMeetingTypePaths();
     return {
       success: makeAi
-        ? `Đã tạo “${created.title}” và chọn làm AI booking.`
-        : `Đã tạo “${created.title}” trên Cal.com.`,
+        ? `Created “${created.title}” and set as AI booking.`
+        : `Created “${created.title}” on Cal.com.`,
     };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Tạo meeting type thất bại",
+      error: error instanceof Error ? error.message : "Failed to create meeting type",
     };
   }
 }
@@ -239,7 +239,7 @@ export async function setAiBookingMeetingTypeAction(
       .maybeSingle();
 
     if (error) return { error: error.message };
-    if (!row) return { error: "Không tìm thấy meeting type." };
+    if (!row) return { error: "Meeting type not found." };
 
     await setAiBookingOnWorkspace(auth.workspaceId, {
       cal_event_type_id: row.cal_event_type_id,
@@ -247,13 +247,13 @@ export async function setAiBookingMeetingTypeAction(
     });
 
     revalidateMeetingTypePaths();
-    return { success: `AI booking dùng “${row.title}”.` };
+    return { success: `AI booking uses “${row.title}”.` };
   } catch (error) {
     return {
       error:
         error instanceof Error
           ? error.message
-          : "Không chọn được AI booking meeting type",
+          : "Could not set AI booking meeting type",
     };
   }
 }

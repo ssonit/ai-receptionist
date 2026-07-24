@@ -14,26 +14,26 @@ export default async function HelpPage() {
 
   const steps = [
     {
-      title: "1. Cấu hình workspace",
-      body: "Settings: thông tin doanh nghiệp, meeting type cho AI, hướng dẫn agent.",
+      title: "1. Configure workspace",
+      body: "Settings: business info, AI meeting type, and agent instructions.",
       href: "/dashboard/settings",
       label: "Settings",
     },
     {
       title: "2. Meeting types & FAQ",
-      body: "Đồng bộ / tạo meeting type trên Cal.com; thêm Q&A để chat trả lời đúng.",
+      body: "Sync / create meeting types on Cal.com; add Q&A so chat answers correctly.",
       href: "/dashboard/meeting-types",
       label: "Meeting types",
     },
     {
-      title: "3. Trang đặt lịch công khai",
-      body: "Gắn /b/{slug} lên website hoặc bio. Khách chat → Conversations / Leads / Bookings.",
+      title: "3. Public booking page",
+      body: "Add /b/{slug} to your website or bio. Customer chats → Conversations / Leads / Bookings.",
       href: bookingHref,
       label: "Booking page",
     },
     {
-      title: "4. Vận hành",
-      body: "Leads & Bookings để follow-up; Analytics / Conversations để đánh giá AI.",
+      title: "4. Operations",
+      body: "Use Leads & Bookings for follow-up; Analytics / Conversations to evaluate the AI.",
       href: "/dashboard/leads",
       label: "Leads",
     },
@@ -44,8 +44,8 @@ export default async function HelpPage() {
       <div className="flex flex-col gap-6 py-4 md:gap-8 md:py-6">
         <div className="px-4 lg:px-6">
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Hướng dẫn nhanh cho staff. Dùng <kbd className="rounded border px-1 text-xs">⌘K</kbd> /{" "}
-            <kbd className="rounded border px-1 text-xs">Ctrl+K</kbd> để tìm trang hoặc lead/booking.
+            Quick guide for staff. Use <kbd className="rounded border px-1 text-xs">⌘K</kbd> /{" "}
+            <kbd className="rounded border px-1 text-xs">Ctrl+K</kbd> to find pages or leads/bookings.
           </p>
           <div className="mt-4">
             <Button asChild>
@@ -76,7 +76,7 @@ export default async function HelpPage() {
 
         <div className="text-muted-foreground px-4 text-xs lg:px-6">
           <p>
-            Thêm:{" "}
+            More:{" "}
             <Link className="underline underline-offset-4" href="/dashboard/faq">
               FAQ
             </Link>

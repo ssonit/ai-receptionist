@@ -18,29 +18,29 @@ function parseFaqItems(formData: FormData): FaqItemInput[] | { error: string } {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return { error: "Dữ liệu FAQ không hợp lệ." };
+    return { error: "Invalid FAQ data." };
   }
 
   if (!Array.isArray(parsed)) {
-    return { error: "Dữ liệu FAQ không hợp lệ." };
+    return { error: "Invalid FAQ data." };
   }
 
   if (parsed.length > MAX_FAQ_ITEMS) {
-    return { error: `Tối đa ${MAX_FAQ_ITEMS} FAQ mỗi workspace.` };
+    return { error: `Maximum ${MAX_FAQ_ITEMS} FAQ items per workspace.` };
   }
 
   const items: FaqItemInput[] = [];
   for (let i = 0; i < parsed.length; i++) {
     const entry = parsed[i];
     if (!entry || typeof entry !== "object") {
-      return { error: `FAQ #${i + 1} không hợp lệ.` };
+      return { error: `FAQ #${i + 1} is invalid.` };
     }
     const question = String(
       (entry as { question?: unknown }).question ?? "",
     ).trim();
     const answer = String((entry as { answer?: unknown }).answer ?? "").trim();
     if (!question || !answer) {
-      return { error: `FAQ #${i + 1}: câu hỏi và câu trả lời đều bắt buộc.` };
+      return { error: `FAQ #${i + 1}: question and answer are both required.` };
     }
     items.push({ question, answer });
   }
@@ -58,7 +58,7 @@ export async function saveFaqSettings(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "Bạn cần đăng nhập." };
+    return { error: "You need to sign in." };
   }
 
   const { data: profile } = await supabase
@@ -69,7 +69,7 @@ export async function saveFaqSettings(
 
   const workspaceId = profile?.workspace_id;
   if (!workspaceId) {
-    return { error: "Tài khoản chưa được gán workspace." };
+    return { error: "Account is not assigned to a workspace." };
   }
 
   const parsedItems = parseFaqItems(formData);
@@ -104,5 +104,7 @@ export async function saveFaqSettings(
   }
 
   revalidatePath("/dashboard/faq");
-  return { success: "Đã lưu FAQ. Agent sẽ dùng nội dung mới ở lượt chat tiếp theo." };
+  return {
+    success: "FAQ saved. The agent will use the new content on the next chat turn.",
+  };
 }

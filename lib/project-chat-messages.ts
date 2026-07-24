@@ -21,7 +21,7 @@ export function projectEveMessages(
       const role = m.role as "user" | "assistant" | "system";
       return {
         role,
-        content: text || (role === "assistant" ? "(không có text)" : ""),
+        content: text || (role === "assistant" ? "(no text)" : ""),
         eve_message_id: m.id,
         raw: { id: m.id, role: m.role, parts: m.parts },
       };

@@ -19,38 +19,38 @@ export default async function AnalyticsPage() {
     {
       label: `Bookings (${rangeDays}d)`,
       value: String(kpis.bookingsInRange),
-      delta: `${kpis.chatBookingsInRange} qua chat`,
+      delta: `${kpis.chatBookingsInRange} via chat`,
       trend: kpis.bookingsInRange > 0 ? "up" : "down",
-      footnote: "Booking mới trong khoảng",
-      detail: "Mirrored từ Cal.com / agent",
+      footnote: "New bookings in range",
+      detail: "Mirrored from Cal.com / agent",
     },
     {
       label: `Leads (${rangeDays}d)`,
       value: String(kpis.leadsInRange),
       delta: `${kpis.bookedLeadsInRange} booked`,
       trend: kpis.leadsInRange > 0 ? "up" : "down",
-      footnote: "Lead từ log_lead",
-      detail: "Xem funnel bên dưới",
+      footnote: "Leads from log_lead",
+      detail: "See funnel below",
     },
     {
       label: "Lead → booked",
       value: `${kpis.conversionPct}%`,
       delta:
         kpis.conversionPct >= 15
-          ? "Ổn"
+          ? "Healthy"
           : kpis.leadsInRange >= 5
-            ? "Thấp"
-            : "Ít data",
+            ? "Low"
+            : "Sparse data",
       trend: kpis.conversionPct >= 15 ? "up" : "down",
-      footnote: "Tỷ lệ chuyển đổi lead",
-      detail: "booked / tổng lead trong khoảng",
+      footnote: "Lead conversion rate",
+      detail: "booked / total leads in range",
     },
     {
       label: "Cancelled",
       value: String(kpis.cancelledBookingsInRange),
-      delta: kpis.cancelledBookingsInRange ? "Cần xem" : "OK",
+      delta: kpis.cancelledBookingsInRange ? "Needs review" : "OK",
       trend: kpis.cancelledBookingsInRange ? "down" : "up",
-      footnote: "Booking hủy trong khoảng",
+      footnote: "Cancelled bookings in range",
       detail: "status cancelled / rejected",
     },
   ];
@@ -61,8 +61,8 @@ export default async function AnalyticsPage() {
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <div className="px-4 lg:px-6">
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Funnel, trend thật, và AI health (cấu hình + lỗi tool). Overview
-              dashboard giữ KPI nhanh trong ngày.
+              Real funnel, trends, and AI health (config + tool errors). The overview
+              dashboard keeps day-to-day KPIs.
             </p>
           </div>
           <SectionCards stats={stats} />

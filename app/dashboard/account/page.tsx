@@ -28,7 +28,7 @@ export default async function AccountPage() {
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
           <p className="max-w-xl text-sm text-muted-foreground">
-            Hồ sơ đăng nhập của bạn. Cấu hình workspace / AI nằm ở Settings.
+            Your login profile. Workspace / AI configuration lives in Settings.
           </p>
         </div>
         <div className="px-4 lg:px-6">

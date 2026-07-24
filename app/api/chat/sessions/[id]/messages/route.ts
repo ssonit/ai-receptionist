@@ -37,7 +37,7 @@ export async function POST(request: Request, { params }: Params) {
     const firstUser = messages.find((m) => m.role === "user" && m.content.trim());
     const nextTitle =
       body.title ??
-      (session.title === "Chat mới" && firstUser
+      ((session.title === "New chat" || session.title === "Chat mới") && firstUser
         ? titleFromFirstUserMessage(firstUser.content)
         : undefined);
 

@@ -1,3 +1,4 @@
+import slugify from "slugify";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decryptSecret } from "@/lib/workspace-secrets";
 import { bookingConfig } from "@/lib/booking-config";
@@ -18,17 +19,58 @@ export function getDefaultWorkspaceId(): string {
   return getPilotWorkspaceId();
 }
 
+/**
+ * Booking-page / meeting-type slug.
+ *
+ * Uses npm `slugify` with `locale: "vi"` (đ/Đ → d, diacritics stripped).
+ *
+ * KEEP IN SYNC with Postgres `public.slugify_workspace_name`
+ * (`supabase/migrations/20260724000004_slugify_vietnamese.sql` and init_schema):
+ * same contract — lower, hyphen, [a-z0-9] only, max 48, fallback `ws` if < 2 chars,
+ * Vietnamese via unaccent+đ, and `&`→`and` / `@`→`at` like this package.
+ * Signup trigger can only run SQL; live preview + server actions use this TS helper.
+ * Collision policy differs by design: SQL auto-appends -1,-2; Settings rejects duplicates.
+ */
 export function slugifyWorkspaceName(name: string): string {
+  const base = slugify(name.trim(), {
+    lower: true,
+    strict: true,
+    locale: "vi",
+    trim: true,
+  }).slice(0, 48);
+  return base.length >= 2 ? base : "ws";
+}
+
+/**
+ * Pre-fix SQL signup slugify — dropped Vietnamese letters instead of
+ * transliterating (`Phòng` → `ph-ng`). Used to heal settings UI.
+ */
+export function legacyAsciiOnlySlugify(name: string): string {
   const base = name
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    // đ/Đ do not decompose under NFD/NFKD
-    .replace(/đ/gi, "d")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 48);
   return base.length >= 2 ? base : "ws";
+}
+
+/** Prefer a corrected slug when DB still has the legacy broken form. */
+export function resolveWorkspaceSlugField(
+  name: string | null | undefined,
+  storedSlug: string | null | undefined,
+): string {
+  const nameTrim = name?.trim() ?? "";
+  const stored = storedSlug?.trim() ?? "";
+  const good = nameTrim ? slugifyWorkspaceName(nameTrim) : "";
+  if (!stored) return good;
+  if (
+    nameTrim &&
+    stored === legacyAsciiOnlySlugify(nameTrim) &&
+    good !== stored
+  ) {
+    return good;
+  }
+  return stored;
 }
 
 export type WorkspaceTenant = {
@@ -97,7 +139,7 @@ export async function resolvePublicWorkspaceId(
 
   // Explicit tenant slug that does not resolve must NOT fall back to Eve Pilot
   // (that would mix visitor chat into the demo workspace).
-  throw new Error(`Workspace không tồn tại: ${cleaned}`);
+  throw new Error(`Workspace does not exist: ${cleaned}`);
 }
 
 export type PublicBookingWorkspace = {
@@ -270,7 +312,7 @@ export async function resolveWorkspaceIdFromAgentContext(input: {
 
   if (hadTenantHint) {
     throw new Error(
-      "Không xác định được workspace từ phiên chat — từ chối ghi sang workspace khác.",
+      "Could not determine workspace from chat session — refusing to write to another workspace.",
     );
   }
 
@@ -291,7 +333,7 @@ export async function getCalApiKeyForWorkspace(
     const envKey = bookingConfig.cal.apiKey?.trim();
     if (envKey) return envKey;
     throw new Error(
-      "Demo Eve Pilot cần CALCOM_API_KEY trong env (sandbox calendar).",
+      "Eve Pilot demo requires CALCOM_API_KEY in env (sandbox calendar).",
     );
   }
 
@@ -309,7 +351,7 @@ export async function getCalApiKeyForWorkspace(
   }
 
   throw new Error(
-    "Cal.com API key chưa cấu hình. Vào Setup / Settings để dán API key của workspace.",
+    "Cal.com API key is not configured. Go to Setup / Settings to paste the workspace API key.",
   );
 }
 

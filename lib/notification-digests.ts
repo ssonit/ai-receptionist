@@ -56,8 +56,8 @@ async function ensureStaleLeadNotifications(workspaceId: string) {
       lead.full_name?.trim() || lead.phone || lead.id.slice(0, 8);
     await createNotificationDebounced({
       type: "lead_stale",
-      title: "Lead new quá 3 ngày",
-      body: `${label} vẫn ở trạng thái new — nên gọi lại hoặc chuyển contacted/lost.`,
+      title: "Lead still new after 3 days",
+      body: `${label} is still in new status — follow up or move to contacted/lost.`,
       severity: "medium",
       href: "/dashboard/leads",
       entityType: "lead",
@@ -102,8 +102,8 @@ async function ensureAiConfigNotifications(workspaceId: string) {
   if (!hasAiMeetingType) {
     await createNotificationDebounced({
       type: "ai_config",
-      title: "Chưa chọn meeting type cho AI",
-      body: "Agent không check slot / đặt lịch được cho đến khi chọn type ở Settings.",
+      title: "AI meeting type not selected",
+      body: "Agent cannot check slots or book until a type is selected in Settings.",
       severity: "high",
       href: "/dashboard/settings",
       entityType: "ai_config",
@@ -116,8 +116,8 @@ async function ensureAiConfigNotifications(workspaceId: string) {
   if (!calUsername) {
     await createNotificationDebounced({
       type: "ai_config",
-      title: "Chưa lấy được Cal.com username",
-      body: "Mở Meeting types để sync profile, hoặc kiểm tra CALCOM_API_KEY.",
+      title: "Cal.com username not available",
+      body: "Open Meeting types to sync the profile, or check CALCOM_API_KEY.",
       severity: "medium",
       href: "/dashboard/meeting-types",
       entityType: "ai_config",
@@ -130,8 +130,8 @@ async function ensureAiConfigNotifications(workspaceId: string) {
   if (faqCount === 0) {
     await createNotificationDebounced({
       type: "ai_config",
-      title: "FAQ trống",
-      body: "Agent thiếu Q&A — khách hỏi dịch vụ/giờ dễ bị trả lời generic.",
+      title: "FAQ is empty",
+      body: "Agent lacks Q&A — service/hours questions may get generic answers.",
       severity: "medium",
       href: "/dashboard/faq",
       entityType: "ai_config",

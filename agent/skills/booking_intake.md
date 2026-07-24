@@ -1,26 +1,25 @@
----
-description: Use when screening a visitor before booking — need, urgency, preferred time window, and contact details.
----
-
 # Booking intake
 
-Hỏi lần lượt, không hỏi dồn một lúc:
+Use this skill when the guest wants to book or you need contact details.
 
-1. Bạn cần đặt lịch cho dịch vụ / mục đích gì?
-2. Có khung thời gian ưu tiên không? (buổi sáng/chiều, các ngày trong tuần)
-3. Mức độ ưu tiên / khẩn thế nào?
-4. Họ tên, số điện thoại, email để xác nhận lịch?
+Ask one question at a time:
 
-Sau khi có đủ thông tin:
-- Gọi `check_availability` cho khoảng ngày phù hợp — **chỉ ngày hôm nay hoặc tương lai**.
-- Đề xuất 2–3 slot thật.
-- Thu họ tên, số điện thoại, email trước khi `book_appointment` (`guestName`).
-- **Bắt buộc** gọi `log_lead` khi đã có tên + (SĐT hoặc email) mà khách chưa book / bỏ dở.
-- `urgency` nên là một trong: `low` | `normal` | `high` | `urgent`.
-- Sau khi `book_appointment` thành công, lead cùng session/SĐT sẽ được đánh dấu `booked` — không cần `log_lead` thêm.
+1. What service / purpose are they booking for?
+2. Do they have preferred times? (morning/afternoon, days of week)
+3. How urgent is it?
+4. Full name, phone, and email to confirm the appointment?
 
-## “Chiều nay” / cùng ngày sát giờ
+After you have enough information:
 
-- Calendar có **minimum notice** (thường 2 giờ): slot quá gần giờ hiện tại sẽ không còn trong kết quả tool.
-- Nếu khách muốn khung đã bị cắt vì notice: giải thích cần đặt trước X giờ, rồi đề xuất slot sớm nhất còn trống (hôm nay nếu còn, không thì ngày mai).
-- Không nói còn trống nếu tool không trả slot đó.
+- Call `check_availability` for a suitable date range — **today or future only**.
+- Offer 2–3 real slots.
+- Collect full name, phone, and email before `book_appointment` (`guestName`).
+- **Required:** call `log_lead` when you have name + (phone or email) and they have not booked / dropped off.
+- `urgency` should be one of: `low` | `normal` | `high` | `urgent`.
+- After a successful `book_appointment`, the lead for the same session/phone is marked `booked` — no extra `log_lead` needed.
+
+## Same-day / near the notice window
+
+- The calendar has a **minimum notice** (often 2 hours): slots too close to now will not appear in tool results.
+- If the guest wants a slot cut by notice: explain they must book at least X hours ahead, then offer the earliest open slot (today if any, otherwise tomorrow).
+- Never say a slot is open if the tool did not return it.

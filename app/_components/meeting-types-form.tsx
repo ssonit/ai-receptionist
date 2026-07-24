@@ -60,7 +60,7 @@ function formatDateTime(value: string | null | undefined) {
   if (!value) return "—";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("vi-VN", {
+  return d.toLocaleString("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
   });
@@ -68,14 +68,14 @@ function formatDateTime(value: string | null | undefined) {
 
 function formatDuration(minutes: number) {
   if (!Number.isFinite(minutes) || minutes <= 0) return "—";
-  if (minutes < 60) return `${minutes} phút`;
+  if (minutes < 60) return `${minutes} min`;
   if (minutes % 60 === 0) {
     const hours = minutes / 60;
-    return `${hours} giờ`;
+    return `${hours} hr`;
   }
   const hours = Math.floor(minutes / 60);
   const rem = minutes % 60;
-  return `${hours} giờ ${rem} phút`;
+  return `${hours} hr ${rem} min`;
 }
 
 function formatNotice(minutes: number | null) {
@@ -143,7 +143,7 @@ function MeetingTypeDetailSheet({
     <div className="flex h-full flex-col">
       <SheetTitle className="sr-only">{row.title}</SheetTitle>
       <SheetDescription className="sr-only">
-        Chi tiết meeting type {row.slug}
+        Meeting type details for {row.slug}
       </SheetDescription>
 
       <div className="flex-1 overflow-y-auto px-6 pt-6 pb-8 pr-14">
@@ -162,9 +162,9 @@ function MeetingTypeDetailSheet({
         </h2>
         <p className="text-muted-foreground mb-8 flex items-center gap-1.5 text-sm">
           <IconClock className="size-4" />
-          {row.length_minutes} phút
+          {row.length_minutes} min
           {row.minimum_notice_minutes != null
-            ? ` · báo trước ${formatNotice(row.minimum_notice_minutes)}`
+            ? ` · ${formatNotice(row.minimum_notice_minutes)} notice`
             : ""}
         </p>
 
@@ -194,7 +194,7 @@ function MeetingTypeDetailSheet({
                   </a>
                 ) : (
                   <span className="text-muted-foreground">
-                    `/{row.slug}` — chưa có username từ Cal.com
+                    `/{row.slug}` — no username from Cal.com yet
                   </span>
                 )
               }
@@ -211,11 +211,11 @@ function MeetingTypeDetailSheet({
               value={
                 row.is_ai_booking ? (
                   <span className="text-emerald-600 dark:text-emerald-400">
-                    Đang dùng cho chat
+                    In use for chat
                   </span>
                 ) : (
                   <span>
-                    Không — chọn ở{" "}
+                    No — select in{" "}
                     <Link
                       className="underline underline-offset-4"
                       href="/dashboard/settings"
@@ -279,7 +279,7 @@ function CreateMeetingTypeSheet({
         <div className="flex h-full flex-col">
           <SheetTitle className="sr-only">{heading}</SheetTitle>
           <SheetDescription className="sr-only">
-            Tạo meeting type mới trên Cal.com
+            Create a new meeting type on Cal.com
           </SheetDescription>
 
           <form
@@ -302,7 +302,7 @@ function CreateMeetingTypeSheet({
                       setTitle(next);
                       if (!slugTouched) setSlug(slugify(next));
                     }}
-                    placeholder="Khám tổng quát 90p"
+                    placeholder="General checkup 90m"
                     required
                     value={title}
                   />
@@ -352,8 +352,8 @@ function CreateMeetingTypeSheet({
                         value={slug}
                       />
                       <p className="text-muted-foreground text-xs">
-                        Không lấy được username từ Cal.com (`GET /v2/me`). Kiểm
-                        tra `CALCOM_API_KEY`.
+                        Could not get username from Cal.com (`GET /v2/me`). Check
+                        `CALCOM_API_KEY`.
                       </p>
                     </div>
                   )}
@@ -487,7 +487,7 @@ export function MeetingTypesForm({
             Meeting types
           </h2>
           <p className="text-muted-foreground mt-1 max-w-xl text-sm">
-            Mirror từ Cal.com. Chọn type cho AI ở{" "}
+            Mirrored from Cal.com. Choose the AI type in{" "}
             <Link
               className="underline underline-offset-4"
               href="/dashboard/settings"
@@ -538,7 +538,7 @@ export function MeetingTypesForm({
         {sorted.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
             <p className="text-muted-foreground text-sm">
-              Chưa có meeting type. Sync từ Cal.com hoặc tạo mới.
+              No meeting types yet. Sync from Cal.com or create one.
             </p>
             <Button onClick={() => setCreateOpen(true)} size="sm" type="button">
               <IconPlus className="size-4" />
@@ -573,9 +573,9 @@ export function MeetingTypesForm({
                         ) : null}
                       </div>
                       <p className="text-muted-foreground mt-0.5 text-sm">
-                        {row.length_minutes} phút
+                        {row.length_minutes} min
                         {row.minimum_notice_minutes != null
-                          ? ` · báo trước ${formatNotice(row.minimum_notice_minutes)}`
+                          ? ` · ${formatNotice(row.minimum_notice_minutes)} notice`
                           : ""}
                       </p>
                     </div>

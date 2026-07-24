@@ -23,7 +23,7 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 function formatWhen(iso: string) {
-  return new Date(iso).toLocaleString("vi-VN", {
+  return new Date(iso).toLocaleString("en-US", {
     dateStyle: "short",
     timeStyle: "short",
   });
@@ -122,7 +122,7 @@ export function NotificationsBell() {
       <DropdownMenuTrigger asChild>
         <Button
           aria-label={
-            unread > 0 ? `${unread} thông báo chưa đọc` : "Thông báo"
+            unread > 0 ? `${unread} unread notifications` : "Notifications"
           }
           className="relative"
           size="icon-sm"
@@ -142,7 +142,7 @@ export function NotificationsBell() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel className="flex items-center justify-between gap-2">
-          <span>Thông báo</span>
+          <span>Notifications</span>
           {unread > 0 ? (
             <button
               className="text-muted-foreground text-xs font-normal underline-offset-4 hover:underline"
@@ -155,18 +155,18 @@ export function NotificationsBell() {
                 })();
               }}
             >
-              Đọc hết
+              Mark all read
             </button>
           ) : null}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {loading && items.length === 0 ? (
           <p className="text-muted-foreground px-2 py-6 text-center text-xs">
-            Đang tải…
+            Loading…
           </p>
         ) : items.length === 0 ? (
           <p className="text-muted-foreground px-2 py-6 text-center text-xs">
-            Chưa có thông báo.
+            No notifications yet.
           </p>
         ) : (
           items.map((item) => (
@@ -203,7 +203,7 @@ export function NotificationsBell() {
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/dashboard/notifications">Xem tất cả</Link>
+          <Link href="/dashboard/notifications">View all</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

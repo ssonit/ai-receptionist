@@ -43,7 +43,7 @@ export default defineTool({
       const aiEvent = await getAiBookingEventType(workspaceId);
       if (!aiEvent) {
         const error =
-          "Chưa cấu hình meeting type cho AI booking. Vào Dashboard → Setup / Settings để chọn.";
+          "AI booking meeting type is not configured. Go to Dashboard → Setup / Settings to select one.";
         await logAgentToolEvent({
           toolName: "book_appointment",
           ok: false,
@@ -148,7 +148,7 @@ export default defineTool({
         });
         await createNotification({
           type: "booking_mirror_failed",
-          title: `Booking Cal.com nhưng chưa mirror DB`,
+          title: `Cal.com booking saved but not mirrored to DB`,
           body: `${guestName} · ${booking.start} · ${warning}`,
           severity: "medium",
           href: "/dashboard/bookings",
@@ -169,7 +169,7 @@ export default defineTool({
 
       await createNotification({
         type: "booking_created",
-        title: `Booking mới: ${guestName}`,
+        title: `New booking: ${guestName}`,
         body: [service ?? aiEvent.title, booking.start, phone]
           .filter(Boolean)
           .join(" · "),

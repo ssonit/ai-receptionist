@@ -62,7 +62,7 @@ export function AnalyticsTrendChart({
       <CardHeader>
         <CardTitle>Bookings & leads</CardTitle>
         <CardDescription>
-          Số booking / lead tạo theo ngày (dữ liệu thật từ Supabase).
+          Bookings / leads created per day (live Supabase data).
         </CardDescription>
         <CardAction>
           <ToggleGroup
@@ -72,9 +72,9 @@ export function AnalyticsTrendChart({
             variant="outline"
             className="hidden *:data-[slot=toggle-group-item]:px-4! @[767px]/card:flex"
           >
-            <ToggleGroupItem value="90d">90 ngày</ToggleGroupItem>
-            <ToggleGroupItem value="30d">30 ngày</ToggleGroupItem>
-            <ToggleGroupItem value="7d">7 ngày</ToggleGroupItem>
+            <ToggleGroupItem value="90d">90 days</ToggleGroupItem>
+            <ToggleGroupItem value="30d">30 days</ToggleGroupItem>
+            <ToggleGroupItem value="7d">7 days</ToggleGroupItem>
           </ToggleGroup>
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger
@@ -84,9 +84,9 @@ export function AnalyticsTrendChart({
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
-              <SelectItem value="90d">90 ngày</SelectItem>
-              <SelectItem value="30d">30 ngày</SelectItem>
-              <SelectItem value="7d">7 ngày</SelectItem>
+              <SelectItem value="90d">90 days</SelectItem>
+              <SelectItem value="30d">30 days</SelectItem>
+              <SelectItem value="7d">7 days</SelectItem>
             </SelectContent>
           </Select>
         </CardAction>
@@ -132,7 +132,7 @@ export function AnalyticsTrendChart({
               minTickGap={32}
               tickFormatter={(value) => {
                 const date = new Date(`${value}T00:00:00`);
-                return date.toLocaleDateString("vi-VN", {
+                return date.toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                 });
@@ -143,7 +143,7 @@ export function AnalyticsTrendChart({
               content={
                 <ChartTooltipContent
                   labelFormatter={(value) =>
-                    new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN", {
+                    new Date(`${value}T00:00:00`).toLocaleDateString("en-US", {
                       weekday: "short",
                       month: "short",
                       day: "numeric",

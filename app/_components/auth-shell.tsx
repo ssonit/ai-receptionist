@@ -10,9 +10,9 @@ import { Particles } from "@/components/ui/particles";
 import { cn } from "@/lib/utils";
 
 const highlights = [
-  "Xem bookings & leads realtime",
-  "Chat agent đặt lịch 24/7",
-  "Đồng bộ Cal.com + Supabase",
+  "View bookings & leads in realtime",
+  "24/7 scheduling chat agent",
+  "Cal.com + Supabase sync",
 ];
 
 export function AuthShell({
@@ -55,11 +55,11 @@ export function AuthShell({
                 Booking dashboard
               </AnimatedShinyText>
               <h2 className="text-4xl font-semibold tracking-tight text-white xl:text-5xl">
-                Một chỗ để chạy booking.
+                One place to run bookings.
               </h2>
               <p className="text-sm leading-relaxed text-zinc-400">
-                Đăng nhập để theo dõi lịch, lead từ chat, và trạng thái đặt hẹn — giao diện tối giản như
-                Magic UI / shadcn.
+                Sign in to track schedules, chat leads, and booking status — a minimal UI in the
+                Magic UI / shadcn style.
               </p>
               <ul className="space-y-3 pt-2">
                 {highlights.map((item) => (

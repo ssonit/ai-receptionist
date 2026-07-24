@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { IconMenu2, IconPlus } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +10,7 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useOptionalAppLocale } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
 import type { ChatSessionListItem } from "@/lib/chat-sessions";
 
@@ -27,6 +29,10 @@ export function ChatSessionSidebar({
   onNew: () => void;
   className?: string;
 }) {
+  const t = useTranslations();
+  const localeCtx = useOptionalAppLocale();
+  const dateLocale = localeCtx?.locale === "vi" ? "vi-VN" : "en-US";
+
   return (
     <aside
       className={cn(
@@ -36,7 +42,7 @@ export function ChatSessionSidebar({
     >
       <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-zinc-950/95 px-3 py-3 backdrop-blur-md">
         <p className="text-xs font-medium tracking-wide text-zinc-400 uppercase">
-          Hội thoại
+          {t("chat.sessions")}
         </p>
         <Button
           className="h-8 gap-1 rounded-full border-white/10 bg-white/[0.04] text-xs text-zinc-200 hover:bg-white/[0.08] hover:text-white"
@@ -47,13 +53,13 @@ export function ChatSessionSidebar({
           variant="outline"
         >
           <IconPlus className="size-3.5" />
-          Mới
+          {t("chat.newChat")}
         </Button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
         {sessions.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-zinc-500">
-            Chưa có hội thoại. Bắt đầu chat hoặc bấm Mới.
+            {t("chat.noSessions")}
           </p>
         ) : (
           <ul className="space-y-1">
@@ -73,15 +79,15 @@ export function ChatSessionSidebar({
                     type="button"
                   >
                     <span className="line-clamp-2 text-sm font-medium">
-                      {s.title || "Chat mới"}
+                      {s.title || t("chat.newChatTitle")}
                     </span>
                     <span className="mt-0.5 block text-[10px] text-zinc-600">
                       {s.last_message_at
-                        ? new Date(s.last_message_at).toLocaleString("vi-VN", {
+                        ? new Date(s.last_message_at).toLocaleString(dateLocale, {
                             dateStyle: "short",
                             timeStyle: "short",
                           })
-                        : "Chưa có tin nhắn"}
+                        : t("chat.noMessagesYet")}
                     </span>
                   </button>
                 </li>
@@ -103,6 +109,7 @@ export function ChatSessionDrawer({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const t = useTranslations();
   return (
     <Sheet
       open={open}
@@ -114,9 +121,9 @@ export function ChatSessionDrawer({
         side="left"
         className="flex h-full w-[min(100%,18rem)] flex-col gap-0 overflow-hidden border-white/10 bg-zinc-950 p-0 sm:max-w-[18rem]"
       >
-        <SheetTitle className="sr-only">Danh sách hội thoại</SheetTitle>
+        <SheetTitle className="sr-only">{t("chat.sessions")}</SheetTitle>
         <SheetDescription className="sr-only">
-          Chọn hoặc tạo hội thoại chat
+          {t("chat.sessions")}
         </SheetDescription>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden pt-10">
           {children}
@@ -131,9 +138,10 @@ export function ChatSessionsToggle({
 }: {
   onClick: () => void;
 }) {
+  const t = useTranslations();
   return (
     <Button
-      aria-label="Danh sách hội thoại"
+      aria-label={t("chat.sessions")}
       className="size-8 text-zinc-300 md:hidden"
       onClick={onClick}
       size="icon"

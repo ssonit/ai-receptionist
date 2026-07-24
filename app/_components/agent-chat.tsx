@@ -3,6 +3,7 @@
 import type { UserContent } from "ai";
 import type { SessionState } from "eve/client";
 import { useEveAgent, type EveMessage } from "eve/react";
+import { useTranslations } from "next-intl";
 import { AlertCircleIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
@@ -17,6 +18,7 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
+import { LocaleProvider, LocaleToggle, useAppLocale } from "@/components/locale-provider";
 import { BorderBeam } from "@/components/magicui/border-beam";
 import { AnimatedGridPattern } from "@/components/ui/animated-grid-pattern";
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
@@ -27,11 +29,12 @@ import type {
   ChatSessionListItem,
   ChatSessionRow,
 } from "@/lib/chat-sessions";
-import { projectEveMessages } from "@/lib/project-chat-messages";
 import {
-  resolveChatBranding,
+  parseChatSuggestions,
   type ChatBranding,
 } from "@/lib/chat-branding";
+import { EVE_LOCALE_HEADER } from "@/lib/locale";
+import { projectEveMessages } from "@/lib/project-chat-messages";
 import {
   EVE_CHAT_SESSION_HEADER,
   EVE_WORKSPACE_HEADER,
@@ -55,7 +58,27 @@ type ThreadBootstrap = {
   initialEvents?: readonly unknown[];
 };
 
-export function AgentChat({
+export function AgentChat(props: {
+  user?: ChatUser | null;
+  workspaceSlug?: string;
+  workspaceName?: string;
+  workspaceTagline?: string | null;
+  /** Empty-state label, intro, and suggestion chips (falls back to shared defaults). */
+  chatBranding?: Partial<ChatBranding> | null;
+  /** Extra controls in the chat header (e.g. workspace info). */
+  headerEnd?: React.ReactNode;
+  /** Marketing sandbox at `/chat` — Eve Pilot only. */
+  demoMode?: boolean;
+  initialLocale?: "en" | "vi";
+}) {
+  return (
+    <LocaleProvider initialLocale={props.initialLocale} kind="guest">
+      <AgentChatInner {...props} />
+    </LocaleProvider>
+  );
+}
+
+function AgentChatInner({
   user,
   workspaceSlug,
   workspaceName,
@@ -68,22 +91,42 @@ export function AgentChat({
   workspaceSlug?: string;
   workspaceName?: string;
   workspaceTagline?: string | null;
-  /** Empty-state label, intro, and suggestion chips (falls back to shared defaults). */
   chatBranding?: Partial<ChatBranding> | null;
-  /** Extra controls in the chat header (e.g. workspace info). */
   headerEnd?: React.ReactNode;
-  /** Marketing sandbox at `/chat` — Eve Pilot only. */
   demoMode?: boolean;
 }) {
-  const branding = React.useMemo(
-    () =>
-      resolveChatBranding({
-        assistantLabel: chatBranding?.assistantLabel,
-        intro: chatBranding?.intro ?? workspaceTagline,
-        suggestions: chatBranding?.suggestions,
-      }),
-    [chatBranding, workspaceTagline],
-  );
+  const t = useTranslations();
+
+  const branding = React.useMemo((): ChatBranding => {
+    const customSuggestions = parseChatSuggestions(chatBranding?.suggestions);
+    const customLabel = chatBranding?.assistantLabel?.trim();
+    const customIntro = (chatBranding?.intro ?? workspaceTagline)?.trim();
+    return {
+      assistantLabel: customLabel || t("chat.assistantDefault"),
+      intro: customIntro || t("chat.introDefault"),
+      suggestions:
+        customSuggestions.length > 0
+          ? customSuggestions
+          : [
+              {
+                label: t("chat.suggestions.afternoon.label"),
+                prompt: t("chat.suggestions.afternoon.prompt"),
+              },
+              {
+                label: t("chat.suggestions.hours.label"),
+                prompt: t("chat.suggestions.hours.prompt"),
+              },
+              {
+                label: t("chat.suggestions.cleaning.label"),
+                prompt: t("chat.suggestions.cleaning.prompt"),
+              },
+              {
+                label: t("chat.suggestions.pricing.label"),
+                prompt: t("chat.suggestions.pricing.prompt"),
+              },
+            ],
+    };
+  }, [chatBranding, t, workspaceTagline]);
 
   const [sessions, setSessions] = React.useState<ChatSessionListItem[]>([]);
   const [activeId, setActiveId] = React.useState<string | null>(null);
@@ -106,32 +149,37 @@ export function AgentChat({
     return data.sessions;
   }, [tenantQs]);
 
-  const loadThread = React.useCallback(async (id: string) => {
-    const res = await fetch(`/api/chat/sessions/${id}${tenantQs}`);
-    if (!res.ok) throw new Error("Failed to load session");
-    const data = (await res.json()) as { session: ChatSessionRow };
-    const session = data.session;
-    const initialSession: SessionState | undefined =
-      session.continuation_token || session.eve_session_id
-        ? {
-            sessionId: session.eve_session_id ?? undefined,
-            continuationToken: session.continuation_token ?? undefined,
-            streamIndex: session.stream_index ?? 0,
-          }
-        : undefined;
-    const events = Array.isArray(session.events) ? session.events : [];
-    setActiveId(id);
-    setBootstrap({
-      chatSessionId: id,
-      initialSession,
-      initialEvents: events,
-    });
-  }, [tenantQs]);
+  const loadThread = React.useCallback(
+    async (id: string) => {
+      const res = await fetch(`/api/chat/sessions/${id}${tenantQs}`);
+      if (!res.ok) throw new Error("Failed to load session");
+      const data = (await res.json()) as { session: ChatSessionRow };
+      const session = data.session;
+      const initialSession: SessionState | undefined =
+        session.continuation_token || session.eve_session_id
+          ? {
+              sessionId: session.eve_session_id ?? undefined,
+              continuationToken: session.continuation_token ?? undefined,
+              streamIndex: session.stream_index ?? 0,
+            }
+          : undefined;
+      const events = Array.isArray(session.events) ? session.events : [];
+      setActiveId(id);
+      setBootstrap({
+        chatSessionId: id,
+        initialSession,
+        initialEvents: events,
+      });
+    },
+    [tenantQs],
+  );
 
   const createAndOpen = React.useCallback(async () => {
     setBusyAction(true);
     try {
-      const res = await fetch(`/api/chat/sessions${tenantQs}`, { method: "POST" });
+      const res = await fetch(`/api/chat/sessions${tenantQs}`, {
+        method: "POST",
+      });
       if (!res.ok) throw new Error("Failed to create session");
       const data = (await res.json()) as { session: ChatSessionRow };
       await refreshSessions();
@@ -167,9 +215,7 @@ export function AgentChat({
         console.error("[eve chat] bootstrap failed", error);
         if (!cancelled) {
           setBootError(
-            error instanceof Error
-              ? error.message
-              : "Không tải được hội thoại. Thử reload.",
+            error instanceof Error ? error.message : t("chat.bootError"),
           );
         }
       } finally {
@@ -259,18 +305,19 @@ export function AgentChat({
           </div>
 
           <div className="flex items-center gap-2">
+            <LocaleToggle />
             {headerEnd}
             <Link
               className="hidden text-sm text-zinc-400 transition hover:text-white sm:inline"
               href="/dashboard"
             >
-              Dashboard
+              {t("chat.dashboardLink")}
             </Link>
             {user ? (
               <ChatUserMenu user={user} />
             ) : (
               <RainbowButton asChild className="h-8 rounded-full px-3 text-xs" size="sm">
-                <Link href="/login">Sign in</Link>
+                <Link href="/login">{t("common.signIn")}</Link>
               </RainbowButton>
             )}
           </div>
@@ -279,11 +326,11 @@ export function AgentChat({
         {demoMode ? (
           <div className="flex shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2 text-center text-xs text-amber-100/90 sm:text-[13px]">
             <span>
-              <span className="font-medium text-amber-50">Đây là bản demo</span>
+              <span className="font-medium text-amber-50">{t("chat.demoBanner")}</span>
               {" — "}
-              doanh nghiệp thật có trang riêng tại{" "}
+              {t("chat.demoBannerBody")}{" "}
               <code className="rounded bg-black/30 px-1 py-0.5 text-[11px] text-amber-50/90">
-                /b/ten-doanh-nghiep
+                /b/your-business
               </code>
             </span>
             <span className="text-amber-100/40">·</span>
@@ -291,26 +338,26 @@ export function AgentChat({
               className="font-medium text-teal-200 underline-offset-2 hover:underline"
               href="/signup"
             >
-              Tạo workspace của bạn
+              {t("chat.createWorkspace")}
             </Link>
           </div>
         ) : null}
 
         {loading ? (
           <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
-            Đang tải hội thoại…
+            {t("chat.loading")}
           </div>
         ) : bootError || !bootstrap ? (
           <div className="mx-auto flex max-w-md flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
             <p className="text-sm text-zinc-300">
-              {bootError || "Không mở được hội thoại."}
+              {bootError || t("chat.bootError")}
             </p>
             <button
               className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs text-zinc-200 hover:bg-white/[0.08]"
               onClick={() => window.location.reload()}
               type="button"
             >
-              Reload
+              {t("chat.reload")}
             </button>
           </div>
         ) : (
@@ -355,17 +402,20 @@ function AgentChatThread({
   workspaceName?: string;
   workspaceSlug?: string;
 }) {
+  const t = useTranslations();
+  const { locale } = useAppLocale();
   const persistTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const tenantHeaders = React.useMemo(() => {
+  const tenantHeaders = React.useCallback((): Record<string, string> => {
     const headers: Record<string, string> = {
       [EVE_CHAT_SESSION_HEADER]: chatSessionId,
+      [EVE_LOCALE_HEADER]: locale,
     };
     if (workspaceSlug?.trim()) {
       headers[EVE_WORKSPACE_HEADER] = workspaceSlug.trim().toLowerCase();
     }
     return headers;
-  }, [chatSessionId, workspaceSlug]);
+  }, [chatSessionId, locale, workspaceSlug]);
 
   const persistSnapshot = React.useCallback(
     async (input: {
@@ -494,7 +544,7 @@ function AgentChatThread({
       <PromptInput className="border-0 bg-transparent shadow-none" onSubmit={handleSubmit}>
         <PromptInputTextarea
           className="min-h-[52px] text-zinc-100 placeholder:text-zinc-500"
-          placeholder="Hỏi lịch trống, FAQ, hoặc đặt hẹn…"
+          placeholder={t("chat.placeholder")}
         />
         <PromptInputSubmit onStop={agent.stop} status={agent.status} />
       </PromptInput>
@@ -508,12 +558,8 @@ function AgentChatThread({
           <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm">
             <AlertCircleIcon className="mt-0.5 size-4 shrink-0 text-zinc-400" />
             <div>
-              <p className="font-medium text-zinc-100">Chat tạm thời không phản hồi</p>
-              <p className="mt-0.5 text-zinc-400">
-                Thử gửi lại sau vài giây. Nếu vẫn lỗi, kiểm tra API key model trong{" "}
-                <code className="text-zinc-300">.env.local</code>
-                {" "}(DEEPSEEK / GOOGLE / ANTHROPIC).
-              </p>
+              <p className="font-medium text-zinc-100">{t("chat.unavailableTitle")}</p>
+              <p className="mt-0.5 text-zinc-400">{t("chat.unavailableBody")}</p>
             </div>
           </div>
         </div>
@@ -579,7 +625,7 @@ function AgentChatThread({
         <div className="w-full space-y-2">
           {composer}
           <p className="text-center text-[11px] text-zinc-600">
-            Eve có thể nhầm — luôn xác nhận lại khi cần.
+            {t("chat.disclaimer")}
           </p>
         </div>
       </div>
@@ -588,15 +634,16 @@ function AgentChatThread({
 }
 
 function StatusDot({ status }: { readonly status: AgentStatus }) {
+  const t = useTranslations();
   const isLive = status === "submitted" || status === "streaming";
   const label =
     status === "error"
-      ? "Error"
+      ? t("chat.statusError")
       : isLive
-        ? "Typing"
+        ? t("chat.statusTyping")
         : status === "ready"
-          ? "Online"
-          : "Idle";
+          ? t("chat.statusOnline")
+          : t("chat.statusIdle");
   const tone =
     status === "error"
       ? "bg-red-400"

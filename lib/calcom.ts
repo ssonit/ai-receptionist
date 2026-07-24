@@ -137,7 +137,7 @@ function resolveEventRef(override?: CalEventRef): Required<Pick<CalEventRef, "us
   const username = override?.username ?? bookingConfig.cal.username;
   if (!eventTypeId && !(username && eventTypeSlug)) {
     throw new Error(
-      "Chưa chọn meeting type cho AI booking. Vào Settings để chọn, hoặc Meeting types để sync/tạo, hoặc set CALCOM_EVENT_TYPE_ID.",
+      "No meeting type selected for AI booking. Choose one in Settings, sync/create in Meeting types, or set CALCOM_EVENT_TYPE_ID.",
     );
   }
   return { eventTypeId, eventTypeSlug, username };
