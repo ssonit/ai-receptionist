@@ -1,3 +1,8 @@
+import type {
+  AgentReplyLocale,
+  AgentTone,
+} from "./agent-reply-customs";
+
 /** Shared FAQ domain types — import from here instead of redefining. */
 
 export const MAX_FAQ_ITEMS = 50;
@@ -24,6 +29,10 @@ export type WorkspaceFaqRecord = {
   businessHours: string | null;
   servicesSummary: string | null;
   agentInstructions: string | null;
+  agentDisplayName: string | null;
+  agentTone: AgentTone | null;
+  agentReplyLocale: AgentReplyLocale | null;
+  agentHandoff: string | null;
   items: WorkspaceFaqItem[];
 };
 
@@ -49,6 +58,10 @@ export type WorkspaceFaqQueryRow = {
   business_hours: string | null;
   services_summary: string | null;
   agent_instructions: string | null;
+  agent_display_name: string | null;
+  agent_tone: string | null;
+  agent_reply_locale: string | null;
+  agent_handoff: string | null;
   workspace_faq_items: WorkspaceFaqItemRow[] | WorkspaceFaqItemRow | null;
 };
 
@@ -76,4 +89,4 @@ export type FaqSettingsFormProps = {
 };
 
 export const WORKSPACE_FAQ_SELECT =
-  "id, name, timezone, phone, address, email, website, tagline, about, business_hours, services_summary, agent_instructions, workspace_faq_items(id, question, answer, sort_order)";
+  "id, name, timezone, phone, address, email, website, tagline, about, business_hours, services_summary, agent_instructions, agent_display_name, agent_tone, agent_reply_locale, agent_handoff, workspace_faq_items(id, question, answer, sort_order)";

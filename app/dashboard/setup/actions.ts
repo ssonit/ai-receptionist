@@ -18,6 +18,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { canonicalizeTimezone } from "@/lib/timezones";
+import { WORKSPACE_AI_DEFAULTS } from "@/lib/workspace-ai-defaults";
 import {
   getCalApiKeyForWorkspace,
   getWorkspaceById,
@@ -170,7 +171,12 @@ export async function saveSetupProfileAction(
 
   const { error } = await admin
     .from("workspaces")
-    .update({ name, slug, timezone, about: about || null })
+    .update({
+      name,
+      slug,
+      timezone,
+      about: about || WORKSPACE_AI_DEFAULTS.about,
+    })
     .eq("id", auth.workspaceId);
 
   if (error) return { error: formatDbError(error) };

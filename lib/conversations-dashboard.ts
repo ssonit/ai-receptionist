@@ -1,9 +1,11 @@
 import {
-  getChatMessages,
+  countChatMessages,
+  getChatMessagesPage,
   listWorkspaceChatSessions,
   type ChatMessageRow,
   type ChatSessionListItem,
 } from "@/lib/chat-sessions";
+import { CHAT_MESSAGE_INITIAL_LIMIT } from "@/lib/chat-limits";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionWorkspaceId } from "@/lib/workspace-session";
 
@@ -28,6 +30,9 @@ export type ConversationDetail = {
     continuation_token?: string | null;
   };
   messages: ChatMessageRow[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  messageCount: number;
   leadId: string | null;
   bookingId: string | null;
   toolErrors: {
@@ -134,6 +139,7 @@ export async function loadConversationsDashboard(limit = 100): Promise<{
 
 export async function loadConversationDetail(
   id: string,
+  options?: { before?: string | null; limit?: number },
 ): Promise<ConversationDetail | null> {
   const supabase = await createClient();
   const workspaceId = await getSessionWorkspaceId();
@@ -150,7 +156,13 @@ export async function loadConversationDetail(
 
   if (error || !session) return null;
 
-  const messages = await getChatMessages(id);
+  const page = await getChatMessagesPage(id, {
+    before: options?.before,
+    limit: options?.limit ?? CHAT_MESSAGE_INITIAL_LIMIT,
+  });
+  const messageCount = await countChatMessages(id).catch(
+    () => page.messages.length,
+  );
   const eve = session.eve_session_id as string | null;
 
   const [leadRes, bookingRes, toolsRes] = await Promise.all([
@@ -190,12 +202,15 @@ export async function loadConversationDetail(
 
   return {
     session,
-    messages,
+    messages: page.messages,
+    nextCursor: page.nextCursor,
+    hasMore: page.hasMore,
+    messageCount,
     leadId: leadRes.data?.id ?? null,
     bookingId: bookingRes.data?.id ?? null,
     toolErrors: toolsRes.data ?? [],
     outcome: classifyOutcome({
-      messageCount: messages.length,
+      messageCount,
       hasBooking: has_booking,
       hasLead: has_lead,
       hasToolError: has_tool_error,

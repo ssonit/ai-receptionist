@@ -152,8 +152,8 @@ export function buildAiHealthAlerts(input: {
       severity: "error",
       title: "AI meeting type not selected",
       detail:
-        "The agent cannot check slots or book until you select a type in Settings.",
-      href: "/dashboard/settings",
+        "The agent cannot check slots or book until you select a type in AI Agent.",
+      href: "/dashboard/agent",
     });
   }
 
@@ -183,8 +183,8 @@ export function buildAiHealthAlerts(input: {
       id: "thin-workspace-profile",
       severity: "info",
       title: "AI profile incomplete",
-      detail: "Add About + Agent instructions in Settings for more consistent answers.",
-      href: "/dashboard/settings",
+      detail: "Add About + Agent instructions in AI Agent for more consistent answers.",
+      href: "/dashboard/agent",
     });
   }
 

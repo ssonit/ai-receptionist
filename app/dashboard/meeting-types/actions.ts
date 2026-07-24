@@ -98,6 +98,7 @@ async function setAiBookingOnWorkspace(
 function revalidateMeetingTypePaths() {
   revalidatePath("/dashboard/meeting-types");
   revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/agent");
 }
 
 export async function syncMeetingTypesAction(): Promise<MeetingTypesActionState> {

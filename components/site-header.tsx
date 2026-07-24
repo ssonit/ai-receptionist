@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { IconHome } from "@tabler/icons-react";
+import { IconHome, IconCalendarEvent } from "@tabler/icons-react";
 import { DashboardRefreshButton } from "@/components/dashboard-refresh-button";
 import { LocaleToggle } from "@/components/locale-provider";
 import { NotificationsBell } from "@/components/notifications-bell";
@@ -16,6 +16,7 @@ const TITLE_BY_PATH: Record<string, string> = {
   "/dashboard/bookings": "dashboard.nav.bookings",
   "/dashboard/meeting-types": "dashboard.nav.meetingTypes",
   "/dashboard/faq": "dashboard.nav.faq",
+  "/dashboard/agent": "dashboard.nav.agent",
   "/dashboard/leads": "dashboard.nav.leads",
   "/dashboard/conversations": "dashboard.nav.conversations",
   "/dashboard/analytics": "dashboard.nav.analytics",
@@ -50,8 +51,18 @@ export function SiteHeader({
           <LocaleToggle variant="light" />
           <NotificationsBell />
           <DashboardRefreshButton />
-          <Button asChild className="hidden sm:flex" size="sm" variant="outline">
-            <Link href={bookingPagePath}>{t("dashboard.bookingPage")}</Link>
+          <Button
+            asChild
+            aria-label={t("dashboard.bookingPage")}
+            className="hidden sm:inline-flex"
+            size="icon-sm"
+            title={t("dashboard.bookingPage")}
+            variant="outline"
+          >
+            <Link href={bookingPagePath}>
+              <IconCalendarEvent className="size-4" />
+              <span className="sr-only">{t("dashboard.bookingPage")}</span>
+            </Link>
           </Button>
           <Button
             asChild

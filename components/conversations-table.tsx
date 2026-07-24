@@ -81,6 +81,9 @@ function ConversationDetailSheet({
   const [title, setTitle] = React.useState("Conversation");
   const [outcome, setOutcome] = React.useState<ConversationOutcome>("empty");
   const [messages, setMessages] = React.useState<ChatMessageRow[]>([]);
+  const [nextCursor, setNextCursor] = React.useState<string | null>(null);
+  const [hasMore, setHasMore] = React.useState(false);
+  const [loadingOlder, setLoadingOlder] = React.useState(false);
   const [leadId, setLeadId] = React.useState<string | null>(null);
   const [bookingId, setBookingId] = React.useState<string | null>(null);
   const [toolErrors, setToolErrors] = React.useState<
@@ -101,6 +104,8 @@ function ConversationDetailSheet({
         setTitle(data.session?.title ?? "Conversation");
         setOutcome(data.outcome ?? "empty");
         setMessages(data.messages ?? []);
+        setNextCursor(data.nextCursor ?? null);
+        setHasMore(Boolean(data.hasMore));
         setLeadId(data.leadId ?? null);
         setBookingId(data.bookingId ?? null);
         setToolErrors(data.toolErrors ?? []);
@@ -117,6 +122,29 @@ function ConversationDetailSheet({
       cancelled = true;
     };
   }, [sessionId]);
+
+  const loadOlder = React.useCallback(async () => {
+    if (!nextCursor || loadingOlder || !hasMore) return;
+    setLoadingOlder(true);
+    try {
+      const res = await fetch(
+        `/api/dashboard/conversations/${sessionId}?before=${encodeURIComponent(nextCursor)}`,
+      );
+      if (!res.ok) throw new Error("Failed to load older messages");
+      const data = await res.json();
+      const older = (data.messages ?? []) as ChatMessageRow[];
+      setMessages((prev) => {
+        const ids = new Set(prev.map((m) => m.id));
+        return [...older.filter((m) => !ids.has(m.id)), ...prev];
+      });
+      setNextCursor(data.nextCursor ?? null);
+      setHasMore(Boolean(data.hasMore));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingOlder(false);
+    }
+  }, [hasMore, loadingOlder, nextCursor, sessionId]);
 
   return (
     <div className="flex h-full flex-col">
@@ -161,6 +189,17 @@ function ConversationDetailSheet({
           <>
             <div className="mt-8 space-y-3">
               <h3 className="text-sm font-medium">Transcript</h3>
+              {hasMore ? (
+                <Button
+                  disabled={loadingOlder}
+                  onClick={() => void loadOlder()}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  {loadingOlder ? "Loading…" : "Load earlier messages"}
+                </Button>
+              ) : null}
               {messages.length === 0 ? (
                 <p className="text-muted-foreground text-sm">No messages yet.</p>
               ) : (
@@ -169,7 +208,7 @@ function ConversationDetailSheet({
                     <li
                       key={m.id}
                       className={cn(
-                        "rounded-lg border px-3 py-2 text-sm",
+                        "rounded-lg border px-3 py-2 text-sm [content-visibility:auto] [contain-intrinsic-size:auto_80px]",
                         m.role === "user"
                           ? "border-border bg-muted/40"
                           : "border-border/60 bg-background",

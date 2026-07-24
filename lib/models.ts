@@ -58,6 +58,10 @@ export function hasProviderKey(slot: ModelSlot): boolean {
   return Boolean(key && key.length > 0);
 }
 
+export function hasAnyProviderKey(): boolean {
+  return MODEL_SLOTS.some((slot) => hasProviderKey(slot));
+}
+
 export function languageModelFor(slot: ModelSlot): LanguageModel {
   switch (slot) {
     case "deepseekFlash":

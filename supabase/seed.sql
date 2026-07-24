@@ -36,6 +36,14 @@ insert into public.workspaces (
   business_hours,
   services_summary,
   agent_instructions,
+  agent_display_name,
+  agent_tone,
+  agent_reply_locale,
+  agent_handoff,
+  chat_assistant_label,
+  chat_intro,
+  chat_placeholder,
+  chat_suggestions,
   setup_completed_at
 )
 values (
@@ -52,6 +60,19 @@ values (
   '- Thứ 2–Thứ 7: 08:00–20:00' || E'\n' || '- Chủ nhật: 08:00–12:00' || E'\n' || '- Nghỉ các ngày lễ lớn',
   '- Consultation 30 phút (đặt qua chat)' || E'\n' || '- Khám / điều trị dài hơn — nhân viên xếp lịch',
   '- Xưng hô lịch sự, ưu tiên slot sớm nếu khách gấp.' || E'\n' || '- Không cam kết giá cuối nếu chưa xác nhận.' || E'\n' || '- Nếu ngoài phạm vi booking: đề nghị gọi SĐT workspace.',
+  'Trợ lý đặt lịch',
+  'friendly',
+  'vi',
+  'Nếu khách cần việc ngoài FAQ / đặt lịch: đề nghị gọi SĐT hoặc email workspace. Không hứa kết quả chưa xác nhận được.',
+  'Trợ lý đặt lịch AI',
+  'Hỏi FAQ, xem lịch trống, hoặc đặt hẹn ngay.',
+  'Hỏi giờ mở cửa, dịch vụ, hoặc đặt lịch…',
+  jsonb_build_array(
+    jsonb_build_object('label', 'Chiều mai', 'prompt', 'Chiều mai còn chỗ trống không?'),
+    jsonb_build_object('label', 'Giờ mở cửa', 'prompt', 'Hôm nay mở cửa lúc mấy giờ?'),
+    jsonb_build_object('label', 'Đặt lịch', 'prompt', 'Tôi muốn đặt một lịch hẹn'),
+    jsonb_build_object('label', 'Dịch vụ', 'prompt', 'Các bạn có những dịch vụ nào?')
+  ),
   now()
 )
 on conflict (id) do update set
@@ -67,6 +88,14 @@ on conflict (id) do update set
   business_hours = excluded.business_hours,
   services_summary = excluded.services_summary,
   agent_instructions = excluded.agent_instructions,
+  agent_display_name = excluded.agent_display_name,
+  agent_tone = excluded.agent_tone,
+  agent_reply_locale = excluded.agent_reply_locale,
+  agent_handoff = excluded.agent_handoff,
+  chat_assistant_label = excluded.chat_assistant_label,
+  chat_intro = excluded.chat_intro,
+  chat_placeholder = excluded.chat_placeholder,
+  chat_suggestions = excluded.chat_suggestions,
   setup_completed_at = coalesce(public.workspaces.setup_completed_at, excluded.setup_completed_at),
   updated_at = now();
 

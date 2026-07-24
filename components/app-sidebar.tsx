@@ -12,6 +12,7 @@ import {
   IconMessage,
   IconMessageChatbot,
   IconQuestionMark,
+  IconRobot,
   IconSearch,
   IconSettings,
   IconTags,
@@ -41,38 +42,71 @@ export function AppSidebar({
 }) {
   const t = useTranslations();
 
-  const navMain = [
+  const navGroups = [
     {
-      title: t("dashboard.nav.dashboard"),
-      url: "/dashboard",
-      icon: IconDashboard,
+      label: t("dashboard.nav.groups.overview"),
+      items: [
+        {
+          title: t("dashboard.nav.dashboard"),
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+        {
+          title: t("dashboard.nav.analytics"),
+          url: "/dashboard/analytics",
+          icon: IconChartBar,
+        },
+      ],
     },
     {
-      title: t("dashboard.nav.bookings"),
-      url: "/dashboard/bookings",
-      icon: IconCalendarEvent,
+      label: t("dashboard.nav.groups.booking"),
+      items: [
+        {
+          title: t("dashboard.nav.bookings"),
+          url: "/dashboard/bookings",
+          icon: IconCalendarEvent,
+        },
+        {
+          title: t("dashboard.nav.meetingTypes"),
+          url: "/dashboard/meeting-types",
+          icon: IconTags,
+        },
+        {
+          title: t("dashboard.bookingPage"),
+          url: bookingPagePath,
+          icon: IconMessageChatbot,
+        },
+      ],
     },
     {
-      title: t("dashboard.nav.meetingTypes"),
-      url: "/dashboard/meeting-types",
-      icon: IconTags,
-    },
-    { title: t("dashboard.nav.faq"), url: "/dashboard/faq", icon: IconQuestionMark },
-    { title: t("dashboard.nav.leads"), url: "/dashboard/leads", icon: IconUsers },
-    {
-      title: t("dashboard.nav.conversations"),
-      url: "/dashboard/conversations",
-      icon: IconMessage,
-    },
-    {
-      title: t("dashboard.nav.analytics"),
-      url: "/dashboard/analytics",
-      icon: IconChartBar,
+      label: t("dashboard.nav.groups.customers"),
+      items: [
+        {
+          title: t("dashboard.nav.conversations"),
+          url: "/dashboard/conversations",
+          icon: IconMessage,
+        },
+        {
+          title: t("dashboard.nav.leads"),
+          url: "/dashboard/leads",
+          icon: IconUsers,
+        },
+      ],
     },
     {
-      title: t("dashboard.bookingPage"),
-      url: bookingPagePath,
-      icon: IconMessageChatbot,
+      label: t("dashboard.nav.groups.agent"),
+      items: [
+        {
+          title: t("dashboard.nav.agent"),
+          url: "/dashboard/agent",
+          icon: IconRobot,
+        },
+        {
+          title: t("dashboard.nav.faq"),
+          url: "/dashboard/faq",
+          icon: IconQuestionMark,
+        },
+      ],
     },
   ];
 
@@ -112,7 +146,7 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} />
+        <NavMain groups={navGroups} />
         <NavSecondary className="mt-auto" items={navSecondary} />
       </SidebarContent>
       <SidebarFooter>

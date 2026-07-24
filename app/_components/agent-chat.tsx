@@ -8,11 +8,6 @@ import { AlertCircleIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import {
-  Conversation,
-  ConversationContent,
-  ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
-import {
   PromptInput,
   type PromptInputMessage,
   PromptInputSubmit,
@@ -25,10 +20,19 @@ import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
 import { BlurFade } from "@/components/ui/blur-fade";
 import { Particles } from "@/components/ui/particles";
 import { RainbowButton } from "@/components/ui/rainbow-button";
+import { Button } from "@/components/ui/button";
+import { VirtualConversation } from "@/components/ai-elements/virtual-conversation";
 import type {
+  ChatMessageRow,
   ChatSessionListItem,
-  ChatSessionRow,
+  ChatSessionClientRow,
 } from "@/lib/chat-sessions";
+import {
+  CHAT_LONG_THREAD_MESSAGES,
+  CHAT_LONG_THREAD_USER_TURNS,
+  CHAT_MESSAGE_PAGE_LIMIT,
+} from "@/lib/chat-limits";
+import { chatMessageRowsToEveMessages } from "@/lib/chat-message-display";
 import {
   parseChatSuggestions,
   type ChatBranding,
@@ -56,6 +60,10 @@ type ThreadBootstrap = {
   chatSessionId: string;
   initialSession?: SessionState;
   initialEvents?: readonly unknown[];
+  historyMessages: EveMessage[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  messageCount: number;
 };
 
 export function AgentChat(props: {
@@ -101,9 +109,11 @@ function AgentChatInner({
     const customSuggestions = parseChatSuggestions(chatBranding?.suggestions);
     const customLabel = chatBranding?.assistantLabel?.trim();
     const customIntro = (chatBranding?.intro ?? workspaceTagline)?.trim();
+    const customPlaceholder = chatBranding?.placeholder?.trim();
     return {
       assistantLabel: customLabel || t("chat.assistantDefault"),
       intro: customIntro || t("chat.introDefault"),
+      placeholder: customPlaceholder || t("chat.placeholder"),
       suggestions:
         customSuggestions.length > 0
           ? customSuggestions
@@ -117,12 +127,12 @@ function AgentChatInner({
                 prompt: t("chat.suggestions.hours.prompt"),
               },
               {
-                label: t("chat.suggestions.cleaning.label"),
-                prompt: t("chat.suggestions.cleaning.prompt"),
+                label: t("chat.suggestions.book.label"),
+                prompt: t("chat.suggestions.book.prompt"),
               },
               {
-                label: t("chat.suggestions.pricing.label"),
-                prompt: t("chat.suggestions.pricing.prompt"),
+                label: t("chat.suggestions.services.label"),
+                prompt: t("chat.suggestions.services.prompt"),
               },
             ],
     };
@@ -153,7 +163,13 @@ function AgentChatInner({
     async (id: string) => {
       const res = await fetch(`/api/chat/sessions/${id}${tenantQs}`);
       if (!res.ok) throw new Error("Failed to load session");
-      const data = (await res.json()) as { session: ChatSessionRow };
+      const data = (await res.json()) as {
+        session: ChatSessionClientRow;
+        messages: ChatMessageRow[];
+        nextCursor: string | null;
+        hasMore: boolean;
+        messageCount?: number;
+      };
       const session = data.session;
       const initialSession: SessionState | undefined =
         session.continuation_token || session.eve_session_id
@@ -163,12 +179,17 @@ function AgentChatInner({
               streamIndex: session.stream_index ?? 0,
             }
           : undefined;
+      // Tail only — never hydrate the full event log into the browser.
       const events = Array.isArray(session.events) ? session.events : [];
       setActiveId(id);
       setBootstrap({
         chatSessionId: id,
         initialSession,
         initialEvents: events,
+        historyMessages: chatMessageRowsToEveMessages(data.messages ?? []),
+        nextCursor: data.nextCursor ?? null,
+        hasMore: Boolean(data.hasMore),
+        messageCount: data.messageCount ?? data.messages?.length ?? 0,
       });
     },
     [tenantQs],
@@ -181,10 +202,16 @@ function AgentChatInner({
         method: "POST",
       });
       if (!res.ok) throw new Error("Failed to create session");
-      const data = (await res.json()) as { session: ChatSessionRow };
+      const data = (await res.json()) as { session: ChatSessionClientRow };
       await refreshSessions();
       setActiveId(data.session.id);
-      setBootstrap({ chatSessionId: data.session.id });
+      setBootstrap({
+        chatSessionId: data.session.id,
+        historyMessages: [],
+        nextCursor: null,
+        hasMore: false,
+        messageCount: 0,
+      });
       setDrawerOpen(false);
     } finally {
       setBusyAction(false);
@@ -203,11 +230,17 @@ function AgentChatInner({
             method: "POST",
           });
           if (!res.ok) throw new Error("Failed to create session");
-          const data = (await res.json()) as { session: ChatSessionRow };
+          const data = (await res.json()) as { session: ChatSessionClientRow };
           if (cancelled) return;
           await refreshSessions();
           setActiveId(data.session.id);
-          setBootstrap({ chatSessionId: data.session.id });
+          setBootstrap({
+            chatSessionId: data.session.id,
+            historyMessages: [],
+            nextCursor: null,
+            hasMore: false,
+            messageCount: 0,
+          });
         } else {
           await loadThread(list[0]!.id);
         }
@@ -366,8 +399,13 @@ function AgentChatInner({
               key={bootstrap.chatSessionId}
               branding={branding}
               chatSessionId={bootstrap.chatSessionId}
+              historyMessages={bootstrap.historyMessages}
+              initialHasMore={bootstrap.hasMore}
+              initialMessageCount={bootstrap.messageCount}
+              initialNextCursor={bootstrap.nextCursor}
               initialEvents={bootstrap.initialEvents}
               initialSession={bootstrap.initialSession}
+              onNewChat={() => void createAndOpen()}
               onPersisted={onPersisted}
               onStatusChange={setAgentStatus}
               tenantQs={tenantQs}
@@ -384,8 +422,13 @@ function AgentChatInner({
 function AgentChatThread({
   branding,
   chatSessionId,
+  historyMessages: initialHistory,
+  initialHasMore,
+  initialMessageCount,
+  initialNextCursor,
   initialSession,
   initialEvents,
+  onNewChat,
   onPersisted,
   onStatusChange,
   tenantQs,
@@ -394,8 +437,13 @@ function AgentChatThread({
 }: {
   branding: ChatBranding;
   chatSessionId: string;
+  historyMessages: EveMessage[];
+  initialHasMore: boolean;
+  initialMessageCount: number;
+  initialNextCursor: string | null;
   initialSession?: SessionState;
   initialEvents?: readonly unknown[];
+  onNewChat: () => void;
   onPersisted: () => void;
   onStatusChange?: (status: AgentStatus) => void;
   tenantQs: string;
@@ -405,6 +453,12 @@ function AgentChatThread({
   const t = useTranslations();
   const { locale } = useAppLocale();
   const persistTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [history, setHistory] = React.useState(initialHistory);
+  const [nextCursor, setNextCursor] = React.useState(initialNextCursor);
+  const [hasMore, setHasMore] = React.useState(initialHasMore);
+  const [loadingOlder, setLoadingOlder] = React.useState(false);
+  const [messageCount, setMessageCount] = React.useState(initialMessageCount);
+  const [nudgeDismissed, setNudgeDismissed] = React.useState(false);
 
   const tenantHeaders = React.useCallback((): Record<string, string> => {
     const headers: Record<string, string> = {
@@ -452,9 +506,9 @@ function AgentChatThread({
   const agent = useEveAgent({
     headers: tenantHeaders,
     initialSession,
+    // Tail events only (or empty) — model resume uses continuationToken.
     initialEvents: initialEvents as never,
     onSessionChange: (session) => {
-      // Link eve_session_id ASAP (no debounce) so dashboard/tools can resolve tenant.
       if (persistTimer.current) clearTimeout(persistTimer.current);
       void fetch(`/api/chat/sessions/${chatSessionId}${tenantQs}`, {
         method: "PATCH",
@@ -474,6 +528,9 @@ function AgentChatThread({
         session: snapshot.session,
         events: snapshot.events,
       });
+      setMessageCount((c) =>
+        Math.max(c, history.length + snapshot.data.messages.length),
+      );
     },
   });
 
@@ -487,8 +544,66 @@ function AgentChatThread({
     };
   }, []);
 
+  const historyIds = React.useMemo(
+    () => new Set(history.map((m) => m.id)),
+    [history],
+  );
+  const liveMessages = React.useMemo(
+    () => agent.data.messages.filter((m) => !historyIds.has(m.id)),
+    [agent.data.messages, historyIds],
+  );
+  const displayMessages = React.useMemo(
+    () => [...history, ...liveMessages],
+    [history, liveMessages],
+  );
+
+  const userTurnCount = React.useMemo(
+    () => displayMessages.filter((m) => m.role === "user").length,
+    [displayMessages],
+  );
+  const showLongThreadNudge =
+    !nudgeDismissed &&
+    (userTurnCount >= CHAT_LONG_THREAD_USER_TURNS ||
+      messageCount >= CHAT_LONG_THREAD_MESSAGES ||
+      displayMessages.length >= CHAT_LONG_THREAD_MESSAGES);
+
+  const loadOlder = React.useCallback(async () => {
+    if (!nextCursor || loadingOlder || !hasMore) return;
+    setLoadingOlder(true);
+    try {
+      const qs = new URLSearchParams();
+      if (tenantQs.startsWith("?")) {
+        const existing = new URLSearchParams(tenantQs.slice(1));
+        existing.forEach((v, k) => qs.set(k, v));
+      }
+      qs.set("before", nextCursor);
+      qs.set("limit", String(CHAT_MESSAGE_PAGE_LIMIT));
+      const res = await fetch(
+        `/api/chat/sessions/${chatSessionId}/messages?${qs.toString()}`,
+      );
+      if (!res.ok) throw new Error("Failed to load older messages");
+      const data = (await res.json()) as {
+        messages: ChatMessageRow[];
+        nextCursor: string | null;
+        hasMore: boolean;
+      };
+      const older = chatMessageRowsToEveMessages(data.messages ?? []);
+      setHistory((prev) => {
+        const ids = new Set(prev.map((m) => m.id));
+        const unique = older.filter((m) => !ids.has(m.id));
+        return [...unique, ...prev];
+      });
+      setNextCursor(data.nextCursor ?? null);
+      setHasMore(Boolean(data.hasMore));
+    } catch (error) {
+      console.error("[eve chat] load older failed", error);
+    } finally {
+      setLoadingOlder(false);
+    }
+  }, [chatSessionId, hasMore, loadingOlder, nextCursor, tenantQs]);
+
   const isBusy = agent.status === "submitted" || agent.status === "streaming";
-  const isEmpty = agent.data.messages.length === 0;
+  const isEmpty = displayMessages.length === 0 && !isBusy;
 
   if (agent.error) {
     console.error("[eve chat]", agent.error);
@@ -544,12 +659,14 @@ function AgentChatThread({
       <PromptInput className="border-0 bg-transparent shadow-none" onSubmit={handleSubmit}>
         <PromptInputTextarea
           className="min-h-[52px] text-zinc-100 placeholder:text-zinc-500"
-          placeholder={t("chat.placeholder")}
+          placeholder={branding.placeholder}
         />
         <PromptInputSubmit onStop={agent.stop} status={agent.status} />
       </PromptInput>
     </div>
   );
+
+  const lastMessageId = displayMessages[displayMessages.length - 1]?.id ?? "";
 
   return (
     <>
@@ -565,26 +682,73 @@ function AgentChatThread({
         </div>
       ) : null}
 
+      {showLongThreadNudge ? (
+        <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pt-3 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-teal-400/20 bg-teal-400/10 px-3 py-2.5 text-sm text-teal-50">
+            <p className="min-w-0 flex-1 text-xs leading-relaxed sm:text-sm">
+              {t("chat.longThreadNudge")}
+            </p>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                className="h-8 rounded-full px-3 text-xs"
+                onClick={onNewChat}
+                size="sm"
+                type="button"
+                variant="secondary"
+              >
+                {t("chat.newChat")}
+              </Button>
+              <button
+                className="text-xs text-teal-100/70 underline-offset-2 hover:underline"
+                onClick={() => setNudgeDismissed(true)}
+                type="button"
+              >
+                {t("chat.dismissNudge")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {isEmpty ? null : (
-        <Conversation className="min-h-0 flex-1">
-          <ConversationContent className="mx-auto w-full max-w-3xl gap-6 px-4 py-6 sm:px-6">
-            {agent.data.messages.map((message, index) => (
-              <AgentMessage
-                canRespond={!isBusy}
-                isStreaming={
-                  agent.status === "streaming" &&
-                  index === agent.data.messages.length - 1
-                }
-                key={message.id}
-                message={message}
-                onInputResponses={(inputResponses) =>
-                  agent.send({ inputResponses })
-                }
-              />
-            ))}
-          </ConversationContent>
-          <ConversationScrollButton />
-        </Conversation>
+        <div className="flex min-h-0 flex-1 flex-col">
+          {hasMore ? (
+            <div className="mx-auto flex w-full max-w-3xl shrink-0 justify-center px-4 pt-3 sm:px-6">
+              <Button
+                className="h-8 rounded-full border-white/10 bg-white/[0.04] text-xs text-zinc-300 hover:bg-white/[0.08]"
+                disabled={loadingOlder}
+                onClick={() => void loadOlder()}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                {loadingOlder ? t("chat.loadingOlder") : t("chat.loadEarlier")}
+              </Button>
+            </div>
+          ) : null}
+          <VirtualConversation
+            itemCount={displayMessages.length}
+            scrollToBottomKey={`${lastMessageId}-${agent.status}`}
+          >
+            {(index) => {
+              const message = displayMessages[index]!;
+              return (
+                <AgentMessage
+                  canRespond={!isBusy}
+                  isStreaming={
+                    agent.status === "streaming" &&
+                    index === displayMessages.length - 1
+                  }
+                  key={message.id}
+                  message={message}
+                  onInputResponses={(inputResponses) =>
+                    agent.send({ inputResponses })
+                  }
+                />
+              );
+            }}
+          </VirtualConversation>
+        </div>
       )}
 
       <div

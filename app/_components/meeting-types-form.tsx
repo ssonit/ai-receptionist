@@ -218,9 +218,9 @@ function MeetingTypeDetailSheet({
                     No — select in{" "}
                     <Link
                       className="underline underline-offset-4"
-                      href="/dashboard/settings"
+                      href="/dashboard/agent"
                     >
-                      Settings
+                      AI Agent
                     </Link>
                   </span>
                 )
@@ -490,9 +490,9 @@ export function MeetingTypesForm({
             Mirrored from Cal.com. Choose the AI type in{" "}
             <Link
               className="underline underline-offset-4"
-              href="/dashboard/settings"
+              href="/dashboard/agent"
             >
-              Settings
+              AI Agent
             </Link>
             .
           </p>

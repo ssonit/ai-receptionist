@@ -1,4 +1,10 @@
 import { defineDynamic, defineInstructions } from "eve/instructions";
+import {
+  agentTonePrompt,
+  resolveAgentReplyLocale,
+  resolveAgentTone,
+  type AgentReplyLocale,
+} from "../lib/agent-reply-customs";
 import { bookingConfig } from "../lib/booking-config";
 import {
   buildBookingFaqSummary,
@@ -18,25 +24,50 @@ function firstAttr(
   return undefined;
 }
 
-function languagePolicy(locale: AppLocale): string {
-  if (locale === "vi") {
-    return "Reply in **Vietnamese by default**. Switch to English only if the guest writes in English. Still follow the guest's message language if it differs from the UI locale.";
+function languagePolicy(
+  uiLocale: AppLocale,
+  preferred: AgentReplyLocale,
+): string {
+  const effective: AppLocale =
+    preferred === "auto" ? uiLocale : preferred === "vi" ? "vi" : "en";
+
+  if (effective === "vi") {
+    return "Reply in **Vietnamese by default**. Switch to English only if the guest writes in English. Still follow the guest's message language if it differs from this preference.";
   }
-  return "Reply in **English by default**. Switch to Vietnamese only if the guest writes in Vietnamese. Still follow the guest's message language if it differs from the UI locale.";
+  return "Reply in **English by default**. Switch to Vietnamese only if the guest writes in Vietnamese. Still follow the guest's message language if it differs from this preference.";
 }
 
-async function buildMarkdown(workspaceId: string, locale: AppLocale) {
+function identityLine(
+  workspaceName: string,
+  displayName: string | null | undefined,
+): string {
+  const name = workspaceName.trim() || "Eve";
+  const self = displayName?.trim();
+  if (self) {
+    return `You are **${self}**, the AI booking assistant for **${name}**.`;
+  }
+  return `You are the AI booking assistant for **${name}**.`;
+}
+
+async function buildMarkdown(workspaceId: string, uiLocale: AppLocale) {
   const workspace = await fetchWorkspaceFaq(workspaceId);
   const tz = workspace?.timezone?.trim() || bookingConfig.timezone;
   const today = todayYmd(tz);
   const label = todayLabel(tz);
   const clock = nowHm(tz);
   const noticeHours = bookingConfig.minNoticeHours;
+  const tone = resolveAgentTone(workspace?.agentTone);
+  const replyLocale = resolveAgentReplyLocale(workspace?.agentReplyLocale);
+  const handoff = workspace?.agentHandoff?.trim();
+
+  const handoffBlock = handoff
+    ? `\n# Human handoff\n\n${handoff}\n`
+    : "";
 
   return `# Identity
 
-You are the AI booking assistant for **${workspace?.name?.trim() || "Eve"}**. ${languagePolicy(locale)}
-Be polite, clear, and concise.
+${identityLine(workspace?.name ?? "", workspace?.agentDisplayName)} ${languagePolicy(uiLocale, replyLocale)}
+${agentTonePrompt(tone)}
 ${workspace?.tagline?.trim() ? `\nWorkspace tagline: ${workspace.tagline.trim()}\n` : ""}
 # Current time (required)
 
@@ -55,7 +86,7 @@ ${workspace?.tagline?.trim() ? `\nWorkspace tagline: ${workspace.tagline.trim()}
    - Offer **2–3 earliest open slots** from the tool (later today if any, otherwise tomorrow morning/afternoon).
 3. **Do not** invent other reasons; **do not** claim a slot is open if the tool did not return it.
 4. If the guest is urgent: only suggest tool-returned slots; you may suggest calling the workspace phone if available.
-
+${handoffBlock}
 # Workspace & FAQ (summary — source: Supabase)
 
 ${buildBookingFaqSummary(workspace)}

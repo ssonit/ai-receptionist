@@ -22,17 +22,19 @@ export type {
 export { MAX_FAQ_ITEMS, WORKSPACE_FAQ_SELECT } from "./workspace-faq-types";
 export { mapFaqItems, mapWorkspaceFaqRecord } from "./workspace-faq-map";
 
-const UNCONFIGURED =
-  "*(not configured — run `npx supabase db reset` or update in FAQ / Settings)*";
+/** Product copy for missing fields — never mention db reset / seed. */
+const NOT_SET = "Not set yet — fill in AI Agent / FAQ";
+const AGENT_MISSING_HINT =
+  "Do not invent missing details. Help with booking when possible, or offer to pass the question to staff.";
 
-function contactLine(label: string, value: string | null | undefined): string {
+function contactLine(label: string, value: string | null | undefined): string | null {
   const v = value?.trim() ?? "";
-  return v ? `- **${label}:** ${v}` : `- **${label}:** ${UNCONFIGURED}`;
+  return v ? `- **${label}:** ${v}` : null;
 }
 
 function blockSection(title: string, value: string | null | undefined): string[] {
   const v = value?.trim() ?? "";
-  if (!v) return [`## ${title}`, UNCONFIGURED, ""];
+  if (!v) return [];
   return [`## ${title}`, v, ""];
 }
 
@@ -59,16 +61,17 @@ export async function fetchWorkspaceFaq(
 export function buildBookingFaqSummary(row: WorkspaceFaqRecord | null): string {
   if (!row) {
     return [
-      `- **FAQ:** ${UNCONFIGURED}`,
+      `- **FAQ:** ${NOT_SET}`,
       `- **Minimum booking notice:** ${bookingConfig.minNoticeHours} hours (Cal.com)`,
       `- **Details:** \`load_skill\` → \`booking_faq\``,
+      `- **Note:** ${AGENT_MISSING_HINT}`,
     ].join("\n");
   }
 
   const count = row.items.length;
   const firstQuestion = row.items[0]?.question?.trim();
 
-  return [
+  const lines = [
     contactLine("Workspace", row.name),
     contactLine("Tagline", row.tagline),
     contactLine("Timezone", row.timezone),
@@ -76,22 +79,51 @@ export function buildBookingFaqSummary(row: WorkspaceFaqRecord | null): string {
     contactLine("Email", row.email),
     contactLine("Website", row.website),
     contactLine("Address", row.address),
-    `- **Business hours:** ${row.businessHours?.trim() ? "configured" : UNCONFIGURED}`,
-    `- **Services:** ${row.servicesSummary?.trim() ? "configured" : UNCONFIGURED}`,
-    `- **Agent instructions:** ${row.agentInstructions?.trim() ? "configured" : UNCONFIGURED}`,
-    `- **FAQ:** ${count > 0 ? `${count} items` : UNCONFIGURED}${
-      firstQuestion ? ` (e.g. ${firstQuestion})` : ""
+    row.businessHours?.trim()
+      ? "- **Business hours:** configured"
+      : null,
+    row.servicesSummary?.trim() ? "- **Services:** configured" : null,
+    row.agentInstructions?.trim()
+      ? "- **Agent instructions:** configured"
+      : null,
+    row.agentDisplayName?.trim()
+      ? `- **Agent name:** ${row.agentDisplayName.trim()}`
+      : null,
+    row.agentTone ? `- **Tone:** ${row.agentTone}` : null,
+    row.agentReplyLocale && row.agentReplyLocale !== "auto"
+      ? `- **Reply language preference:** ${row.agentReplyLocale}`
+      : null,
+    row.agentHandoff?.trim() ? "- **Handoff notes:** configured" : null,
+    `- **FAQ:** ${
+      count > 0
+        ? `${count} items${firstQuestion ? ` (e.g. ${firstQuestion})` : ""}`
+        : "none yet — owner should add Q&A on the FAQ page"
     }`,
     `- **Minimum booking notice:** ${bookingConfig.minNoticeHours} hours`,
     `- **Details:** \`load_skill\` → \`booking_faq\``,
-  ].join("\n");
+  ].filter((line): line is string => Boolean(line));
+
+  return lines.join("\n");
 }
 
 /** Full FAQ markdown for booking_faq skill. */
 export function buildBookingFaqMarkdown(row: WorkspaceFaqRecord | null): string {
   if (!row) {
-    return `# Booking FAQ\n\n${UNCONFIGURED}\n\nRun \`npx supabase db reset\` to load seed FAQ, or add FAQ on the FAQ page.`;
+    return [
+      "# Booking FAQ",
+      "",
+      NOT_SET,
+      "",
+      AGENT_MISSING_HINT,
+    ].join("\n");
   }
+
+  const contacts = [
+    contactLine("Phone", row.phone),
+    contactLine("Email", row.email),
+    contactLine("Website", row.website),
+    contactLine("Address", row.address),
+  ].filter((line): line is string => Boolean(line));
 
   const body = [
     `# Booking FAQ — ${row.name}`,
@@ -99,19 +131,21 @@ export function buildBookingFaqMarkdown(row: WorkspaceFaqRecord | null): string 
     row.tagline?.trim() ? `> ${row.tagline.trim()}` : "",
     row.tagline?.trim() ? "" : "",
     `**Timezone:** ${row.timezone}`,
-    contactLine("Phone", row.phone),
-    contactLine("Email", row.email),
-    contactLine("Website", row.website),
-    contactLine("Address", row.address),
-    "",
+    ...contacts,
+    contacts.length > 0 ? "" : "",
     ...blockSection("About", row.about),
     ...blockSection("Business hours", row.businessHours),
     ...blockSection("Services", row.servicesSummary),
     ...blockSection("Agent instructions", row.agentInstructions),
+    ...blockSection("Human handoff", row.agentHandoff),
   ].filter((line, i, arr) => !(line === "" && arr[i - 1] === ""));
 
   if (row.items.length === 0) {
-    body.push("## FAQ", UNCONFIGURED, "");
+    body.push(
+      "## FAQ",
+      "No Q&A items yet. Suggest the owner add FAQ on the dashboard, or help with booking and offer to pass other questions to staff.",
+      "",
+    );
   } else {
     body.push("## FAQ", "");
     for (const item of row.items) {

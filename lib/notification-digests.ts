@@ -103,9 +103,9 @@ async function ensureAiConfigNotifications(workspaceId: string) {
     await createNotificationDebounced({
       type: "ai_config",
       title: "AI meeting type not selected",
-      body: "Agent cannot check slots or book until a type is selected in Settings.",
+      body: "Agent cannot check slots or book until a type is selected in AI Agent.",
       severity: "high",
-      href: "/dashboard/settings",
+      href: "/dashboard/agent",
       entityType: "ai_config",
       entityId: "missing-ai-meeting-type",
       workspaceId,

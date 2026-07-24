@@ -43,6 +43,10 @@ export const APP_ERROR_MESSAGE = {
   [APP_ERROR_CODE.FAQ_ITEM_INVALID]: "That FAQ item is invalid.",
   [APP_ERROR_CODE.FAQ_ITEM_REQUIRED]:
     "FAQ question and answer are both required.",
+  [APP_ERROR_CODE.FAQ_GENERATE_FAILED]:
+    "Could not generate FAQ drafts. Try again.",
+  [APP_ERROR_CODE.FAQ_GENERATE_UNAVAILABLE]:
+    "AI generation is unavailable. Add a model API key, or use suggested questions.",
   [APP_ERROR_CODE.INVALID_SUGGESTIONS]: "Invalid suggestion data.",
   [APP_ERROR_CODE.SUGGESTION_LIMIT]: `Maximum ${MAX_CHAT_SUGGESTIONS} suggestions.`,
   [APP_ERROR_CODE.SUGGESTION_INVALID]: "That suggestion is invalid.",

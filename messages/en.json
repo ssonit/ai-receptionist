@@ -1,12 +1,12 @@
 {
   "chat": {
     "assistantDefault": "AI booking assistant",
-    "introDefault": "Ask FAQs, check open slots, or book an appointment. Not a substitute for a doctor — booking support only.",
+    "introDefault": "Ask FAQs, check open slots, or book an appointment.",
     "loading": "Loading conversation…",
     "bootError": "Could not open the conversation.",
     "reload": "Reload",
-    "placeholder": "Ask about hours, pricing, or booking…",
-    "disclaimer": "Booking assistant only — not medical advice.",
+    "placeholder": "Ask about hours, services, or booking…",
+    "disclaimer": "Booking assistant — confirm details when it matters.",
     "demoBanner": "This is a demo",
     "demoBannerBody": "Real businesses have their own page at",
     "createWorkspace": "Create your workspace",
@@ -29,11 +29,15 @@
     "phone": "Phone",
     "address": "Address",
     "faq": "FAQ",
+    "loadEarlier": "Load earlier messages",
+    "loadingOlder": "Loading…",
+    "longThreadNudge": "This conversation is getting long — a new chat keeps replies faster.",
+    "dismissNudge": "Dismiss",
     "suggestions": {
       "afternoon": { "label": "Tomorrow afternoon", "prompt": "Any openings tomorrow afternoon?" },
       "hours": { "label": "Business hours", "prompt": "What are today's business hours?" },
-      "cleaning": { "label": "Teeth cleaning", "prompt": "I'd like to book a teeth cleaning" },
-      "pricing": { "label": "Exam pricing", "prompt": "About how much is a general checkup?" }
+      "book": { "label": "Book a visit", "prompt": "I'd like to book an appointment" },
+      "services": { "label": "Services", "prompt": "What services do you offer?" }
     }
   },
   "dashboard": {
@@ -61,9 +65,16 @@
       "bookings": "Bookings",
       "meetingTypes": "Meeting types",
       "faq": "FAQ",
+      "agent": "AI Agent",
       "leads": "Leads",
       "conversations": "Conversations",
-      "analytics": "Analytics"
+      "analytics": "Analytics",
+      "groups": {
+        "overview": "Overview",
+        "booking": "Booking",
+        "customers": "Customers",
+        "agent": "Agent"
+      }
     }
   },
   "common": {

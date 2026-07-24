@@ -12,6 +12,7 @@
 - [ ] `npx supabase db reset` applies `20260724000001_init_schema.sql` + `supabase/seed.sql`
 - [ ] Landing → **Dùng thử ngay** → `/chat` (Eve Pilot demo + banner)
 - [ ] Tenant booking page: `/b/{slug}` (Settings copy link); pilot layout preview: `/b/eve-pilot`
+- [ ] New signup workspaces get AI/chat/FAQ starter defaults; empty FAQ form also pre-fills starter Q&A until saved
 - [ ] Eve Pilot `/chat` demo uses env `CALCOM_*` (sandbox calendar). Tenant workspaces use their own Setup API key only.
 
 ## Auth / profiles
@@ -29,7 +30,7 @@
 
 - [ ] Open `/chat` (demo) or `/b/eve-pilot` (booking-page layout of pilot)
 - [ ] Demo banner visible on `/chat` only
-- [ ] Edit FAQ at `/dashboard/faq` (or Supabase Studio → `workspace_faq_items`); workspace contact at `/dashboard/settings`
+- [ ] Edit FAQ at `/dashboard/faq` (or Supabase Studio → `workspace_faq_items`); workspace contact at `/dashboard/settings`; AI greeting / persona / tone / reply language / meeting type at `/dashboard/agent`
 - [ ] Ask giá / dịch vụ → no invented advice; stay in booking scope
 
 ## Availability + booking

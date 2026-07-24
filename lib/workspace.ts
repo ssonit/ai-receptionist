@@ -2,6 +2,8 @@ import slugify from "slugify";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decryptSecret } from "@/lib/workspace-secrets";
 import { bookingConfig } from "@/lib/booking-config";
+import { parseChatSuggestions } from "@/lib/chat-branding";
+import { withWorkspaceAiDefaults } from "@/lib/workspace-ai-defaults";
 
 /** Pilot / default workspace id for local demo + Eve CLI fallback. */
 export const PILOT_WORKSPACE_ID = "00000000-0000-4000-8000-000000000001";
@@ -159,6 +161,7 @@ export type PublicBookingWorkspace = {
   chatAssistantLabel: string | null;
   chatIntro: string | null;
   chatSuggestions: unknown;
+  chatPlaceholder: string | null;
 };
 
 /** Public booking page `/b/[slug]` — service role (RLS is auth-only). */
@@ -172,7 +175,7 @@ export async function getPublicBookingWorkspace(
   const { data, error } = await supabase
     .from("workspaces")
     .select(
-      "id, name, slug, tagline, about, business_hours, services_summary, phone, email, address, website, setup_completed_at, chat_assistant_label, chat_intro, chat_suggestions, workspace_faq_items(question, answer, sort_order)",
+      "id, name, slug, tagline, about, business_hours, services_summary, phone, email, address, website, setup_completed_at, chat_assistant_label, chat_intro, chat_suggestions, chat_placeholder, workspace_faq_items(question, answer, sort_order)",
     )
     .eq("slug", cleaned)
     .maybeSingle();
@@ -194,23 +197,35 @@ export async function getPublicBookingWorkspace(
     }))
     .filter((row) => row.question.trim());
 
-  return {
-    id: data.id as string,
-    name: data.name as string,
-    slug: data.slug as string,
+  const filled = withWorkspaceAiDefaults({
     tagline: (data.tagline as string | null) ?? null,
     about: (data.about as string | null) ?? null,
     businessHours: (data.business_hours as string | null) ?? null,
     servicesSummary: (data.services_summary as string | null) ?? null,
+    chatAssistantLabel: (data.chat_assistant_label as string | null) ?? null,
+    chatIntro: (data.chat_intro as string | null) ?? null,
+    chatPlaceholder: (data.chat_placeholder as string | null) ?? null,
+    chatSuggestions: parseChatSuggestions(data.chat_suggestions),
+  });
+
+  return {
+    id: data.id as string,
+    name: data.name as string,
+    slug: data.slug as string,
+    tagline: filled.tagline,
+    about: filled.about,
+    businessHours: filled.businessHours,
+    servicesSummary: filled.servicesSummary,
     phone: (data.phone as string | null) ?? null,
     email: (data.email as string | null) ?? null,
     address: (data.address as string | null) ?? null,
     website: (data.website as string | null) ?? null,
     setupCompletedAt: (data.setup_completed_at as string | null) ?? null,
     faqItems,
-    chatAssistantLabel: (data.chat_assistant_label as string | null) ?? null,
-    chatIntro: (data.chat_intro as string | null) ?? null,
-    chatSuggestions: data.chat_suggestions ?? null,
+    chatAssistantLabel: filled.chatAssistantLabel,
+    chatIntro: filled.chatIntro,
+    chatSuggestions: filled.chatSuggestions,
+    chatPlaceholder: filled.chatPlaceholder,
   };
 }
 

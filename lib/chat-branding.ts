@@ -9,26 +9,33 @@ export type ChatBranding = {
   assistantLabel: string;
   intro: string;
   suggestions: ChatSuggestion[];
+  /** Composer placeholder; empty = use i18n default in the chat UI. */
+  placeholder: string;
 };
 
-export const DEFAULT_CHAT_ASSISTANT_LABEL = "AI booking assistant";
+/** VI-first product defaults (aligned with lib/workspace-ai-defaults.ts). */
+export const DEFAULT_CHAT_ASSISTANT_LABEL = "Trợ lý đặt lịch AI";
 
 export const DEFAULT_CHAT_INTRO =
-  "Ask FAQs, check open slots, or book an appointment. Not a substitute for a doctor — booking support only.";
+  "Hỏi FAQ, xem lịch trống, hoặc đặt hẹn ngay.";
 
 export const DEFAULT_CHAT_SUGGESTIONS: ChatSuggestion[] = [
-  { label: "Tomorrow afternoon", prompt: "Any openings tomorrow afternoon?" },
-  { label: "Business hours", prompt: "What are today's business hours?" },
-  { label: "Teeth cleaning", prompt: "I'd like to book a teeth cleaning" },
-  { label: "Exam pricing", prompt: "About how much is a general checkup?" },
+  { label: "Chiều mai", prompt: "Chiều mai còn chỗ trống không?" },
+  { label: "Giờ mở cửa", prompt: "Hôm nay mở cửa lúc mấy giờ?" },
+  { label: "Đặt lịch", prompt: "Tôi muốn đặt một lịch hẹn" },
+  { label: "Dịch vụ", prompt: "Các bạn có những dịch vụ nào?" },
 ];
 
 export const MAX_CHAT_SUGGESTIONS = 6;
+
+export const DEFAULT_CHAT_PLACEHOLDER =
+  "Hỏi giờ mở cửa, dịch vụ, hoặc đặt lịch…";
 
 export const DEFAULT_CHAT_BRANDING: ChatBranding = {
   assistantLabel: DEFAULT_CHAT_ASSISTANT_LABEL,
   intro: DEFAULT_CHAT_INTRO,
   suggestions: DEFAULT_CHAT_SUGGESTIONS,
+  placeholder: DEFAULT_CHAT_PLACEHOLDER,
 };
 
 export function parseChatSuggestions(raw: unknown): ChatSuggestion[] {
@@ -50,6 +57,7 @@ export function resolveChatBranding(input?: {
   assistantLabel?: string | null;
   intro?: string | null;
   suggestions?: unknown;
+  placeholder?: string | null;
 } | null): ChatBranding {
   const suggestions = parseChatSuggestions(input?.suggestions);
   return {
@@ -58,5 +66,6 @@ export function resolveChatBranding(input?: {
     intro: input?.intro?.trim() || DEFAULT_CHAT_INTRO,
     suggestions:
       suggestions.length > 0 ? suggestions : DEFAULT_CHAT_SUGGESTIONS,
+    placeholder: input?.placeholder?.trim() || DEFAULT_CHAT_PLACEHOLDER,
   };
 }

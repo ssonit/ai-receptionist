@@ -22,10 +22,13 @@ export default async function FaqPage() {
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Manage Q&A for the agent. Workspace contact details are
-            configured in{" "}
+            Manage Q&A for the agent. Workspace contact is in{" "}
             <a className="underline underline-offset-4" href="/dashboard/settings">
               Settings
+            </a>
+            ; greeting and persona are under{" "}
+            <a className="underline underline-offset-4" href="/dashboard/agent">
+              AI Agent
             </a>
             .
           </p>

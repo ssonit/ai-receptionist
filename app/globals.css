@@ -131,7 +131,8 @@
   --popover-foreground: lab(98.26% 0 0);
   --primary: lab(98.26% 0 0);
   --primary-foreground: #000000;
-  --secondary: lab(84.92% 0 0);
+  /* Secondary = raised dark surface (not light grey — that broke button contrast) */
+  --secondary: oklab(0.22 0 0);
   --secondary-foreground: lab(98.26% 0 0);
   --muted: oklab(0.1702 0 0);
   --muted-foreground: lab(66.128% 0 0);

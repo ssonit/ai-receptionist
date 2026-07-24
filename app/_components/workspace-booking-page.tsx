@@ -169,6 +169,7 @@ export function WorkspaceBookingPage({
         assistantLabel: workspace.chatAssistantLabel,
         intro: workspace.chatIntro,
         suggestions: workspace.chatSuggestions,
+        placeholder: workspace.chatPlaceholder,
       })}
       demoMode={demoMode}
       headerEnd={<WorkspaceInfoSheet workspace={workspace} />}

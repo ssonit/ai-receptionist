@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TimezoneSelect } from "@/components/timezone-select";
 import type { WorkspaceMeetingTypeRow } from "@/lib/workspace-cal";
+import { WORKSPACE_AI_DEFAULTS } from "@/lib/workspace-ai-defaults";
 import { resolveWorkspaceSlugField, slugifyWorkspaceName } from "@/lib/workspace";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -110,8 +111,12 @@ export function SetupWizard({
   const [profileDirty, setProfileDirty] = React.useState(false);
 
   useEffect(() => {
-    setStep(initialStep);
-  }, [initialStep]);
+    // Do not sync step from server `initialStep` after actions — selecting a
+    // meeting type refreshes props (initialStep → 3) and would skip Continue.
+    // Full page load still uses useState(initialStep). Snap back if prereqs lost.
+    if (step >= 2 && !workspace.hasCalKey) setStep(1);
+    else if (step >= 3 && !workspace.aiMeetingTypeId && !aiId) setStep(2);
+  }, [workspace.hasCalKey, workspace.aiMeetingTypeId, aiId, step]);
 
   useEffect(() => {
     if (calState.success) {
@@ -438,7 +443,11 @@ export function SetupWizard({
                   const next = e.target.value;
                   setName(next);
                   setProfileDirty(true);
-                  if (!slugTouched) setSlug(slugifyWorkspaceName(next));
+                  // Keep auto-slug while untouched, or resume after slug was cleared.
+                  if (!slugTouched || !slug.trim()) {
+                    setSlugTouched(false);
+                    setSlug(slugifyWorkspaceName(next));
+                  }
                 }}
               />
             </div>
@@ -454,14 +463,23 @@ export function SetupWizard({
                 required
                 value={slug}
                 onChange={(e) => {
-                  setSlugTouched(true);
-                  setSlug(e.target.value);
+                  const next = e.target.value;
                   setProfileDirty(true);
+                  if (!next.trim()) {
+                    // Cleared → resume auto-slug from workspace name
+                    setSlugTouched(false);
+                    setSlug(slugifyWorkspaceName(name));
+                    return;
+                  }
+                  setSlugTouched(true);
+                  setSlug(next);
                 }}
               />
               <p className="break-all text-xs text-zinc-500">
                 Public link: {chatBaseUrl}/b/
-                {encodeURIComponent(slugifyWorkspaceName(slug) || "…")}
+                {encodeURIComponent(
+                  slugifyWorkspaceName(slug.trim() ? slug : name) || "…",
+                )}
               </p>
               {slugChecking ? (
                 <p className="text-xs text-zinc-500">Checking slug…</p>
@@ -495,9 +513,12 @@ export function SetupWizard({
               </Label>
               <Textarea
                 className="min-h-[88px] border-white/10 bg-black/40 text-white"
-                defaultValue={workspace.about ?? ""}
+                defaultValue={
+                  workspace.about?.trim() || WORKSPACE_AI_DEFAULTS.about
+                }
                 id="about"
                 name="about"
+                placeholder="Short intro for guests and the AI agent…"
                 rows={3}
               />
             </div>

@@ -1,11 +1,10 @@
 import { WorkspaceSettingsForm } from "@/app/_components/workspace-settings-form";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { parseChatSuggestions } from "@/lib/chat-branding";
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { createClient } from "@/lib/supabase/server";
-import { listWorkspaceMeetingTypes } from "@/lib/workspace-cal";
 import { publicBookingPath } from "@/lib/workspace";
-import type { WorkspaceSettingsValues } from "@/lib/workspace-settings-types";
+import { WORKSPACE_AI_DEFAULTS } from "@/lib/workspace-ai-defaults";
+import type { WorkspaceOpsValues } from "@/lib/workspace-settings-types";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -26,19 +25,13 @@ export default async function SettingsPage() {
     redirect("/login?next=/dashboard/settings");
   }
 
-  const meetingTypes = dashboard.workspaceId
-    ? await listWorkspaceMeetingTypes(dashboard.workspaceId).catch(() => [])
-    : [];
-
-  let workspace: WorkspaceSettingsValues | null = null;
+  let workspace: WorkspaceOpsValues | null = null;
 
   if (dashboard.workspaceId) {
     const supabase = await createClient();
     const { data } = await supabase
       .from("workspaces")
-      .select(
-        "name, slug, timezone, phone, address, email, website, tagline, about, business_hours, services_summary, agent_instructions, chat_assistant_label, chat_intro, chat_suggestions",
-      )
+      .select("name, slug, timezone, phone, address, email, website, tagline")
       .eq("id", dashboard.workspaceId)
       .maybeSingle();
 
@@ -51,14 +44,7 @@ export default async function SettingsPage() {
         address: data.address,
         email: data.email,
         website: data.website,
-        tagline: data.tagline,
-        about: data.about,
-        businessHours: data.business_hours,
-        servicesSummary: data.services_summary,
-        agentInstructions: data.agent_instructions,
-        chatAssistantLabel: data.chat_assistant_label,
-        chatIntro: data.chat_intro,
-        chatSuggestions: parseChatSuggestions(data.chat_suggestions),
+        tagline: data.tagline?.trim() || WORKSPACE_AI_DEFAULTS.tagline,
       };
     }
   }
@@ -73,12 +59,11 @@ export default async function SettingsPage() {
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
           <p className="text-sm text-muted-foreground">
-            Workspace profile, chat screen, public booking link, and meeting
-            type for AI.
+            Workspace identity, contact, language, and booking link. Configure
+            the AI greeting and persona on AI Agent.
           </p>
         </div>
         <WorkspaceSettingsForm
-          meetingTypes={meetingTypes}
           publicBookingUrl={publicBookingUrl}
           workspace={workspace}
         />

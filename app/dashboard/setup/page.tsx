@@ -59,7 +59,7 @@ export default async function SetupPage() {
           name: workspace.name,
           slug: workspace.slug,
           timezone: workspace.timezone,
-          about: workspace.about,
+          about: workspace.about?.trim() || null,
           calUsername: workspace.cal_username,
           hasCalKey,
           aiMeetingTypeId: aiRow?.id ?? null,

@@ -37,13 +37,13 @@ export function DashboardRefreshButton({
           router.refresh();
         });
       }}
-      size="sm"
+      size="icon-sm"
       title={label}
       type="button"
       variant="outline"
     >
       <IconRefresh className={cn("size-4", pending && "animate-spin")} />
-      <span className="hidden sm:inline">
+      <span className="sr-only">
         {pending ? t("dashboard.reloading") : label}
       </span>
     </Button>

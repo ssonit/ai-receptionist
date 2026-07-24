@@ -1,13 +1,47 @@
 import {
+  getChatMessagesPage,
   getChatSessionForActor,
-  replaceChatMessages,
   titleFromFirstUserMessage,
   updateChatSessionState,
+  upsertChatMessages,
+  CHAT_MESSAGE_PAGE_LIMIT,
   type ProjectedChatMessage,
 } from "@/lib/chat-sessions";
 import { getChatActor, getChatWorkspaceId, jsonError } from "@/lib/chat-api";
 
 type Params = { params: Promise<{ id: string }> };
+
+/** Cursor page of messages (load earlier). */
+export async function GET(request: Request, { params }: Params) {
+  try {
+    const { id } = await params;
+    const { visitorId, userId } = await getChatActor();
+    const workspaceId = await getChatWorkspaceId(request);
+    const session = await getChatSessionForActor({
+      id,
+      visitorId,
+      userId,
+      workspaceId,
+    });
+    if (!session) return jsonError("Session not found", 404);
+
+    const url = new URL(request.url);
+    const before = url.searchParams.get("before");
+    const limitRaw = url.searchParams.get("limit");
+    const limit = limitRaw ? Number(limitRaw) : CHAT_MESSAGE_PAGE_LIMIT;
+
+    const page = await getChatMessagesPage(id, {
+      before,
+      limit: Number.isFinite(limit) && limit > 0 ? limit : CHAT_MESSAGE_PAGE_LIMIT,
+    });
+
+    return Response.json(page);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to load messages";
+    return jsonError(message, 500);
+  }
+}
 
 export async function POST(request: Request, { params }: Params) {
   try {
@@ -32,12 +66,13 @@ export async function POST(request: Request, { params }: Params) {
     };
 
     const messages = Array.isArray(body.messages) ? body.messages : [];
-    await replaceChatMessages({ sessionId: id, messages });
+    await upsertChatMessages({ sessionId: id, messages });
 
     const firstUser = messages.find((m) => m.role === "user" && m.content.trim());
     const nextTitle =
       body.title ??
-      ((session.title === "New chat" || session.title === "Chat mới") && firstUser
+      ((session.title === "New chat" || session.title === "Chat mới") &&
+      firstUser
         ? titleFromFirstUserMessage(firstUser.content)
         : undefined);
 
@@ -53,7 +88,20 @@ export async function POST(request: Request, { params }: Params) {
       title: nextTitle,
     });
 
-    return Response.json({ ok: true, session: updated });
+    return Response.json({
+      ok: true,
+      session: updated
+        ? {
+            id: updated.id,
+            title: updated.title,
+            status: updated.status,
+            eve_session_id: updated.eve_session_id,
+            continuation_token: updated.continuation_token,
+            stream_index: updated.stream_index,
+            last_message_at: updated.last_message_at,
+          }
+        : null,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to save messages";

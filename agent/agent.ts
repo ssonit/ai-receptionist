@@ -28,4 +28,8 @@ export default defineAgent({
     },
   }),
   reasoning: "low",
+  // Compact booking threads sooner so long sessions stay snappy.
+  compaction: {
+    thresholdPercent: 0.75,
+  },
 });

@@ -31,6 +31,8 @@ export const APP_ERROR_CODE = {
   FAQ_LIMIT: "faq_limit",
   FAQ_ITEM_INVALID: "faq_item_invalid",
   FAQ_ITEM_REQUIRED: "faq_item_required",
+  FAQ_GENERATE_FAILED: "faq_generate_failed",
+  FAQ_GENERATE_UNAVAILABLE: "faq_generate_unavailable",
   INVALID_SUGGESTIONS: "invalid_suggestions",
   SUGGESTION_LIMIT: "suggestion_limit",
   SUGGESTION_INVALID: "suggestion_invalid",

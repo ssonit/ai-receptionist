@@ -11,6 +11,7 @@ import {
   IconMessage,
   IconMessageChatbot,
   IconQuestionMark,
+  IconRobot,
   IconSettings,
   IconTags,
   IconUser,
@@ -68,6 +69,11 @@ export function DashboardCommand({
         icon: IconDashboard,
       },
       {
+        title: t("dashboard.nav.analytics"),
+        href: "/dashboard/analytics",
+        icon: IconChartBar,
+      },
+      {
         title: t("dashboard.nav.bookings"),
         href: "/dashboard/bookings",
         icon: IconCalendarEvent,
@@ -77,18 +83,23 @@ export function DashboardCommand({
         href: "/dashboard/meeting-types",
         icon: IconTags,
       },
-      { title: t("dashboard.nav.faq"), href: "/dashboard/faq", icon: IconQuestionMark },
-      { title: t("dashboard.nav.leads"), href: "/dashboard/leads", icon: IconUsers },
+      {
+        title: t("dashboard.bookingPage"),
+        href: bookingPagePath,
+        icon: IconMessageChatbot,
+      },
       {
         title: t("dashboard.nav.conversations"),
         href: "/dashboard/conversations",
         icon: IconMessage,
       },
+      { title: t("dashboard.nav.leads"), href: "/dashboard/leads", icon: IconUsers },
       {
-        title: t("dashboard.nav.analytics"),
-        href: "/dashboard/analytics",
-        icon: IconChartBar,
+        title: t("dashboard.nav.agent"),
+        href: "/dashboard/agent",
+        icon: IconRobot,
       },
+      { title: t("dashboard.nav.faq"), href: "/dashboard/faq", icon: IconQuestionMark },
       {
         title: t("dashboard.settings"),
         href: "/dashboard/settings",
@@ -96,11 +107,6 @@ export function DashboardCommand({
       },
       { title: t("dashboard.getHelp"), href: "/dashboard/help", icon: IconHelp },
       { title: t("dashboard.account"), href: "/dashboard/account", icon: IconUser },
-      {
-        title: t("dashboard.bookingPage"),
-        href: bookingPagePath,
-        icon: IconMessageChatbot,
-      },
     ],
     [bookingPagePath, t],
   );

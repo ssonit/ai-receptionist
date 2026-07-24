@@ -1,12 +1,12 @@
 {
   "chat": {
     "assistantDefault": "Trợ lý đặt lịch AI",
-    "introDefault": "Hỏi FAQ, kiểm tra lịch trống hoặc đặt hẹn. Không thay thế bác sĩ — chỉ hỗ trợ đặt lịch.",
+    "introDefault": "Hỏi FAQ, kiểm tra lịch trống hoặc đặt hẹn.",
     "loading": "Đang tải hội thoại…",
     "bootError": "Không mở được hội thoại.",
     "reload": "Tải lại",
-    "placeholder": "Hỏi giờ mở cửa, giá, hoặc đặt lịch…",
-    "disclaimer": "Chỉ hỗ trợ đặt lịch — không phải tư vấn y khoa.",
+    "placeholder": "Hỏi giờ mở cửa, dịch vụ, hoặc đặt lịch…",
+    "disclaimer": "Trợ lý đặt lịch — hãy xác nhận lại khi cần.",
     "demoBanner": "Đây là bản demo",
     "demoBannerBody": "Doanh nghiệp thật có trang riêng tại",
     "createWorkspace": "Tạo workspace của bạn",
@@ -29,11 +29,15 @@
     "phone": "Điện thoại",
     "address": "Địa chỉ",
     "faq": "FAQ",
+    "loadEarlier": "Tải tin nhắn cũ hơn",
+    "loadingOlder": "Đang tải…",
+    "longThreadNudge": "Hội thoại đang dài — chat mới giúp trả lời nhanh hơn.",
+    "dismissNudge": "Bỏ qua",
     "suggestions": {
       "afternoon": { "label": "Chiều mai", "prompt": "Còn trống chiều mai không?" },
       "hours": { "label": "Giờ mở cửa", "prompt": "Giờ mở cửa hôm nay?" },
-      "cleaning": { "label": "Lấy cao răng", "prompt": "Muốn đặt lịch lấy cao răng" },
-      "pricing": { "label": "Giá khám", "prompt": "Khám tổng quát khoảng bao nhiêu?" }
+      "book": { "label": "Đặt lịch", "prompt": "Tôi muốn đặt lịch hẹn" },
+      "services": { "label": "Dịch vụ", "prompt": "Có những dịch vụ nào?" }
     }
   },
   "dashboard": {
@@ -61,9 +65,16 @@
       "bookings": "Lịch hẹn",
       "meetingTypes": "Loại cuộc họp",
       "faq": "FAQ",
+      "agent": "AI Agent",
       "leads": "Lead",
       "conversations": "Hội thoại",
-      "analytics": "Phân tích"
+      "analytics": "Phân tích",
+      "groups": {
+        "overview": "Tổng quan",
+        "booking": "Đặt lịch",
+        "customers": "Khách hàng",
+        "agent": "Agent"
+      }
     }
   },
   "common": {

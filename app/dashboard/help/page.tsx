@@ -15,24 +15,30 @@ export default async function HelpPage() {
   const steps = [
     {
       title: "1. Configure workspace",
-      body: "Settings: business info, AI meeting type, and agent instructions.",
+      body: "Settings: name, timezone, contact, and booking link.",
       href: "/dashboard/settings",
       label: "Settings",
     },
     {
-      title: "2. Meeting types & FAQ",
+      title: "2. AI Agent",
+      body: "Greeting, persona, and the meeting type used for AI booking.",
+      href: "/dashboard/agent",
+      label: "AI Agent",
+    },
+    {
+      title: "3. Meeting types & FAQ",
       body: "Sync / create meeting types on Cal.com; add Q&A so chat answers correctly.",
       href: "/dashboard/meeting-types",
       label: "Meeting types",
     },
     {
-      title: "3. Public booking page",
+      title: "4. Public booking page",
       body: "Add /b/{slug} to your website or bio. Customer chats → Conversations / Leads / Bookings.",
       href: bookingHref,
       label: "Booking page",
     },
     {
-      title: "4. Operations",
+      title: "5. Operations",
       body: "Use Leads & Bookings for follow-up; Analytics / Conversations to evaluate the AI.",
       href: "/dashboard/leads",
       label: "Leads",

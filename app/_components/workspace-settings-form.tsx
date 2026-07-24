@@ -1,16 +1,18 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { setAiBookingMeetingTypeAction } from "@/app/dashboard/meeting-types/actions";
+import { useActionState, useEffect, useState } from "react";
+import { ChevronDownIcon } from "lucide-react";
+import { toast } from "sonner";
 import {
   checkWorkspaceSlugAvailable,
   saveWorkspaceSettings,
 } from "@/app/dashboard/settings/actions";
 import { CopyBookingLink } from "@/components/copy-booking-link";
 import { LocaleToggle } from "@/components/locale-provider";
+import { TimezoneSelect } from "@/components/timezone-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,36 +22,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { TimezoneSelect } from "@/components/timezone-select";
-import {
-  DEFAULT_CHAT_ASSISTANT_LABEL,
-  DEFAULT_CHAT_INTRO,
-  DEFAULT_CHAT_SUGGESTIONS,
-  MAX_CHAT_SUGGESTIONS,
-  type ChatSuggestion,
-} from "@/lib/chat-branding";
+import { cn } from "@/lib/utils";
 import { resolveWorkspaceSlugField, slugifyWorkspaceName } from "@/lib/workspace";
 import {
   type WorkspaceSettingsFormProps,
   type WorkspaceSettingsState,
 } from "@/lib/workspace-settings-types";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { PlusIcon, Trash2Icon } from "lucide-react";
 
 const initial: WorkspaceSettingsState = {};
 
-export type { WorkspaceSettingsValues } from "@/lib/workspace-settings-types";
+export type { WorkspaceOpsValues } from "@/lib/workspace-settings-types";
 
 type SlugStatus = {
   available: boolean;
@@ -57,17 +46,26 @@ type SlugStatus = {
   message: string;
 } | null;
 
-type SuggestionDraft = ChatSuggestion & { key: string };
+function hasText(...values: Array<string | null | undefined>) {
+  return values.some((v) => Boolean(v?.trim()));
+}
+
+function SectionHint({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-muted-foreground text-xs leading-relaxed sm:col-span-2">
+      {children}
+    </p>
+  );
+}
 
 export function WorkspaceSettingsForm({
   workspace,
-  meetingTypes,
   publicBookingUrl,
 }: WorkspaceSettingsFormProps) {
   const t = useTranslations();
   const router = useRouter();
   const [state, action, pending] = useActionState(saveWorkspaceSettings, initial);
-  const [selectPending, startSelect] = useTransition();
+
   const [name, setName] = useState(workspace?.name ?? "");
   const [slug, setSlug] = useState(() =>
     resolveWorkspaceSlugField(workspace?.name, workspace?.slug),
@@ -75,25 +73,35 @@ export function WorkspaceSettingsForm({
   const [slugTouched, setSlugTouched] = useState(false);
   const [slugStatus, setSlugStatus] = useState<SlugStatus>(null);
   const [slugChecking, setSlugChecking] = useState(false);
-  const [suggestions, setSuggestions] = useState<SuggestionDraft[]>(() =>
-    (workspace?.chatSuggestions?.length
-      ? workspace.chatSuggestions
-      : DEFAULT_CHAT_SUGGESTIONS
-    ).map((item, i) => ({ ...item, key: `s-${i}` })),
+  const [timezone, setTimezone] = useState(
+    workspace?.timezone ?? "Asia/Ho_Chi_Minh",
   );
+  const [phone, setPhone] = useState(workspace?.phone ?? "");
+  const [email, setEmail] = useState(workspace?.email ?? "");
+  const [website, setWebsite] = useState(workspace?.website ?? "");
+  const [address, setAddress] = useState(workspace?.address ?? "");
+  const [tagline, setTagline] = useState(workspace?.tagline ?? "");
 
-  const aiRow = meetingTypes.find((r) => r.is_ai_booking) ?? null;
+  const moreContactOpenDefault = hasText(
+    workspace?.tagline,
+    workspace?.website,
+    workspace?.address,
+  );
+  const [moreContactOpen, setMoreContactOpen] = useState(moreContactOpenDefault);
 
   useEffect(() => {
     setName(workspace?.name ?? "");
     setSlug(resolveWorkspaceSlugField(workspace?.name, workspace?.slug));
     setSlugTouched(false);
     setSlugStatus(null);
-    setSuggestions(
-      (workspace?.chatSuggestions?.length
-        ? workspace.chatSuggestions
-        : DEFAULT_CHAT_SUGGESTIONS
-      ).map((item, i) => ({ ...item, key: `s-${i}-${item.label}` })),
+    setTimezone(workspace?.timezone ?? "Asia/Ho_Chi_Minh");
+    setPhone(workspace?.phone ?? "");
+    setEmail(workspace?.email ?? "");
+    setWebsite(workspace?.website ?? "");
+    setAddress(workspace?.address ?? "");
+    setTagline(workspace?.tagline ?? "");
+    setMoreContactOpen(
+      hasText(workspace?.tagline, workspace?.website, workspace?.address),
     );
   }, [workspace]);
 
@@ -130,346 +138,194 @@ export function WorkspaceSettingsForm({
   }, [slug]);
 
   return (
-    <div className="grid gap-6 px-4 pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(17.5rem,22rem)] lg:items-start lg:gap-8 lg:px-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
-      <div className="min-w-0 space-y-6">
-        <form
-          action={action}
-          className="flex flex-col gap-6"
-          id="workspace-settings-form"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact & identity</CardTitle>
-              <CardDescription>
-                Information customers see when the agent introduces the workspace.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <div className="space-y-2 sm:col-span-2 xl:col-span-2">
-                <Label htmlFor="name">Workspace name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  onChange={(e) => {
-                    const next = e.target.value;
-                    setName(next);
-                    if (!slugTouched) setSlug(slugifyWorkspaceName(next));
-                  }}
-                  placeholder="Eve Pilot"
-                  required
-                  value={name}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="timezone">Timezone</Label>
-                <TimezoneSelect
-                  defaultValue={workspace?.timezone ?? "Asia/Ho_Chi_Minh"}
-                  id="timezone"
-                  name="timezone"
-                  required
-                />
-              </div>
-              <div className="space-y-2 sm:col-span-2 xl:col-span-3">
-                <Label htmlFor="slug">Booking page slug</Label>
-                <Input
-                  aria-invalid={slugStatus ? !slugStatus.available : undefined}
-                  id="slug"
-                  name="slug"
-                  onChange={(e) => {
-                    setSlugTouched(true);
-                    setSlug(e.target.value);
-                  }}
-                  placeholder="phong-kham-hoa"
-                  required
-                  value={slug}
-                />
-                <p className="text-muted-foreground text-xs">
-                  Public URL: /b/{slugifyWorkspaceName(slug) || "…"}
-                </p>
-                {slugChecking ? (
-                  <p className="text-muted-foreground text-xs">
-                    Checking slug…
-                  </p>
-                ) : slugStatus ? (
-                  <p
-                    className={cn(
-                      "text-xs",
-                      slugStatus.available
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-destructive",
-                    )}
-                  >
-                    {slugStatus.message}
-                  </p>
-                ) : null}
-              </div>
-              <div className="space-y-2 sm:col-span-2 xl:col-span-3">
-                <Label htmlFor="tagline">Tagline</Label>
-                <Input
-                  defaultValue={workspace?.tagline ?? ""}
-                  id="tagline"
-                  name="tagline"
-                  placeholder="24/7 booking assistant for clinics / studios"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone number</Label>
-                <Input
-                  defaultValue={workspace?.phone ?? ""}
-                  id="phone"
-                  name="phone"
-                  placeholder="0901234567"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  defaultValue={workspace?.email ?? ""}
-                  id="email"
-                  name="email"
-                  placeholder="hello@example.com"
-                  type="email"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="website">Website</Label>
-                <Input
-                  defaultValue={workspace?.website ?? ""}
-                  id="website"
-                  name="website"
-                  placeholder="https://example.com"
-                  type="url"
-                />
-              </div>
-              <div className="space-y-2 sm:col-span-2 xl:col-span-3">
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  defaultValue={workspace?.address ?? ""}
-                  id="address"
-                  name="address"
-                  placeholder="123 Nguyen Hue, District 1, Ho Chi Minh City"
-                />
-              </div>
-            </CardContent>
-          </Card>
+    <div className="mx-auto max-w-2xl space-y-6 px-4 pb-10 lg:px-6">
+      <form
+        action={action}
+        className="flex flex-col gap-6"
+        id="workspace-settings-form"
+      >
+        <input name="name" type="hidden" value={name} />
+        <input name="slug" type="hidden" value={slug} />
+        <input name="timezone" type="hidden" value={timezone} />
+        <input name="phone" type="hidden" value={phone} />
+        <input name="email" type="hidden" value={email} />
+        <input name="website" type="hidden" value={website} />
+        <input name="address" type="hidden" value={address} />
+        <input name="tagline" type="hidden" value={tagline} />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>AI profile</CardTitle>
-              <CardDescription>
-                The agent reads these fields via the <code>booking_faq</code> skill
-                when answering customers. Manage detailed FAQ on the{" "}
-                <Link
-                  className="underline underline-offset-4"
-                  href="/dashboard/faq"
-                >
-                  FAQ
-                </Link>{" "}
-                page.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="about">About</Label>
-                <Textarea
-                  defaultValue={workspace?.about ?? ""}
-                  id="about"
-                  name="about"
-                  placeholder="Short description of the workspace / services / customers…"
-                  rows={4}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="business_hours">Business hours</Label>
-                <Textarea
-                  defaultValue={workspace?.businessHours ?? ""}
-                  id="business_hours"
-                  name="business_hours"
-                  placeholder={
-                    "- Mon–Sat: 08:00–20:00\n- Sunday: 08:00–12:00"
-                  }
-                  rows={5}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="services_summary">Services summary</Label>
-                <Textarea
-                  defaultValue={workspace?.servicesSummary ?? ""}
-                  id="services_summary"
-                  name="services_summary"
-                  placeholder={
-                    "- Consultation 30 minutes\n- General checkup 90 minutes"
-                  }
-                  rows={5}
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="agent_instructions">Agent instructions</Label>
-                <Textarea
-                  defaultValue={workspace?.agentInstructions ?? ""}
-                  id="agent_instructions"
-                  name="agent_instructions"
-                  placeholder={
-                    "- Tone, what not to promise\n- Booking / cancellation rules\n- When to hand off to a phone call"
-                  }
-                  rows={5}
-                />
-                <p className="text-muted-foreground text-xs">
-                  Operational notes only — does not replace Q&A FAQ.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-              <div className="space-y-1.5">
-                <CardTitle>Empty chat screen</CardTitle>
-                <CardDescription>
-                  AI label, description, and default question buttons on the
-                  booking page. Leave blank / remove all suggestions to use Eve’s
-                  shared defaults.
-                </CardDescription>
-              </div>
-              <Button
-                disabled={pending || suggestions.length >= MAX_CHAT_SUGGESTIONS}
-                onClick={() =>
-                  setSuggestions((prev) => [
-                    ...prev,
-                    {
-                      key: `s-new-${Date.now()}`,
-                      label: "",
-                      prompt: "",
-                    },
-                  ])
-                }
-                size="sm"
-                type="button"
-                variant="outline"
+        <Card>
+          <CardHeader>
+            <CardTitle>Essentials</CardTitle>
+            <CardDescription>
+              Name, timezone, booking link, and how guests reach you.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <SectionHint>
+              Shows on the public booking page and in agent replies. AI
+              personality lives under{" "}
+              <Link
+                className="underline underline-offset-4"
+                href="/dashboard/agent"
               >
-                <PlusIcon className="size-4" />
-                Add
-              </Button>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <input
-                name="chat_suggestions"
-                type="hidden"
-                value={JSON.stringify(
-                  suggestions.map(({ label, prompt }) => ({ label, prompt })),
-                )}
+                AI Agent
+              </Link>
+              .
+            </SectionHint>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="name">Workspace name</Label>
+              <Input
+                id="name"
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setName(next);
+                  if (!slugTouched || !slug.trim()) {
+                    setSlugTouched(false);
+                    setSlug(slugifyWorkspaceName(next));
+                  }
+                }}
+                placeholder="Eve Pilot"
+                required
+                value={name}
               />
-              <div className="space-y-2">
-                <Label htmlFor="chat_assistant_label">AI label (eyebrow)</Label>
-                <Input
-                  defaultValue={workspace?.chatAssistantLabel ?? ""}
-                  id="chat_assistant_label"
-                  name="chat_assistant_label"
-                  placeholder={DEFAULT_CHAT_ASSISTANT_LABEL}
-                />
-              </div>
-              <div className="space-y-2 md:row-span-2">
-                <Label htmlFor="chat_intro">Description under name</Label>
-                <Textarea
-                  defaultValue={workspace?.chatIntro ?? ""}
-                  id="chat_intro"
-                  name="chat_intro"
-                  placeholder={DEFAULT_CHAT_INTRO}
-                  rows={4}
-                />
-              </div>
-              <div className="space-y-3 md:col-span-2">
-                <Label>Default questions (max {MAX_CHAT_SUGGESTIONS})</Label>
-                {suggestions.length === 0 ? (
-                  <p className="rounded-lg border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
-                    No suggestions yet — Eve defaults will be used if you save empty.
-                  </p>
-                ) : (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {suggestions.map((item, index) => (
-                      <div
-                        className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/20 p-3"
-                        key={item.key}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-medium">
-                            Suggestion #{index + 1}
-                          </p>
-                          <Button
-                            aria-label="Remove suggestion"
-                            disabled={pending}
-                            onClick={() =>
-                              setSuggestions((prev) =>
-                                prev.filter((s) => s.key !== item.key),
-                              )
-                            }
-                            size="icon-sm"
-                            type="button"
-                            variant="ghost"
-                          >
-                            <Trash2Icon className="size-4" />
-                          </Button>
-                        </div>
-                        <Input
-                          onChange={(e) =>
-                            setSuggestions((prev) =>
-                              prev.map((s) =>
-                                s.key === item.key
-                                  ? { ...s, label: e.target.value }
-                                  : s,
-                              ),
-                            )
-                          }
-                          placeholder="Button label — e.g. Opening hours"
-                          value={item.label}
-                        />
-                        <Input
-                          onChange={(e) =>
-                            setSuggestions((prev) =>
-                              prev.map((s) =>
-                                s.key === item.key
-                                  ? { ...s, prompt: e.target.value }
-                                  : s,
-                              ),
-                            )
-                          }
-                          placeholder="Message sent on click — e.g. What are today’s hours?"
-                          value={item.prompt}
-                        />
-                      </div>
-                    ))}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="timezone">Timezone</Label>
+              <TimezoneSelect
+                id="timezone"
+                name="timezone_ui"
+                onValueChange={setTimezone}
+                required
+                value={timezone}
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="slug">Booking page slug</Label>
+              <Input
+                aria-invalid={slugStatus ? !slugStatus.available : undefined}
+                id="slug"
+                onChange={(e) => {
+                  const next = e.target.value;
+                  if (!next.trim()) {
+                    setSlugTouched(false);
+                    setSlug(slugifyWorkspaceName(name));
+                    return;
+                  }
+                  setSlugTouched(true);
+                  setSlug(next);
+                }}
+                placeholder="phong-kham-hoa"
+                required
+                value={slug}
+              />
+              <p className="text-muted-foreground text-xs">
+                Public URL: /b/
+                {slugifyWorkspaceName(slug.trim() ? slug : name) || "…"}
+              </p>
+              {slugChecking ? (
+                <p className="text-muted-foreground text-xs">Checking slug…</p>
+              ) : slugStatus ? (
+                <p
+                  className={cn(
+                    "text-xs",
+                    slugStatus.available
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-destructive",
+                  )}
+                >
+                  {slugStatus.message}
+                </p>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone number</Label>
+              <Input
+                id="phone"
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="0901234567"
+                value={phone}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="hello@example.com"
+                type="email"
+                value={email}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Collapsible onOpenChange={setMoreContactOpen} open={moreContactOpen}>
+          <Card>
+            <CardHeader className="space-y-0">
+              <CollapsibleTrigger asChild>
+                <button
+                  className="flex w-full items-start justify-between gap-3 text-left"
+                  type="button"
+                >
+                  <div className="space-y-1.5">
+                    <CardTitle className="flex items-center gap-2">
+                      More contact
+                      {!moreContactOpenDefault && !moreContactOpen ? (
+                        <Badge variant="secondary">Optional</Badge>
+                      ) : null}
+                    </CardTitle>
+                    <CardDescription>
+                      Tagline, website, and address on the guest booking page.
+                    </CardDescription>
                   </div>
-                )}
-              </div>
-            </CardContent>
+                  <ChevronDownIcon
+                    className={cn(
+                      "mt-1 size-4 shrink-0 text-muted-foreground transition-transform",
+                      moreContactOpen && "rotate-180",
+                    )}
+                  />
+                </button>
+              </CollapsibleTrigger>
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent className="grid gap-4 border-t pt-6 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="tagline">Tagline</Label>
+                  <Input
+                    id="tagline"
+                    onChange={(e) => setTagline(e.target.value)}
+                    placeholder="24/7 booking assistant for clinics / studios"
+                    value={tagline}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website</Label>
+                  <Input
+                    id="website"
+                    onChange={(e) => setWebsite(e.target.value)}
+                    placeholder="https://example.com"
+                    type="url"
+                    value={website}
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Input
+                    id="address"
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="123 Nguyen Hue, District 1, Ho Chi Minh City"
+                    value={address}
+                  />
+                </div>
+              </CardContent>
+            </CollapsibleContent>
           </Card>
+        </Collapsible>
 
-          {state.error ? (
-            <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {state.error}
-            </p>
-          ) : null}
-
-          <div className="lg:hidden">
-            <Button
-              disabled={
-                pending || slugChecking || slugStatus?.available === false
-              }
-              type="submit"
-            >
-              {pending ? "Saving…" : "Save settings"}
-            </Button>
-          </div>
-        </form>
-      </div>
-
-      <aside className="flex flex-col gap-6 lg:sticky lg:top-20">
         <Card>
           <CardHeader>
             <CardTitle>{t("dashboard.languageCardTitle")}</CardTitle>
-            <CardDescription>
-              {t("dashboard.languageCardBody")}
-            </CardDescription>
+            <CardDescription>{t("dashboard.languageCardBody")}</CardDescription>
           </CardHeader>
           <CardContent>
             <LocaleToggle variant="light" />
@@ -496,109 +352,34 @@ export function WorkspaceSettingsForm({
           </Card>
         ) : null}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>AI booking meeting type</CardTitle>
-            <CardDescription>
-              Cal.com meeting type the agent uses to check slots / book. Manage
-              the list under{" "}
-              <Link
-                className="underline underline-offset-4"
-                href="/dashboard/meeting-types"
-              >
-                Meeting types
-              </Link>
-              .
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {meetingTypes.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                No meeting types yet. Go to{" "}
-                <Link
-                  className="underline underline-offset-4"
-                  href="/dashboard/meeting-types"
-                >
-                  Meeting types
-                </Link>{" "}
-                to sync or create one.
-              </p>
-            ) : (
-              <>
-                <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-muted/20 p-3">
-                  <span className="text-muted-foreground text-xs uppercase tracking-wide">
-                    In use
-                  </span>
-                  {aiRow ? (
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">{aiRow.title}</span>
-                        <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
-                          AI booking
-                        </Badge>
-                      </div>
-                      <p className="text-muted-foreground text-xs">
-                        {aiRow.length_minutes} min · `{aiRow.slug}`
-                      </p>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-amber-600 dark:text-amber-400">
-                      Not selected
-                    </span>
-                  )}
-                </div>
+        {state.error ? (
+          <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {state.error}
+          </p>
+        ) : null}
 
-                <div className="space-y-2">
-                  <Label htmlFor="ai-meeting-type">Select meeting type</Label>
-                  <Select
-                    disabled={selectPending}
-                    value={aiRow?.id ?? undefined}
-                    onValueChange={(id) => {
-                      startSelect(async () => {
-                        const result = await setAiBookingMeetingTypeAction(id);
-                        if (result.error) toast.error(result.error);
-                        else if (result.success) {
-                          toast.success(result.success);
-                          router.refresh();
-                        }
-                      });
-                    }}
-                  >
-                    <SelectTrigger id="ai-meeting-type">
-                      <SelectValue placeholder="Choose type for AI…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {meetingTypes.map((row) => (
-                        <SelectItem key={row.id} value={row.id}>
-                          {row.title} ({row.length_minutes} min)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="hidden lg:block">
-          <CardContent className="flex flex-col gap-3 pt-6">
-            <Button
-              disabled={
-                pending || slugChecking || slugStatus?.available === false
-              }
-              form="workspace-settings-form"
-              type="submit"
+        <div className="flex flex-col gap-2">
+          <Button
+            disabled={
+              pending || slugChecking || slugStatus?.available === false
+            }
+            type="submit"
+          >
+            {pending ? "Saving…" : "Save settings"}
+          </Button>
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            Changing the slug changes the public URL. Configure AI greeting,
+            persona, and booking type on{" "}
+            <Link
+              className="underline underline-offset-4"
+              href="/dashboard/agent"
             >
-              {pending ? "Saving…" : "Save settings"}
-            </Button>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              Changing the slug changes the public URL. FAQ and meeting types are
-              managed on their own pages.
-            </p>
-          </CardContent>
-        </Card>
-      </aside>
+              AI Agent
+            </Link>
+            .
+          </p>
+        </div>
+      </form>
     </div>
   );
 }
