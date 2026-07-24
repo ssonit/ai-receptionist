@@ -24,6 +24,11 @@ export default async function DashboardPage() {
     redirect("/login?next=/dashboard");
   }
 
+  const workspaceId = dashboard.workspaceId;
+  if (!workspaceId) {
+    redirect("/dashboard/setup");
+  }
+
   const supabase = await createClient();
 
   const { data: bookings } = await supabase
@@ -31,6 +36,7 @@ export default async function DashboardPage() {
     .select(
       "id, guest_name, guest_phone, guest_email, start_time, status, service, cal_booking_uid, created_at",
     )
+    .eq("workspace_id", workspaceId)
     .order("created_at", { ascending: false })
     .limit(50);
 
@@ -38,12 +44,14 @@ export default async function DashboardPage() {
   const { data: newLeads } = await supabase
     .from("leads")
     .select("id")
+    .eq("workspace_id", workspaceId)
     .eq("status", "new")
     .gte("created_at", weekAgo);
 
   const { count: leadsTotal } = await supabase
     .from("leads")
-    .select("id", { count: "exact", head: true });
+    .select("id", { count: "exact", head: true })
+    .eq("workspace_id", workspaceId);
 
   const todayIso = startOfTodayIso();
   const bookingsList = bookings ?? [];

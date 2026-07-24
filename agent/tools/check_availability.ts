@@ -6,7 +6,7 @@ import { bookingConfig } from "@/lib/booking-config";
 import {
   getCalApiKeyForWorkspace,
   getWorkspaceById,
-  resolveWorkspaceIdForAgentSession,
+  resolveWorkspaceIdFromAgentContext,
 } from "@/lib/workspace";
 import { getAiBookingEventType } from "@/lib/workspace-cal";
 import { addDaysYmd, compareYmd, toYmd, todayYmd } from "../date-context";
@@ -28,8 +28,13 @@ export default defineTool({
   }),
   async execute({ startDate, endDate, timeZone }, ctx) {
     const sessionId = ctx.session?.id ?? null;
+    let workspaceIdForLog: string | null = null;
     try {
-      const workspaceId = await resolveWorkspaceIdForAgentSession(sessionId);
+      const workspaceId = await resolveWorkspaceIdFromAgentContext({
+        sessionId,
+        auth: ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null,
+      });
+      workspaceIdForLog = workspaceId;
       const aiEvent = await getAiBookingEventType(workspaceId);
       if (!aiEvent) {
         const error =
@@ -136,12 +141,15 @@ export default defineTool({
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to fetch availability";
-      await logAgentToolEvent({
-        toolName: "check_availability",
-        ok: false,
-        error: message,
-        sessionId,
-      });
+      if (workspaceIdForLog) {
+        await logAgentToolEvent({
+          toolName: "check_availability",
+          ok: false,
+          error: message,
+          sessionId,
+          workspaceId: workspaceIdForLog,
+        });
+      }
       return { ok: false as const, error: message };
     }
   },

@@ -1,6 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createToolErrorNotificationDebounced } from "@/lib/notifications-write";
-import { getDefaultWorkspaceId } from "@/lib/workspace";
 
 export async function logAgentToolEvent(input: {
   toolName: string;
@@ -8,10 +7,15 @@ export async function logAgentToolEvent(input: {
   error?: string | null;
   sessionId?: string | null;
   meta?: Record<string, unknown> | null;
-  workspaceId?: string;
+  /** Required — never fall back to another tenant's workspace. */
+  workspaceId: string;
 }): Promise<void> {
   try {
-    const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
+    if (!input.workspaceId.trim()) {
+      console.error("[agent-tool-log] refused: missing workspaceId");
+      return;
+    }
+    const workspaceId = input.workspaceId;
     const supabase = createAdminClient();
     await supabase.from("agent_tool_events").insert({
       workspace_id: workspaceId,

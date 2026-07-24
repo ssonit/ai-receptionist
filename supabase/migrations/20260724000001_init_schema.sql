@@ -39,6 +39,9 @@ create table public.workspaces (
   business_hours text,
   services_summary text,
   agent_instructions text,
+  chat_assistant_label text,
+  chat_intro text,
+  chat_suggestions jsonb,
   cal_event_type_id integer,
   cal_event_type_slug text,
   cal_username text,
@@ -67,6 +70,9 @@ comment on column public.workspaces.about is 'Short about / intro paragraph for 
 comment on column public.workspaces.business_hours is 'Opening hours text (agent FAQ context)';
 comment on column public.workspaces.services_summary is 'Services overview the agent can summarize';
 comment on column public.workspaces.agent_instructions is 'Extra rules / tone / booking notes injected into agent context';
+comment on column public.workspaces.chat_assistant_label is 'Empty-state eyebrow; null = app default';
+comment on column public.workspaces.chat_intro is 'Empty-state description; null = app default';
+comment on column public.workspaces.chat_suggestions is 'Quick-reply chips JSON [{label,prompt}]; null = app default';
 
 -- -----------------------------------------------------------------------------
 -- profiles + signup (multi-tenant: create workspace per user)

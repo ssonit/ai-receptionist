@@ -19,7 +19,17 @@ export async function syncBookingsAction(): Promise<SyncBookingsState> {
     return { error: "Bạn cần đăng nhập." };
   }
 
-  const result = await syncCalBookingsToSupabase();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("workspace_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile?.workspace_id) {
+    return { error: "Tài khoản chưa được gán workspace." };
+  }
+
+  const result = await syncCalBookingsToSupabase(profile.workspace_id);
 
   if (result.error && !result.skipped) {
     return { error: result.error };

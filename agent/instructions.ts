@@ -4,10 +4,11 @@ import {
   buildBookingFaqSummary,
   fetchWorkspaceFaq,
 } from "../lib/workspace-faq";
+import { resolveWorkspaceIdFromAgentContext } from "../lib/workspace";
 import { nowHm, todayLabel, todayYmd } from "./date-context";
 
-async function buildMarkdown() {
-  const workspace = await fetchWorkspaceFaq();
+async function buildMarkdown(workspaceId: string) {
+  const workspace = await fetchWorkspaceFaq(workspaceId);
   const tz = workspace?.timezone?.trim() || bookingConfig.timezone;
   const today = todayYmd(tz);
   const label = todayLabel(tz);
@@ -62,11 +63,25 @@ Bạn là trợ lý đặt lịch, không thay thế chuyên gia tư vấn trự
 `;
 }
 
+async function instructionsForCtx(ctx: {
+  session?: {
+    id?: string;
+    auth?: {
+      current?: { attributes?: Readonly<Record<string, string | readonly string[]>> } | null;
+      initiator?: { attributes?: Readonly<Record<string, string | readonly string[]>> } | null;
+    };
+  };
+}) {
+  const workspaceId = await resolveWorkspaceIdFromAgentContext({
+    sessionId: ctx.session?.id ?? null,
+    auth: ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null,
+  });
+  return defineInstructions({ markdown: await buildMarkdown(workspaceId) });
+}
+
 export default defineDynamic({
   events: {
-    "session.started": async () =>
-      defineInstructions({ markdown: await buildMarkdown() }),
-    "turn.started": async () =>
-      defineInstructions({ markdown: await buildMarkdown() }),
+    "session.started": async (_event, ctx) => instructionsForCtx(ctx),
+    "turn.started": async (_event, ctx) => instructionsForCtx(ctx),
   },
 });

@@ -5,7 +5,7 @@ import {
   updateChatSessionState,
   type ProjectedChatMessage,
 } from "@/lib/chat-sessions";
-import { getChatActor, jsonError } from "@/lib/chat-api";
+import { getChatActor, getChatWorkspaceId, jsonError } from "@/lib/chat-api";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -13,7 +13,13 @@ export async function POST(request: Request, { params }: Params) {
   try {
     const { id } = await params;
     const { visitorId, userId } = await getChatActor();
-    const session = await getChatSessionForActor({ id, visitorId, userId });
+    const workspaceId = await getChatWorkspaceId(request);
+    const session = await getChatSessionForActor({
+      id,
+      visitorId,
+      userId,
+      workspaceId,
+    });
     if (!session) return jsonError("Session not found", 404);
 
     const body = (await request.json()) as {
@@ -39,6 +45,7 @@ export async function POST(request: Request, { params }: Params) {
       id,
       visitorId,
       userId,
+      workspaceId,
       eveSessionId: body.eveSessionId,
       continuationToken: body.continuationToken,
       streamIndex: body.streamIndex,

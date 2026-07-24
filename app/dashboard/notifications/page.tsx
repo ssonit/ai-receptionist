@@ -11,7 +11,9 @@ export default async function NotificationsPage() {
     redirect("/login?next=/dashboard/notifications");
   }
 
-  await ensureDigestNotifications().catch(() => undefined);
+  if (dashboard.workspaceId) {
+    await ensureDigestNotifications(dashboard.workspaceId).catch(() => undefined);
+  }
   const page = await listNotifications({
     unreadOnly: true,
     limit: 30,

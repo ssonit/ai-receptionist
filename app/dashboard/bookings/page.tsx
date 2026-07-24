@@ -2,37 +2,29 @@ import { redirect } from "next/navigation";
 import { BookingsSyncButton } from "@/components/bookings-sync-button";
 import { BookingsTable } from "@/components/bookings-table";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { getDashboardUser } from "@/lib/dashboard-user";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function BookingsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
+  const dashboard = await getDashboardUser();
+  if (!dashboard) {
+    redirect("/login?next=/dashboard/bookings");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
+  const workspaceId = dashboard.workspaceId;
+  if (!workspaceId) {
+    redirect("/dashboard/setup");
+  }
 
+  const supabase = await createClient();
   const { data: bookings } = await supabase
     .from("bookings")
     .select(
       "id, guest_name, guest_phone, guest_email, start_time, status, list_status, service, cal_booking_uid, session_id, synced_at, raw",
     )
+    .eq("workspace_id", workspaceId)
     .order("start_time", { ascending: false })
     .limit(100);
-
-  const navUser = {
-    name: profile?.full_name || user.email?.split("@")[0] || "Account",
-    email: profile?.email || user.email || "you@eve.local",
-    avatar: "",
-  };
 
   const lastSyncedAt = (bookings ?? []).reduce<string | null>((latest, row) => {
     if (!row.synced_at) return latest;
@@ -45,7 +37,7 @@ export default async function BookingsPage() {
     : "Dữ liệu Supabase — nhấn Đồng bộ Cal.com để lấy lịch từ Cal.com.";
 
   return (
-    <DashboardShell title="Bookings" user={navUser}>
+    <DashboardShell title="Bookings" user={dashboard.navUser}>
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <div className="flex flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">

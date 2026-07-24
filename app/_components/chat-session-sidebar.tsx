@@ -30,11 +30,11 @@ export function ChatSessionSidebar({
   return (
     <aside
       className={cn(
-        "flex h-full w-full flex-col border-white/10 bg-zinc-950/90",
+        "flex h-full min-h-0 w-full flex-col overflow-hidden border-white/10 bg-zinc-950/90",
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-3">
+      <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-zinc-950/95 px-3 py-3 backdrop-blur-md">
         <p className="text-xs font-medium tracking-wide text-zinc-400 uppercase">
           Hội thoại
         </p>
@@ -50,7 +50,7 @@ export function ChatSessionSidebar({
           Mới
         </Button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
         {sessions.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-zinc-500">
             Chưa có hội thoại. Bắt đầu chat hoặc bấm Mới.
@@ -112,13 +112,15 @@ export function ChatSessionDrawer({
     >
       <SheetContent
         side="left"
-        className="w-[min(100%,18rem)] gap-0 border-white/10 bg-zinc-950 p-0 sm:max-w-[18rem]"
+        className="flex h-full w-[min(100%,18rem)] flex-col gap-0 overflow-hidden border-white/10 bg-zinc-950 p-0 sm:max-w-[18rem]"
       >
         <SheetTitle className="sr-only">Danh sách hội thoại</SheetTitle>
         <SheetDescription className="sr-only">
           Chọn hoặc tạo hội thoại chat
         </SheetDescription>
-        <div className="flex h-full min-h-0 flex-1 flex-col pt-10">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden pt-10">
+          {children}
+        </div>
       </SheetContent>
     </Sheet>
   );

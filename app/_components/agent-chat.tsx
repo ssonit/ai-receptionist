@@ -28,6 +28,14 @@ import type {
   ChatSessionRow,
 } from "@/lib/chat-sessions";
 import { projectEveMessages } from "@/lib/project-chat-messages";
+import {
+  resolveChatBranding,
+  type ChatBranding,
+} from "@/lib/chat-branding";
+import {
+  EVE_CHAT_SESSION_HEADER,
+  EVE_WORKSPACE_HEADER,
+} from "@/lib/workspace";
 import { cn } from "@/lib/utils";
 import { AgentMessage } from "./agent-message";
 import { ChatUserMenu, type ChatUser } from "./chat-user-menu";
@@ -41,13 +49,6 @@ const AGENT_NAME = "Eve";
 
 type AgentStatus = ReturnType<typeof useEveAgent>["status"];
 
-const suggestions = [
-  { label: "Slot chiều mai", prompt: "Còn trống chiều mai không?" },
-  { label: "Giờ mở cửa", prompt: "Giờ mở cửa hôm nay?" },
-  { label: "Lấy cao răng", prompt: "Muốn đặt lịch lấy cao răng" },
-  { label: "Giá khám", prompt: "Khám tổng quát khoảng bao nhiêu?" },
-];
-
 type ThreadBootstrap = {
   chatSessionId: string;
   initialSession?: SessionState;
@@ -58,17 +59,32 @@ export function AgentChat({
   user,
   workspaceSlug,
   workspaceName,
-  embedded = false,
+  workspaceTagline,
+  chatBranding,
+  headerEnd,
   demoMode = false,
 }: {
   user?: ChatUser | null;
   workspaceSlug?: string;
   workspaceName?: string;
-  /** Fit parent (e.g. /b/[slug]) instead of full viewport page. */
-  embedded?: boolean;
+  workspaceTagline?: string | null;
+  /** Empty-state label, intro, and suggestion chips (falls back to shared defaults). */
+  chatBranding?: Partial<ChatBranding> | null;
+  /** Extra controls in the chat header (e.g. workspace info). */
+  headerEnd?: React.ReactNode;
   /** Marketing sandbox at `/chat` — Eve Pilot only. */
   demoMode?: boolean;
 }) {
+  const branding = React.useMemo(
+    () =>
+      resolveChatBranding({
+        assistantLabel: chatBranding?.assistantLabel,
+        intro: chatBranding?.intro ?? workspaceTagline,
+        suggestions: chatBranding?.suggestions,
+      }),
+    [chatBranding, workspaceTagline],
+  );
+
   const [sessions, setSessions] = React.useState<ChatSessionListItem[]>([]);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [bootstrap, setBootstrap] = React.useState<ThreadBootstrap | null>(null);
@@ -76,6 +92,7 @@ export function AgentChat({
   const [bootError, setBootError] = React.useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [busyAction, setBusyAction] = React.useState(false);
+  const [agentStatus, setAgentStatus] = React.useState<AgentStatus>("ready");
 
   const tenantQs = workspaceSlug
     ? `?w=${encodeURIComponent(workspaceSlug)}`
@@ -198,15 +215,8 @@ export function AgentChat({
     />
   );
 
-  const Root = embedded ? "div" : "main";
-
   return (
-    <Root
-      className={cn(
-        "relative flex overflow-hidden bg-black text-zinc-100",
-        embedded ? "h-full min-h-[70dvh] lg:min-h-dvh" : "h-dvh",
-      )}
-    >
+    <main className="relative flex h-dvh overflow-hidden bg-black text-zinc-100">
       <Particles
         className="pointer-events-none absolute inset-0 opacity-35"
         color="#ffffff"
@@ -221,7 +231,7 @@ export function AgentChat({
       />
       <div className="pointer-events-none absolute left-1/2 top-24 size-[28rem] -translate-x-1/2 rounded-full bg-teal-500/8 blur-[110px]" />
 
-      <div className="relative z-10 hidden w-64 shrink-0 border-r border-white/10 md:flex">
+      <div className="relative z-10 hidden h-full min-h-0 w-64 shrink-0 flex-col overflow-hidden border-r border-white/10 md:flex">
         {sidebar}
       </div>
       <ChatSessionDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
@@ -237,16 +247,19 @@ export function AgentChat({
             </Link>
           </div>
 
-          <div className="flex min-w-0 items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">
-            <span className="flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-teal-300/30 to-white/10">
+          <div className="flex min-w-0 max-w-[min(100%,16rem)] items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 sm:max-w-xs">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-300/30 to-white/10">
               <SparklesIcon className="size-3 text-teal-200" />
             </span>
-            <span className="truncate text-sm text-zinc-200">
+            <span className="min-w-0 truncate text-sm text-zinc-200">
               {workspaceName || AGENT_NAME}
             </span>
+            <span className="h-3 w-px shrink-0 bg-white/10" aria-hidden />
+            <StatusDot status={agentStatus} />
           </div>
 
           <div className="flex items-center gap-2">
+            {headerEnd}
             <Link
               className="hidden text-sm text-zinc-400 transition hover:text-white sm:inline"
               href="/dashboard"
@@ -304,30 +317,55 @@ export function AgentChat({
           <div className="flex min-h-0 flex-1 flex-col">
             <AgentChatThread
               key={bootstrap.chatSessionId}
+              branding={branding}
               chatSessionId={bootstrap.chatSessionId}
               initialEvents={bootstrap.initialEvents}
               initialSession={bootstrap.initialSession}
               onPersisted={onPersisted}
+              onStatusChange={setAgentStatus}
+              tenantQs={tenantQs}
+              workspaceName={workspaceName}
+              workspaceSlug={workspaceSlug}
             />
           </div>
         )}
       </div>
-    </Root>
+    </main>
   );
 }
 
 function AgentChatThread({
+  branding,
   chatSessionId,
   initialSession,
   initialEvents,
   onPersisted,
+  onStatusChange,
+  tenantQs,
+  workspaceName,
+  workspaceSlug,
 }: {
+  branding: ChatBranding;
   chatSessionId: string;
   initialSession?: SessionState;
   initialEvents?: readonly unknown[];
   onPersisted: () => void;
+  onStatusChange?: (status: AgentStatus) => void;
+  tenantQs: string;
+  workspaceName?: string;
+  workspaceSlug?: string;
 }) {
   const persistTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const tenantHeaders = React.useMemo(() => {
+    const headers: Record<string, string> = {
+      [EVE_CHAT_SESSION_HEADER]: chatSessionId,
+    };
+    if (workspaceSlug?.trim()) {
+      headers[EVE_WORKSPACE_HEADER] = workspaceSlug.trim().toLowerCase();
+    }
+    return headers;
+  }, [chatSessionId, workspaceSlug]);
 
   const persistSnapshot = React.useCallback(
     async (input: {
@@ -336,43 +374,49 @@ function AgentChatThread({
       events: readonly unknown[];
     }) => {
       try {
-        await fetch(`/api/chat/sessions/${chatSessionId}/messages`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: projectEveMessages(input.messages),
-            eveSessionId: input.session.sessionId ?? null,
-            continuationToken: input.session.continuationToken ?? null,
-            streamIndex: input.session.streamIndex ?? 0,
-            events: input.events,
-          }),
-        });
+        const res = await fetch(
+          `/api/chat/sessions/${chatSessionId}/messages${tenantQs}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messages: projectEveMessages(input.messages),
+              eveSessionId: input.session.sessionId ?? null,
+              continuationToken: input.session.continuationToken ?? null,
+              streamIndex: input.session.streamIndex ?? 0,
+              events: input.events,
+            }),
+          },
+        );
+        if (!res.ok) {
+          throw new Error(`persist failed (${res.status})`);
+        }
         onPersisted();
       } catch (error) {
         console.error("[eve chat] persist failed", error);
       }
     },
-    [chatSessionId, onPersisted],
+    [chatSessionId, onPersisted, tenantQs],
   );
 
   const agent = useEveAgent({
+    headers: tenantHeaders,
     initialSession,
     initialEvents: initialEvents as never,
     onSessionChange: (session) => {
+      // Link eve_session_id ASAP (no debounce) so dashboard/tools can resolve tenant.
       if (persistTimer.current) clearTimeout(persistTimer.current);
-      persistTimer.current = setTimeout(() => {
-        void fetch(`/api/chat/sessions/${chatSessionId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            eveSessionId: session.sessionId ?? null,
-            continuationToken: session.continuationToken ?? null,
-            streamIndex: session.streamIndex ?? 0,
-          }),
-        }).catch((error) => {
-          console.error("[eve chat] session patch failed", error);
-        });
-      }, 400);
+      void fetch(`/api/chat/sessions/${chatSessionId}${tenantQs}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eveSessionId: session.sessionId ?? null,
+          continuationToken: session.continuationToken ?? null,
+          streamIndex: session.streamIndex ?? 0,
+        }),
+      }).catch((error) => {
+        console.error("[eve chat] session patch failed", error);
+      });
     },
     onFinish: (snapshot) => {
       void persistSnapshot({
@@ -382,6 +426,10 @@ function AgentChatThread({
       });
     },
   });
+
+  React.useEffect(() => {
+    onStatusChange?.(agent.status);
+  }, [agent.status, onStatusChange]);
 
   React.useEffect(() => {
     return () => {
@@ -455,12 +503,6 @@ function AgentChatThread({
 
   return (
     <>
-      <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center justify-between gap-2 px-4 pt-3 sm:px-6">
-        <div className="flex min-w-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1">
-          <StatusDot status={agent.status} />
-        </div>
-      </div>
-
       {agent.error ? (
         <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pt-3 sm:px-6">
           <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm">
@@ -510,18 +552,17 @@ function AgentChatThread({
         {isEmpty ? (
           <BlurFade className="flex w-full flex-col items-center gap-5 text-center" delay={0.05}>
             <AnimatedShinyText className="text-xs tracking-[0.18em] text-zinc-400 uppercase dark:text-zinc-400">
-              AI booking assistant
+              {branding.assistantLabel}
             </AnimatedShinyText>
             <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-              {AGENT_NAME}
+              {workspaceName?.trim() || AGENT_NAME}
             </h1>
             <p className="max-w-md text-sm leading-relaxed text-zinc-400">
-              Hỏi FAQ, kiểm tra slot trống, hoặc đặt lịch. Không thay thế bác sĩ — chỉ hỗ trợ đặt
-              hẹn. Dùng sidebar để mở chat cũ hoặc tạo session mới.
+              {branding.intro}
             </p>
             <div className="flex flex-wrap justify-center gap-2 pt-1">
-              {suggestions.map((item, i) => (
-                <BlurFade delay={0.12 + i * 0.05} key={item.prompt}>
+              {branding.suggestions.map((item, i) => (
+                <BlurFade delay={0.12 + i * 0.05} key={`${item.label}-${item.prompt}`}>
                   <button
                     className="rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-xs text-zinc-300 transition hover:border-teal-300/30 hover:bg-white/[0.08] hover:text-white"
                     onClick={() => void sendSuggestion(item.prompt)}
@@ -566,7 +607,7 @@ function StatusDot({ status }: { readonly status: AgentStatus }) {
           : "bg-zinc-600";
 
   return (
-    <span className="inline-flex items-center gap-1.5 pl-0.5">
+    <span className="inline-flex shrink-0 items-center gap-1.5">
       <span className="relative flex size-1.5">
         {isLive ? (
           <span
@@ -578,9 +619,7 @@ function StatusDot({ status }: { readonly status: AgentStatus }) {
         ) : null}
         <span className={cn("relative inline-flex size-1.5 rounded-full transition-colors", tone)} />
       </span>
-      <span className="hidden text-[10px] tracking-wide text-zinc-500 uppercase sm:inline">
-        {label}
-      </span>
+      <span className="text-[10px] tracking-wide text-zinc-500 uppercase">{label}</span>
     </span>
   );
 }

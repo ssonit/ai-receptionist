@@ -44,8 +44,10 @@ export async function GET(request: Request) {
   );
 
   try {
-    // Refresh digests + purge read > 30d (debounced writes inside helpers).
-    await ensureDigestNotifications();
+    if (dashboard.workspaceId) {
+      // Refresh digests + purge read > 30d (debounced writes inside helpers).
+      await ensureDigestNotifications(dashboard.workspaceId);
+    }
 
     if (countOnly) {
       const unread = await countUnreadNotifications();

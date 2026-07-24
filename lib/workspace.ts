@@ -85,13 +85,19 @@ export async function resolveWorkspaceIdBySlug(
   return data?.id ?? null;
 }
 
-/** Resolve tenant for public chat (?w=slug) with pilot fallback. */
+/** Resolve tenant for public chat (?w=slug) with pilot fallback only when slug omitted. */
 export async function resolvePublicWorkspaceId(
   slug?: string | null,
 ): Promise<string> {
-  const fromSlug = await resolveWorkspaceIdBySlug(slug);
+  const cleaned = slug?.trim().toLowerCase();
+  if (!cleaned) return getDefaultWorkspaceId();
+
+  const fromSlug = await resolveWorkspaceIdBySlug(cleaned);
   if (fromSlug) return fromSlug;
-  return getDefaultWorkspaceId();
+
+  // Explicit tenant slug that does not resolve must NOT fall back to Eve Pilot
+  // (that would mix visitor chat into the demo workspace).
+  throw new Error(`Workspace không tồn tại: ${cleaned}`);
 }
 
 export type PublicBookingWorkspace = {
@@ -108,6 +114,9 @@ export type PublicBookingWorkspace = {
   website: string | null;
   setupCompletedAt: string | null;
   faqItems: { question: string; answer: string }[];
+  chatAssistantLabel: string | null;
+  chatIntro: string | null;
+  chatSuggestions: unknown;
 };
 
 /** Public booking page `/b/[slug]` — service role (RLS is auth-only). */
@@ -121,7 +130,7 @@ export async function getPublicBookingWorkspace(
   const { data, error } = await supabase
     .from("workspaces")
     .select(
-      "id, name, slug, tagline, about, business_hours, services_summary, phone, email, address, website, setup_completed_at, workspace_faq_items(question, answer, sort_order)",
+      "id, name, slug, tagline, about, business_hours, services_summary, phone, email, address, website, setup_completed_at, chat_assistant_label, chat_intro, chat_suggestions, workspace_faq_items(question, answer, sort_order)",
     )
     .eq("slug", cleaned)
     .maybeSingle();
@@ -157,11 +166,35 @@ export async function getPublicBookingWorkspace(
     website: (data.website as string | null) ?? null,
     setupCompletedAt: (data.setup_completed_at as string | null) ?? null,
     faqItems,
+    chatAssistantLabel: (data.chat_assistant_label as string | null) ?? null,
+    chatIntro: (data.chat_intro as string | null) ?? null,
+    chatSuggestions: data.chat_suggestions ?? null,
   };
 }
 
 export function publicBookingPath(slug: string): string {
   return `/b/${encodeURIComponent(slug.trim().toLowerCase())}`;
+}
+
+/** Browser → Eve HTTP: public booking slug (`/b/[slug]` or `?w=`). */
+export const EVE_WORKSPACE_HEADER = "x-eve-w";
+/** Browser → Eve HTTP: Supabase `chat_sessions.id` for reliable tenant lookup. */
+export const EVE_CHAT_SESSION_HEADER = "x-eve-chat-session";
+
+function authAttr(
+  attributes: Readonly<Record<string, string | readonly string[]>> | undefined,
+  key: string,
+): string | null {
+  const raw = attributes?.[key];
+  if (typeof raw === "string") {
+    const v = raw.trim();
+    return v.length > 0 ? v : null;
+  }
+  if (Array.isArray(raw) && typeof raw[0] === "string") {
+    const v = raw[0].trim();
+    return v.length > 0 ? v : null;
+  }
+  return null;
 }
 
 /**
@@ -183,6 +216,65 @@ export async function resolveWorkspaceIdForAgentSession(
       .maybeSingle();
     if (data?.workspace_id) return data.workspace_id as string;
   }
+  return getDefaultWorkspaceId();
+}
+
+/**
+ * Resolve tenant for agent tools / instructions / skills.
+ * Prefer auth attributes from {@link EVE_CHAT_SESSION_HEADER} /
+ * {@link EVE_WORKSPACE_HEADER}, then Eve session → chat_sessions link.
+ *
+ * If the request carried a tenant hint (slug / chat session) but lookup
+ * fails, refuse to fall back to Eve Pilot — wrong-tenant writes are worse
+ * than a tool error.
+ */
+export async function resolveWorkspaceIdFromAgentContext(input: {
+  sessionId?: string | null;
+  auth?: {
+    attributes?: Readonly<Record<string, string | readonly string[]>>;
+  } | null;
+}): Promise<string> {
+  const attrs = input.auth?.attributes;
+  const chatSessionId = authAttr(attrs, "chatSessionId");
+  const slug = authAttr(attrs, "workspaceSlug");
+  const hadTenantHint = Boolean(chatSessionId || slug);
+
+  if (chatSessionId) {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("chat_sessions")
+      .select("workspace_id")
+      .eq("id", chatSessionId)
+      .not("workspace_id", "is", null)
+      .maybeSingle();
+    if (data?.workspace_id) return data.workspace_id as string;
+  }
+
+  if (slug) {
+    const fromSlug = await resolveWorkspaceIdBySlug(slug);
+    if (fromSlug) return fromSlug;
+  }
+
+  if (input.sessionId?.trim()) {
+    const supabase = createAdminClient();
+    const id = input.sessionId.trim();
+    const { data } = await supabase
+      .from("chat_sessions")
+      .select("workspace_id")
+      .or(`id.eq.${id},eve_session_id.eq.${id}`)
+      .not("workspace_id", "is", null)
+      .limit(1)
+      .maybeSingle();
+    if (data?.workspace_id) return data.workspace_id as string;
+  }
+
+  if (hadTenantHint) {
+    throw new Error(
+      "Không xác định được workspace từ phiên chat — từ chối ghi sang workspace khác.",
+    );
+  }
+
+  // CLI / Eve Pilot demo only (no tenant headers).
   return getDefaultWorkspaceId();
 }
 

@@ -9,7 +9,7 @@ import { createNotification } from "@/lib/notifications-write";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getCalApiKeyForWorkspace,
-  resolveWorkspaceIdForAgentSession,
+  resolveWorkspaceIdFromAgentContext,
 } from "@/lib/workspace";
 import { getAiBookingEventType } from "@/lib/workspace-cal";
 
@@ -33,8 +33,13 @@ export default defineTool({
     ctx,
   ) {
     const sid = sessionId ?? ctx.session?.id ?? null;
+    let workspaceIdForLog: string | null = null;
     try {
-      const workspaceId = await resolveWorkspaceIdForAgentSession(sid);
+      const workspaceId = await resolveWorkspaceIdFromAgentContext({
+        sessionId: sid,
+        auth: ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null,
+      });
+      workspaceIdForLog = workspaceId;
       const aiEvent = await getAiBookingEventType(workspaceId);
       if (!aiEvent) {
         const error =
@@ -189,12 +194,15 @@ export default defineTool({
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to create booking";
-      await logAgentToolEvent({
-        toolName: "book_appointment",
-        ok: false,
-        error: message,
-        sessionId: sid,
-      });
+      if (workspaceIdForLog) {
+        await logAgentToolEvent({
+          toolName: "book_appointment",
+          ok: false,
+          error: message,
+          sessionId: sid,
+          workspaceId: workspaceIdForLog,
+        });
+      }
       return { ok: false as const, error: message };
     }
   },

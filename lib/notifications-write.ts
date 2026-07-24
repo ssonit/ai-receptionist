@@ -1,9 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getDefaultWorkspaceId } from "@/lib/workspace";
 
 /**
  * Write-path notifications for agent tools / sync.
  * Must NOT import next/headers or @/lib/supabase/server (Eve agent bundle).
+ *
+ * Every write requires an explicit workspaceId — never fall back to Eve Pilot
+ * (that would leak alerts into the wrong tenant inbox).
  */
 
 export const NOTIFICATION_TYPES = [
@@ -29,19 +31,32 @@ export type CreateNotificationInput = {
   href?: string | null;
   entityType?: string | null;
   entityId?: string | null;
-  workspaceId?: string;
+  /** Required for multi-tenant isolation. */
+  workspaceId: string;
 };
+
+function requireWorkspaceId(workspaceId: string | undefined, label: string): string | null {
+  const id = workspaceId?.trim();
+  if (!id) {
+    console.error(`[notifications] ${label} refused: missing workspaceId`);
+    return null;
+  }
+  return id;
+}
 
 /** Fire-and-forget safe for agent tools — never throws to callers. */
 export async function createNotification(
   input: CreateNotificationInput,
 ): Promise<string | null> {
   try {
+    const workspaceId = requireWorkspaceId(input.workspaceId, "create");
+    if (!workspaceId) return null;
+
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("notifications")
       .insert({
-        workspace_id: input.workspaceId ?? getDefaultWorkspaceId(),
+        workspace_id: workspaceId,
         type: input.type,
         title: input.title.trim(),
         body: (input.body ?? "").trim(),
@@ -72,10 +87,12 @@ export async function createNotificationDebounced(
   input: CreateNotificationInput & { windowMinutes?: number },
 ): Promise<string | null> {
   try {
-    const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
+    const workspaceId = requireWorkspaceId(input.workspaceId, "debounce");
+    if (!workspaceId) return null;
+
     const entityId = input.entityId ?? null;
     if (!entityId) {
-      return createNotification(input);
+      return createNotification({ ...input, workspaceId });
     }
 
     const since = new Date(
@@ -109,11 +126,13 @@ export async function createToolErrorNotificationDebounced(input: {
   toolName: string;
   error: string;
   sessionId?: string | null;
-  workspaceId?: string;
+  workspaceId: string;
   windowMinutes?: number;
 }): Promise<void> {
   try {
-    const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
+    const workspaceId = requireWorkspaceId(input.workspaceId, "tool_error");
+    if (!workspaceId) return;
+
     const entityId = `${input.toolName}:${input.sessionId ?? "none"}`;
     const errorText = input.error.slice(0, 480);
     const supabase = createAdminClient();
@@ -140,7 +159,8 @@ export async function createToolErrorNotificationDebounced(input: {
           severity: "high",
           created_at: new Date().toISOString(),
         })
-        .eq("id", unread.id);
+        .eq("id", unread.id)
+        .eq("workspace_id", workspaceId);
       if (error) {
         console.error(
           "[notifications] collapse tool_error failed",
@@ -166,19 +186,22 @@ export async function createToolErrorNotificationDebounced(input: {
   }
 }
 
-/** Delete read notifications older than `days` (default 30). Admin only. */
+/** Delete read notifications older than `days` (default 30). Scoped to one workspace. */
 export async function purgeOldNotifications(
   days = 30,
-  workspaceId = getDefaultWorkspaceId(),
+  workspaceId?: string,
 ): Promise<number> {
   try {
+    const wsId = requireWorkspaceId(workspaceId, "purge");
+    if (!wsId) return 0;
+
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("notifications")
       .delete()
-      .eq("workspace_id", workspaceId)
+      .eq("workspace_id", wsId)
       .not("read_at", "is", null)
       .lt("created_at", cutoff.toISOString())
       .select("id");

@@ -10,12 +10,18 @@ export default async function LeadsPage() {
     redirect("/login?next=/dashboard/leads");
   }
 
+  const workspaceId = dashboard.workspaceId;
+  if (!workspaceId) {
+    redirect("/dashboard/setup");
+  }
+
   const supabase = await createClient();
   const { data: leads } = await supabase
     .from("leads")
     .select(
       "id, full_name, phone, email, service, urgency, notes, status, session_id, created_at, updated_at",
     )
+    .eq("workspace_id", workspaceId)
     .order("created_at", { ascending: false })
     .limit(200);
 

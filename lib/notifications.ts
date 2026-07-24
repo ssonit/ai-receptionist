@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { getDefaultWorkspaceId } from "@/lib/workspace";
 import { getSessionWorkspaceId } from "@/lib/workspace-session";
 
 export {
@@ -72,8 +71,8 @@ export async function listNotifications(input?: {
   group?: NotificationTypeGroup | null;
 }): Promise<ListNotificationsResult> {
   const supabase = await createClient();
-  const workspaceId =
-    (await getSessionWorkspaceId()) ?? getDefaultWorkspaceId();
+  const workspaceId = await getSessionWorkspaceId();
+  if (!workspaceId) return { items: [], nextCursor: null };
   const limit = Math.min(Math.max(input?.limit ?? PAGE_DEFAULT, 1), 100);
   const unreadOnly = Boolean(input?.unreadOnly);
   const unreadFirst = input?.unreadFirst ?? !unreadOnly;
@@ -130,8 +129,8 @@ export async function listNotifications(input?: {
 
 export async function countUnreadNotifications(): Promise<number> {
   const supabase = await createClient();
-  const workspaceId =
-    (await getSessionWorkspaceId()) ?? getDefaultWorkspaceId();
+  const workspaceId = await getSessionWorkspaceId();
+  if (!workspaceId) return 0;
   const { count, error } = await supabase
     .from("notifications")
     .select("id", { count: "exact", head: true })
@@ -144,8 +143,8 @@ export async function countUnreadNotifications(): Promise<number> {
 
 export async function markNotificationRead(id: string): Promise<void> {
   const supabase = await createClient();
-  const workspaceId =
-    (await getSessionWorkspaceId()) ?? getDefaultWorkspaceId();
+  const workspaceId = await getSessionWorkspaceId();
+  if (!workspaceId) return;
   const { error } = await supabase
     .from("notifications")
     .update({ read_at: new Date().toISOString() })
@@ -158,8 +157,8 @@ export async function markNotificationRead(id: string): Promise<void> {
 
 export async function markAllNotificationsRead(): Promise<void> {
   const supabase = await createClient();
-  const workspaceId =
-    (await getSessionWorkspaceId()) ?? getDefaultWorkspaceId();
+  const workspaceId = await getSessionWorkspaceId();
+  if (!workspaceId) return;
   const { error } = await supabase
     .from("notifications")
     .update({ read_at: new Date().toISOString() })

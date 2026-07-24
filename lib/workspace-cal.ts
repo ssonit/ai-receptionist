@@ -32,13 +32,15 @@ export type WorkspaceMeetingTypeRow = WorkspaceEventTypeRow;
 
 /**
  * Resolve the single meeting type used by AI booking tools.
- * Prefer DB (`is_ai_booking` / workspaces.cal_event_type_id), else env bootstrap.
+ * Prefer DB (`is_ai_booking` / workspaces.cal_event_type_id), else env bootstrap
+ * for Eve Pilot only.
  */
 export async function getAiBookingEventType(
-  workspaceId?: string,
+  workspaceId: string,
 ): Promise<AiBookingEventType | null> {
+  if (!workspaceId.trim()) return null;
   const { getDefaultWorkspaceId } = await import("@/lib/workspace");
-  const wsId = workspaceId ?? getDefaultWorkspaceId();
+  const wsId = workspaceId;
   const supabase = createAdminClient();
 
   const { data: aiRow } = await supabase

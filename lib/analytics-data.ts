@@ -10,7 +10,6 @@ import {
   type ToolErrorRow,
 } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/server";
-import { getDefaultWorkspaceId } from "@/lib/workspace";
 import { getSessionWorkspaceId } from "@/lib/workspace-session";
 
 const RANGE_DAYS = 30;
@@ -31,10 +30,28 @@ function daysAgoIso(days: number): string {
   return d.toISOString();
 }
 
+function emptyAnalytics(): AnalyticsDashboardData {
+  return {
+    rangeDays: RANGE_DAYS,
+    kpis: buildAnalyticsKpis({ bookings: [], leads: [] }),
+    series90: buildDailySeries({ bookings: [], leads: [], days: SERIES_DAYS }),
+    funnel: buildLeadFunnel([]),
+    alerts: [
+      {
+        id: "no-workspace",
+        severity: "warning",
+        title: "Chưa gán workspace",
+        detail: "Tài khoản chưa có workspace_id — không tải được analytics.",
+      },
+    ],
+    toolErrors: [],
+  };
+}
+
 export async function loadAnalyticsDashboard(): Promise<AnalyticsDashboardData> {
   const supabase = await createClient();
-  const workspaceId =
-    (await getSessionWorkspaceId()) ?? getDefaultWorkspaceId();
+  const workspaceId = await getSessionWorkspaceId();
+  if (!workspaceId) return emptyAnalytics();
   const rangeStart = daysAgoIso(RANGE_DAYS);
   const seriesStart = daysAgoIso(SERIES_DAYS);
   const day24h = daysAgoIso(1);

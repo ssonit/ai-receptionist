@@ -1,8 +1,5 @@
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { createClient } from "@/lib/supabase/server";
-import {
-  getDefaultWorkspaceId,
-} from "@/lib/workspace";
 import { getSessionWorkspaceId } from "@/lib/workspace-session";
 import { NextResponse } from "next/server";
 
@@ -34,8 +31,10 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createClient();
-  const workspaceId =
-    (await getSessionWorkspaceId()) ?? getDefaultWorkspaceId();
+  const workspaceId = await getSessionWorkspaceId();
+  if (!workspaceId) {
+    return NextResponse.json({ leads: [], bookings: [] });
+  }
   const pattern = `%${q}%`;
 
   const leadSelect = "id, full_name, phone, email, status" as const;

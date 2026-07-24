@@ -1,17 +1,20 @@
-import { AgentChat } from "@/app/_components/agent-chat";
+import { WorkspaceBookingPage } from "@/app/_components/workspace-booking-page";
 import { createClient } from "@/lib/supabase/server";
 import {
   getDefaultWorkspaceId,
+  getPublicBookingWorkspace,
   getWorkspaceById,
 } from "@/lib/workspace";
 
 /**
  * Marketing product demo — always Eve Pilot (seeded sandbox).
- * Real tenant booking lives at `/b/[slug]`.
+ * Same chat UI as tenant booking `/b/[slug]`, with a demo banner.
  */
 export default async function ChatPage() {
-  const workspaceId = getDefaultWorkspaceId();
-  const workspace = await getWorkspaceById(workspaceId);
+  const tenant = await getWorkspaceById(getDefaultWorkspaceId());
+  const workspace = tenant?.slug
+    ? await getPublicBookingWorkspace(tenant.slug)
+    : null;
 
   const supabase = await createClient();
   const {
@@ -30,12 +33,18 @@ export default async function ChatPage() {
       }
     : null;
 
+  if (!workspace?.setupCompletedAt) {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-black px-6 text-center text-zinc-300">
+        <p className="text-sm">Demo Eve Pilot chưa sẵn sàng.</p>
+        <a className="text-sm text-teal-200 underline-offset-2 hover:underline" href="/">
+          Về trang chủ
+        </a>
+      </div>
+    );
+  }
+
   return (
-    <AgentChat
-      demoMode
-      user={chatUser}
-      workspaceName={workspace?.name ?? "Eve Pilot"}
-      workspaceSlug={workspace?.slug ?? "eve-pilot"}
-    />
+    <WorkspaceBookingPage demoMode user={chatUser} workspace={workspace} />
   );
 }

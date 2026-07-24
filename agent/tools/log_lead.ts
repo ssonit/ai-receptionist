@@ -8,7 +8,7 @@ import {
 import { findWorkspaceLead } from "@/lib/leads";
 import { createNotification } from "@/lib/notifications-write";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { resolveWorkspaceIdForAgentSession } from "@/lib/workspace";
+import { resolveWorkspaceIdFromAgentContext } from "@/lib/workspace";
 
 function nextStatusOnLog(current: string | undefined): LeadStatus {
   if (current === "booked" || current === "lost" || current === "qualified") {
@@ -31,9 +31,14 @@ export default defineTool({
   }),
   async execute(input, ctx) {
     const sessionId = ctx.session?.id ?? null;
+    let workspaceIdForLog: string | null = null;
     try {
       const supabase = createAdminClient();
-      const workspaceId = await resolveWorkspaceIdForAgentSession(sessionId);
+      const workspaceId = await resolveWorkspaceIdFromAgentContext({
+        sessionId,
+        auth: ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null,
+      });
+      workspaceIdForLog = workspaceId;
       const phone = input.phone?.trim() || null;
       const email = input.email?.trim() || null;
       const urgency = normalizeLeadUrgency(input.urgency);
@@ -163,12 +168,15 @@ export default defineTool({
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to log lead";
-      await logAgentToolEvent({
-        toolName: "log_lead",
-        ok: false,
-        error: message,
-        sessionId,
-      });
+      if (workspaceIdForLog) {
+        await logAgentToolEvent({
+          toolName: "log_lead",
+          ok: false,
+          error: message,
+          sessionId,
+          workspaceId: workspaceIdForLog,
+        });
+      }
       return { ok: false as const, error: message };
     }
   },

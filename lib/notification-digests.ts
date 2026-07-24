@@ -3,7 +3,6 @@ import {
   createNotificationDebounced,
   purgeOldNotifications,
 } from "@/lib/notifications";
-import { getDefaultWorkspaceId } from "@/lib/workspace";
 
 function daysAgoIso(days: number): string {
   const d = new Date();
@@ -14,10 +13,15 @@ function daysAgoIso(days: number): string {
 /**
  * Phase-2 digests: stale leads + missing AI config + retention purge.
  * Safe to call from sync / API — debounced 24h per entity.
+ * Always scoped to one workspace (never Eve Pilot by default).
  */
 export async function ensureDigestNotifications(
-  workspaceId = getDefaultWorkspaceId(),
+  workspaceId: string,
 ): Promise<void> {
+  if (!workspaceId.trim()) {
+    console.error("[notifications] digest refused: missing workspaceId");
+    return;
+  }
   try {
     await Promise.all([
       ensureStaleLeadNotifications(workspaceId),

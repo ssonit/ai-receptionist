@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import {
+  MAX_CHAT_SUGGESTIONS,
+  type ChatSuggestion,
+} from "@/lib/chat-branding";
 import { canonicalizeTimezone } from "@/lib/timezones";
 import type { WorkspaceSettingsState } from "@/lib/workspace-settings-types";
 import { slugifyWorkspaceName } from "@/lib/workspace";
@@ -32,6 +36,45 @@ function optionalText(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim() || null;
 }
 
+function parseSuggestionsFromForm(
+  formData: FormData,
+): ChatSuggestion[] | { error: string } {
+  const raw = String(formData.get("chat_suggestions") ?? "").trim();
+  if (!raw) return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { error: "Dữ liệu câu hỏi gợi ý không hợp lệ." };
+  }
+
+  if (!Array.isArray(parsed)) {
+    return { error: "Dữ liệu câu hỏi gợi ý không hợp lệ." };
+  }
+
+  if (parsed.length > MAX_CHAT_SUGGESTIONS) {
+    return { error: `Tối đa ${MAX_CHAT_SUGGESTIONS} câu hỏi gợi ý.` };
+  }
+
+  const items: ChatSuggestion[] = [];
+  for (let i = 0; i < parsed.length; i++) {
+    const entry = parsed[i];
+    if (!entry || typeof entry !== "object") {
+      return { error: `Câu hỏi gợi ý #${i + 1} không hợp lệ.` };
+    }
+    const label = String((entry as { label?: unknown }).label ?? "").trim();
+    const prompt = String((entry as { prompt?: unknown }).prompt ?? "").trim();
+    if (!label || !prompt) {
+      return {
+        error: `Câu hỏi gợi ý #${i + 1}: cần cả nhãn nút và nội dung gửi.`,
+      };
+    }
+    items.push({ label, prompt });
+  }
+  return items;
+}
+
 export async function saveWorkspaceSettings(
   _prev: WorkspaceSettingsState,
   formData: FormData,
@@ -50,6 +93,9 @@ export async function saveWorkspaceSettings(
 
   if (!slug) slug = slugifyWorkspaceName(name);
   slug = slugifyWorkspaceName(slug);
+
+  const suggestions = parseSuggestionsFromForm(formData);
+  if ("error" in suggestions) return { error: suggestions.error };
 
   const { data: taken } = await auth.supabase
     .from("workspaces")
@@ -77,6 +123,9 @@ export async function saveWorkspaceSettings(
       business_hours: optionalText(formData, "business_hours"),
       services_summary: optionalText(formData, "services_summary"),
       agent_instructions: optionalText(formData, "agent_instructions"),
+      chat_assistant_label: optionalText(formData, "chat_assistant_label"),
+      chat_intro: optionalText(formData, "chat_intro"),
+      chat_suggestions: suggestions.length > 0 ? suggestions : null,
     })
     .eq("id", auth.workspaceId);
 
@@ -93,7 +142,7 @@ export async function checkWorkspaceSlugAvailable(
 ): Promise<{ available: boolean; slug: string; message: string }> {
   const auth = await requireWorkspaceId();
   if ("error" in auth) {
-    return { available: false, slug: "", message: auth.error };
+    return { available: false, slug: "", message: auth.error ?? "Lỗi xác thực." };
   }
 
   const slug = slugifyWorkspaceName(slugRaw);
@@ -105,7 +154,6 @@ export async function checkWorkspaceSlugAvailable(
     };
   }
 
-  // Unchanged from current workspace — still "available" for this user
   const { data: self } = await auth.supabase
     .from("workspaces")
     .select("id")

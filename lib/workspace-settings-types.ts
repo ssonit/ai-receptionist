@@ -1,4 +1,5 @@
 import type { WorkspaceMeetingTypeRow } from "./workspace-cal";
+import type { ChatSuggestion } from "./chat-branding";
 
 /** Shared workspace settings types — import from here instead of redefining. */
 
@@ -20,6 +21,9 @@ export type WorkspaceSettingsValues = {
   businessHours: string | null;
   servicesSummary: string | null;
   agentInstructions: string | null;
+  chatAssistantLabel: string | null;
+  chatIntro: string | null;
+  chatSuggestions: ChatSuggestion[];
 };
 
 export type WorkspaceSettingsFormProps = {

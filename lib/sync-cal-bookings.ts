@@ -6,7 +6,6 @@ import { createNotification } from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getCalApiKeyForWorkspace,
-  getDefaultWorkspaceId,
 } from "@/lib/workspace";
 import { getSessionWorkspaceId } from "@/lib/workspace-session";
 
@@ -44,10 +43,14 @@ function formatWhen(iso: string) {
 export async function syncCalBookingsToSupabase(
   workspaceId?: string,
 ): Promise<SyncCalBookingsResult> {
-  const wsId =
-    workspaceId ??
-    (await getSessionWorkspaceId()) ??
-    getDefaultWorkspaceId();
+  const wsId = workspaceId ?? (await getSessionWorkspaceId());
+  if (!wsId) {
+    return {
+      synced: 0,
+      skipped: true,
+      error: "Thiếu workspace — không đồng bộ sang tenant khác.",
+    };
+  }
 
   let apiKey: string;
   try {

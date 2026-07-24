@@ -1,6 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { IconInfoCircle } from "@tabler/icons-react";
 import { AgentChat } from "@/app/_components/agent-chat";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import type { PublicBookingWorkspace } from "@/lib/workspace";
+import { resolveChatBranding } from "@/lib/chat-branding";
 
 type ChatUser = {
   name: string;
@@ -8,86 +21,88 @@ type ChatUser = {
   avatar: string;
 };
 
-export function WorkspaceBookingPage({
-  workspace,
-  user,
-}: {
-  workspace: PublicBookingWorkspace;
-  user?: ChatUser | null;
-}) {
+function WorkspaceInfoSheet({ workspace }: { workspace: PublicBookingWorkspace }) {
   const hoursLines = (workspace.businessHours ?? "")
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean)
-    .slice(0, 4);
+    .slice(0, 6);
+
+  const hasDetails = Boolean(
+    workspace.about?.trim() ||
+      hoursLines.length ||
+      workspace.phone?.trim() ||
+      workspace.address?.trim() ||
+      workspace.faqItems.length,
+  );
+
+  if (!hasDetails) return null;
 
   return (
-    <div className="booking-page text-foreground relative flex min-h-dvh flex-col lg:flex-row">
-      <aside className="border-border/60 relative flex w-full flex-col justify-between gap-8 overflow-hidden border-b px-6 py-8 lg:w-[min(420px,38vw)] lg:border-b-0 lg:border-r lg:px-8 lg:py-10">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_0%,rgba(196,149,90,0.18),transparent_55%),radial-gradient(ellipse_at_80%_100%,rgba(45,90,78,0.14),transparent_50%)]"
-        />
-        <div className="relative z-10 space-y-6">
-          <p className="text-muted-foreground text-xs font-medium tracking-[0.2em] uppercase">
-            Đặt lịch
-          </p>
-          <div className="space-y-3">
-            <h1 className="font-serif text-4xl leading-[1.05] tracking-tight sm:text-5xl">
-              {workspace.name}
-            </h1>
-            {workspace.tagline ? (
-              <p className="text-muted-foreground text-base text-pretty sm:text-lg">
-                {workspace.tagline}
-              </p>
-            ) : (
-              <p className="text-muted-foreground text-base text-pretty sm:text-lg">
-                Chat với trợ lý để hỏi FAQ và đặt lịch ngay.
-              </p>
-            )}
-          </div>
-
-          {workspace.about ? (
-            <p className="text-muted-foreground/90 max-w-prose text-sm leading-relaxed text-pretty">
-              {workspace.about}
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button
+          aria-label="Thông tin workspace"
+          className="size-8 text-zinc-300"
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <IconInfoCircle className="size-4" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent className="border-white/10 bg-zinc-950 text-zinc-100 sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle className="text-white">{workspace.name}</SheetTitle>
+          <SheetDescription className="text-zinc-400">
+            {workspace.tagline?.trim() || "Thông tin đặt lịch"}
+          </SheetDescription>
+        </SheetHeader>
+        <div className="mt-6 space-y-5 overflow-y-auto px-1 pb-6 text-sm">
+          {workspace.about?.trim() ? (
+            <p className="leading-relaxed text-zinc-300 text-pretty">
+              {workspace.about.trim()}
             </p>
           ) : null}
 
-          <div className="space-y-3 text-sm">
-            {hoursLines.length > 0 ? (
-              <div>
-                <p className="text-foreground/80 mb-1 font-medium">Giờ mở cửa</p>
-                <ul className="text-muted-foreground space-y-0.5">
-                  {hoursLines.map((line) => (
-                    <li key={line}>{line.replace(/^-+\s*/, "")}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            {workspace.phone ? (
-              <p className="text-muted-foreground">
-                <span className="text-foreground/80 font-medium">ĐT: </span>
-                <a className="underline-offset-2 hover:underline" href={`tel:${workspace.phone}`}>
-                  {workspace.phone}
-                </a>
-              </p>
-            ) : null}
-            {workspace.address ? (
-              <p className="text-muted-foreground text-pretty">
-                <span className="text-foreground/80 font-medium">Địa chỉ: </span>
-                {workspace.address}
-              </p>
-            ) : null}
-          </div>
+          {hoursLines.length > 0 ? (
+            <div>
+              <p className="mb-1.5 font-medium text-zinc-200">Giờ mở cửa</p>
+              <ul className="space-y-0.5 text-zinc-400">
+                {hoursLines.map((line) => (
+                  <li key={line}>{line.replace(/^-+\s*/, "")}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {workspace.phone?.trim() ? (
+            <p className="text-zinc-400">
+              <span className="font-medium text-zinc-200">ĐT: </span>
+              <a
+                className="underline-offset-2 hover:underline"
+                href={`tel:${workspace.phone}`}
+              >
+                {workspace.phone}
+              </a>
+            </p>
+          ) : null}
+
+          {workspace.address?.trim() ? (
+            <p className="text-pretty text-zinc-400">
+              <span className="font-medium text-zinc-200">Địa chỉ: </span>
+              {workspace.address}
+            </p>
+          ) : null}
 
           {workspace.faqItems.length > 0 ? (
             <div className="space-y-3">
-              <p className="text-foreground/80 text-sm font-medium">Câu hỏi thường gặp</p>
+              <p className="font-medium text-zinc-200">FAQ</p>
               <ul className="space-y-3">
-                {workspace.faqItems.slice(0, 3).map((item) => (
-                  <li key={item.question} className="border-border/50 border-l-2 pl-3">
-                    <p className="text-sm font-medium">{item.question}</p>
-                    <p className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-relaxed">
+                {workspace.faqItems.slice(0, 5).map((item) => (
+                  <li key={item.question} className="border-l-2 border-white/15 pl-3">
+                    <p className="font-medium text-zinc-100">{item.question}</p>
+                    <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-zinc-500">
                       {item.answer.replace(/^-\s*/gm, "").trim()}
                     </p>
                   </li>
@@ -96,33 +111,41 @@ export function WorkspaceBookingPage({
             </div>
           ) : null}
 
-          <a
-            className="bg-foreground text-background inline-flex h-11 w-full items-center justify-center rounded-md text-sm font-semibold transition hover:opacity-90 lg:hidden"
-            href="#booking-chat"
-          >
-            Chat đặt lịch
-          </a>
+          <p className="pt-2 text-xs text-zinc-600">
+            Trợ lý đặt lịch ·{" "}
+            <Link className="underline-offset-2 hover:underline" href="/">
+              Eve
+            </Link>
+          </p>
         </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
 
-        <p className="text-muted-foreground relative z-10 text-xs">
-          Trợ lý đặt lịch ·{" "}
-          <Link className="underline-offset-2 hover:underline" href="/">
-            Eve
-          </Link>
-        </p>
-      </aside>
-
-      <main
-        className="relative min-h-[70dvh] flex-1 lg:min-h-dvh"
-        id="booking-chat"
-      >
-        <AgentChat
-          embedded
-          user={user}
-          workspaceName={workspace.name}
-          workspaceSlug={workspace.slug}
-        />
-      </main>
-    </div>
+export function WorkspaceBookingPage({
+  workspace,
+  user,
+  demoMode = false,
+}: {
+  workspace: PublicBookingWorkspace;
+  user?: ChatUser | null;
+  /** Marketing `/chat` sandbox — shows demo banner only. */
+  demoMode?: boolean;
+}) {
+  return (
+    <AgentChat
+      chatBranding={resolveChatBranding({
+        assistantLabel: workspace.chatAssistantLabel,
+        intro: workspace.chatIntro,
+        suggestions: workspace.chatSuggestions,
+      })}
+      demoMode={demoMode}
+      headerEnd={<WorkspaceInfoSheet workspace={workspace} />}
+      user={user}
+      workspaceName={workspace.name}
+      workspaceSlug={workspace.slug}
+      workspaceTagline={workspace.tagline}
+    />
   );
 }
