@@ -50,9 +50,10 @@ Do **not** assume the user wants you to start `localhost:3000` unless they ask.
 4. **Secrets** — Cal API keys via `getCalApiKeyForWorkspace` + `withCalApiKey`; encrypt with `lib/workspace-secrets.ts`.
 5. **UI strings** — product chrome goes through `messages/*.json` + locale cookies (`eve_guest_locale` vs `eve_dashboard_locale`). Do not hardcode Vietnamese UI.
 6. **React/Next performance** — follow skill `.agents/skills/vercel-react-best-practices/` (and `.cursor/rules/vercel-react-conventions.mdc` / `.claude/rules/vercel-react-conventions.md`). Priority: kill waterfalls → shrink bundles → server fetch hygiene → re-renders.
-7. **Small diffs** — change only what the task needs; no drive-by refactors or unsolicited markdown docs.
-8. **After React/UI edits** — run `npm run doctor` (react-doctor `--scope changed`). Fix errors before considering the task done. Full scan: `npm run doctor:full`.
-9. **After code edits** — run `graphify update .` (see `.cursor/rules/graphify.mdc`).
+7. **User-facing errors** — codes + copy in `lib/errors/` (`AUTH_ERROR_CODE` / `formatAuthError`). Never show raw provider strings. See `.cursor/rules/errors.mdc`.
+8. **Small diffs** — change only what the task needs; no drive-by refactors or unsolicited markdown docs.
+9. **After React/UI edits** — run `npm run doctor` (react-doctor `--scope changed`). Fix errors before considering the task done. Full scan: `npm run doctor:full`.
+10. **After code edits** — run `graphify update .` (see `.cursor/rules/graphify.mdc`).
 
 ## Non-negotiables
 

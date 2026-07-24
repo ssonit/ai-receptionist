@@ -2,6 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { setAiBookingMeetingTypeAction } from "@/app/dashboard/meeting-types/actions";
+import {
+  APP_ERROR_CODE,
+  appErrorMessage,
+  formatDbError,
+  formatUnknownError,
+  slugTakenMessage,
+} from "@/lib/errors";
 import {
   getCalMeProfile,
   listEventTypes,
@@ -9,14 +17,13 @@ import {
 } from "@/lib/calcom";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { canonicalizeTimezone } from "@/lib/timezones";
 import {
   getCalApiKeyForWorkspace,
   getWorkspaceById,
   slugifyWorkspaceName,
 } from "@/lib/workspace";
 import { encryptSecret } from "@/lib/workspace-secrets";
-import { canonicalizeTimezone } from "@/lib/timezones";
-import { setAiBookingMeetingTypeAction } from "@/app/dashboard/meeting-types/actions";
 
 export type SetupActionState = {
   error?: string;
@@ -28,7 +35,9 @@ async function requireOwnerWorkspace() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You need to sign in." as const };
+  if (!user) {
+    return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -37,7 +46,7 @@ async function requireOwnerWorkspace() {
     .maybeSingle();
 
   if (!profile?.workspace_id) {
-    return { error: "Account is not assigned to a workspace." as const };
+    return { error: appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE) };
   }
 
   return { workspaceId: profile.workspace_id as string, userId: user.id };
@@ -51,7 +60,9 @@ export async function saveCalApiKeyAction(
   if ("error" in auth) return { error: auth.error };
 
   const apiKey = String(formData.get("calApiKey") ?? "").trim();
-  if (!apiKey) return { error: "Paste a Cal.com API key to continue." };
+  if (!apiKey) {
+    return { error: appErrorMessage(APP_ERROR_CODE.CAL_KEY_REQUIRED) };
+  }
 
   try {
     const me = await withCalApiKey(apiKey, () => getCalMeProfile());
@@ -68,16 +79,13 @@ export async function saveCalApiKeyAction(
       })
       .eq("id", auth.workspaceId);
 
-    if (error) return { error: error.message };
+    if (error) return { error: formatDbError(error) };
 
     revalidatePath("/dashboard/setup");
     return { success: `Connected Cal.com · @${me.username}` };
   } catch (error) {
     return {
-      error:
-        error instanceof Error
-          ? error.message
-          : "Could not verify Cal.com API key",
+      error: formatUnknownError(error, APP_ERROR_CODE.CAL_VERIFY_FAILED),
     };
   }
 }
@@ -92,10 +100,7 @@ export async function syncSetupMeetingTypesAction(): Promise<SetupActionState> {
     const admin = createAdminClient();
 
     if (remote.length === 0) {
-      return {
-        error:
-          "No meeting types on Cal.com. Create an event type, then Sync again.",
-      };
+      return { error: appErrorMessage(APP_ERROR_CODE.CAL_NO_MEETING_TYPES) };
     }
 
     const rows = remote.map((et) => ({
@@ -112,13 +117,15 @@ export async function syncSetupMeetingTypesAction(): Promise<SetupActionState> {
     const { error } = await admin.from("workspace_event_types").upsert(rows, {
       onConflict: "workspace_id,cal_event_type_id",
     });
-    if (error) return { error: error.message };
+    if (error) return { error: formatDbError(error) };
 
     revalidatePath("/dashboard/setup");
-    return { success: `Synced ${remote.length} meeting type${remote.length === 1 ? "" : "s"}.` };
+    return {
+      success: `Synced ${remote.length} meeting type${remote.length === 1 ? "" : "s"}.`,
+    };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Sync failed",
+      error: formatUnknownError(error, APP_ERROR_CODE.SYNC_FAILED),
     };
   }
 }
@@ -145,7 +152,7 @@ export async function saveSetupProfileAction(
   );
   const about = String(formData.get("about") ?? "").trim();
 
-  if (!name) return { error: "Workspace name is required." };
+  if (!name) return { error: appErrorMessage(APP_ERROR_CODE.NAME_REQUIRED) };
   if (!slug) slug = slugifyWorkspaceName(name);
   slug = slugifyWorkspaceName(slug);
 
@@ -158,7 +165,7 @@ export async function saveSetupProfileAction(
     .maybeSingle();
 
   if (clash) {
-    return { error: `Slug “${slug}” is already taken. Choose another.` };
+    return { error: slugTakenMessage(slug) };
   }
 
   const { error } = await admin
@@ -166,7 +173,7 @@ export async function saveSetupProfileAction(
     .update({ name, slug, timezone, about: about || null })
     .eq("id", auth.workspaceId);
 
-  if (error) return { error: error.message };
+  if (error) return { error: formatDbError(error) };
 
   revalidatePath("/dashboard/setup");
   return { success: "Workspace profile saved." };
@@ -178,10 +185,10 @@ export async function completeSetupAction(): Promise<SetupActionState> {
 
   const ws = await getWorkspaceById(auth.workspaceId);
   if (!ws?.has_cal_key) {
-    return { error: "Cal.com API key is not connected." };
+    return { error: appErrorMessage(APP_ERROR_CODE.CAL_KEY_MISSING) };
   }
   if (!ws.cal_event_type_id) {
-    return { error: "AI booking meeting type is not selected." };
+    return { error: appErrorMessage(APP_ERROR_CODE.AI_MEETING_TYPE_REQUIRED) };
   }
 
   const admin = createAdminClient();
@@ -189,7 +196,7 @@ export async function completeSetupAction(): Promise<SetupActionState> {
 
   // Rare: signup should always set slug — ensure one before opening public page.
   if (!slug) {
-    let base = slugifyWorkspaceName(ws.name || "ws");
+    const base = slugifyWorkspaceName(ws.name || "ws");
     let candidate = base;
     let n = 0;
     while (true) {
@@ -214,7 +221,7 @@ export async function completeSetupAction(): Promise<SetupActionState> {
     })
     .eq("id", auth.workspaceId);
 
-  if (error) return { error: error.message };
+  if (error) return { error: formatDbError(error) };
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/setup");

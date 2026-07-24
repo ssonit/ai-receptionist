@@ -170,7 +170,7 @@
   "168": "Sections",
   "169": "React Best Practices",
   "170": "Sections",
-  "171": "timezones.ts",
+  "171": "particles.tsx",
   "172": "1. Eliminating Waterfalls",
   "173": "2. Bundle Size Optimization",
   "174": "1. Eliminating Waterfalls",
@@ -189,7 +189,7 @@
   "187": ".claude/skills/vercel-react-best-practices/rules/async-cheap-condition-before-await.md",
   "188": "Prefer Statically Analyzable Paths",
   "189": ".claude/skills/vercel-react-best-practices/rules/server-hoist-static-io.md",
-  "190": "animated-grid-pattern.tsx",
+  "190": "markdown-link.tsx",
   "191": ".agents/skills/vercel-react-best-practices/rules/advanced-effect-event-deps.md",
   "192": ".agents/skills/vercel-react-best-practices/rules/advanced-event-handler-refs.md",
   "193": ".agents/skills/vercel-react-best-practices/rules/advanced-init-once.md",
@@ -323,5 +323,12 @@
   "321": ".claude/skills/vercel-react-best-practices/rules/server-parallel-nested-fetching.md",
   "322": ".claude/skills/vercel-react-best-practices/rules/server-serialization.md",
   "323": ".claude/skills/vercel-react-best-practices/rules/_template.md",
-  "324": "graphify.md"
+  "324": "graphify.md",
+  "325": "dashboard/layout.tsx",
+  "326": "cmdk",
+  "327": "@dnd-kit/utilities",
+  "328": "shimmer-button.tsx",
+  "329": "@ai-sdk/anthropic",
+  "330": "react-doctor.md",
+  "331": "timezones.ts"
 }

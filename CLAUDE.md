@@ -18,6 +18,7 @@ Shared standards live in `AGENTS.md`. Claude-scoped detail:
 | `.claude/rules/react-ui.md` | `app/**/*.tsx`, `components/**/*.tsx` |
 | `.claude/rules/vercel-react-conventions.md` | Vercel React/Next perf (skill-backed) |
 | `.claude/rules/react-doctor.md` | After UI work — `npm run doctor` |
+| `.claude/rules/errors.md` | User-facing errors / `lib/errors` |
 | `.claude/rules/local-dev.md` | Bootstrapping local env |
 
 Skills (invoke when relevant):

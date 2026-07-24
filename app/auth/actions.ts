@@ -1,6 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import {
+  AUTH_ERROR_CODE,
+  authErrorMessage,
+  formatAuthError,
+} from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthState = {
@@ -17,10 +22,12 @@ export async function signUp(
   const fullName = String(formData.get("fullName") ?? "").trim();
 
   if (!email || !password) {
-    return { error: "Email and password are required." };
+    return {
+      error: authErrorMessage(AUTH_ERROR_CODE.EMAIL_PASSWORD_REQUIRED),
+    };
   }
   if (password.length < 6) {
-    return { error: "Password must be at least 6 characters." };
+    return { error: authErrorMessage(AUTH_ERROR_CODE.WEAK_PASSWORD) };
   }
 
   const supabase = await createClient();
@@ -38,7 +45,7 @@ export async function signUp(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: formatAuthError(error, "signUp") };
   }
 
   redirect("/dashboard/setup");
@@ -53,14 +60,16 @@ export async function signIn(
   const next = String(formData.get("next") ?? "/dashboard");
 
   if (!email || !password) {
-    return { error: "Email and password are required." };
+    return {
+      error: authErrorMessage(AUTH_ERROR_CODE.EMAIL_PASSWORD_REQUIRED),
+    };
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: error.message };
+    return { error: formatAuthError(error, "signIn") };
   }
 
   redirect(next.startsWith("/") ? next : "/dashboard");

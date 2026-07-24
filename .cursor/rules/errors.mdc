@@ -1,0 +1,54 @@
+---
+description: User-facing errors — constants, mapping, never leak provider strings
+globs: lib/errors/**/*,app/auth/**/*,app/**/actions.ts
+alwaysApply: false
+---
+
+# Error conventions
+
+## Rules
+
+1. **Never** return raw provider/API/DB strings to the UI (e.g. Supabase `"Invalid login credentials"`).
+2. Put stable codes in `lib/errors/*-codes.ts` (`as const` object).
+3. Put user copy in `lib/errors/*-messages.ts` keyed by those codes.
+4. Map provider errors in a small formatter — match `code` first, then message fragments when needed.
+5. Server actions / forms return product copy only via helpers from `@/lib/errors`.
+6. Logs may keep raw `error.message` for debugging; UI only gets product copy.
+7. Prefer shared `APP_ERROR_CODE` for dashboard domains; add a new `*-codes.ts` only when a domain needs its own mapping rules (like auth).
+
+## Auth
+
+```ts
+import { AUTH_ERROR_CODE, authErrorMessage, formatAuthError } from "@/lib/errors";
+
+if (!email) {
+  return { error: authErrorMessage(AUTH_ERROR_CODE.EMAIL_PASSWORD_REQUIRED) };
+}
+if (error) {
+  return { error: formatAuthError(error, "signIn") };
+}
+```
+
+## Dashboard / app (DB, Cal.com, validation)
+
+```ts
+import {
+  APP_ERROR_CODE,
+  appErrorMessage,
+  formatDbError,
+  formatUnknownError,
+  slugTakenMessage,
+} from "@/lib/errors";
+
+if (!user) return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
+if (error) return { error: formatDbError(error) }; // logs raw; UI gets SAVE_FAILED
+catch (e) {
+  return { error: formatUnknownError(e, APP_ERROR_CODE.SYNC_FAILED) };
+}
+```
+
+- Validation / known cases → `appErrorMessage(APP_ERROR_CODE.*)` or helpers (`slugTakenMessage`, `faqItemRequiredMessage`, …).
+- Supabase `{ error }` → `formatDbError(error, optionalFallback)`.
+- `catch` / Cal.com / sync → `formatUnknownError(error, fallbackCode)`.
+
+Canonical modules: `lib/errors/auth-*.ts`, `app-codes.ts`, `app-messages.ts`, `format.ts`, `index.ts`.

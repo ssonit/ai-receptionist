@@ -1,6 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import {
+  APP_ERROR_CODE,
+  appErrorMessage,
+  faqItemInvalidMessage,
+  faqItemRequiredMessage,
+  formatDbError,
+} from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 import {
   MAX_FAQ_ITEMS,
@@ -18,29 +25,29 @@ function parseFaqItems(formData: FormData): FaqItemInput[] | { error: string } {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return { error: "Invalid FAQ data." };
+    return { error: appErrorMessage(APP_ERROR_CODE.INVALID_FAQ) };
   }
 
   if (!Array.isArray(parsed)) {
-    return { error: "Invalid FAQ data." };
+    return { error: appErrorMessage(APP_ERROR_CODE.INVALID_FAQ) };
   }
 
   if (parsed.length > MAX_FAQ_ITEMS) {
-    return { error: `Maximum ${MAX_FAQ_ITEMS} FAQ items per workspace.` };
+    return { error: appErrorMessage(APP_ERROR_CODE.FAQ_LIMIT) };
   }
 
   const items: FaqItemInput[] = [];
   for (let i = 0; i < parsed.length; i++) {
     const entry = parsed[i];
     if (!entry || typeof entry !== "object") {
-      return { error: `FAQ #${i + 1} is invalid.` };
+      return { error: faqItemInvalidMessage(i + 1) };
     }
     const question = String(
       (entry as { question?: unknown }).question ?? "",
     ).trim();
     const answer = String((entry as { answer?: unknown }).answer ?? "").trim();
     if (!question || !answer) {
-      return { error: `FAQ #${i + 1}: question and answer are both required.` };
+      return { error: faqItemRequiredMessage(i + 1) };
     }
     items.push({ question, answer });
   }
@@ -58,7 +65,7 @@ export async function saveFaqSettings(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "You need to sign in." };
+    return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
   }
 
   const { data: profile } = await supabase
@@ -69,7 +76,7 @@ export async function saveFaqSettings(
 
   const workspaceId = profile?.workspace_id;
   if (!workspaceId) {
-    return { error: "Account is not assigned to a workspace." };
+    return { error: appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE) };
   }
 
   const parsedItems = parseFaqItems(formData);
@@ -83,7 +90,7 @@ export async function saveFaqSettings(
     .eq("workspace_id", workspaceId);
 
   if (deleteError) {
-    return { error: deleteError.message };
+    return { error: formatDbError(deleteError) };
   }
 
   if (parsedItems.length > 0) {
@@ -99,12 +106,13 @@ export async function saveFaqSettings(
       );
 
     if (insertError) {
-      return { error: insertError.message };
+      return { error: formatDbError(insertError) };
     }
   }
 
   revalidatePath("/dashboard/faq");
   return {
-    success: "FAQ saved. The agent will use the new content on the next chat turn.",
+    success:
+      "FAQ saved. The agent will use the new content on the next chat turn.",
   };
 }

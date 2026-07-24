@@ -1,6 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import {
+  APP_ERROR_CODE,
+  appErrorMessage,
+  formatDbError,
+} from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 
 export type AccountActionState = {
@@ -14,10 +19,10 @@ export async function updateAccountNameAction(
 ): Promise<AccountActionState> {
   const fullName = String(formData.get("fullName") ?? "").trim();
   if (!fullName) {
-    return { error: "Name cannot be empty." };
+    return { error: appErrorMessage(APP_ERROR_CODE.NAME_EMPTY) };
   }
   if (fullName.length > 120) {
-    return { error: "Name must be at most 120 characters." };
+    return { error: appErrorMessage(APP_ERROR_CODE.NAME_TOO_LONG) };
   }
 
   const supabase = await createClient();
@@ -26,7 +31,7 @@ export async function updateAccountNameAction(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "You need to sign in." };
+    return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
   }
 
   const { error } = await supabase
@@ -35,7 +40,7 @@ export async function updateAccountNameAction(
     .eq("id", user.id);
 
   if (error) {
-    return { error: error.message };
+    return { error: formatDbError(error) };
   }
 
   revalidatePath("/dashboard/account");

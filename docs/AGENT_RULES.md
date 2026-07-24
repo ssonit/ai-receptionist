@@ -35,3 +35,9 @@ npm run doctor:full  # whole repo
 - Rules: `.cursor/rules/react-doctor.mdc`, `.claude/rules/react-doctor.md`.
 - CI: `.github/workflows/react-doctor.yml`.
 - **Do not** use `npx react-doctor install --yes` — it installs into every detected agent.
+
+## Errors (user-facing)
+
+- Codes + copy under `lib/errors/`: auth (`AUTH_ERROR_CODE`, `formatAuthError`) and app (`APP_ERROR_CODE`, `formatDbError`, `formatUnknownError`).
+- Conventions: `.cursor/rules/errors.mdc` + `.claude/rules/errors.md`.
+- Never surface raw provider/DB strings in the UI; log raw server-side only.

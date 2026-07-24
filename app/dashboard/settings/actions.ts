@@ -1,11 +1,21 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import {
   MAX_CHAT_SUGGESTIONS,
   type ChatSuggestion,
 } from "@/lib/chat-branding";
+import {
+  APP_ERROR_CODE,
+  appErrorMessage,
+  formatDbError,
+  slugAvailableMessage,
+  slugIsYoursMessage,
+  slugTakenMessage,
+  suggestionInvalidMessage,
+  suggestionRequiredMessage,
+} from "@/lib/errors";
+import { createClient } from "@/lib/supabase/server";
 import { canonicalizeTimezone } from "@/lib/timezones";
 import type { WorkspaceSettingsState } from "@/lib/workspace-settings-types";
 import { slugifyWorkspaceName } from "@/lib/workspace";
@@ -17,7 +27,9 @@ async function requireWorkspaceId() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You need to sign in." as const };
+  if (!user) {
+    return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -26,7 +38,7 @@ async function requireWorkspaceId() {
     .maybeSingle();
 
   if (!profile?.workspace_id) {
-    return { error: "Account is not assigned to a workspace." as const };
+    return { error: appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE) };
   }
 
   return { supabase, workspaceId: profile.workspace_id as string };
@@ -46,29 +58,27 @@ function parseSuggestionsFromForm(
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return { error: "Invalid suggestion data." };
+    return { error: appErrorMessage(APP_ERROR_CODE.INVALID_SUGGESTIONS) };
   }
 
   if (!Array.isArray(parsed)) {
-    return { error: "Invalid suggestion data." };
+    return { error: appErrorMessage(APP_ERROR_CODE.INVALID_SUGGESTIONS) };
   }
 
   if (parsed.length > MAX_CHAT_SUGGESTIONS) {
-    return { error: `Maximum ${MAX_CHAT_SUGGESTIONS} suggestions.` };
+    return { error: appErrorMessage(APP_ERROR_CODE.SUGGESTION_LIMIT) };
   }
 
   const items: ChatSuggestion[] = [];
   for (let i = 0; i < parsed.length; i++) {
     const entry = parsed[i];
     if (!entry || typeof entry !== "object") {
-      return { error: `Suggestion #${i + 1} is invalid.` };
+      return { error: suggestionInvalidMessage(i + 1) };
     }
     const label = String((entry as { label?: unknown }).label ?? "").trim();
     const prompt = String((entry as { prompt?: unknown }).prompt ?? "").trim();
     if (!label || !prompt) {
-      return {
-        error: `Suggestion #${i + 1}: both button label and message are required.`,
-      };
+      return { error: suggestionRequiredMessage(i + 1) };
     }
     items.push({ label, prompt });
   }
@@ -86,8 +96,10 @@ export async function saveWorkspaceSettings(
   const timezone = String(formData.get("timezone") ?? "").trim();
   let slug = String(formData.get("slug") ?? "").trim();
 
-  if (!name) return { error: "Workspace name is required." };
-  if (!timezone) return { error: "Timezone is required." };
+  if (!name) return { error: appErrorMessage(APP_ERROR_CODE.NAME_REQUIRED) };
+  if (!timezone) {
+    return { error: appErrorMessage(APP_ERROR_CODE.TIMEZONE_REQUIRED) };
+  }
 
   const canonicalTimezone = canonicalizeTimezone(timezone);
 
@@ -105,7 +117,7 @@ export async function saveWorkspaceSettings(
     .maybeSingle();
 
   if (taken) {
-    return { error: `Slug “${slug}” is already taken. Choose another.` };
+    return { error: slugTakenMessage(slug) };
   }
 
   const { error } = await auth.supabase
@@ -129,7 +141,7 @@ export async function saveWorkspaceSettings(
     })
     .eq("id", auth.workspaceId);
 
-  if (error) return { error: error.message };
+  if (error) return { error: formatDbError(error) };
 
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard/faq");
@@ -142,7 +154,11 @@ export async function checkWorkspaceSlugAvailable(
 ): Promise<{ available: boolean; slug: string; message: string }> {
   const auth = await requireWorkspaceId();
   if ("error" in auth) {
-    return { available: false, slug: "", message: auth.error ?? "Authentication error." };
+    return {
+      available: false,
+      slug: "",
+      message: auth.error ?? appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED),
+    };
   }
 
   const slug = slugifyWorkspaceName(slugRaw);
@@ -150,7 +166,7 @@ export async function checkWorkspaceSlugAvailable(
     return {
       available: false,
       slug,
-      message: "Slug needs at least 2 characters (a-z, 0-9).",
+      message: appErrorMessage(APP_ERROR_CODE.SLUG_TOO_SHORT),
     };
   }
 
@@ -165,7 +181,7 @@ export async function checkWorkspaceSlugAvailable(
     return {
       available: true,
       slug,
-      message: `“${slug}” is already your slug.`,
+      message: slugIsYoursMessage(slug),
     };
   }
 
@@ -180,13 +196,13 @@ export async function checkWorkspaceSlugAvailable(
     return {
       available: false,
       slug,
-      message: `“${slug}” is already taken. Choose another.`,
+      message: slugTakenMessage(slug),
     };
   }
 
   return {
     available: true,
     slug,
-    message: `“${slug}” is available.`,
+    message: slugAvailableMessage(slug),
   };
 }

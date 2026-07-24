@@ -1,6 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import {
+  APP_ERROR_CODE,
+  appErrorMessage,
+  formatDbError,
+} from "@/lib/errors";
 import { isLeadStatus, type LeadStatus } from "@/lib/lead-status";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,7 +19,9 @@ async function requireWorkspace() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You need to sign in." as const };
+  if (!user) {
+    return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -23,7 +30,7 @@ async function requireWorkspace() {
     .maybeSingle();
 
   if (!profile?.workspace_id) {
-    return { error: "Account is not assigned to a workspace." as const };
+    return { error: appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE) };
   }
 
   return { supabase, workspaceId: profile.workspace_id as string };
@@ -35,7 +42,9 @@ export async function updateLeadStatusAction(
 ): Promise<LeadActionState> {
   const auth = await requireWorkspace();
   if ("error" in auth) return { error: auth.error };
-  if (!isLeadStatus(status)) return { error: "Invalid status." };
+  if (!isLeadStatus(status)) {
+    return { error: appErrorMessage(APP_ERROR_CODE.INVALID_STATUS) };
+  }
 
   const { error } = await auth.supabase
     .from("leads")
@@ -43,7 +52,7 @@ export async function updateLeadStatusAction(
     .eq("id", leadId)
     .eq("workspace_id", auth.workspaceId);
 
-  if (error) return { error: error.message };
+  if (error) return { error: formatDbError(error) };
 
   revalidatePath("/dashboard/leads");
   revalidatePath("/dashboard");
@@ -63,7 +72,7 @@ export async function updateLeadNotesAction(
     .eq("id", leadId)
     .eq("workspace_id", auth.workspaceId);
 
-  if (error) return { error: error.message };
+  if (error) return { error: formatDbError(error) };
 
   revalidatePath("/dashboard/leads");
   return { success: "Notes saved." };

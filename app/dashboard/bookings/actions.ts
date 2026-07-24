@@ -1,6 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import {
+  APP_ERROR_CODE,
+  appErrorMessage,
+  formatUnknownError,
+} from "@/lib/errors";
 import { syncCalBookingsToSupabase } from "@/lib/sync-cal-bookings";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,7 +21,7 @@ export async function syncBookingsAction(): Promise<SyncBookingsState> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "You need to sign in." };
+    return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
   }
 
   const { data: profile } = await supabase
@@ -26,17 +31,22 @@ export async function syncBookingsAction(): Promise<SyncBookingsState> {
     .maybeSingle();
 
   if (!profile?.workspace_id) {
-    return { error: "Account is not assigned to a workspace." };
+    return { error: appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE) };
   }
 
   const result = await syncCalBookingsToSupabase(profile.workspace_id);
 
   if (result.error && !result.skipped) {
-    return { error: result.error };
+    return {
+      error: formatUnknownError(
+        new Error(result.error),
+        APP_ERROR_CODE.SYNC_FAILED,
+      ),
+    };
   }
 
   if (result.skipped) {
-    return { error: result.error ?? "Cal.com is not configured." };
+    return { error: appErrorMessage(APP_ERROR_CODE.CAL_NOT_CONFIGURED) };
   }
 
   revalidatePath("/dashboard/bookings");

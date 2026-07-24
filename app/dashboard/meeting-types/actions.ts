@@ -7,6 +7,12 @@ import {
   withCalApiKey,
   type CalEventType,
 } from "@/lib/calcom";
+import {
+  APP_ERROR_CODE,
+  appErrorMessage,
+  formatDbError,
+  formatUnknownError,
+} from "@/lib/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getCalApiKeyForWorkspace, slugifyWorkspaceName } from "@/lib/workspace";
@@ -22,7 +28,7 @@ async function requireWorkspaceId() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return { error: "You need to sign in." as const };
+    return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
   }
 
   const { data: profile } = await supabase
@@ -32,7 +38,7 @@ async function requireWorkspaceId() {
     .maybeSingle();
 
   if (!profile?.workspace_id) {
-    return { error: "Account is not assigned to a workspace." as const };
+    return { error: appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE) };
   }
 
   return { workspaceId: profile.workspace_id as string, userId: user.id };
@@ -116,7 +122,7 @@ export async function syncMeetingTypesAction(): Promise<MeetingTypesActionState>
         onConflict: "workspace_id,cal_event_type_id",
         ignoreDuplicates: false,
       });
-      if (error) return { error: error.message };
+      if (error) return { error: formatDbError(error) };
 
       if (!hadAi && remote[0]) {
         const { data: aiRow } = await admin
@@ -143,7 +149,7 @@ export async function syncMeetingTypesAction(): Promise<MeetingTypesActionState>
     };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Failed to sync meeting types",
+      error: formatUnknownError(error, APP_ERROR_CODE.SYNC_FAILED),
     };
   }
 }
@@ -161,14 +167,14 @@ export async function createMeetingTypeAction(
   const description = String(formData.get("description") ?? "").trim();
   const location = String(formData.get("location") ?? "cal-video").trim();
 
-  if (!title) return { error: "Title is required." };
+  if (!title) return { error: appErrorMessage(APP_ERROR_CODE.TITLE_REQUIRED) };
   if (!Number.isFinite(lengthMinutes) || lengthMinutes < 1) {
-    return { error: "Invalid duration." };
+    return { error: appErrorMessage(APP_ERROR_CODE.INVALID_DURATION) };
   }
 
   const allowedLocations = new Set(["cal-video", "google-meet"]);
   if (!allowedLocations.has(location)) {
-    return { error: "Invalid location." };
+    return { error: appErrorMessage(APP_ERROR_CODE.INVALID_LOCATION) };
   }
 
   const slug =
@@ -201,7 +207,7 @@ export async function createMeetingTypeAction(
       mirrorRow(auth.workspaceId, created, { isAiBooking: makeAi }),
       { onConflict: "workspace_id,cal_event_type_id" },
     );
-    if (error) return { error: error.message };
+    if (error) return { error: formatDbError(error) };
 
     if (makeAi) {
       await setAiBookingOnWorkspace(auth.workspaceId, {
@@ -218,7 +224,7 @@ export async function createMeetingTypeAction(
     };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Failed to create meeting type",
+      error: formatUnknownError(error, APP_ERROR_CODE.CREATE_FAILED),
     };
   }
 }
@@ -238,8 +244,10 @@ export async function setAiBookingMeetingTypeAction(
       .eq("workspace_id", auth.workspaceId)
       .maybeSingle();
 
-    if (error) return { error: error.message };
-    if (!row) return { error: "Meeting type not found." };
+    if (error) return { error: formatDbError(error, APP_ERROR_CODE.LOAD_FAILED) };
+    if (!row) {
+      return { error: appErrorMessage(APP_ERROR_CODE.MEETING_TYPE_NOT_FOUND) };
+    }
 
     await setAiBookingOnWorkspace(auth.workspaceId, {
       cal_event_type_id: row.cal_event_type_id,
@@ -250,10 +258,7 @@ export async function setAiBookingMeetingTypeAction(
     return { success: `AI booking uses “${row.title}”.` };
   } catch (error) {
     return {
-      error:
-        error instanceof Error
-          ? error.message
-          : "Could not set AI booking meeting type",
+      error: formatUnknownError(error, APP_ERROR_CODE.SET_AI_BOOKING_FAILED),
     };
   }
 }
