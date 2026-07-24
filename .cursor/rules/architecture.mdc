@@ -1,0 +1,15 @@
+---
+description: eve-booking architecture — multi-tenant model, directories, known gaps
+alwaysApply: false
+---
+
+# Architecture (summary)
+
+Full detail: `.claude/rules/architecture.md` — keep this Cursor rule short.
+
+- **Tenant** = `workspaces` row; user via `profiles.workspace_id`.
+- **Public**: `/b/[slug]` real tenant; `/chat` = Eve Pilot demo only (env Cal key).
+- **Agent tenant resolution**: `resolveWorkspaceIdFromAgentContext()` — refuse Pilot fallback when hint present but unresolved.
+- **Cal keys**: per-workspace encrypted (`workspace-secrets.ts`); `withCalApiKey` per call.
+- **Dirs**: `app/` routes, `agent/` eve agent, `lib/` domain, `components/` UI, `messages/` i18n, `supabase/migrations/` schema+RLS.
+- **Gaps**: no agent cancel/reschedule tools yet; no automated test suite; signup always creates a new workspace.

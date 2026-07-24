@@ -1,0 +1,24 @@
+---
+description: Vercel React/Next performance conventions — use vercel-react-best-practices skill for UI work
+globs: app/**/*.{ts,tsx},components/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Vercel React best practices (required)
+
+Skill path: `.agents/skills/vercel-react-best-practices/`
+(Source: `npx skills add https://github.com/vercel-labs/agent-skills --skill vercel-react-best-practices`)
+
+**When writing/reviewing/refactoring React or Next UI**, read `SKILL.md` then the matching `rules/<prefix>-*.md` files.
+
+## Apply by impact (Eve)
+
+1. `async-*` — no sequential independent awaits; `Promise.all`; cheap checks before await.
+2. `bundle-*` — `next/dynamic` for heavy UI; keep icon imports optimizable (`lucide-react`, `@tabler/icons-react` in Next `optimizePackageImports`).
+3. `server-*` — thin RSC pages; parallel fetch; small client props; auth on server actions.
+4. `client-*` — dedupe client fetches/listeners.
+5. `rerender-*` — no inline component definitions; derive in render; `startTransition` for non-urgent work; avoid unnecessary `useMemo`/`useCallback`.
+
+## Conflicts
+
+Tenant isolation, secrets, and eve/Next package docs win over micro-opts. Do not dump all 70 rules into context — open only relevant rule files.

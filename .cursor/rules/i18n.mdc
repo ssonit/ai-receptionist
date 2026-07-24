@@ -1,0 +1,13 @@
+---
+description: Guest vs dashboard locale cookies and next-intl catalogs
+globs: messages/**/*,lib/locale.ts,lib/i18n.ts,lib/read-locale-cookie.ts,components/locale-provider.tsx,app/_components/agent-chat.tsx,app/_components/chat-session-sidebar.tsx,app/dashboard/**/*
+alwaysApply: false
+---
+
+# i18n
+
+- Default **`en`**, optional **`vi`**.
+- Cookies: `eve_guest_locale` (`/chat`, `/b/[slug]`) vs `eve_dashboard_locale` (dashboard) — never cross-write.
+- Agent default via `x-eve-locale`; still follow guest message language if different.
+- Chrome copy → `messages/en.json` + `messages/vi.json`.
+- DB FAQ / profile text is not auto-translated.

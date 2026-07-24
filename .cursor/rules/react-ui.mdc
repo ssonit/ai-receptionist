@@ -1,0 +1,17 @@
+---
+description: React / Next UI patterns for reusable components
+globs: app/**/*.tsx,components/**/*.tsx
+alwaysApply: false
+---
+
+# React & UI
+
+Also apply **vercel-react-conventions** + skill `.agents/skills/vercel-react-best-practices/`.
+
+- Server Components by default; `"use client"` only when required.
+- Reuse `components/ui/*` — no parallel primitives.
+- Shared UI → `components/` after 2+ call sites; one-offs → `app/_components/`.
+- Dashboard: `DashboardShell` + `LocaleProvider` (`dashboard`). Guest chat: `AgentChat` + `LocaleProvider` (`guest`).
+- Do not invent a second design system.
+- Prefer `Promise.all` for independent fetches; `next/dynamic` for heavy client widgets.
+- Avoid unnecessary `useMemo`/`useCallback`.

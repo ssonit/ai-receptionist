@@ -18,7 +18,9 @@
     "dev:eve": "eve dev",
     "start:eve": "eve start",
     "patch:eve": "node ./scripts/patch-eve-package-resolve.mjs",
-    "sync:eve": "node ./scripts/sync-eve-compile.mjs"
+    "sync:eve": "node ./scripts/sync-eve-compile.mjs",
+    "doctor": "npx react-doctor@latest --verbose --scope changed",
+    "doctor:full": "npx react-doctor@latest --verbose"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.18",
@@ -79,6 +81,7 @@
     "@types/react": "19.2.15",
     "@types/react-dom": "19.2.3",
     "just-bash": "^3.1.0",
+    "react-doctor": "^0.9.1",
     "typescript": "6.0.3"
   },
   "overrides": {

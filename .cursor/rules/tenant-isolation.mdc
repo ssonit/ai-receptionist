@@ -1,0 +1,27 @@
+---
+description: Multi-tenant isolation — never leak Pilot/demo workspace into real tenants
+alwaysApply: true
+---
+
+# Tenant isolation
+
+Every guest or dashboard write must be scoped to an explicit `workspace_id`.
+
+## Agent / chat
+
+1. Prefer `resolveWorkspaceIdFromAgentContext({ sessionId, auth })` from `lib/workspace.ts`.
+2. Stamp tenant via `x-eve-w` + `x-eve-chat-session` (`agent/channels/eve.ts`).
+3. If a tenant hint is present but unresolved → **fail**, do not fall back to Eve Pilot.
+4. Chat APIs must resolve workspace from the request; client fetches for `/b/[slug]` must include `?w=`.
+
+## Dashboard
+
+- Use `getDashboardUser()` / profile `workspace_id`.
+- Always filter by `workspace_id`. Never load all tenants for a normal owner.
+
+## Secrets
+
+- Real tenants: `getCalApiKeyForWorkspace` + `withCalApiKey`.
+- Env `CALCOM_API_KEY` only for Pilot `/chat` demo.
+
+Wrong-workspace bugs → check resolution + missing `?w=` / headers first.

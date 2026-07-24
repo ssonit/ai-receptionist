@@ -1,0 +1,18 @@
+---
+description: Run react-doctor after React/UI changes so the workflow is never skipped
+globs: app/**/*.{ts,tsx},components/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# React Doctor (required after UI work)
+
+After finishing React/Next UI changes (feature, bugfix, refactor):
+
+```bash
+npm run doctor
+# = npx react-doctor@latest --verbose --scope changed
+```
+
+- If the score drops or errors appear → fix, then re-run.
+- Full-repo audit when asked or before a large release: `npm run doctor:full`.
+- Skill (Claude / Cursor via `.agents` / Codex): `react-doctor` — do **not** reinstall with `npx react-doctor install --yes` (installs every agent). Keep only `.agents`, `.claude`, `.codex` skill copies in this repo.

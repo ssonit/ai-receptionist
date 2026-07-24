@@ -1,19 +1,63 @@
+# Dependencies & build
 node_modules
-.env*
-.eve
-.vercel
 .next
 .output
 .nitro
+.turbo
 dist
-.DS_Store
+coverage
 *.tsbuildinfo
+
+# Env / secrets (keep the template)
+.env
+.env.*
+!.env.example
+
+# Local platform / deploy
+.eve
+.vercel
+.DS_Store
 Thumbs.db
 *.log
-.turbo
-coverage
+
+# Test artifacts
 playwright-report
 test-results
+
+# Local agent overrides (personal; do not commit)
+CLAUDE.local.md
+AGENTS.override.md
+.claude/settings.local.json
+.claude/settings.local.json.bak
+.cursor/hooks.json
+.cursor/mcp.json
+.cursor/plans/
+
+# Accidental multi-agent skill dumps from `npx react-doctor install --yes`
+# Keep only: .agents/ .claude/ .codex/ (+ .cursor/rules)
+.amp/
+.antigravity/
+.cline/
+.codebuddy/
+.commandcode/
+.factory/
+.gemini/
+.goose/
+.kilocode/
+.mcpjam/
+.mux/
+.neovate/
+.opencode/
+.openhands/
+.qwen/
+.roo/
+.windsurf/
+.zencoder/
+
+# React Doctor local outputs (config like doctor.config.* SHOULD be committed if shared)
+.react-doctor/
+react-doctor-report/
+doctor-report/
 
 # graphify — commit shared graph artifacts; keep local/cache/backups out
 graphify-out/cost.json

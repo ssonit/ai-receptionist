@@ -1,0 +1,17 @@
+---
+description: Pattern when adding or editing an eve agent tool
+globs: agent/**/*
+alwaysApply: false
+---
+
+# Agent tools
+
+Match `agent/tools/book_appointment.ts` / `check_availability.ts`:
+
+1. `resolveWorkspaceIdFromAgentContext({ sessionId, auth })` — never assume one workspace.
+2. `getCalApiKeyForWorkspace(workspaceId)` + `withCalApiKey(key, () => ...)` for Cal calls.
+3. `logAgentToolEvent(...)` on success and failure with `workspaceId`.
+4. Return `{ ok: true, ... } | { ok: false, error }` — do not throw past the tool boundary.
+5. Timezone/FAQ from workspace helpers — `bookingConfig` is Pilot fallback only.
+
+New booking capability: add credential-agnostic helper in `lib/calcom.ts` first, then the tool.

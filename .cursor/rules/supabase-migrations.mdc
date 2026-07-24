@@ -1,0 +1,16 @@
+---
+description: RLS and migration workflow for Supabase tenant tables
+globs: supabase/migrations/**/*
+alwaysApply: false
+---
+
+# Supabase migrations
+
+Do not reintroduce `using (true)` policies on tenant tables.
+
+- Every tenant table: RLS on, policies scoped by
+  `workspace_id in (select workspace_id from public.profiles where id = auth.uid())`
+  (or documented join).
+- Secrets: encrypt via `lib/workspace-secrets.ts`; do not SELECT plaintext keys for `authenticated`.
+- New file: `supabase/migrations/YYYYMMDDHHMMSS_description.sql` — never edit already-applied migrations.
+- Verify locally: `npx supabase db reset`.
