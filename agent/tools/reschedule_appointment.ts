@@ -17,6 +17,8 @@ import {
 } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
 import { normalizeCalApiStatus } from "@/lib/booking-status";
+import { formatSlotForGuest } from "@/lib/guest-timezone";
+import { resolveGuestTimeZone } from "@/lib/guest-timezone-resolve";
 import { APP_ERROR_CODE } from "@/lib/errors";
 import { createNotification } from "@/lib/notifications-write";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -99,6 +101,15 @@ export default defineTool({
       const apiKey = await getCalApiKeyForWorkspace(actor.workspaceId);
       const ws = await getWorkspaceById(actor.workspaceId);
       const timeZone = ws?.timezone ?? bookingConfig.timezone;
+      const guestTimeZone =
+        ws?.service_mode === "online"
+          ? (
+              await resolveGuestTimeZone({
+                auth,
+                chatSessionId: actor.chatSessionId,
+              })
+            ).guestTimeZone
+          : null;
       const day = newStart.slice(0, 10);
       const slots = await withCalApiKey(apiKey, () =>
         getAvailableSlots({
@@ -165,6 +176,7 @@ export default defineTool({
             visitor_id: booking.visitor_id,
             chat_session_id: booking.chat_session_id,
             manage_code_hash: booking.manage_code_hash,
+            guest_timezone: booking.guest_timezone,
             cancelled_by: null,
             raw: moved.raw,
             synced_at: nowIso,
@@ -211,15 +223,31 @@ export default defineTool({
         workspaceId: actor.workspaceId,
       });
 
+      const newStartIso = moved.start || newStart;
+      const display = formatSlotForGuest(
+        newStartIso,
+        guestTimeZone,
+        timeZone,
+      );
+      const previousDisplay = formatSlotForGuest(
+        booking.start_time,
+        guestTimeZone,
+        timeZone,
+      );
+
       return {
         ok: true as const,
         booking: {
           uid: moved.uid,
           previousUid: booking.cal_booking_uid,
           previousStart: booking.start_time,
-          start: moved.start || newStart,
+          previousDisplay: previousDisplay.combined,
+          start: newStartIso,
           status,
           meetingUrl: moved.meetingUrl,
+          display: display.combined,
+          guestTimeZone,
+          businessTimeZone: timeZone,
         },
       };
     } catch (error) {

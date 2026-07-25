@@ -18,6 +18,8 @@
   - `20260724000007_workspace_starter_defaults.sql` (signup AI/chat/FAQ defaults + backfill)
   - `20260724000008_workspace_invites.sql` (staff invite links + join path)
   - `20260725000001_guest_booking_manage.sql` (guest cancel ownership + OTP tables)
+  - `20260725000002_guest_timezone.sql` / `20260725000003_onsite_clear_guest_timezone.sql`
+  - `20260725000004_booking_reminders.sql` (cron reminders + manage_link + opt-out)
 - [ ] Landing → **Dùng thử ngay** → `/chat` (Eve Pilot demo + banner)
 - [ ] Tenant booking page: `/b/{slug}` (Settings copy link); pilot layout preview: `/b/eve-pilot`
 - [ ] New signup workspaces get AI/chat/FAQ starter defaults; empty FAQ form also pre-fills starter Q&A until saved
@@ -92,6 +94,16 @@ Prefer **Tenant happy path** above for product sign-off. Pilot checks:
 - Stripe billing / WhatsApp production channels
 - Dashboard cancel / reschedule UI (agent-first only in Phase 2)
 - Multi-workspace per user, owner transfer, billing seats
+
+## Outbound reminders (cron)
+
+1. [ ] Set `CRON_SECRET` in `.env.local` (and Vercel project env)
+2. [ ] Migration `20260725000004_booking_reminders.sql` applied
+3. [ ] `GET /api/cron/tick` without Bearer → **401**
+4. [ ] Settings → enable **Outbound reminders**; upcoming booking with guest email
+5. [ ] Tick with `Authorization: Bearer $CRON_SECRET` → sync + reminder rows; email when due (`RESEND_API_KEY`)
+6. [ ] Open manage link from email → chat verified, `?mt=` stripped; second open refused
+7. [ ] Unsubscribe link → no further reminders for that booking
 
 ## Commands
 

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { ensureVisitorId } from "@/lib/visitor";
+import { ensureVisitorId } from "@/lib/visitor-server";
 import { resolvePublicWorkspaceId } from "@/lib/workspace";
 
 export async function getChatActor() {

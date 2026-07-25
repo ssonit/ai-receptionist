@@ -34,6 +34,8 @@
     "longThreadNudge": "Hội thoại đang dài — chat mới giúp trả lời nhanh hơn.",
     "dismissNudge": "Bỏ qua",
     "notYou": "Không phải bạn?",
+    "yourTime": "giờ của bạn",
+    "askTimezone": "Bạn đang ở thành phố / múi giờ nào? Tôi sẽ hiện giờ của bạn và của tiệm.",
     "suggestions": {
       "afternoon": { "label": "Chiều mai", "prompt": "Còn trống chiều mai không?" },
       "hours": { "label": "Giờ mở cửa", "prompt": "Giờ mở cửa hôm nay?" },

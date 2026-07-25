@@ -33,6 +33,13 @@ export function hashBookingCode(plaintext: string): string {
     .digest("hex");
 }
 
+/** Case-sensitive hash for one-time manage-link tokens (base64url). */
+export function hashManageLinkToken(token: string): string {
+  return createHash("sha256")
+    .update(`${pepper()}:mt:${token.trim()}`)
+    .digest("hex");
+}
+
 export function bookingCodesEqual(aHash: string, plaintext: string): boolean {
   const b = Buffer.from(hashBookingCode(plaintext), "utf8");
   const a = Buffer.from(aHash.trim(), "utf8");

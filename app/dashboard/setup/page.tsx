@@ -28,20 +28,18 @@ export default async function SetupPage() {
     redirect("/login");
   }
 
-  if (workspace.setup_completed_at) {
-    redirect("/dashboard");
-  }
-
   const meetingTypes = await listWorkspaceMeetingTypes(
     dashboard.workspaceId,
   ).catch(() => []);
 
   const aiRow = meetingTypes.find((r) => r.is_ai_booking) ?? null;
   const hasCalKey = Boolean(workspace.cal_api_key_encrypted);
+  const setupCompleted = Boolean(workspace.setup_completed_at);
 
-  let initialStep: 1 | 2 | 3 = 1;
-  if (hasCalKey && aiRow) initialStep = 3;
-  else if (hasCalKey) initialStep = 2;
+  let initialStep: 1 | 2 | 3 | 4 = 1;
+  if (setupCompleted && hasCalKey && aiRow) initialStep = 4;
+  else if (setupCompleted && hasCalKey) initialStep = 4;
+  else if (setupCompleted) initialStep = 3;
 
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
@@ -54,6 +52,7 @@ export default async function SetupPage() {
         chatBaseUrl={chatBaseUrl}
         initialStep={initialStep}
         meetingTypes={meetingTypes}
+        setupCompleted={setupCompleted}
         workspace={{
           id: workspace.id,
           name: workspace.name,

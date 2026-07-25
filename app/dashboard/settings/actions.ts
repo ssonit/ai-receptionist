@@ -95,6 +95,28 @@ export async function saveWorkspaceSettings(
         if (!Number.isFinite(parsed)) return 120;
         return Math.max(0, Math.floor(parsed));
       })(),
+      service_mode:
+        formData.get("serviceMode") === "online" ? "online" : "onsite",
+      booking_reminders_enabled: formData.get("bookingRemindersEnabled") === "on",
+      reminder_lead_minutes: (() => {
+        const raw = String(formData.get("reminderLeadMinutes") ?? "").trim();
+        if (!raw) return [1440];
+        const parts = raw
+          .split(/[,\s]+/)
+          .map((p) => Math.floor(Number(p)))
+          .filter((n) => Number.isFinite(n) && n >= 60 && n <= 10080);
+        return parts.length > 0 ? parts : [1440];
+      })(),
+      reminder_quiet_start: (() => {
+        const parsed = Number(formData.get("reminderQuietStart"));
+        if (!Number.isFinite(parsed)) return 21;
+        return Math.min(23, Math.max(0, Math.floor(parsed)));
+      })(),
+      reminder_quiet_end: (() => {
+        const parsed = Number(formData.get("reminderQuietEnd"));
+        if (!Number.isFinite(parsed)) return 8;
+        return Math.min(23, Math.max(0, Math.floor(parsed)));
+      })(),
     })
     .eq("id", auth.workspaceId);
 

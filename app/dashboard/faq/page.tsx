@@ -18,7 +18,7 @@ export default async function FaqPage() {
   const previewMarkdown = buildBookingFaqMarkdown(faq);
 
   return (
-    <DashboardShell title="FAQ" user={dashboard.navUser}>
+    <DashboardShell title="FAQ" user={dashboard.navUser} workspaceId={dashboard.workspaceId}>
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
           <p className="max-w-2xl text-sm text-muted-foreground">

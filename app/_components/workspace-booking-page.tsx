@@ -156,12 +156,16 @@ export function WorkspaceBookingPage({
   user,
   demoMode = false,
   initialLocale,
+  preferChatSessionId = null,
+  manageLinkNotice = null,
 }: {
   workspace: PublicBookingWorkspace;
   user?: ChatUser | null;
   /** Marketing `/chat` sandbox — shows demo banner only. */
   demoMode?: boolean;
   initialLocale?: "en" | "vi";
+  preferChatSessionId?: string | null;
+  manageLinkNotice?: string | null;
 }) {
   return (
     <AgentChat
@@ -174,6 +178,8 @@ export function WorkspaceBookingPage({
       demoMode={demoMode}
       headerEnd={<WorkspaceInfoSheet workspace={workspace} />}
       initialLocale={initialLocale}
+      manageLinkNotice={manageLinkNotice}
+      preferChatSessionId={preferChatSessionId}
       user={user}
       workspaceName={workspace.name}
       workspaceSlug={workspace.slug}

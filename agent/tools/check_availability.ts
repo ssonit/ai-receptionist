@@ -1,8 +1,11 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { logAgentToolEvent } from "@/lib/agent-tool-log";
+import { authAttr } from "@/lib/agent-booking-auth";
 import { getAvailableSlots, withCalApiKey } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
+import { formatSlotForGuest } from "@/lib/guest-timezone";
+import { resolveGuestTimeZone } from "@/lib/guest-timezone-resolve";
 import {
   getCalApiKeyForWorkspace,
   getWorkspaceById,
@@ -13,7 +16,7 @@ import { addDaysYmd, compareYmd, toYmd, todayYmd } from "../date-context";
 
 export default defineTool({
   description:
-    "Check real available appointment slots from the calendar. Always call this before confirming any time to the guest. Never invent slots. Dates must be today or in the future (YYYY-MM-DD).",
+    "Check real available appointment slots from the calendar. Always call this before confirming any time to the guest. Never invent slots. Dates must be today or in the future (YYYY-MM-DD). Slots are fetched in the business timezone; when guest timezone is known, each slot includes a dual display string.",
   inputSchema: z.object({
     startDate: z
       .string()
@@ -21,18 +24,16 @@ export default defineTool({
     endDate: z
       .string()
       .describe("Range end as YYYY-MM-DD or ISO datetime — must be >= startDate"),
-    timeZone: z
-      .string()
-      .optional()
-      .describe(`IANA timezone, default ${bookingConfig.timezone}`),
   }),
-  async execute({ startDate, endDate, timeZone }, ctx) {
+  async execute({ startDate, endDate }, ctx) {
     const sessionId = ctx.session?.id ?? null;
+    const auth =
+      ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null;
     let workspaceIdForLog: string | null = null;
     try {
       const workspaceId = await resolveWorkspaceIdFromAgentContext({
         sessionId,
-        auth: ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null,
+        auth,
       });
       workspaceIdForLog = workspaceId;
       const aiEvent = await getAiBookingEventType(workspaceId);
@@ -50,8 +51,17 @@ export default defineTool({
       }
 
       const ws = await getWorkspaceById(workspaceId);
-      const tz = timeZone ?? ws?.timezone ?? bookingConfig.timezone;
-      const today = todayYmd(tz);
+      const businessTz = ws?.timezone ?? bookingConfig.timezone;
+      const serviceMode = ws?.service_mode ?? "onsite";
+
+      const guestResolved = await resolveGuestTimeZone({
+        auth,
+        chatSessionId: authAttr(auth?.attributes, "chatSessionId"),
+      });
+      const guestTz =
+        serviceMode === "online" ? guestResolved.guestTimeZone : null;
+
+      const today = todayYmd(businessTz);
       let start = toYmd(startDate);
       let end = toYmd(endDate);
       const notes: string[] = [];
@@ -63,13 +73,13 @@ export default defineTool({
         start = today;
       }
       if (compareYmd(end, start) < 0) {
-        const next = addDaysYmd(start, 7, tz);
+        const next = addDaysYmd(start, 7, businessTz);
         notes.push(
           `Clamped endDate from ${end} to ${next} (end was before start).`,
         );
         end = next;
       }
-      const maxEnd = addDaysYmd(start, 60, tz);
+      const maxEnd = addDaysYmd(start, 60, businessTz);
       if (compareYmd(end, maxEnd) > 0) {
         notes.push(
           `Clamped endDate from ${end} to ${maxEnd} (max 60-day window).`,
@@ -77,24 +87,45 @@ export default defineTool({
         end = maxEnd;
       }
 
+      if (serviceMode === "online" && !guestTz) {
+        notes.push(
+          "Online workspace: guest timezone unknown. Ask once (or call set_guest_timezone) before confirming a slot. Browser may send x-eve-tz automatically.",
+        );
+      }
+
       const apiKey = await getCalApiKeyForWorkspace(workspaceId);
       const slots = await withCalApiKey(apiKey, () =>
         getAvailableSlots({
           startDate: start,
           endDate: end,
-          timeZone: tz,
+          timeZone: businessTz,
           eventTypeId: aiEvent.calEventTypeId || undefined,
           eventTypeSlug: aiEvent.slug,
           username: aiEvent.username,
         }),
       );
 
-      const byDay: Record<string, string[]> = {};
-      for (const slot of slots.slice(0, 40)) {
+      type SlotRow = {
+        start: string;
+        display: string;
+        guestDisplay: string | null;
+        businessDisplay: string;
+      };
+      const byDay: Record<string, SlotRow[]> = {};
+      const formattedSlots: SlotRow[] = slots.slice(0, 40).map((slot) => {
+        const display = formatSlotForGuest(slot.start, guestTz, businessTz);
+        const row: SlotRow = {
+          start: slot.start,
+          display: display.combined,
+          guestDisplay: display.guest,
+          businessDisplay: display.business,
+        };
         const day = slot.start.slice(0, 10);
         byDay[day] ??= [];
-        byDay[day].push(slot.start);
-      }
+        byDay[day].push(row);
+        return row;
+      });
+
       const noticeHours =
         aiEvent.minimumNoticeMinutes != null
           ? Math.max(1, Math.round(aiEvent.minimumNoticeMinutes / 60))
@@ -115,12 +146,15 @@ export default defineTool({
         ok: true,
         sessionId,
         workspaceId,
-        meta: { count: slots.length, start, end },
+        meta: { count: slots.length, start, end, guestTz },
       });
 
       return {
         ok: true as const,
-        timezone: tz,
+        timezone: businessTz,
+        businessTimeZone: businessTz,
+        guestTimeZone: guestTz,
+        serviceMode,
         today,
         eventType: {
           id: aiEvent.calEventTypeId || null,
@@ -135,7 +169,7 @@ export default defineTool({
         count: slots.length,
         slotsByDay: byDay,
         earliestStart: slots[0]?.start,
-        slots: slots.slice(0, 40),
+        slots: formattedSlots,
         truncated: slots.length > 40,
       };
     } catch (error) {

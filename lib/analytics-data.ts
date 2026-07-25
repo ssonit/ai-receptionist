@@ -112,7 +112,7 @@ export async function loadAnalyticsDashboard(): Promise<AnalyticsDashboardData> 
     supabase
       .from("workspaces")
       .select(
-        "cal_username, about, agent_instructions, cal_event_type_id, cal_event_type_slug",
+        "cal_username, about, agent_instructions, cal_event_type_id, cal_event_type_slug, cal_api_key_encrypted",
       )
       .eq("id", workspaceId)
       .maybeSingle(),
@@ -156,6 +156,7 @@ export async function loadAnalyticsDashboard(): Promise<AnalyticsDashboardData> 
 
   const alerts = buildAiHealthAlerts({
     hasAiMeetingType,
+    hasCalKey: Boolean(workspace?.cal_api_key_encrypted),
     calUsername: workspace?.cal_username ?? null,
     faqCount: faqCountRes.count ?? 0,
     hasAbout: Boolean(workspace?.about?.trim()),

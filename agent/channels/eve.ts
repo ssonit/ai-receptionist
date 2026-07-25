@@ -4,17 +4,18 @@ import {
   checkAgentRateLimit,
   clientIpFromRequest,
 } from "@/lib/agent-rate-limit";
-import { EVE_LOCALE_HEADER, parseAppLocale } from "@/lib/locale";
+import { EVE_LOCALE_HEADER, EVE_TZ_HEADER, parseAppLocale } from "@/lib/locale";
 import { readVisitorIdFromCookieHeader } from "@/lib/request-cookies";
 import {
   EVE_CHAT_SESSION_HEADER,
   EVE_WORKSPACE_HEADER,
 } from "@/lib/workspace";
+import { normalizeIanaTimeZone } from "@/lib/guest-timezone";
 
 type EveAuth = NonNullable<ReturnType<typeof defaultEveAuth>>;
 
 /**
- * Stamp public-chat tenant (+ locale + visitor) headers onto whatever route
+ * Stamp public-chat tenant (+ locale + visitor + guest tz) headers onto whatever route
  * auth produced. Visitor binding (S1) prevents spoofing x-eve-chat-session.
  */
 function withTenantAttributes(
@@ -28,11 +29,15 @@ function withTenantAttributes(
     .get(EVE_CHAT_SESSION_HEADER)
     ?.trim();
   const localeRaw = request.headers.get(EVE_LOCALE_HEADER)?.trim();
+  const tzRaw = request.headers.get(EVE_TZ_HEADER)?.trim();
+  const guestTimeZone = normalizeIanaTimeZone(tzRaw);
   const visitorId = readVisitorIdFromCookieHeader(
     request.headers.get("cookie"),
   );
 
-  if (!slug && !chatSessionId && !localeRaw && !visitorId) return base;
+  if (!slug && !chatSessionId && !localeRaw && !visitorId && !guestTimeZone) {
+    return base;
+  }
 
   const attributes: Record<string, string | readonly string[]> = {
     ...base.attributes,
@@ -41,6 +46,7 @@ function withTenantAttributes(
   if (chatSessionId) attributes.chatSessionId = chatSessionId;
   if (localeRaw) attributes.locale = parseAppLocale(localeRaw);
   if (visitorId) attributes.visitorId = visitorId;
+  if (guestTimeZone) attributes.guestTimeZone = guestTimeZone;
 
   return { ...base, attributes };
 }

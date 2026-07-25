@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { BookingsSyncButton } from "@/components/bookings-sync-button";
 import { BookingsTable } from "@/components/bookings-table";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { bookingConfig } from "@/lib/booking-config";
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,16 +18,59 @@ export default async function BookingsPage() {
   }
 
   const supabase = await createClient();
-  const { data: bookings } = await supabase
-    .from("bookings")
-    .select(
-      "id, guest_name, guest_phone, guest_email, start_time, status, list_status, cancelled_by, service, cal_booking_uid, session_id, synced_at, raw",
-    )
-    .eq("workspace_id", workspaceId)
-    .order("start_time", { ascending: false })
-    .limit(100);
+  const [{ data: bookings }, { data: workspace }] = await Promise.all([
+    supabase
+      .from("bookings")
+      .select(
+        "id, guest_name, guest_phone, guest_email, start_time, status, list_status, cancelled_by, guest_timezone, service, cal_booking_uid, session_id, synced_at, raw",
+      )
+      .eq("workspace_id", workspaceId)
+      .order("start_time", { ascending: false })
+      .limit(100),
+    supabase
+      .from("workspaces")
+      .select("name, timezone, service_mode")
+      .eq("id", workspaceId)
+      .maybeSingle(),
+  ]);
 
-  const lastSyncedAt = (bookings ?? []).reduce<string | null>((latest, row) => {
+  const bookingIds = (bookings ?? []).map((b) => b.id);
+  const reminderByBooking = new Map<
+    string,
+    "pending" | "sent" | "failed" | "skipped"
+  >();
+  if (bookingIds.length > 0) {
+    const { data: reminders } = await supabase
+      .from("booking_reminders")
+      .select("booking_id, status")
+      .eq("workspace_id", workspaceId)
+      .in("booking_id", bookingIds);
+    const rank: Record<string, number> = {
+      failed: 4,
+      pending: 3,
+      sent: 2,
+      skipped: 1,
+    };
+    for (const row of reminders ?? []) {
+      const id = row.booking_id as string;
+      const status = row.status as
+        | "pending"
+        | "sent"
+        | "failed"
+        | "skipped";
+      const prev = reminderByBooking.get(id);
+      if (!prev || (rank[status] ?? 0) > (rank[prev] ?? 0)) {
+        reminderByBooking.set(id, status);
+      }
+    }
+  }
+
+  const rows = (bookings ?? []).map((b) => ({
+    ...b,
+    reminder_status: reminderByBooking.get(b.id) ?? null,
+  }));
+
+  const lastSyncedAt = rows.reduce<string | null>((latest, row) => {
     if (!row.synced_at) return latest;
     if (!latest || row.synced_at > latest) return row.synced_at;
     return latest;
@@ -37,7 +81,7 @@ export default async function BookingsPage() {
     : "Supabase data — click Sync Cal.com to pull bookings from Cal.com.";
 
   return (
-    <DashboardShell title="Bookings" user={dashboard.navUser}>
+    <DashboardShell title="Bookings" user={dashboard.navUser} workspaceId={dashboard.workspaceId}>
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <div className="flex flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
@@ -50,7 +94,14 @@ export default async function BookingsPage() {
             </div>
             <BookingsSyncButton />
           </div>
-          <BookingsTable rows={bookings ?? []} />
+          <BookingsTable
+            hostName={workspace?.name ?? "Appointment"}
+            rows={rows}
+            serviceMode={
+              workspace?.service_mode === "online" ? "online" : "onsite"
+            }
+            timeZone={workspace?.timezone ?? bookingConfig.timezone}
+          />
         </div>
       </div>
     </DashboardShell>

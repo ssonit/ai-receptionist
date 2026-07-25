@@ -26,6 +26,11 @@ export type WorkspaceOpsValues = {
   guestCancelEnabled?: boolean;
   guestRescheduleEnabled?: boolean;
   guestChangeCutoffMinutes?: number;
+  serviceMode?: "onsite" | "online";
+  bookingRemindersEnabled?: boolean;
+  reminderLeadMinutes?: number[];
+  reminderQuietStart?: number;
+  reminderQuietEnd?: number;
 };
 
 /** AI personality + chat empty screen — `/dashboard/agent`. */

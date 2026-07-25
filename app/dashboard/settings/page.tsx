@@ -39,7 +39,7 @@ export default async function SettingsPage() {
     const { data } = await supabase
       .from("workspaces")
       .select(
-        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes",
+        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end",
       )
       .eq("id", dashboard.workspaceId)
       .maybeSingle();
@@ -60,6 +60,19 @@ export default async function SettingsPage() {
           typeof data.guest_change_cutoff_minutes === "number"
             ? data.guest_change_cutoff_minutes
             : 120,
+        serviceMode: data.service_mode === "online" ? "online" : "onsite",
+        bookingRemindersEnabled: data.booking_reminders_enabled === true,
+        reminderLeadMinutes: Array.isArray(data.reminder_lead_minutes)
+          ? data.reminder_lead_minutes
+          : [1440],
+        reminderQuietStart:
+          typeof data.reminder_quiet_start === "number"
+            ? data.reminder_quiet_start
+            : 21,
+        reminderQuietEnd:
+          typeof data.reminder_quiet_end === "number"
+            ? data.reminder_quiet_end
+            : 8,
       };
     }
 
@@ -80,7 +93,7 @@ export default async function SettingsPage() {
     : null;
 
   return (
-    <DashboardShell title="Settings" user={dashboard.navUser}>
+    <DashboardShell title="Settings" user={dashboard.navUser} workspaceId={dashboard.workspaceId}>
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
           <p className="text-sm text-muted-foreground">

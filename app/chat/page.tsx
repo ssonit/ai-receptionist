@@ -35,10 +35,16 @@ export default async function ChatPage() {
       }
     : null;
 
-  if (!workspace?.setupCompletedAt) {
+  if (!workspace?.bookingLive) {
+    const missingEnv = !workspace;
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-black px-6 text-center text-zinc-300">
         <p className="text-sm">Eve Pilot demo isn&apos;t ready yet.</p>
+        <p className="text-muted-foreground max-w-md text-xs text-zinc-500">
+          {missingEnv
+            ? "Run npx supabase db reset so the eve-pilot workspace is seeded."
+            : "Set CALCOM_API_KEY and CALCOM_EVENT_TYPE_ID (or USERNAME + EVENT_TYPE_SLUG) in .env.local, then restart the dev server."}
+        </p>
         <a className="text-sm text-teal-200 underline-offset-2 hover:underline" href="/">
           Back to home
         </a>

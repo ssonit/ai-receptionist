@@ -37,7 +37,7 @@ import {
   parseChatSuggestions,
   type ChatBranding,
 } from "@/lib/chat-branding";
-import { EVE_LOCALE_HEADER } from "@/lib/locale";
+import { EVE_LOCALE_HEADER, EVE_TZ_HEADER } from "@/lib/locale";
 import { projectEveMessages } from "@/lib/project-chat-messages";
 import {
   EVE_CHAT_SESSION_HEADER,
@@ -78,6 +78,10 @@ export function AgentChat(props: {
   /** Marketing sandbox at `/chat` — Eve Pilot only. */
   demoMode?: boolean;
   initialLocale?: "en" | "vi";
+  /** Open this chat session first (e.g. after consuming a manage link). */
+  preferChatSessionId?: string | null;
+  /** Banner after magic-link claim. */
+  manageLinkNotice?: string | null;
 }) {
   return (
     <LocaleProvider initialLocale={props.initialLocale} kind="guest">
@@ -94,6 +98,8 @@ function AgentChatInner({
   chatBranding,
   headerEnd,
   demoMode = false,
+  preferChatSessionId = null,
+  manageLinkNotice = null,
 }: {
   user?: ChatUser | null;
   workspaceSlug?: string;
@@ -102,6 +108,8 @@ function AgentChatInner({
   chatBranding?: Partial<ChatBranding> | null;
   headerEnd?: React.ReactNode;
   demoMode?: boolean;
+  preferChatSessionId?: string | null;
+  manageLinkNotice?: string | null;
 }) {
   const t = useTranslations();
 
@@ -225,6 +233,15 @@ function AgentChatInner({
         setBootError(null);
         const list = await refreshSessions();
         if (cancelled) return;
+
+        if (
+          preferChatSessionId &&
+          list.some((s) => s.id === preferChatSessionId)
+        ) {
+          await loadThread(preferChatSessionId);
+          return;
+        }
+
         if (list.length === 0) {
           const res = await fetch(`/api/chat/sessions${tenantQs}`, {
             method: "POST",
@@ -258,9 +275,9 @@ function AgentChatInner({
     return () => {
       cancelled = true;
     };
-    // Re-bootstrap when tenant slug changes.
+    // Re-bootstrap when tenant slug or preferred session changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tenantQs]);
+  }, [tenantQs, preferChatSessionId]);
 
   const onSelect = async (id: string) => {
     if (id === activeId) {
@@ -398,6 +415,12 @@ function AgentChatInner({
           </div>
         ) : null}
 
+        {manageLinkNotice ? (
+          <div className="flex shrink-0 items-center justify-center border-b border-teal-500/20 bg-teal-500/10 px-4 py-2 text-center text-xs text-teal-100/90 sm:text-[13px]">
+            {manageLinkNotice}
+          </div>
+        ) : null}
+
         {loading ? (
           <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
             {t("chat.loading")}
@@ -489,6 +512,12 @@ function AgentChatThread({
     };
     if (workspaceSlug?.trim()) {
       headers[EVE_WORKSPACE_HEADER] = workspaceSlug.trim().toLowerCase();
+    }
+    try {
+      const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (browserTz) headers[EVE_TZ_HEADER] = browserTz;
+    } catch {
+      // ignore
     }
     return headers;
   }, [chatSessionId, locale, workspaceSlug]);

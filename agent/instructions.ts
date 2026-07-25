@@ -11,7 +11,14 @@ import {
   fetchWorkspaceFaq,
 } from "../lib/workspace-faq";
 import { DEFAULT_LOCALE, parseAppLocale, type AppLocale } from "../lib/locale";
-import { resolveWorkspaceIdFromAgentContext } from "../lib/workspace";
+import {
+  type WorkspaceServiceMode,
+} from "../lib/guest-timezone";
+import { resolveGuestTimeZone } from "../lib/guest-timezone-resolve";
+import {
+  getWorkspaceById,
+  resolveWorkspaceIdFromAgentContext,
+} from "../lib/workspace";
 import { nowHm, todayLabel, todayYmd } from "./date-context";
 
 function firstAttr(
@@ -49,7 +56,15 @@ function identityLine(
   return `You are the AI booking assistant for **${name}**.`;
 }
 
-async function buildMarkdown(workspaceId: string, uiLocale: AppLocale) {
+async function buildMarkdown(
+  workspaceId: string,
+  uiLocale: AppLocale,
+  opts?: {
+    serviceMode?: WorkspaceServiceMode;
+    guestTimeZone?: string | null;
+    guestTzSource?: string | null;
+  },
+) {
   const workspace = await fetchWorkspaceFaq(workspaceId);
   const tz = workspace?.timezone?.trim() || bookingConfig.timezone;
   const today = todayYmd(tz);
@@ -59,10 +74,44 @@ async function buildMarkdown(workspaceId: string, uiLocale: AppLocale) {
   const tone = resolveAgentTone(workspace?.agentTone);
   const replyLocale = resolveAgentReplyLocale(workspace?.agentReplyLocale);
   const handoff = workspace?.agentHandoff?.trim();
+  const serviceMode = opts?.serviceMode ?? "onsite";
+  const guestTz = opts?.guestTimeZone ?? null;
 
   const handoffBlock = handoff
     ? `\n# Human handoff\n\n${handoff}\n`
     : "";
+
+  let timezoneBlock = "";
+  if (serviceMode === "online") {
+    if (guestTz) {
+      timezoneBlock = `
+# Guest timezone (online)
+
+- **Service mode:** online (remote meetings).
+- **Guest timezone:** \`${guestTz}\` (source: ${opts?.guestTzSource ?? "known"}).
+- **Business timezone:** \`${tz}\`.
+- When stating any time, show **both** (use tool \`display\` fields): guest time first, then business time.
+- If the guest corrects their city/timezone, call \`set_guest_timezone\`.
+`;
+    } else {
+      timezoneBlock = `
+# Guest timezone (online)
+
+- **Service mode:** online (remote meetings).
+- Guest timezone is **unknown**. Before confirming a slot, ask once politely where they are (city) **or** call \`set_guest_timezone\` if they already said it.
+- Browser may provide \`x-eve-tz\` automatically — if tools show \`guestTimeZone\`, use it and confirm once.
+- Until known: you may list business-local times with a clear \`${tz}\` label — do **not** pretend they are the guest's local time.
+`;
+    }
+  } else {
+    timezoneBlock = `
+# Timezone (onsite)
+
+- **Service mode:** onsite (guest visits in person).
+- **Never ask** for the guest's timezone.
+- Always speak in business local time \`${tz}\`. Mention the timezone label once when first offering times.
+`;
+  }
 
   return `# Identity
 
@@ -77,7 +126,7 @@ ${workspace?.tagline?.trim() ? `\nWorkspace tagline: ${workspace.tagline.trim()}
 - When the guest says "today / tomorrow / this week / next week", always map to calendar dates from today above.
 - **Never** call \`check_availability\` with \`startDate\`/\`endDate\` before \`${today}\`.
 - If the guest does not specify a date: default to checking from today through the next 7 days.
-
+${timezoneBlock}
 # Same-day / "this afternoon" near the notice window
 
 1. Still call \`check_availability\` for today (+ a few days ahead for alternatives).
@@ -101,7 +150,8 @@ ${buildBookingFaqSummary(workspace)}
 # Hard rules
 
 - You only support booking / appointment FAQ — no professional advice outside booking scope.
-- Before stating any open time: call \`check_availability\`. Only mention \`start\` values returned by the tool.
+- Before stating any open time: call \`check_availability\`. Only mention \`start\` values returned by the tool. Prefer tool \`display\` strings for dual timezones.
+- After \`book_appointment\` or \`reschedule_appointment\`, confirm using the booking \`display\` field (both times when online).
 - Before booking: confirm with the guest (full name, phone, email, chosen time). Then call \`book_appointment\` with \`guestName\`.
 - After a successful \`book_appointment\`, read the one-time \`manageCode\` to the guest clearly (they need it to change the booking later). Do not invent codes.
 - **Cancel / reschedule ladder (required):**
@@ -149,8 +199,18 @@ async function instructionsForCtx(ctx: {
     firstAttr(auth?.attributes, "locale"),
     DEFAULT_LOCALE,
   );
+  const chatSessionId = firstAttr(auth?.attributes, "chatSessionId") ?? null;
+  const [ws, guestTz] = await Promise.all([
+    getWorkspaceById(workspaceId),
+    resolveGuestTimeZone({ auth, chatSessionId }),
+  ]);
+
   return defineInstructions({
-    markdown: await buildMarkdown(workspaceId, locale),
+    markdown: await buildMarkdown(workspaceId, locale, {
+      serviceMode: ws?.service_mode ?? "onsite",
+      guestTimeZone: guestTz.guestTimeZone,
+      guestTzSource: guestTz.source,
+    }),
   });
 }
 

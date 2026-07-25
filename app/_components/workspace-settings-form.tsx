@@ -334,6 +334,48 @@ export function WorkspaceSettingsForm({
 
         <Card>
           <CardHeader>
+            <CardTitle>Service mode</CardTitle>
+            <CardDescription>
+              Onsite keeps business timezone only. Online detects or asks for
+              the guest timezone and shows both when offering times.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                className="mt-1"
+                defaultChecked={workspace?.serviceMode !== "online"}
+                name="serviceMode"
+                type="radio"
+                value="onsite"
+              />
+              <span>
+                <span className="font-medium">Onsite</span>
+                <span className="text-muted-foreground block text-xs">
+                  Guest visits in person — never ask for their timezone.
+                </span>
+              </span>
+            </label>
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                className="mt-1"
+                defaultChecked={workspace?.serviceMode === "online"}
+                name="serviceMode"
+                type="radio"
+                value="online"
+              />
+              <span>
+                <span className="font-medium">Online</span>
+                <span className="text-muted-foreground block text-xs">
+                  Remote meetings — use browser timezone or ask the guest once.
+                </span>
+              </span>
+            </label>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Guest cancel / reschedule</CardTitle>
             <CardDescription>
               Allow visitors to change appointments in chat after proving
@@ -367,6 +409,74 @@ export function WorkspaceSettingsForm({
                 type="number"
               />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Outbound reminders</CardTitle>
+            <CardDescription>
+              Email guests before their appointment (default off). Requires a
+              verified Resend domain — otherwise messages land in spam. Short
+              lead is always cutoff + 30 minutes so guests still have time to
+              change.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                defaultChecked={workspace?.bookingRemindersEnabled === true}
+                name="bookingRemindersEnabled"
+                type="checkbox"
+              />
+              Enable booking reminders
+            </label>
+            <div className="space-y-2">
+              <Label htmlFor="reminder-leads">
+                Long lead(s) in minutes (comma-separated)
+              </Label>
+              <Input
+                defaultValue={(workspace?.reminderLeadMinutes ?? [1440]).join(
+                  ",",
+                )}
+                id="reminder-leads"
+                name="reminderLeadMinutes"
+                placeholder="1440"
+              />
+              <p className="text-muted-foreground text-xs">
+                Example: 1440 = 24 hours before. A second reminder is always
+                scheduled at cutoff + 30 minutes.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="quiet-start">Quiet hours start (0–23)</Label>
+                <Input
+                  defaultValue={workspace?.reminderQuietStart ?? 21}
+                  id="quiet-start"
+                  max={23}
+                  min={0}
+                  name="reminderQuietStart"
+                  type="number"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="quiet-end">Quiet hours end (0–23)</Label>
+                <Input
+                  defaultValue={workspace?.reminderQuietEnd ?? 8}
+                  id="quiet-end"
+                  max={23}
+                  min={0}
+                  name="reminderQuietEnd"
+                  type="number"
+                />
+              </div>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              Default 21→08 in the guest timezone (online) or business timezone
+              (onsite). Set start = end to disable quiet hours. Long reminders in
+              quiet hours defer to end; short ones are skipped.
+            </p>
           </CardContent>
         </Card>
 

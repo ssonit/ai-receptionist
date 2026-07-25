@@ -6,6 +6,7 @@
 import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
 import { isCancelledStatus } from "@/lib/booking-status";
 import { VERIFIED_UNTIL_MS } from "@/lib/booking-manage-code";
+import { formatSlotForGuest } from "@/lib/guest-timezone";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getPilotWorkspaceId,
@@ -31,6 +32,7 @@ export type OwnedBookingRow = {
   chat_session_id: string | null;
   session_id: string | null;
   manage_code_hash: string | null;
+  guest_timezone: string | null;
   claimTier: "A1" | "A2" | "A+" | "B" | "C";
 };
 
@@ -52,7 +54,7 @@ export type WorkspaceGuestPolicy = {
 };
 
 const BOOKING_SELECT =
-  "id, cal_booking_uid, guest_name, guest_email, guest_phone, service, start_time, status, list_status, visitor_id, chat_session_id, session_id, manage_code_hash";
+  "id, cal_booking_uid, guest_name, guest_email, guest_phone, service, start_time, status, list_status, visitor_id, chat_session_id, session_id, manage_code_hash, guest_timezone";
 
 export function authAttr(
   attributes: Readonly<Record<string, string | readonly string[]>> | undefined,
@@ -463,14 +465,36 @@ export function assertBookingChangeAllowed(
   return { ok: true };
 }
 
-export function summarizeBookingCandidates(rows: OwnedBookingRow[]) {
-  return rows.map((row) => ({
-    bookingUid: row.cal_booking_uid,
-    start: row.start_time,
-    guestName: row.guest_name,
-    service: row.service,
-    claimTier: row.claimTier,
-  }));
+export function summarizeBookingCandidates(
+  rows: OwnedBookingRow[],
+  opts?: {
+    businessTimeZone?: string;
+    fallbackGuestTimeZone?: string | null;
+    /** Onsite: never surface stored bookings.guest_timezone (may be stale/wrong). */
+    ignoreStoredGuestTz?: boolean;
+  },
+) {
+  const businessTz = opts?.businessTimeZone;
+  return rows.map((row) => {
+    const storedGuestTz = opts?.ignoreStoredGuestTz
+      ? null
+      : row.guest_timezone;
+    const base = {
+      bookingUid: row.cal_booking_uid,
+      start: row.start_time,
+      guestName: row.guest_name,
+      service: row.service,
+      claimTier: row.claimTier,
+      guestTimeZone: storedGuestTz,
+    };
+    if (!businessTz) return base;
+    const display = formatSlotForGuest(
+      row.start_time,
+      storedGuestTz ?? opts?.fallbackGuestTimeZone ?? null,
+      businessTz,
+    );
+    return { ...base, display: display.combined };
+  });
 }
 
 export function toolError(errorCode: string): {
@@ -493,7 +517,7 @@ export async function markBookingVerified(input: {
   workspaceId: string;
   chatSessionId: string;
   bookingId: string;
-  channel: "manage_code" | "email_otp" | "phone_last4";
+  channel: "manage_code" | "email_otp" | "phone_last4" | "manage_link";
   codeHash: string;
   destination?: string | null;
 }): Promise<void> {

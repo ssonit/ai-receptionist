@@ -10,6 +10,8 @@ export const GUEST_LOCALE_COOKIE = "eve_guest_locale";
 export const DASHBOARD_LOCALE_COOKIE = "eve_dashboard_locale";
 /** Browser → Eve HTTP agent */
 export const EVE_LOCALE_HEADER = "x-eve-locale";
+/** Browser IANA timezone from public chat (`Intl...timeZone`). */
+export const EVE_TZ_HEADER = "x-eve-tz";
 
 export function isAppLocale(value: string | null | undefined): value is AppLocale {
   return value === "en" || value === "vi";

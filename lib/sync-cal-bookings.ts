@@ -30,6 +30,7 @@ type ExistingBooking = {
   chat_session_id: string | null;
   manage_code_hash: string | null;
   cancelled_by: string | null;
+  guest_timezone: string | null;
 };
 
 function formatWhen(iso: string) {
@@ -89,7 +90,7 @@ export async function syncCalBookingsToSupabase(
         const { data: existing } = await supabase
           .from("bookings")
           .select(
-            "cal_booking_uid, status, start_time, guest_name, guest_email, session_id, visitor_id, chat_session_id, manage_code_hash, cancelled_by",
+            "cal_booking_uid, status, start_time, guest_name, guest_email, session_id, visitor_id, chat_session_id, manage_code_hash, cancelled_by, guest_timezone",
           )
           .in("cal_booking_uid", chunk);
 
@@ -122,6 +123,7 @@ export async function syncCalBookingsToSupabase(
         visitor_id: prev?.visitor_id ?? null,
         chat_session_id: prev?.chat_session_id ?? null,
         manage_code_hash: prev?.manage_code_hash ?? null,
+        guest_timezone: prev?.guest_timezone ?? null,
         cancelled_by: nowCancelled
           ? prev?.cancelled_by ?? "cal"
           : null,

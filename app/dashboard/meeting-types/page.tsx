@@ -41,7 +41,7 @@ export default async function MeetingTypesPage() {
   }
 
   return (
-    <DashboardShell title="Meeting types" user={dashboard.navUser}>
+    <DashboardShell title="Meeting types" user={dashboard.navUser} workspaceId={dashboard.workspaceId}>
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <MeetingTypesForm calUsername={calUsername} rows={meetingTypes} />
       </div>

@@ -10,7 +10,6 @@ import {
   IconVideo,
 } from "@tabler/icons-react";
 
-import { bookingConfig } from "@/lib/booking-config";
 import {
   CAL_BOOKING_VIEWS,
   getCalBookingView,
@@ -60,6 +59,9 @@ export type BookingRow = {
   status: string;
   list_status: string | null;
   cancelled_by?: string | null;
+  guest_timezone?: string | null;
+  /** Latest reminder status across kinds (for badge). */
+  reminder_status?: "pending" | "sent" | "failed" | "skipped" | null;
   service: string | null;
   cal_booking_uid: string | null;
   session_id: string | null;
@@ -105,54 +107,73 @@ function extractMeetingUrl(row: BookingRow): string | null {
   return null;
 }
 
-function formatDay(iso: string) {
+/** Formatters are expensive to build — one per timezone, reused across rows. */
+const tzLabelFormatters = new Map<string, Intl.DateTimeFormat>();
+
+function tzLabelFormatter(timeZone: string) {
+  let fmt = tzLabelFormatters.get(timeZone);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "long" });
+    tzLabelFormatters.set(timeZone, fmt);
+  }
+  return fmt;
+}
+
+/** Human timezone label for the workspace tz, e.g. "Indochina Time", "GMT+1". */
+function timeZoneLabel(iso: string, timeZone: string) {
+  const parts = tzLabelFormatter(timeZone).formatToParts(new Date(iso));
+  return parts.find((p) => p.type === "timeZoneName")?.value ?? timeZone;
+}
+
+function formatDay(iso: string, timeZone: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
     weekday: "short",
     day: "numeric",
     month: "short",
-    timeZone: bookingConfig.timezone,
+    timeZone,
   });
 }
 
-function formatTime(iso: string) {
+function formatTime(iso: string, timeZone: string) {
   return new Date(iso)
     .toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
-      timeZone: bookingConfig.timezone,
+      timeZone,
     })
     .replace(/\s?(AM|PM)/i, (_, m: string) => m.toLowerCase());
 }
 
-function formatTimeRange(row: BookingRow) {
-  const start = formatTime(row.start_time);
+function formatTimeRange(row: BookingRow, timeZone: string) {
+  const start = formatTime(row.start_time, timeZone);
   const endIso = extractEndIso(row);
   if (!endIso) return start;
-  return `${start} - ${formatTime(endIso)}`;
+  return `${start} - ${formatTime(endIso, timeZone)}`;
 }
 
-function formatWhenDay(row: BookingRow) {
+function formatWhenDay(row: BookingRow, timeZone: string) {
   return new Date(row.start_time).toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
-    timeZone: bookingConfig.timezone,
+    timeZone,
   });
 }
 
-function formatWhenTime(row: BookingRow) {
-  return `${formatTimeRange(row)} (Indochina Time)`;
+function formatWhenTime(row: BookingRow, timeZone: string) {
+  const label = timeZoneLabel(row.start_time, timeZone);
+  return `${formatTimeRange(row, timeZone)} (${label})`;
 }
 
-function formatWhenLong(row: BookingRow) {
-  return `${formatWhenDay(row)}, ${formatWhenTime(row)}`;
+function formatWhenLong(row: BookingRow, timeZone: string) {
+  return `${formatWhenDay(row, timeZone)}, ${formatWhenTime(row, timeZone)}`;
 }
 
-function bookingTitle(row: BookingRow) {
+function bookingTitle(row: BookingRow, hostName: string) {
   const service = row.service?.trim() || "Appointment";
-  return `${service} between ${bookingConfig.name} and ${row.guest_name}`;
+  return `${service} between ${hostName} and ${row.guest_name}`;
 }
 
 function participantsLine(row: BookingRow) {
@@ -165,7 +186,20 @@ function initialOf(name: string) {
   return (name.trim().charAt(0) || "?").toUpperCase();
 }
 
-export function BookingsTable({ rows }: { rows: BookingRow[] }) {
+export function BookingsTable({
+  rows,
+  timeZone,
+  hostName,
+  serviceMode = "onsite",
+}: {
+  rows: BookingRow[];
+  /** Workspace IANA timezone — never assume the Pilot default. */
+  timeZone: string;
+  /** Workspace name shown as the meeting host. */
+  hostName: string;
+  /** Onsite: hide "Guest saw" even if guest_timezone was stored by mistake. */
+  serviceMode?: "onsite" | "online";
+}) {
   const [view, setView] = React.useState<CalBookingView>("upcoming");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [pageIndex, setPageIndex] = React.useState(0);
@@ -281,10 +315,10 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                       >
                         <div className="w-full shrink-0 sm:w-40">
                           <p className="text-sm font-medium">
-                            {formatDay(row.start_time)}
+                            {formatDay(row.start_time, timeZone)}
                           </p>
                           <p className="text-muted-foreground text-sm">
-                            {formatTimeRange(row)}
+                            {formatTimeRange(row, timeZone)}
                           </p>
                           {meetingUrl ? (
                             <Button
@@ -308,7 +342,7 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
 
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">
-                            {bookingTitle(row)}
+                            {bookingTitle(row, hostName)}
                           </p>
                           <p className="text-muted-foreground mt-1 truncate text-sm">
                             {participantsLine(row)}
@@ -461,22 +495,40 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
           side="right"
           className="w-full gap-0 p-0 sm:max-w-md"
         >
-          {active ? <BookingDetailSheet booking={active} /> : null}
+          {active ? (
+            <BookingDetailSheet
+              booking={active}
+              hostName={hostName}
+              serviceMode={serviceMode}
+              timeZone={timeZone}
+            />
+          ) : null}
         </SheetContent>
       </Sheet>
     </div>
   );
 }
 
-function BookingDetailSheet({ booking }: { booking: BookingRow }) {
+function BookingDetailSheet({
+  booking,
+  timeZone,
+  hostName,
+  serviceMode = "onsite",
+}: {
+  booking: BookingRow;
+  timeZone: string;
+  hostName: string;
+  serviceMode?: "onsite" | "online";
+}) {
   const meetingUrl = extractMeetingUrl(booking);
-  const hostName = bookingConfig.name;
 
   return (
     <div className="flex h-full flex-col">
-      <SheetTitle className="sr-only">{bookingTitle(booking)}</SheetTitle>
+      <SheetTitle className="sr-only">
+        {bookingTitle(booking, hostName)}
+      </SheetTitle>
       <SheetDescription className="sr-only">
-        {formatWhenLong(booking)}
+        {formatWhenLong(booking, timeZone)}
       </SheetDescription>
 
       <div className="flex-1 overflow-y-auto px-6 pt-6 pb-8 pr-14">
@@ -496,18 +548,40 @@ function BookingDetailSheet({ booking }: { booking: BookingRow }) {
               Cancelled on Cal.com
             </Badge>
           ) : null}
+          {booking.reminder_status === "sent" ? (
+            <Badge variant="secondary" className="text-xs">
+              Reminder sent
+            </Badge>
+          ) : booking.reminder_status === "pending" ? (
+            <Badge variant="outline" className="text-xs">
+              Reminder pending
+            </Badge>
+          ) : booking.reminder_status === "failed" ? (
+            <Badge variant="destructive" className="text-xs">
+              Reminder failed
+            </Badge>
+          ) : null}
         </div>
 
         <h2 className="text-foreground mb-8 text-xl leading-snug font-semibold tracking-tight">
-          {bookingTitle(booking)}
+          {bookingTitle(booking, hostName)}
         </h2>
 
         <div className="flex flex-col gap-8">
           <section className="space-y-2">
             <h3 className="text-muted-foreground text-sm">When</h3>
             <div className="text-sm leading-relaxed">
-              <p>{formatWhenDay(booking)}</p>
-              <p>{formatWhenTime(booking)}</p>
+              <p>{formatWhenDay(booking, timeZone)}</p>
+              <p>{formatWhenTime(booking, timeZone)}</p>
+              {serviceMode === "online" &&
+              booking.guest_timezone &&
+              booking.guest_timezone !== timeZone ? (
+                <p className="text-muted-foreground text-xs">
+                  Guest saw:{" "}
+                  {formatTime(booking.start_time, booking.guest_timezone)} (
+                  {timeZoneLabel(booking.start_time, booking.guest_timezone)})
+                </p>
+              ) : null}
             </div>
           </section>
 

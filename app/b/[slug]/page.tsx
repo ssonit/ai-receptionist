@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { WorkspaceBookingPage } from "@/app/_components/workspace-booking-page";
+import { StripManageLinkParam } from "@/components/strip-manage-link-param";
+import { consumeManageLink } from "@/lib/manage-link";
 import { createClient } from "@/lib/supabase/server";
 import { readGuestLocale } from "@/lib/read-locale-cookie";
 import { getPublicBookingWorkspace } from "@/lib/workspace";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ mt?: string }>;
 };
 
 export async function generateMetadata({
@@ -15,7 +18,7 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const workspace = await getPublicBookingWorkspace(slug);
-  if (!workspace?.setupCompletedAt) {
+  if (!workspace?.bookingLive) {
     return { title: "Book an appointment" };
   }
   return {
@@ -26,13 +29,17 @@ export async function generateMetadata({
   };
 }
 
-export default async function PublicBookingSlugPage({ params }: PageProps) {
+export default async function PublicBookingSlugPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { slug } = await params;
+  const { mt } = await searchParams;
   const workspace = await getPublicBookingWorkspace(slug);
 
   if (!workspace) notFound();
 
-  if (!workspace.setupCompletedAt) {
+  if (!workspace.bookingLive) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
         <h1 className="font-serif text-3xl tracking-tight">{workspace.name}</h1>
@@ -44,6 +51,35 @@ export default async function PublicBookingSlugPage({ params }: PageProps) {
         </Link>
       </div>
     );
+  }
+
+  const locale = await readGuestLocale();
+  let preferChatSessionId: string | null = null;
+  let manageLinkNotice: string | null = null;
+  const mtToken = mt?.trim() || "";
+
+  if (mtToken) {
+    const result = await consumeManageLink({
+      workspaceId: workspace.id,
+      token: mtToken,
+    });
+    if (result.ok) {
+      preferChatSessionId = result.chatSessionId;
+      manageLinkNotice =
+        locale === "vi"
+          ? "Đã xác minh lịch hẹn. Bạn có thể nói «đổi lịch» hoặc «hủy lịch»."
+          : "Appointment verified. You can ask to reschedule or cancel.";
+    } else if (result.reason === "consumed" || result.reason === "expired") {
+      manageLinkNotice =
+        locale === "vi"
+          ? "Liên kết quản lý đã hết hạn hoặc đã dùng. Hãy xác minh lại trong chat."
+          : "This manage link has expired or already been used. Verify again in chat.";
+    } else {
+      manageLinkNotice =
+        locale === "vi"
+          ? "Liên kết quản lý không hợp lệ."
+          : "This manage link is invalid.";
+    }
   }
 
   const supabase = await createClient();
@@ -64,10 +100,15 @@ export default async function PublicBookingSlugPage({ params }: PageProps) {
     : null;
 
   return (
-    <WorkspaceBookingPage
-      initialLocale={await readGuestLocale()}
-      user={chatUser}
-      workspace={workspace}
-    />
+    <>
+      <StripManageLinkParam enabled={Boolean(mtToken)} />
+      <WorkspaceBookingPage
+        initialLocale={locale}
+        manageLinkNotice={manageLinkNotice}
+        preferChatSessionId={preferChatSessionId}
+        user={chatUser}
+        workspace={workspace}
+      />
+    </>
   );
 }

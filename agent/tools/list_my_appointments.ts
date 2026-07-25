@@ -7,11 +7,14 @@ import {
   toolError,
 } from "@/lib/agent-booking-auth";
 import { logAgentToolEvent } from "@/lib/agent-tool-log";
+import { bookingConfig } from "@/lib/booking-config";
 import { APP_ERROR_CODE } from "@/lib/errors";
+import { resolveGuestTimeZone } from "@/lib/guest-timezone-resolve";
+import { getWorkspaceById } from "@/lib/workspace";
 
 export default defineTool({
   description:
-    "List upcoming appointments this guest can already claim in this chat (same session, verified codes, or logged-in profile email). Does NOT accept email/phone — never invent appointments.",
+    "List upcoming appointments this guest can already claim in this chat (same session, verified codes, or logged-in profile email). Does NOT accept email/phone — never invent appointments. Times use bookings.guest_timezone when set (online workspaces only).",
   inputSchema: z.object({
     sessionId: z.string().optional(),
   }),
@@ -28,6 +31,16 @@ export default defineTool({
         return toolError(APP_ERROR_CODE.AGENT_RATE_LIMITED);
       }
 
+      const ws = await getWorkspaceById(gate.actor.workspaceId);
+      const businessTz = ws?.timezone ?? bookingConfig.timezone;
+      const online = ws?.service_mode === "online";
+      const fallback = online
+        ? await resolveGuestTimeZone({
+            auth,
+            chatSessionId: gate.actor.chatSessionId,
+          })
+        : { guestTimeZone: null as string | null };
+
       const { auto, needsPhoneLast4 } = await findClaimableBookings(gate.actor);
       await logAgentToolEvent({
         toolName: "list_my_appointments",
@@ -40,10 +53,17 @@ export default defineTool({
         },
       });
 
+      const fmt = {
+        businessTimeZone: businessTz,
+        fallbackGuestTimeZone: online ? fallback.guestTimeZone : null,
+        ignoreStoredGuestTz: !online,
+      };
+
       return {
         ok: true as const,
-        appointments: summarizeBookingCandidates(auto),
-        needsPhoneLast4: summarizeBookingCandidates(needsPhoneLast4),
+        businessTimeZone: businessTz,
+        appointments: summarizeBookingCandidates(auto, fmt),
+        needsPhoneLast4: summarizeBookingCandidates(needsPhoneLast4, fmt),
       };
     } catch (error) {
       const message =

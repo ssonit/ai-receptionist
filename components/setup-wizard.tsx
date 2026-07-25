@@ -6,6 +6,7 @@ import { useActionState, useEffect, useTransition } from "react";
 import {
   CalendarBlankIcon,
   CheckCircleIcon,
+  ChatCircleIcon,
   SparkleIcon,
   StorefrontIcon,
 } from "@phosphor-icons/react";
@@ -18,6 +19,7 @@ import {
   syncSetupMeetingTypesAction,
   type SetupActionState,
 } from "@/app/dashboard/setup/actions";
+import { trackSetupEventAction } from "@/app/dashboard/setup/track";
 import { checkWorkspaceSlugAvailable } from "@/app/dashboard/settings/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,32 +37,41 @@ const empty: SetupActionState = {};
 const STEPS = [
   {
     id: 1 as const,
-    label: "Cal.com",
+    label: "Profile",
     required: true,
-    title: "Connect your booking calendar",
-    question: "Paste your Cal.com API key.",
-    hint: "Required. The key is encrypted on the server.",
+    title: "Your workspace profile",
+    question: "Confirm name, public slug, and timezone.",
+    hint: "Required once — unlocks the dashboard.",
   },
   {
     id: 2 as const,
-    label: "Meeting type",
-    required: true,
-    title: "Choose a meeting type for AI",
-    question: "Which meeting type should the agent use to check slots and book?",
-    hint: "Required. Sync from Cal.com, then pick one type.",
+    label: "Try agent",
+    required: false,
+    title: "Try the booking agent",
+    question: "Chat with a live sandbox demo.",
+    hint: "Uses Eve Pilot calendar — connect your Cal.com next for real bookings.",
   },
   {
     id: 3 as const,
-    label: "Profile",
+    label: "Cal.com",
     required: false,
-    title: "Customize your booking page",
-    question: "Edit name, slug, and timezone — or skip and keep signup defaults.",
-    hint: "Optional. Configure FAQ / contact later in the Dashboard.",
+    title: "Connect your booking calendar",
+    question: "Paste your Cal.com API key.",
+    hint: "Optional for now — needed before guests can book on your public page.",
+  },
+  {
+    id: 4 as const,
+    label: "Meeting type",
+    required: false,
+    title: "Choose a meeting type for AI",
+    question: "Which meeting type should the agent use?",
+    hint: "Optional until you go live. Sync from Cal.com, then pick one type.",
   },
 ];
 
 export type SetupWizardProps = {
-  initialStep: 1 | 2 | 3;
+  initialStep: 1 | 2 | 3 | 4;
+  setupCompleted: boolean;
   workspace: {
     id: string;
     name: string;
@@ -77,6 +88,7 @@ export type SetupWizardProps = {
 
 export function SetupWizard({
   initialStep,
+  setupCompleted,
   workspace,
   meetingTypes,
   chatBaseUrl,
@@ -109,21 +121,26 @@ export function SetupWizard({
   const [slugChecking, setSlugChecking] = React.useState(false);
   const [calKeyDraft, setCalKeyDraft] = React.useState("");
   const [profileDirty, setProfileDirty] = React.useState(false);
+  const [profileSaved, setProfileSaved] = React.useState(setupCompleted);
+  const openedRef = React.useRef(false);
 
   useEffect(() => {
-    // Do not sync step from server `initialStep` after actions — selecting a
-    // meeting type refreshes props (initialStep → 3) and would skip Continue.
-    // Full page load still uses useState(initialStep). Snap back if prereqs lost.
-    if (step >= 2 && !workspace.hasCalKey) setStep(1);
-    else if (step >= 3 && !workspace.aiMeetingTypeId && !aiId) setStep(2);
-  }, [workspace.hasCalKey, workspace.aiMeetingTypeId, aiId, step]);
+    if (openedRef.current) return;
+    openedRef.current = true;
+    void trackSetupEventAction("setup_open", { initialStep });
+  }, [initialStep]);
+
+  useEffect(() => {
+    if (step === 2) void trackSetupEventAction("setup_step2_view");
+  }, [step]);
 
   useEffect(() => {
     if (calState.success) {
       toast.success(calState.success);
       setCalKeyDraft("");
+      void trackSetupEventAction("setup_cal_connected");
       router.refresh();
-      setStep(2);
+      setStep(4);
     } else if (calState.error) toast.error(calState.error);
   }, [calState, router]);
 
@@ -131,20 +148,28 @@ export function SetupWizard({
     if (profileState.success) {
       toast.success(profileState.success);
       setProfileDirty(false);
+      setProfileSaved(true);
       router.refresh();
     } else if (profileState.error) toast.error(profileState.error);
   }, [profileState, router]);
 
   useEffect(() => {
-    if (finishState.error) toast.error(finishState.error);
-  }, [finishState]);
+    if (finishState.success) {
+      toast.success(finishState.success);
+      setProfileDirty(false);
+      setProfileSaved(true);
+      void trackSetupEventAction("setup_step1_done");
+      router.refresh();
+      setStep(2);
+    } else if (finishState.error) toast.error(finishState.error);
+  }, [finishState, router]);
 
   useEffect(() => {
     setAiId(workspace.aiMeetingTypeId ?? "");
   }, [workspace.aiMeetingTypeId]);
 
   useEffect(() => {
-    if (step !== 3) return;
+    if (step !== 1) return;
     const normalized = slugifyWorkspaceName(slug);
     if (!normalized || normalized.length < 2) {
       setSlugStatus(null);
@@ -171,8 +196,8 @@ export function SetupWizard({
   }, [slug, step]);
 
   const formDirty =
-    (step === 1 && !workspace.hasCalKey && calKeyDraft.trim().length > 0) ||
-    (step === 3 && profileDirty);
+    (step === 3 && !workspace.hasCalKey && calKeyDraft.trim().length > 0) ||
+    (step === 1 && profileDirty);
 
   useEffect(() => {
     if (!formDirty) return;
@@ -184,13 +209,15 @@ export function SetupWizard({
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [formDirty]);
 
-  const meta = STEPS[step - 1];
-  const canGoStep2 = workspace.hasCalKey;
-  const canGoStep3 = canGoStep2 && Boolean(workspace.aiMeetingTypeId || aiId);
+  const meta = STEPS[step - 1]!;
 
   const goBack = () => {
-    if (step === 2) setStep(1);
-    if (step === 3) setStep(2);
+    if (step > 1) setStep((s) => (s - 1) as 1 | 2 | 3 | 4);
+  };
+
+  const goDashboard = (event: "setup_cal_skip" | "setup_complete_dashboard") => {
+    void trackSetupEventAction(event);
+    router.push("/dashboard");
   };
 
   const selectMeetingType = (id: string) => {
@@ -200,21 +227,26 @@ export function SetupWizard({
       if (result.error) toast.error(result.error);
       else {
         toast.success(result.success ?? "Selected");
+        void trackSetupEventAction("setup_meeting_type", { id });
         router.refresh();
       }
     });
   };
 
-  const skipProfileAndFinish = () => {
-    startTransition(async () => {
-      const result = await completeSetupAction();
-      if (result?.error) toast.error(result.error);
-    });
-  };
+  const icon =
+    step === 1 ? (
+      <StorefrontIcon className="size-4 text-white" weight="fill" />
+    ) : step === 2 ? (
+      <ChatCircleIcon className="size-4 text-white" weight="fill" />
+    ) : step === 3 ? (
+      <CalendarBlankIcon className="size-4 text-white" weight="fill" />
+    ) : (
+      <SparkleIcon className="size-4 text-white" weight="fill" />
+    );
 
   return (
     <div className="flex min-h-[calc(100svh-5.5rem)] flex-col">
-      <div className="mx-auto mb-3 flex w-full max-w-xs gap-1.5">
+      <div className="mx-auto mb-3 flex w-full max-w-md gap-1.5">
         {STEPS.map((s) => (
           <button
             key={s.id}
@@ -226,27 +258,20 @@ export function SetupWizard({
             type="button"
             onClick={() => {
               if (s.id === 1) setStep(1);
-              if (s.id === 2 && canGoStep2) setStep(2);
-              if (s.id === 3 && canGoStep3) setStep(3);
+              else if (profileSaved || setupCompleted) setStep(s.id);
             }}
           />
         ))}
       </div>
       <p className="mb-8 text-center text-xs text-zinc-500">
-        Steps 1–2 are required · Step 3 is optional. You can close this page and
-        come back later — saved Cal & meeting type will be kept.
+        Step 1 unlocks the dashboard · Cal.com steps are optional until you go
+        live
       </p>
 
       <div className="mb-8 space-y-4">
         <div className="flex items-start gap-3">
           <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-amber-600 shadow-[0_0_24px_-4px_rgba(251,146,60,0.55)]">
-            {step === 1 ? (
-              <CalendarBlankIcon className="size-4 text-white" weight="fill" />
-            ) : step === 2 ? (
-              <SparkleIcon className="size-4 text-white" weight="fill" />
-            ) : (
-              <StorefrontIcon className="size-4 text-white" weight="fill" />
-            )}
+            {icon}
           </span>
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -274,6 +299,123 @@ export function SetupWizard({
 
       <div className="flex-1">
         {step === 1 ? (
+          <form
+            action={profileSaved ? profileAction : finishAction}
+            className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6"
+            id="setup-profile-form"
+            onChange={() => setProfileDirty(true)}
+          >
+            <div className="space-y-2">
+              <Label className="text-zinc-200" htmlFor="name">
+                Workspace name
+              </Label>
+              <Input
+                className="h-11 border-white/10 bg-black/40 text-white"
+                id="name"
+                name="name"
+                required
+                value={name}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setName(next);
+                  setProfileDirty(true);
+                  if (!slugTouched || !slug.trim()) {
+                    setSlugTouched(false);
+                    setSlug(slugifyWorkspaceName(next));
+                  }
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-zinc-200" htmlFor="slug">
+                Booking page slug
+              </Label>
+              <Input
+                aria-invalid={slugStatus ? !slugStatus.available : undefined}
+                className="h-11 border-white/10 bg-black/40 text-white"
+                id="slug"
+                name="slug"
+                required
+                value={slug}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setProfileDirty(true);
+                  if (!next.trim()) {
+                    setSlugTouched(false);
+                    setSlug(slugifyWorkspaceName(name));
+                    return;
+                  }
+                  setSlugTouched(true);
+                  setSlug(next);
+                }}
+              />
+              <p className="break-all text-xs text-zinc-500">
+                Public link: {chatBaseUrl}/b/
+                {encodeURIComponent(
+                  slugifyWorkspaceName(slug.trim() ? slug : name) || "…",
+                )}
+              </p>
+              {slugChecking ? (
+                <p className="text-xs text-zinc-500">Checking slug…</p>
+              ) : slugStatus ? (
+                <p
+                  className={cn(
+                    "text-xs",
+                    slugStatus.available ? "text-emerald-400" : "text-red-400",
+                  )}
+                >
+                  {slugStatus.message}
+                </p>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label className="text-zinc-200" htmlFor="timezone">
+                Timezone
+              </Label>
+              <TimezoneSelect
+                defaultValue={workspace.timezone || "Asia/Ho_Chi_Minh"}
+                id="timezone"
+                name="timezone"
+                required
+                triggerClassName="h-11 border-white/10 bg-black/40 text-white hover:bg-black/50 hover:text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-zinc-200" htmlFor="about">
+                Short intro{" "}
+                <span className="font-normal text-zinc-500">(optional)</span>
+              </Label>
+              <Textarea
+                className="min-h-[88px] border-white/10 bg-black/40 text-white"
+                defaultValue={
+                  workspace.about?.trim() || WORKSPACE_AI_DEFAULTS.about
+                }
+                id="about"
+                name="about"
+                placeholder="Short intro for guests and the AI agent…"
+                rows={3}
+              />
+            </div>
+          </form>
+        ) : null}
+
+        {step === 2 ? (
+          <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+            <p className="px-1 text-sm text-zinc-400">
+              This is a{" "}
+              <span className="font-medium text-zinc-200">sandbox demo</span>{" "}
+              calendar. Connect Cal.com in the next step to use your real
+              availability.
+            </p>
+            <iframe
+              className="h-[min(70vh,560px)] w-full rounded-xl border border-white/10 bg-black"
+              src={`${chatBaseUrl}/chat`}
+              title="Eve booking agent demo"
+            />
+          </div>
+        ) : null}
+
+        {step === 3 ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             {workspace.hasCalKey ? (
               <div className="space-y-5">
@@ -347,7 +489,7 @@ export function SetupWizard({
           </div>
         ) : null}
 
-        {step === 2 ? (
+        {step === 4 ? (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs tracking-wide text-zinc-500 uppercase">
@@ -356,7 +498,7 @@ export function SetupWizard({
               </p>
               <Button
                 className="rounded-full border-white/10 bg-white/5 text-zinc-200 hover:bg-white/10 hover:text-white"
-                disabled={pending}
+                disabled={pending || !workspace.hasCalKey}
                 size="sm"
                 type="button"
                 variant="outline"
@@ -375,7 +517,14 @@ export function SetupWizard({
               </Button>
             </div>
 
-            {meetingTypes.length === 0 ? (
+            {!workspace.hasCalKey ? (
+              <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-5 py-10 text-center">
+                <p className="text-sm text-zinc-400">
+                  Connect Cal.com in the previous step before syncing meeting
+                  types.
+                </p>
+              </div>
+            ) : meetingTypes.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-5 py-10 text-center">
                 <p className="text-sm text-zinc-400">
                   No meeting types yet. Create one on Cal.com, then Sync.
@@ -421,109 +570,6 @@ export function SetupWizard({
             )}
           </div>
         ) : null}
-
-        {step === 3 ? (
-          <form
-            action={finishAction}
-            className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6"
-            id="setup-profile-form"
-            onChange={() => setProfileDirty(true)}
-          >
-            <div className="space-y-2">
-              <Label className="text-zinc-200" htmlFor="name">
-                Workspace name
-              </Label>
-              <Input
-                className="h-11 border-white/10 bg-black/40 text-white"
-                id="name"
-                name="name"
-                required
-                value={name}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setName(next);
-                  setProfileDirty(true);
-                  // Keep auto-slug while untouched, or resume after slug was cleared.
-                  if (!slugTouched || !slug.trim()) {
-                    setSlugTouched(false);
-                    setSlug(slugifyWorkspaceName(next));
-                  }
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-zinc-200" htmlFor="slug">
-                Booking page slug
-              </Label>
-              <Input
-                aria-invalid={slugStatus ? !slugStatus.available : undefined}
-                className="h-11 border-white/10 bg-black/40 text-white"
-                id="slug"
-                name="slug"
-                required
-                value={slug}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setProfileDirty(true);
-                  if (!next.trim()) {
-                    // Cleared → resume auto-slug from workspace name
-                    setSlugTouched(false);
-                    setSlug(slugifyWorkspaceName(name));
-                    return;
-                  }
-                  setSlugTouched(true);
-                  setSlug(next);
-                }}
-              />
-              <p className="break-all text-xs text-zinc-500">
-                Public link: {chatBaseUrl}/b/
-                {encodeURIComponent(
-                  slugifyWorkspaceName(slug.trim() ? slug : name) || "…",
-                )}
-              </p>
-              {slugChecking ? (
-                <p className="text-xs text-zinc-500">Checking slug…</p>
-              ) : slugStatus ? (
-                <p
-                  className={cn(
-                    "text-xs",
-                    slugStatus.available ? "text-emerald-400" : "text-red-400",
-                  )}
-                >
-                  {slugStatus.message}
-                </p>
-              ) : null}
-            </div>
-            <div className="space-y-2">
-              <Label className="text-zinc-200" htmlFor="timezone">
-                Timezone
-              </Label>
-              <TimezoneSelect
-                defaultValue={workspace.timezone || "Asia/Ho_Chi_Minh"}
-                id="timezone"
-                name="timezone"
-                required
-                triggerClassName="h-11 border-white/10 bg-black/40 text-white hover:bg-black/50 hover:text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-zinc-200" htmlFor="about">
-                Short intro{" "}
-                <span className="font-normal text-zinc-500">(optional)</span>
-              </Label>
-              <Textarea
-                className="min-h-[88px] border-white/10 bg-black/40 text-white"
-                defaultValue={
-                  workspace.about?.trim() || WORKSPACE_AI_DEFAULTS.about
-                }
-                id="about"
-                name="about"
-                placeholder="Short intro for guests and the AI agent…"
-                rows={3}
-              />
-            </div>
-          </form>
-        ) : null}
       </div>
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-6">
@@ -540,36 +586,51 @@ export function SetupWizard({
         )}
 
         <div className="flex flex-wrap items-center justify-end gap-3">
-          {step === 1 && workspace.hasCalKey ? (
-            <Button
-              className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
-              type="button"
-              onClick={() => setStep(2)}
-            >
-              Continue →
-            </Button>
-          ) : null}
-
-          {step === 1 && !workspace.hasCalKey ? (
-            <Button
-              className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
-              disabled={calPending}
-              form="setup-cal-form"
-              type="submit"
-            >
-              {calPending ? "Verifying…" : "Continue →"}
-            </Button>
+          {step === 1 ? (
+            <>
+              {profileSaved ? (
+                <>
+                  <Button
+                    className="rounded-full border-white/10 bg-white/5 text-zinc-200"
+                    disabled={
+                      profilePending ||
+                      slugChecking ||
+                      slugStatus?.available === false
+                    }
+                    form="setup-profile-form"
+                    type="submit"
+                    variant="outline"
+                  >
+                    {profilePending ? "Saving…" : "Save profile"}
+                  </Button>
+                  <Button
+                    className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
+                    type="button"
+                    onClick={() => setStep(2)}
+                  >
+                    Continue →
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
+                  disabled={
+                    finishPending ||
+                    slugChecking ||
+                    slugStatus?.available === false
+                  }
+                  form="setup-profile-form"
+                  type="submit"
+                >
+                  {finishPending ? "Saving…" : "Save & continue"}
+                </Button>
+              )}
+            </>
           ) : null}
 
           {step === 2 ? (
             <Button
-              className={cn(
-                "h-10 rounded-full px-5 font-medium",
-                canGoStep3
-                  ? "bg-white text-black hover:bg-zinc-200"
-                  : "bg-white/10 text-zinc-500",
-              )}
-              disabled={!canGoStep3}
+              className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
               type="button"
               onClick={() => setStep(3)}
             >
@@ -579,41 +640,62 @@ export function SetupWizard({
 
           {step === 3 ? (
             <>
-              <button
-                className="text-sm text-zinc-400 transition hover:text-white"
-                disabled={pending || finishPending}
-                type="button"
-                onClick={skipProfileAndFinish}
-              >
-                Skip, use defaults →
-              </button>
               <Button
-                className="h-10 rounded-full border-white/15 bg-transparent text-zinc-200 hover:bg-white/5"
-                disabled={
-                  profilePending ||
-                  slugChecking ||
-                  slugStatus?.available === false
-                }
-                form="setup-profile-form"
-                formAction={profileAction}
-                type="submit"
-                variant="outline"
+                className="rounded-full text-zinc-300"
+                type="button"
+                variant="ghost"
+                onClick={() => goDashboard("setup_cal_skip")}
               >
-                {profilePending ? "Saving…" : "Save profile"}
+                Skip for now
+              </Button>
+              {workspace.hasCalKey ? (
+                <Button
+                  className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
+                  type="button"
+                  onClick={() => setStep(4)}
+                >
+                  Continue →
+                </Button>
+              ) : (
+                <Button
+                  className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
+                  disabled={calPending || !calKeyDraft.trim()}
+                  form="setup-cal-form"
+                  type="submit"
+                >
+                  {calPending ? "Saving…" : "Save key →"}
+                </Button>
+              )}
+            </>
+          ) : null}
+
+          {step === 4 ? (
+            <>
+              <Button
+                className="rounded-full text-zinc-300"
+                type="button"
+                variant="ghost"
+                onClick={() => goDashboard("setup_cal_skip")}
+              >
+                Skip for now
               </Button>
               <Button
                 className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
-                disabled={
-                  pending ||
-                  finishPending ||
-                  profilePending ||
-                  slugChecking ||
-                  slugStatus?.available === false
-                }
-                form="setup-profile-form"
-                type="submit"
+                type="button"
+                onClick={() => {
+                  startTransition(async () => {
+                    if (!setupCompleted && !profileSaved) {
+                      const result = await completeSetupAction();
+                      if (result?.error) {
+                        toast.error(result.error);
+                        return;
+                      }
+                    }
+                    goDashboard("setup_complete_dashboard");
+                  });
+                }}
               >
-                {finishPending ? "Opening…" : "Finish → Dashboard"}
+                Go to dashboard
               </Button>
             </>
           ) : null}

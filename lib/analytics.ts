@@ -134,6 +134,7 @@ export function buildAnalyticsKpis(input: {
 
 export function buildAiHealthAlerts(input: {
   hasAiMeetingType: boolean;
+  hasCalKey?: boolean;
   calUsername: string | null;
   faqCount: number;
   hasAbout: boolean;
@@ -152,12 +153,21 @@ export function buildAiHealthAlerts(input: {
       severity: "error",
       title: "AI meeting type not selected",
       detail:
-        "The agent cannot check slots or book until you select a type in AI Agent.",
-      href: "/dashboard/agent",
+        "The agent cannot check slots or book until you select a type in Setup / Meeting types.",
+      href: "/dashboard/setup",
     });
   }
 
-  if (!input.calUsername?.trim()) {
+  if (!input.hasCalKey) {
+    alerts.push({
+      id: "missing-cal-key",
+      severity: "error",
+      title: "Cal.com not connected",
+      detail:
+        "Your public booking page stays offline until you paste a Cal.com API key.",
+      href: "/dashboard/setup",
+    });
+  } else if (!input.calUsername?.trim()) {
     alerts.push({
       id: "missing-cal-username",
       severity: "warning",

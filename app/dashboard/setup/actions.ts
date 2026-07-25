@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { setAiBookingMeetingTypeAction } from "@/app/dashboard/meeting-types/actions";
 import {
   APP_ERROR_CODE,
@@ -190,19 +189,13 @@ export async function completeSetupAction(): Promise<SetupActionState> {
   if ("error" in auth) return { error: auth.error };
 
   const ws = await getWorkspaceById(auth.workspaceId);
-  if (!ws?.has_cal_key) {
-    return { error: appErrorMessage(APP_ERROR_CODE.CAL_KEY_MISSING) };
-  }
-  if (!ws.cal_event_type_id) {
-    return { error: appErrorMessage(APP_ERROR_CODE.AI_MEETING_TYPE_REQUIRED) };
-  }
 
   const admin = createAdminClient();
-  let slug = ws.slug?.trim() || null;
+  let slug = ws?.slug?.trim() || null;
 
   // Rare: signup should always set slug — ensure one before opening public page.
   if (!slug) {
-    const base = slugifyWorkspaceName(ws.name || "ws");
+    const base = slugifyWorkspaceName(ws?.name || "ws");
     let candidate = base;
     let n = 0;
     while (true) {
@@ -232,7 +225,7 @@ export async function completeSetupAction(): Promise<SetupActionState> {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/setup");
   revalidatePath(`/b/${slug}`);
-  redirect("/dashboard");
+  return { success: "Setup saved. You can open the dashboard anytime." };
 }
 
 /** Save optional profile fields from step 3, then mark setup complete. */

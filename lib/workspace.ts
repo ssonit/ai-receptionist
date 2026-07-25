@@ -3,6 +3,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { decryptSecret } from "@/lib/workspace-secrets";
 import { bookingConfig } from "@/lib/booking-config";
 import { parseChatSuggestions } from "@/lib/chat-branding";
+import {
+  parseServiceMode,
+  type WorkspaceServiceMode,
+} from "@/lib/guest-timezone";
 import { withWorkspaceAiDefaults } from "@/lib/workspace-ai-defaults";
 
 /** Pilot / default workspace id for local demo + Eve CLI fallback. */
@@ -80,6 +84,7 @@ export type WorkspaceTenant = {
   name: string;
   slug: string | null;
   timezone: string;
+  service_mode: WorkspaceServiceMode;
   cal_username: string | null;
   cal_event_type_id: number | null;
   cal_event_type_slug: string | null;
@@ -94,7 +99,7 @@ export async function getWorkspaceById(
   const { data, error } = await supabase
     .from("workspaces")
     .select(
-      "id, name, slug, timezone, cal_username, cal_event_type_id, cal_event_type_slug, setup_completed_at, cal_api_key_encrypted",
+      "id, name, slug, timezone, service_mode, cal_username, cal_event_type_id, cal_event_type_slug, setup_completed_at, cal_api_key_encrypted",
     )
     .eq("id", workspaceId)
     .maybeSingle();
@@ -105,6 +110,7 @@ export async function getWorkspaceById(
     name: data.name,
     slug: data.slug,
     timezone: data.timezone,
+    service_mode: parseServiceMode(data.service_mode as string | null),
     cal_username: data.cal_username,
     cal_event_type_id: data.cal_event_type_id,
     cal_event_type_slug: data.cal_event_type_slug,
@@ -157,6 +163,8 @@ export type PublicBookingWorkspace = {
   address: string | null;
   website: string | null;
   setupCompletedAt: string | null;
+  /** Derived: Cal key + AI meeting type — gates public /b/[slug]. */
+  bookingLive: boolean;
   faqItems: { question: string; answer: string }[];
   chatAssistantLabel: string | null;
   chatIntro: string | null;
@@ -175,7 +183,7 @@ export async function getPublicBookingWorkspace(
   const { data, error } = await supabase
     .from("workspaces")
     .select(
-      "id, name, slug, tagline, about, business_hours, services_summary, phone, email, address, website, setup_completed_at, chat_assistant_label, chat_intro, chat_suggestions, chat_placeholder, workspace_faq_items(question, answer, sort_order)",
+      "id, name, slug, tagline, about, business_hours, services_summary, phone, email, address, website, setup_completed_at, cal_api_key_encrypted, cal_event_type_id, chat_assistant_label, chat_intro, chat_suggestions, chat_placeholder, workspace_faq_items(question, answer, sort_order)",
     )
     .eq("slug", cleaned)
     .maybeSingle();
@@ -208,8 +216,15 @@ export async function getPublicBookingWorkspace(
     chatSuggestions: parseChatSuggestions(data.chat_suggestions),
   });
 
+  const id = data.id as string;
+  const bookingLive = isPilotBookingLive({
+    workspaceId: id,
+    hasEncryptedCalKey: Boolean(data.cal_api_key_encrypted),
+    calEventTypeId: data.cal_event_type_id as number | null,
+  });
+
   return {
-    id: data.id as string,
+    id,
     name: data.name as string,
     slug: data.slug as string,
     tagline: filled.tagline,
@@ -221,6 +236,7 @@ export async function getPublicBookingWorkspace(
     address: (data.address as string | null) ?? null,
     website: (data.website as string | null) ?? null,
     setupCompletedAt: (data.setup_completed_at as string | null) ?? null,
+    bookingLive,
     faqItems,
     chatAssistantLabel: filled.chatAssistantLabel,
     chatIntro: filled.chatIntro,
@@ -375,4 +391,44 @@ export async function isWorkspaceSetupComplete(
 ): Promise<boolean> {
   const ws = await getWorkspaceById(workspaceId);
   return Boolean(ws?.setup_completed_at);
+}
+
+/** True when the workspace can accept real bookings (Cal key + AI meeting type). */
+export async function isWorkspaceBookingLive(
+  workspaceId: string,
+): Promise<boolean> {
+  const ws = await getWorkspaceById(workspaceId);
+  if (!ws) return false;
+  return isPilotBookingLive({
+    workspaceId: ws.id,
+    hasEncryptedCalKey: ws.has_cal_key,
+    calEventTypeId: ws.cal_event_type_id,
+  });
+}
+
+/**
+ * Pilot marketing demo (`/chat`, `/b/eve-pilot`) uses env `CALCOM_*`, not an
+ * encrypted workspace key. Tenants need encrypted key + AI meeting type.
+ */
+export function isPilotBookingLive(input: {
+  workspaceId: string;
+  hasEncryptedCalKey: boolean;
+  calEventTypeId: number | null | undefined;
+}): boolean {
+  const pilotId = getDefaultWorkspaceId();
+  const isPilot =
+    input.workspaceId === pilotId || input.workspaceId === PILOT_WORKSPACE_ID;
+
+  if (isPilot) {
+    const envKey = bookingConfig.cal.apiKey?.trim();
+    if (!envKey) return false;
+    if (input.calEventTypeId) return true;
+    if (bookingConfig.cal.eventTypeId) return true;
+    return Boolean(
+      bookingConfig.cal.username?.trim() &&
+        bookingConfig.cal.eventTypeSlug?.trim(),
+    );
+  }
+
+  return Boolean(input.hasEncryptedCalKey && input.calEventTypeId);
 }

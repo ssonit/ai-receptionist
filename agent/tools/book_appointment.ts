@@ -9,11 +9,14 @@ import {
 import { createBooking, getAvailableSlots, withCalApiKey } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
 import { normalizeCalApiStatus } from "@/lib/booking-status";
+import { formatSlotForGuest } from "@/lib/guest-timezone";
+import { resolveGuestTimeZone } from "@/lib/guest-timezone-resolve";
 import { upsertLeadAsBooked } from "@/lib/leads";
 import { createNotification } from "@/lib/notifications-write";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getCalApiKeyForWorkspace,
+  getWorkspaceById,
   resolveWorkspaceIdFromAgentContext,
 } from "@/lib/workspace";
 import { getAiBookingEventType } from "@/lib/workspace-cal";
@@ -66,12 +69,14 @@ export default defineTool({
       };
 
       const apiKey = await getCalApiKeyForWorkspace(workspaceId);
+      const ws = await getWorkspaceById(workspaceId);
+      const timeZone = ws?.timezone ?? bookingConfig.timezone;
       const day = start.slice(0, 10);
       const slots = await withCalApiKey(apiKey, () =>
         getAvailableSlots({
           startDate: day,
           endDate: day,
-          timeZone: bookingConfig.timezone,
+          timeZone,
           ...eventRef,
         }),
       );
@@ -119,8 +124,19 @@ export default defineTool({
       const chatSessionId = guestActor.ok
         ? guestActor.actor.chatSessionId
         : null;
+      const guestTzResolved = await resolveGuestTimeZone({
+        auth,
+        chatSessionId,
+      });
+      const guestTimeZone =
+        ws?.service_mode === "online" ? guestTzResolved.guestTimeZone : null;
       const manageCode = generateManageCode();
       const manageCodeHash = hashBookingCode(manageCode);
+      const startDisplay = formatSlotForGuest(
+        booking.start,
+        guestTimeZone,
+        timeZone,
+      );
 
       try {
         const supabase = createAdminClient();
@@ -140,6 +156,7 @@ export default defineTool({
             visitor_id: visitorId,
             chat_session_id: chatSessionId,
             manage_code_hash: manageCodeHash,
+            guest_timezone: guestTimeZone,
             raw: booking.raw,
           },
           { onConflict: "cal_booking_uid" },
@@ -197,6 +214,7 @@ export default defineTool({
               visitor_id: visitorId,
               chat_session_id: chatSessionId,
               manage_code_hash: manageCodeHash,
+              guest_timezone: guestTimeZone,
             },
             { onConflict: "cal_booking_uid" },
           );
@@ -230,6 +248,9 @@ export default defineTool({
             meetingUrl: booking.meetingUrl,
             eventTypeId: aiEvent.calEventTypeId || null,
             eventTypeSlug: aiEvent.slug,
+            display: startDisplay.combined,
+            guestTimeZone,
+            businessTimeZone: timeZone,
           },
           warning,
           manageCode,
@@ -245,6 +266,9 @@ export default defineTool({
           meetingUrl: booking.meetingUrl,
           eventTypeId: aiEvent.calEventTypeId || null,
           eventTypeSlug: aiEvent.slug,
+          display: startDisplay.combined,
+          guestTimeZone,
+          businessTimeZone: timeZone,
         },
         /** Tell the guest once — will be redacted when persisted. */
         manageCode,

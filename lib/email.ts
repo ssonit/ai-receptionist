@@ -68,3 +68,82 @@ export function bookingOtpEmailCopy(input: {
     html: `<p>Your verification code is <strong>${input.code}</strong>.</p><p>It expires in 10 minutes. If you did not request this, ignore this email.</p>`,
   };
 }
+
+export function bookingReminderEmailCopy(input: {
+  locale: "en" | "vi";
+  workspaceName: string;
+  serviceLabel: string;
+  whenLabel: string;
+  locationLine?: string | null;
+  manageUrl: string;
+  unsubscribeUrl: string;
+}): { subject: string; html: string; text: string } {
+  const name = input.workspaceName.trim() || "Eve";
+  const service = input.serviceLabel.trim() || "appointment";
+  const location = input.locationLine?.trim() || null;
+
+  if (input.locale === "vi") {
+    const loc = location ? `\n${location}` : "";
+    return {
+      subject: `${name}: nhắc lịch hẹn — ${input.whenLabel}`,
+      text: [
+        `Xin chào,`,
+        ``,
+        `Nhắc bạn về lịch hẹn tại ${name}:`,
+        `${service}`,
+        input.whenLabel,
+        location ?? "",
+        ``,
+        `Cần đổi hoặc hủy? Mở liên kết này (dùng một lần):`,
+        input.manageUrl,
+        ``,
+        `Không muốn nhận nhắc lịch cho cuộc hẹn này:`,
+        input.unsubscribeUrl,
+      ]
+        .filter((line, i, arr) => !(line === "" && arr[i - 1] === ""))
+        .join("\n"),
+      html: `<p>Xin chào,</p>
+<p>Nhắc bạn về lịch hẹn tại <strong>${escapeHtml(name)}</strong>:</p>
+<p><strong>${escapeHtml(service)}</strong><br/>${escapeHtml(input.whenLabel)}${location ? `<br/>${escapeHtml(location)}` : ""}</p>
+<p><a href="${escapeAttr(input.manageUrl)}">Cần đổi hoặc hủy? Bấm vào đây.</a></p>
+<p style="font-size:12px;color:#666">Không muốn nhận nhắc lịch cho cuộc hẹn này? <a href="${escapeAttr(input.unsubscribeUrl)}">Từ chối nhắc</a>.</p>`,
+    };
+  }
+
+  return {
+    subject: `${name}: appointment reminder — ${input.whenLabel}`,
+    text: [
+      `Hi,`,
+      ``,
+      `This is a reminder for your appointment with ${name}:`,
+      `${service}`,
+      input.whenLabel,
+      location ?? "",
+      ``,
+      `Need to change or cancel? Open this one-time link:`,
+      input.manageUrl,
+      ``,
+      `Don't want reminders for this appointment:`,
+      input.unsubscribeUrl,
+    ]
+      .filter((line, i, arr) => !(line === "" && arr[i - 1] === ""))
+      .join("\n"),
+    html: `<p>Hi,</p>
+<p>This is a reminder for your appointment with <strong>${escapeHtml(name)}</strong>:</p>
+<p><strong>${escapeHtml(service)}</strong><br/>${escapeHtml(input.whenLabel)}${location ? `<br/>${escapeHtml(location)}` : ""}</p>
+<p><a href="${escapeAttr(input.manageUrl)}">Need to change or cancel? Click here.</a></p>
+<p style="font-size:12px;color:#666">Don't want reminders for this appointment? <a href="${escapeAttr(input.unsubscribeUrl)}">Unsubscribe</a>.</p>`,
+  };
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function escapeAttr(value: string): string {
+  return escapeHtml(value).replace(/'/g, "&#39;");
+}
