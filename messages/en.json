@@ -33,6 +33,7 @@
     "loadingOlder": "Loading…",
     "longThreadNudge": "This conversation is getting long — a new chat keeps replies faster.",
     "dismissNudge": "Dismiss",
+    "notYou": "Not you?",
     "suggestions": {
       "afternoon": { "label": "Tomorrow afternoon", "prompt": "Any openings tomorrow afternoon?" },
       "hours": { "label": "Business hours", "prompt": "What are today's business hours?" },

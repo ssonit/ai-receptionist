@@ -1,6 +1,11 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
+import { resolveGuestBookingActor } from "@/lib/agent-booking-auth";
 import { logAgentToolEvent } from "@/lib/agent-tool-log";
+import {
+  generateManageCode,
+  hashBookingCode,
+} from "@/lib/booking-manage-code";
 import { createBooking, getAvailableSlots, withCalApiKey } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
 import { normalizeCalApiStatus } from "@/lib/booking-status";
@@ -104,6 +109,19 @@ export default defineTool({
         }),
       );
 
+      const auth =
+        ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null;
+      const guestActor = await resolveGuestBookingActor({
+        sessionId: sid,
+        auth,
+      });
+      const visitorId = guestActor.ok ? guestActor.actor.visitorId : null;
+      const chatSessionId = guestActor.ok
+        ? guestActor.actor.chatSessionId
+        : null;
+      const manageCode = generateManageCode();
+      const manageCodeHash = hashBookingCode(manageCode);
+
       try {
         const supabase = createAdminClient();
         await supabase.from("bookings").upsert(
@@ -119,6 +137,9 @@ export default defineTool({
             list_status: "upcoming",
             notes: notes ?? null,
             session_id: sid,
+            visitor_id: visitorId,
+            chat_session_id: chatSessionId,
+            manage_code_hash: manageCodeHash,
             raw: booking.raw,
           },
           { onConflict: "cal_booking_uid" },
@@ -133,11 +154,55 @@ export default defineTool({
           notes: notes ?? null,
           sessionId: sid,
         });
+
+        await logAgentToolEvent({
+          toolName: "book_appointment",
+          ok: true,
+          sessionId: sid,
+          workspaceId,
+          meta: { uid: booking.uid },
+        });
+
+        await createNotification({
+          type: "booking_created",
+          title: `New booking: ${guestName}`,
+          body: [service ?? aiEvent.title, booking.start, phone]
+            .filter(Boolean)
+            .join(" · "),
+          severity: "high",
+          href: "/dashboard/bookings",
+          entityType: "booking",
+          entityId: booking.uid,
+          workspaceId,
+        });
       } catch (dbError) {
         const warning =
           dbError instanceof Error
             ? `Saved on Cal.com but failed to mirror to Supabase: ${dbError.message}`
             : "Saved on Cal.com but failed to mirror to Supabase";
+        try {
+          const supabase = createAdminClient();
+          await supabase.from("bookings").upsert(
+            {
+              workspace_id: workspaceId,
+              cal_booking_uid: booking.uid,
+              guest_name: guestName,
+              guest_phone: phone,
+              guest_email: email,
+              service: service ?? aiEvent.title ?? null,
+              start_time: booking.start,
+              status: normalizeCalApiStatus(booking.status),
+              list_status: "upcoming",
+              session_id: sid,
+              visitor_id: visitorId,
+              chat_session_id: chatSessionId,
+              manage_code_hash: manageCodeHash,
+            },
+            { onConflict: "cal_booking_uid" },
+          );
+        } catch {
+          // ignore second failure — still return manageCode below
+        }
         await logAgentToolEvent({
           toolName: "book_appointment",
           ok: true,
@@ -156,29 +221,20 @@ export default defineTool({
           entityId: booking.uid,
           workspaceId,
         });
-        return { ok: true as const, booking, warning };
+        return {
+          ok: true as const,
+          booking: {
+            uid: booking.uid,
+            start: booking.start,
+            status: booking.status,
+            meetingUrl: booking.meetingUrl,
+            eventTypeId: aiEvent.calEventTypeId || null,
+            eventTypeSlug: aiEvent.slug,
+          },
+          warning,
+          manageCode,
+        };
       }
-
-      await logAgentToolEvent({
-        toolName: "book_appointment",
-        ok: true,
-        sessionId: sid,
-        workspaceId,
-        meta: { uid: booking.uid },
-      });
-
-      await createNotification({
-        type: "booking_created",
-        title: `New booking: ${guestName}`,
-        body: [service ?? aiEvent.title, booking.start, phone]
-          .filter(Boolean)
-          .join(" · "),
-        severity: "high",
-        href: "/dashboard/bookings",
-        entityType: "booking",
-        entityId: booking.uid,
-        workspaceId,
-      });
 
       return {
         ok: true as const,
@@ -190,6 +246,8 @@ export default defineTool({
           eventTypeId: aiEvent.calEventTypeId || null,
           eventTypeSlug: aiEvent.slug,
         },
+        /** Tell the guest once — will be redacted when persisted. */
+        manageCode,
       };
     } catch (error) {
       const message =

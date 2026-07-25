@@ -19,6 +19,9 @@ export const NOTIFICATION_TYPE_GROUPS = {
     "booking_mirror_failed",
     "booking_cancelled",
     "booking_rescheduled",
+    "booking_cancelled_by_guest",
+    "booking_rescheduled_by_guest",
+    "booking_change_requested",
   ],
   ai: ["tool_error", "ai_config"],
 } as const;

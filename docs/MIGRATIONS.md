@@ -27,7 +27,7 @@ npx supabase db reset   # init_schema.sql + seed.sql
 
 **Cal.com:** Eve Pilot credentials must use a sandbox calendar only. Tenant Cal keys live on each workspace after setup.
 
-Signup creates a new workspace via `handle_new_user()`; it does not attach users to the pilot row. Public tenant URL: `/b/{slug}`. Product demo: `/chat` (always pilot).
+Signup creates a new workspace via `handle_new_user()` unless `raw_user_meta_data.invite_token` is set — then the user joins that workspace as **staff** (no new workspace). Public tenant URL: `/b/{slug}`. Product demo: `/chat` (always pilot).
 
 ## Archived history
 

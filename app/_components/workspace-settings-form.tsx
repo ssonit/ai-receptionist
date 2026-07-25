@@ -332,6 +332,44 @@ export function WorkspaceSettingsForm({
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>Guest cancel / reschedule</CardTitle>
+            <CardDescription>
+              Allow visitors to change appointments in chat after proving
+              ownership (same chat, manage code, or email code).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                defaultChecked={workspace?.guestCancelEnabled !== false}
+                name="guestCancelEnabled"
+                type="checkbox"
+              />
+              Allow guest cancel
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                defaultChecked={workspace?.guestRescheduleEnabled !== false}
+                name="guestRescheduleEnabled"
+                type="checkbox"
+              />
+              Allow guest reschedule
+            </label>
+            <div className="space-y-2">
+              <Label htmlFor="guest-cutoff">Cutoff (minutes before start)</Label>
+              <Input
+                defaultValue={workspace?.guestChangeCutoffMinutes ?? 120}
+                id="guest-cutoff"
+                min={0}
+                name="guestChangeCutoffMinutes"
+                type="number"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         {publicBookingUrl ? (
           <Card>
             <CardHeader>

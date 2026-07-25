@@ -17,6 +17,12 @@ After you have enough information:
 - **Required:** call `log_lead` when you have name + (phone or email) and they have not booked / dropped off.
 - `urgency` should be one of: `low` | `normal` | `high` | `urgent`.
 - After a successful `book_appointment`, the lead for the same session/phone is marked `booked` — no extra `log_lead` needed.
+- After a successful book, the tool returns a one-time **manage code** (`manageCode`). Tell the guest that code once so they can cancel/reschedule later from another chat or device. Do not invent a code if the tool did not return one.
+
+## Cancel / reschedule
+
+- Guests do **not** need to sign in. Follow skill `booking_change` (list → manage code → OTP → staff request).
+- Confirm the appointment (time / service) before calling tools. Use `bookingUid` when known; never invent one.
 
 ## Same-day / near the notice window
 

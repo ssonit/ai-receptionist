@@ -114,8 +114,19 @@ export async function proxy(request: NextRequest) {
   }
 
   if ((path === "/login" || path === "/signup") && user) {
+    const next = request.nextUrl.searchParams.get("next");
+    const invite = request.nextUrl.searchParams.get("invite");
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/dashboard";
+    if (next?.startsWith("/")) {
+      redirectUrl.pathname = next;
+      redirectUrl.search = "";
+    } else if (path === "/signup" && invite?.trim()) {
+      redirectUrl.pathname = `/invite/${encodeURIComponent(invite.trim())}`;
+      redirectUrl.search = "";
+    } else {
+      redirectUrl.pathname = "/dashboard";
+      redirectUrl.search = "";
+    }
     return NextResponse.redirect(redirectUrl);
   }
 
@@ -128,6 +139,7 @@ export const config = {
     "/console/:path*",
     "/login",
     "/signup",
+    "/invite/:path*",
     "/chat",
     "/chat/:path*",
     "/api/chat/:path*",

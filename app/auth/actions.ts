@@ -20,6 +20,7 @@ export async function signUp(
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("fullName") ?? "").trim();
+  const inviteToken = String(formData.get("inviteToken") ?? "").trim();
 
   if (!email || !password) {
     return {
@@ -37,9 +38,10 @@ export async function signUp(
     options: {
       data: {
         full_name: fullName,
-        role: "owner",
+        role: inviteToken ? "staff" : "owner",
         // Temporary workspace label until setup wizard sets the business name.
-        workspace_name: fullName || undefined,
+        workspace_name: inviteToken ? undefined : fullName || undefined,
+        ...(inviteToken ? { invite_token: inviteToken } : {}),
       },
     },
   });
@@ -48,7 +50,7 @@ export async function signUp(
     return { error: formatAuthError(error, "signUp") };
   }
 
-  redirect("/dashboard/setup");
+  redirect(inviteToken ? "/dashboard" : "/dashboard/setup");
 }
 
 export async function signIn(

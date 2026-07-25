@@ -2,6 +2,8 @@
  * Cal.com API v2 client — aligned with official docs:
  * - Slots:  GET /v2/slots   header cal-api-version: 2024-09-04
  * - Bookings create: POST /v2/bookings header cal-api-version: 2024-08-13
+ * - Bookings cancel: POST /v2/bookings/{uid}/cancel header cal-api-version: 2024-08-13
+ * - Bookings reschedule: POST /v2/bookings/{uid}/reschedule header cal-api-version: 2024-08-13
  * - Bookings list: GET /v2/bookings header cal-api-version: 2026-05-01
  *   status filter: upcoming|recurring|past|cancelled|unconfirmed (one per request)
  *
@@ -9,6 +11,8 @@
  *
  * @see https://cal.com/docs/api-reference/v2/slots/get-available-time-slots-for-an-event-type
  * @see https://cal.com/docs/api-reference/v2/bookings/create-a-booking
+ * @see https://cal.com/docs/api-reference/v2/bookings/cancel-a-booking
+ * @see https://cal.com/docs/api-reference/v2/bookings/reschedule-a-booking
  * @see https://cal.com/docs/api-reference/v2/bookings/get-all-bookings
  * @see https://cal.com/docs/api-reference/v2/event-types/create-an-event-type
  */
@@ -351,6 +355,97 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
           : undefined,
     raw: body,
   };
+}
+
+function parseBookingPayload(
+  body: { status?: string; data?: Record<string, unknown> } & Record<string, unknown>,
+  fallbackStart?: string,
+): CreateBookingResult {
+  const data = (body.data ?? body) as Record<string, unknown>;
+  const uid = String(data.uid ?? data.id ?? "");
+  if (!uid) {
+    throw new Error("Cal.com booking response missing uid");
+  }
+  const start =
+    typeof data.start === "string" && data.start.trim()
+      ? data.start
+      : fallbackStart ?? "";
+  return {
+    uid,
+    start,
+    status: normalizeCalApiStatus(String(data.status ?? body.status ?? "accepted")),
+    meetingUrl:
+      typeof data.meetingUrl === "string"
+        ? data.meetingUrl
+        : typeof data.location === "string"
+          ? data.location
+          : undefined,
+    raw: body,
+  };
+}
+
+/**
+ * POST /v2/bookings/{uid}/cancel
+ * @see https://cal.com/docs/api-reference/v2/bookings/cancel-a-booking
+ */
+export async function cancelCalBooking(input: {
+  bookingUid: string;
+  cancellationReason?: string;
+}): Promise<CreateBookingResult> {
+  requireCalApiKey();
+  const uid = input.bookingUid.trim();
+  if (!uid) throw new Error("bookingUid is required");
+
+  const payload: Record<string, unknown> = {};
+  if (input.cancellationReason?.trim()) {
+    payload.cancellationReason = input.cancellationReason.trim();
+  }
+
+  const body = await calFetch<
+    { status?: string; data?: Record<string, unknown> } & Record<string, unknown>
+  >(`/bookings/${encodeURIComponent(uid)}/cancel`, {
+    method: "POST",
+    apiVersion: BOOKINGS_API_VERSION,
+    body: JSON.stringify(payload),
+  });
+
+  const result = parseBookingPayload(body);
+  return {
+    ...result,
+    status: normalizeCalApiStatus(result.status || "cancelled"),
+  };
+}
+
+/**
+ * POST /v2/bookings/{uid}/reschedule
+ * @see https://cal.com/docs/api-reference/v2/bookings/reschedule-a-booking
+ */
+export async function rescheduleCalBooking(input: {
+  bookingUid: string;
+  start: string;
+  reschedulingReason?: string;
+}): Promise<CreateBookingResult> {
+  requireCalApiKey();
+  const uid = input.bookingUid.trim();
+  if (!uid) throw new Error("bookingUid is required");
+  const startUtc = toUtcBookingStart(input.start);
+
+  const payload: Record<string, unknown> = {
+    start: startUtc,
+  };
+  if (input.reschedulingReason?.trim()) {
+    payload.reschedulingReason = input.reschedulingReason.trim();
+  }
+
+  const body = await calFetch<
+    { status?: string; data?: Record<string, unknown> } & Record<string, unknown>
+  >(`/bookings/${encodeURIComponent(uid)}/reschedule`, {
+    method: "POST",
+    apiVersion: BOOKINGS_API_VERSION,
+    body: JSON.stringify(payload),
+  });
+
+  return parseBookingPayload(body, startUtc);
 }
 
 function parseCalEventType(item: Record<string, unknown>): CalEventType | null {

@@ -4,6 +4,10 @@ import {
   CHAT_MESSAGE_INITIAL_LIMIT,
   CHAT_MESSAGE_PAGE_LIMIT,
 } from "@/lib/chat-limits";
+import {
+  redactBookingSecrets,
+  redactBookingSecretsDeep,
+} from "@/lib/chat-redact";
 import { getDefaultWorkspaceId } from "@/lib/workspace";
 
 export type ChatSessionStatus = "active" | "closed";
@@ -349,7 +353,7 @@ export async function updateChatSessionState(input: {
     patch.stream_index = input.streamIndex;
   }
   if (input.events !== undefined) {
-    patch.events = input.events;
+    patch.events = redactBookingSecretsDeep(input.events);
   }
   if (input.title !== undefined) {
     patch.title = input.title.trim() || existing.title;
@@ -395,10 +399,10 @@ export async function upsertChatMessages(input: {
     const rows = withEveId.map((m, index) => ({
       session_id: input.sessionId,
       role: m.role,
-      content: m.content,
+      content: redactBookingSecrets(m.content),
       eve_message_id: m.eve_message_id!.trim(),
       eve_event_index: index,
-      raw: m.raw ?? null,
+      raw: (redactBookingSecretsDeep(m.raw ?? null) as object | null) ?? null,
       created_at: now,
     }));
 
@@ -413,10 +417,10 @@ export async function upsertChatMessages(input: {
     const rows = withoutEveId.map((m, index) => ({
       session_id: input.sessionId,
       role: m.role,
-      content: m.content,
+      content: redactBookingSecrets(m.content),
       eve_message_id: null,
       eve_event_index: index,
-      raw: m.raw ?? null,
+      raw: (redactBookingSecretsDeep(m.raw ?? null) as object | null) ?? null,
       created_at: now,
     }));
     const { error } = await supabase.from("chat_messages").insert(rows);

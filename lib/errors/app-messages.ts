@@ -57,6 +57,44 @@ export const APP_ERROR_MESSAGE = {
     "Could not mark all notifications as read.",
   [APP_ERROR_CODE.SET_AI_BOOKING_FAILED]:
     "Could not set AI booking meeting type.",
+  [APP_ERROR_CODE.OWNER_REQUIRED]:
+    "Only the workspace owner can manage invites.",
+  [APP_ERROR_CODE.INVITE_CREATE_FAILED]: "Could not create invite. Try again.",
+  [APP_ERROR_CODE.INVITE_REVOKE_FAILED]: "Could not revoke invite. Try again.",
+  [APP_ERROR_CODE.INVITE_INVALID]: "That invite link is invalid.",
+  [APP_ERROR_CODE.INVITE_EXPIRED]: "That invite link has expired.",
+  [APP_ERROR_CODE.INVITE_ACCEPTED]: "That invite was already accepted.",
+  [APP_ERROR_CODE.INVITE_EMAIL_MISMATCH]:
+    "Sign in with the email this invite was sent to.",
+  [APP_ERROR_CODE.INVITE_ALREADY_IN_WORKSPACE]:
+    "This account already belongs to another workspace.",
+  [APP_ERROR_CODE.INVITE_ACCEPT_FAILED]: "Could not accept invite. Try again.",
+  [APP_ERROR_CODE.BOOKING_CHANGE_CUTOFF]:
+    "That appointment is too soon to change. Contact the business directly.",
+  [APP_ERROR_CODE.BOOKING_CHANGE_DISABLED]:
+    "Self-serve cancel/reschedule is turned off for this business.",
+  [APP_ERROR_CODE.BOOKING_CODE_INVALID]:
+    "That code is invalid or expired. Try again or ask for a new one.",
+  [APP_ERROR_CODE.BOOKING_CODE_RATE_LIMITED]:
+    "Too many code attempts. Wait a bit, then request a new code.",
+  [APP_ERROR_CODE.BOOKING_OTP_RATE_LIMITED]:
+    "Too many verification emails. Wait a bit, then try again.",
+  [APP_ERROR_CODE.BOOKING_OTP_EXPIRED]:
+    "That verification code expired. Request a new one.",
+  [APP_ERROR_CODE.BOOKING_EMAIL_UNAVAILABLE]:
+    "Could not send email right now. Ask the business to help instead.",
+  [APP_ERROR_CODE.BOOKING_NOT_CLAIMABLE]:
+    "No matching appointment is available for this chat yet. Try a manage code, email verification, or ask staff.",
+  [APP_ERROR_CODE.BOOKING_ALREADY_CANCELLED]:
+    "That appointment is already cancelled.",
+  [APP_ERROR_CODE.BOOKING_VERIFY_REQUIRED]:
+    "Verify ownership first (manage code, phone last digits, or email code).",
+  [APP_ERROR_CODE.BOOKING_SESSION_MISMATCH]:
+    "This chat session does not match the browser visitor. Start a new chat.",
+  [APP_ERROR_CODE.AGENT_RATE_LIMITED]:
+    "Too many messages right now. Please wait a few minutes and try again.",
+  [APP_ERROR_CODE.WORKSPACE_RESOLVE_FAILED]:
+    "Could not determine which business this chat belongs to.",
 } as const satisfies Record<AppErrorCode, string>;
 
 export function appErrorMessage(code: AppErrorCode): string {

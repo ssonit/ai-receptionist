@@ -12,6 +12,7 @@ export async function getDashboardUser(): Promise<{
   workspaceId: string | null;
   workspaceSlug: string | null;
   bookingPagePath: string | null;
+  role: "owner" | "staff" | null;
 } | null> {
   const supabase = await createClient();
   const {
@@ -22,7 +23,7 @@ export async function getDashboardUser(): Promise<{
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, workspace_id")
+    .select("full_name, email, workspace_id, role")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -36,6 +37,11 @@ export async function getDashboardUser(): Promise<{
     workspaceSlug = ws?.slug ?? null;
   }
 
+  const role =
+    profile?.role === "owner" || profile?.role === "staff"
+      ? profile.role
+      : null;
+
   return {
     navUser: {
       name: profile?.full_name || user.email?.split("@")[0] || "Account",
@@ -45,5 +51,6 @@ export async function getDashboardUser(): Promise<{
     workspaceId: profile?.workspace_id ?? null,
     workspaceSlug,
     bookingPagePath: workspaceSlug ? publicBookingPath(workspaceSlug) : null,
+    role,
   };
 }

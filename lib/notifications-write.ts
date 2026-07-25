@@ -18,6 +18,9 @@ export const NOTIFICATION_TYPES = [
   "booking_rescheduled",
   "lead_stale",
   "ai_config",
+  "booking_cancelled_by_guest",
+  "booking_rescheduled_by_guest",
+  "booking_change_requested",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

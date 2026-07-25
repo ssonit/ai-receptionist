@@ -1,6 +1,11 @@
 import { eveChannel, defaultEveAuth } from "eve/channels/eve";
 import { localDev, none, vercelOidc } from "eve/channels/auth";
+import {
+  checkAgentRateLimit,
+  clientIpFromRequest,
+} from "@/lib/agent-rate-limit";
 import { EVE_LOCALE_HEADER, parseAppLocale } from "@/lib/locale";
+import { readVisitorIdFromCookieHeader } from "@/lib/request-cookies";
 import {
   EVE_CHAT_SESSION_HEADER,
   EVE_WORKSPACE_HEADER,
@@ -9,9 +14,8 @@ import {
 type EveAuth = NonNullable<ReturnType<typeof defaultEveAuth>>;
 
 /**
- * Stamp public-chat tenant (+ locale) headers onto whatever route auth produced
- * (OIDC / local-dev / anonymous). Needed so FAQ + tools resolve the right
- * workspace on turn 1 — before `eve_session_id` is linked in chat_sessions.
+ * Stamp public-chat tenant (+ locale + visitor) headers onto whatever route
+ * auth produced. Visitor binding (S1) prevents spoofing x-eve-chat-session.
  */
 function withTenantAttributes(
   request: Request,
@@ -24,7 +28,11 @@ function withTenantAttributes(
     .get(EVE_CHAT_SESSION_HEADER)
     ?.trim();
   const localeRaw = request.headers.get(EVE_LOCALE_HEADER)?.trim();
-  if (!slug && !chatSessionId && !localeRaw) return base;
+  const visitorId = readVisitorIdFromCookieHeader(
+    request.headers.get("cookie"),
+  );
+
+  if (!slug && !chatSessionId && !localeRaw && !visitorId) return base;
 
   const attributes: Record<string, string | readonly string[]> = {
     ...base.attributes,
@@ -32,20 +40,42 @@ function withTenantAttributes(
   if (slug) attributes.workspaceSlug = slug;
   if (chatSessionId) attributes.chatSessionId = chatSessionId;
   if (localeRaw) attributes.locale = parseAppLocale(localeRaw);
+  if (visitorId) attributes.visitorId = visitorId;
 
   return { ...base, attributes };
 }
 
 export default eveChannel({
   auth: [
-    // Lets the eve TUI and your Vercel deployments reach the deployed agent.
     vercelOidc(),
-    // Open on localhost for `eve dev` and the REPL; ignored in production.
     localDev(),
-    // Public visitor chat for the booking MVP (text agent).
     none(),
   ],
-  onMessage: (ctx) => ({
-    auth: withTenantAttributes(ctx.eve.request, defaultEveAuth(ctx)),
-  }),
+  onMessage: (ctx) => {
+    const request = ctx.eve.request;
+    const visitorId = readVisitorIdFromCookieHeader(
+      request.headers.get("cookie"),
+    );
+    const ip = clientIpFromRequest(request);
+    const limited = checkAgentRateLimit({ visitorId, ip });
+    if (!limited.ok) {
+      // Soft-stamp so tools/instructions can surface a friendly limit message.
+      const base = defaultEveAuth(ctx);
+      if (!base) return { auth: null };
+      return {
+        auth: {
+          ...base,
+          attributes: {
+            ...base.attributes,
+            agentRateLimited: "1",
+            visitorId: visitorId ?? "",
+          },
+        },
+      };
+    }
+
+    return {
+      auth: withTenantAttributes(request, defaultEveAuth(ctx)),
+    };
+  },
 });

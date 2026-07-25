@@ -23,6 +23,9 @@ export type WorkspaceOpsValues = {
   email: string | null;
   website: string | null;
   tagline: string | null;
+  guestCancelEnabled?: boolean;
+  guestRescheduleEnabled?: boolean;
+  guestChangeCutoffMinutes?: number;
 };
 
 /** AI personality + chat empty screen — `/dashboard/agent`. */

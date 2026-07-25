@@ -33,6 +33,7 @@
     "loadingOlder": "Đang tải…",
     "longThreadNudge": "Hội thoại đang dài — chat mới giúp trả lời nhanh hơn.",
     "dismissNudge": "Bỏ qua",
+    "notYou": "Không phải bạn?",
     "suggestions": {
       "afternoon": { "label": "Chiều mai", "prompt": "Còn trống chiều mai không?" },
       "hours": { "label": "Giờ mở cửa", "prompt": "Giờ mở cửa hôm nay?" },

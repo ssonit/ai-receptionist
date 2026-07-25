@@ -20,7 +20,7 @@ export default async function BookingsPage() {
   const { data: bookings } = await supabase
     .from("bookings")
     .select(
-      "id, guest_name, guest_phone, guest_email, start_time, status, list_status, service, cal_booking_uid, session_id, synced_at, raw",
+      "id, guest_name, guest_phone, guest_email, start_time, status, list_status, cancelled_by, service, cal_booking_uid, session_id, synced_at, raw",
     )
     .eq("workspace_id", workspaceId)
     .order("start_time", { ascending: false })

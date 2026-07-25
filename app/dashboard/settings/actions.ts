@@ -86,6 +86,15 @@ export async function saveWorkspaceSettings(
       email: optionalText(formData, "email"),
       website: optionalText(formData, "website"),
       tagline: optionalText(formData, "tagline"),
+      guest_cancel_enabled: formData.get("guestCancelEnabled") === "on",
+      guest_reschedule_enabled: formData.get("guestRescheduleEnabled") === "on",
+      guest_change_cutoff_minutes: (() => {
+        const raw = formData.get("guestChangeCutoffMinutes");
+        if (raw === null || raw === "") return 120;
+        const parsed = Number(raw);
+        if (!Number.isFinite(parsed)) return 120;
+        return Math.max(0, Math.floor(parsed));
+      })(),
     })
     .eq("id", auth.workspaceId);
 

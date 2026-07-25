@@ -26,6 +26,10 @@ type ExistingBooking = {
   guest_name: string | null;
   guest_email: string | null;
   session_id: string | null;
+  visitor_id: string | null;
+  chat_session_id: string | null;
+  manage_code_hash: string | null;
+  cancelled_by: string | null;
 };
 
 function formatWhen(iso: string) {
@@ -85,7 +89,7 @@ export async function syncCalBookingsToSupabase(
         const { data: existing } = await supabase
           .from("bookings")
           .select(
-            "cal_booking_uid, status, start_time, guest_name, guest_email, session_id",
+            "cal_booking_uid, status, start_time, guest_name, guest_email, session_id, visitor_id, chat_session_id, manage_code_hash, cancelled_by",
           )
           .in("cal_booking_uid", chunk);
 
@@ -99,21 +103,32 @@ export async function syncCalBookingsToSupabase(
 
     const syncedAt = new Date().toISOString();
     const storeRaw = bookingConfig.sync.storeRaw;
-    const rows = calBookings.map((b) => ({
-      workspace_id: workspaceId,
-      cal_booking_uid: b.uid,
-      guest_name: b.attendeeName,
-      guest_phone: b.attendeePhone ?? null,
-      guest_email: b.attendeeEmail,
-      service: b.title ?? null,
-      start_time: b.start,
-      status: normalizeCalApiStatus(b.status),
-      list_status: b.listStatus,
-      notes: null,
-      session_id: existingByUid.get(b.uid)?.session_id ?? null,
-      synced_at: syncedAt,
-      ...(storeRaw ? { raw: b.raw } : {}),
-    }));
+    const rows = calBookings.map((b) => {
+      const prev = existingByUid.get(b.uid);
+      const status = normalizeCalApiStatus(b.status);
+      const nowCancelled = isCancelledStatus(String(status));
+      return {
+        workspace_id: workspaceId,
+        cal_booking_uid: b.uid,
+        guest_name: b.attendeeName,
+        guest_phone: b.attendeePhone ?? null,
+        guest_email: b.attendeeEmail,
+        service: b.title ?? null,
+        start_time: b.start,
+        status,
+        list_status: b.listStatus,
+        notes: null,
+        session_id: prev?.session_id ?? null,
+        visitor_id: prev?.visitor_id ?? null,
+        chat_session_id: prev?.chat_session_id ?? null,
+        manage_code_hash: prev?.manage_code_hash ?? null,
+        cancelled_by: nowCancelled
+          ? prev?.cancelled_by ?? "cal"
+          : null,
+        synced_at: syncedAt,
+        ...(storeRaw ? { raw: b.raw } : {}),
+      };
+    });
 
     let cancelledNotified = 0;
     let rescheduledNotified = 0;

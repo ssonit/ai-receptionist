@@ -59,6 +59,7 @@ export type BookingRow = {
   start_time: string;
   status: string;
   list_status: string | null;
+  cancelled_by?: string | null;
   service: string | null;
   cal_booking_uid: string | null;
   session_id: string | null;
@@ -479,12 +480,23 @@ function BookingDetailSheet({ booking }: { booking: BookingRow }) {
       </SheetDescription>
 
       <div className="flex-1 overflow-y-auto px-6 pt-6 pb-8 pr-14">
-        <Badge
-          variant="outline"
-          className="mb-5 w-fit rounded-md border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400"
-        >
-          {getCalLifecycleBadgeLabel(booking.status)}
-        </Badge>
+        <div className="mb-5 flex flex-wrap items-center gap-2">
+          <Badge
+            variant="outline"
+            className="w-fit rounded-md border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+          >
+            {getCalLifecycleBadgeLabel(booking.status)}
+          </Badge>
+          {booking.cancelled_by === "guest" ? (
+            <Badge variant="secondary" className="text-xs">
+              Cancelled by guest
+            </Badge>
+          ) : booking.cancelled_by === "cal" ? (
+            <Badge variant="outline" className="text-xs">
+              Cancelled on Cal.com
+            </Badge>
+          ) : null}
+        </div>
 
         <h2 className="text-foreground mb-8 text-xl leading-snug font-semibold tracking-tight">
           {bookingTitle(booking)}

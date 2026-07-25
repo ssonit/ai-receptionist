@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "agent/channels/eve.ts": {
-    "mtime": 1784862285.38608,
-    "ast_hash": "575efcdcb3cff97e7b2518475e501171",
+    "mtime": 1784959897.3250568,
+    "ast_hash": "d7981cdb8cd83ea84a81dd26b97e5194",
     "semantic_hash": ""
   },
   "agent/date-context.ts": {
@@ -15,8 +15,8 @@
     "semantic_hash": "1eac378aa1c8511c8e4118fefbcbb61e"
   },
   "agent/instructions.ts": {
-    "mtime": 1784888004.7446852,
-    "ast_hash": "62a2c1e54e87edd11afd6eb20210109e",
+    "mtime": 1784960079.702624,
+    "ast_hash": "f2b34c8e46bbb0d2dbadd2b52b56c171",
     "semantic_hash": ""
   },
   "agent/sandbox.ts": {
@@ -35,8 +35,8 @@
     "semantic_hash": "930750902f8cd91142b8e6a67e5af6bb"
   },
   "agent/tools/book_appointment.ts": {
-    "mtime": 1784861554.383592,
-    "ast_hash": "43f3609a86ebac9165aa69625b440767",
+    "mtime": 1784960927.593973,
+    "ast_hash": "562761d382d8bfd26fadb5724a7506df",
     "semantic_hash": ""
   },
   "agent/tools/check_availability.ts": {
@@ -70,8 +70,8 @@
     "semantic_hash": "930750902f8cd91142b8e6a67e5af6bb"
   },
   "app/_components/agent-chat.tsx": {
-    "mtime": 1784888004.6981392,
-    "ast_hash": "a93bf08207813b734587d38913cd1924",
+    "mtime": 1784960258.9078279,
+    "ast_hash": "0b398e459df0b7bd5d3b8cfc8fddc3dc",
     "semantic_hash": ""
   },
   "app/_components/agent-message.tsx": {
@@ -90,8 +90,8 @@
     "semantic_hash": "55e31cdeef6968987faef5b378adf1cc"
   },
   "app/_components/faq-settings-form.tsx": {
-    "mtime": 1784888404.9812663,
-    "ast_hash": "b7dae734aaa4fd22d48628116c2e4284",
+    "mtime": 1784888522.5686054,
+    "ast_hash": "49d682c7819a50457924d9d865077f1e",
     "semantic_hash": ""
   },
   "app/_components/landing-page.tsx": {
@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "app/auth/actions.ts": {
-    "mtime": 1784876924.4607978,
-    "ast_hash": "138aff7ce9c8a34a23fdfb6f8e70ba57",
+    "mtime": 1784954138.5970004,
+    "ast_hash": "b366bcf75c3094902cac3464ec79292e",
     "semantic_hash": ""
   },
   "app/chat/page.tsx": {
@@ -120,8 +120,8 @@
     "semantic_hash": ""
   },
   "app/dashboard/bookings/page.tsx": {
-    "mtime": 1784861913.3493948,
-    "ast_hash": "20b9c5ca2025905d09727b8679a1baf7",
+    "mtime": 1784960177.6665204,
+    "ast_hash": "cf8b44355f62e988ffcde1a5bb419584",
     "semantic_hash": ""
   },
   "app/dashboard/page.tsx": {
@@ -130,13 +130,13 @@
     "semantic_hash": ""
   },
   "app/dashboard/settings/actions.ts": {
-    "mtime": 1784888005.0698473,
-    "ast_hash": "ae2a6ef7f20ffd1bea83701ceb9fd1d0",
+    "mtime": 1784960865.1717393,
+    "ast_hash": "92efec1f9d58af5f04cb2bf0da8f2644",
     "semantic_hash": ""
   },
   "app/dashboard/settings/page.tsx": {
-    "mtime": 1784888196.9365726,
-    "ast_hash": "d43b3e408586e14f4cd8ceb3a532c049",
+    "mtime": 1784960123.890085,
+    "ast_hash": "8894a6a9d9b7d56f8c567fb0a278cdda",
     "semantic_hash": ""
   },
   "app/layout.tsx": {
@@ -155,8 +155,8 @@
     "semantic_hash": "b361e50f9a206e457e4905f2526f4ddd"
   },
   "app/login/signup-form.tsx": {
-    "mtime": 1784864263.126156,
-    "ast_hash": "707806bef84e5d2c362ceaf9eae52505",
+    "mtime": 1784954138.7807167,
+    "ast_hash": "cc21847770c9d3e3ce064e7d42027c1b",
     "semantic_hash": ""
   },
   "app/page.tsx": {
@@ -165,9 +165,9 @@
     "semantic_hash": "34c93b33b63ca6e4993b59c3343640b6"
   },
   "app/signup/page.tsx": {
-    "mtime": 1784696056.2174733,
-    "ast_hash": "83a458c1a90548f011f1d779e2f32557",
-    "semantic_hash": "83a458c1a90548f011f1d779e2f32557"
+    "mtime": 1784954138.7992308,
+    "ast_hash": "f948247626c613885b2f01cf9adabab1",
+    "semantic_hash": ""
   },
   "components.json": {
     "mtime": 1784694846.212817,
@@ -230,8 +230,8 @@
     "semantic_hash": ""
   },
   "components/bookings-table.tsx": {
-    "mtime": 1784865057.7746243,
-    "ast_hash": "cbd8ef36d96e778219b4ab3344591ad2",
+    "mtime": 1784960131.738945,
+    "ast_hash": "d0666170fdbacc65db72f8930129bfc7",
     "semantic_hash": ""
   },
   "components/chart-area-interactive.tsx": {
@@ -495,13 +495,13 @@
     "semantic_hash": ""
   },
   "lib/calcom.ts": {
-    "mtime": 1784861913.3569057,
-    "ast_hash": "9700af43db78bb6fb7d6c26eb02f7912",
+    "mtime": 1784954138.640647,
+    "ast_hash": "c3d2502e04b45ac56a765cc54cb40f45",
     "semantic_hash": ""
   },
   "lib/dashboard-user.ts": {
-    "mtime": 1784800894.6786203,
-    "ast_hash": "ca46317ff7de14c6fc448f2fe3623b17",
+    "mtime": 1784954138.8112314,
+    "ast_hash": "24585a169c435278692a87eb73ae1834",
     "semantic_hash": ""
   },
   "lib/models.ts": {
@@ -525,8 +525,8 @@
     "semantic_hash": ""
   },
   "lib/sync-cal-bookings.ts": {
-    "mtime": 1784861590.6154294,
-    "ast_hash": "520104700f0de5ce64882755ed50062d",
+    "mtime": 1784960865.2767286,
+    "ast_hash": "5da5636693a892b353b55978af9ce2fb",
     "semantic_hash": ""
   },
   "lib/utils.ts": {
@@ -550,8 +550,8 @@
     "semantic_hash": ""
   },
   "next-env.d.ts": {
-    "mtime": 1784882733.1977851,
-    "ast_hash": "aa94238a90e7d04b7a47ecc3145ba6a0",
+    "mtime": 1784888708.968132,
+    "ast_hash": "8195d2c60ce847a459ae9d308d6a5724",
     "semantic_hash": ""
   },
   "next.config.ts": {
@@ -775,13 +775,13 @@
     "semantic_hash": ""
   },
   "agent/skills/booking_intake.md": {
-    "mtime": 1784861513.1068807,
-    "ast_hash": "678ed39090c23cf7d23e2607345e5e51",
+    "mtime": 1784960195.1094525,
+    "ast_hash": "a11434a6ef6a7670a694adc573e813c3",
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
-    "mtime": 1784888439.3980265,
-    "ast_hash": "491ae3995e408f1f3fe90ab82605075f",
+    "mtime": 1784960136.547754,
+    "ast_hash": "acbe8a899e0c75e2f8d0d9acd26ffde3",
     "semantic_hash": ""
   },
   "public/landing-hero-chat.png": {
@@ -800,8 +800,8 @@
     "semantic_hash": ""
   },
   "app/_components/workspace-settings-form.tsx": {
-    "mtime": 1784888004.8006916,
-    "ast_hash": "dbcd8f201bad37ce3195022f9399cb87",
+    "mtime": 1784960128.7123446,
+    "ast_hash": "136f9a4b8e35265c9ce42b91bf0af4d0",
     "semantic_hash": ""
   },
   "app/dashboard/event-types/page.tsx": {
@@ -845,8 +845,8 @@
     "semantic_hash": ""
   },
   "lib/workspace-settings-types.ts": {
-    "mtime": 1784888005.3641958,
-    "ast_hash": "35e2216957f68d25a1c0589e750271d7",
+    "mtime": 1784960123.569895,
+    "ast_hash": "8cd4b66dc2e61ea44104a6822215d18c",
     "semantic_hash": ""
   },
   "app/dashboard/leads/actions.ts": {
@@ -945,13 +945,13 @@
     "semantic_hash": ""
   },
   "lib/chat-sessions.ts": {
-    "mtime": 1784888005.4278724,
-    "ast_hash": "b90211367c138d20c070c5f03c344fc0",
+    "mtime": 1784960875.3808925,
+    "ast_hash": "f1edb1525149b83444bdee34646b07bf",
     "semantic_hash": ""
   },
   "lib/conversations-dashboard.ts": {
-    "mtime": 1784888004.7656834,
-    "ast_hash": "950794286293cd28a165c105685ec546",
+    "mtime": 1784960197.0575917,
+    "ast_hash": "6874b2f58bb501998b0509198aa1efca",
     "semantic_hash": ""
   },
   "lib/project-chat-messages.ts": {
@@ -1035,8 +1035,8 @@
     "semantic_hash": ""
   },
   "lib/notifications.ts": {
-    "mtime": 1784859700.4558773,
-    "ast_hash": "61514ec5f5d09925c380fb64e831c3ca",
+    "mtime": 1784960068.688897,
+    "ast_hash": "b5f88dac2085cb639a99bfde3f320ae4",
     "semantic_hash": ""
   },
   "lib/notification-digests.ts": {
@@ -1055,8 +1055,8 @@
     "semantic_hash": ""
   },
   "app/dashboard/setup/page.tsx": {
-    "mtime": 1784802377.9683688,
-    "ast_hash": "28b2128eac8011ca0b0d702f4816990b",
+    "mtime": 1784888489.4517064,
+    "ast_hash": "3f67d738ce08f67432314e37e76f4d9b",
     "semantic_hash": ""
   },
   "components/setup-shell.tsx": {
@@ -1075,8 +1075,8 @@
     "semantic_hash": ""
   },
   "docs/MIGRATIONS.md": {
-    "mtime": 1784801461.480302,
-    "ast_hash": "acd0b6a678581c85b43c96b6c6cff3b3",
+    "mtime": 1784954138.828337,
+    "ast_hash": "e37243dc61a1c7ac2ca611d28c63891a",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000001_init_schema.sql": {
@@ -1215,8 +1215,8 @@
     "semantic_hash": ""
   },
   "lib/notifications-write.ts": {
-    "mtime": 1784862012.1472938,
-    "ast_hash": "62c773df240ac737a504109e4b4e4fd8",
+    "mtime": 1784960068.4129627,
+    "ast_hash": "1aeda29d6d1ec243761e2db2cc9ffddb",
     "semantic_hash": ""
   },
   "lib/workspace-session.ts": {
@@ -1270,13 +1270,13 @@
     "semantic_hash": ""
   },
   "messages/en.json": {
-    "mtime": 1784888004.9294012,
-    "ast_hash": "9f2b8885cdc16522fccca5519788b104",
+    "mtime": 1784960112.5588481,
+    "ast_hash": "4803c8ef7ddf43f4f4dc0fb4997da60a",
     "semantic_hash": ""
   },
   "messages/vi.json": {
-    "mtime": 1784888004.9404745,
-    "ast_hash": "657081589fbe725f4cd6a465c6a5c9f1",
+    "mtime": 1784960117.6264322,
+    "ast_hash": "84de204cc001b88ee302a3660f91c9ed",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000004_slugify_vietnamese.sql": {
@@ -1285,8 +1285,8 @@
     "semantic_hash": ""
   },
   "proxy.ts": {
-    "mtime": 1784865307.995399,
-    "ast_hash": "e03e5d58c4c6e59202d42cdb01063b70",
+    "mtime": 1784954138.822338,
+    "ast_hash": "92f246b429aff8ff300e356843627a3c",
     "semantic_hash": ""
   },
   ".claude/rules/agent-tools.md": {
@@ -2205,13 +2205,13 @@
     "semantic_hash": ""
   },
   "lib/errors/app-codes.ts": {
-    "mtime": 1784888005.0325043,
-    "ast_hash": "775dec18033b89c917df6ca99b3df30e",
+    "mtime": 1784959897.4238906,
+    "ast_hash": "2498a1fb46ae767008c8f7d2e217d2ed",
     "semantic_hash": ""
   },
   "lib/errors/app-messages.ts": {
-    "mtime": 1784888005.0568452,
-    "ast_hash": "e464f7df22af038224bf5ede22ded06f",
+    "mtime": 1784959906.6889634,
+    "ast_hash": "1d48938e376b385bf1b18cb5f22eb87c",
     "semantic_hash": ""
   },
   "lib/errors/format.ts": {
@@ -2289,19 +2289,124 @@
     "ast_hash": "8d168f4038775e88413e1d72d361a994",
     "semantic_hash": ""
   },
-  "supabase/migrations/20260724000007_workspace_ai_defaults_on_signup.sql": {
-    "mtime": 1784888139.1303055,
-    "ast_hash": "65bdd1f437826d6ddc3bbf6262177a95",
-    "semantic_hash": ""
-  },
   "lib/workspace-faq-defaults.ts": {
     "mtime": 1784888368.7607615,
     "ast_hash": "2e7f5ffb8b636126de9653bb999a108d",
     "semantic_hash": ""
   },
-  "supabase/migrations/20260724000008_workspace_faq_defaults.sql": {
-    "mtime": 1784888380.6912122,
-    "ast_hash": "b82855c15919a3921b45b7c6da38307d",
+  "supabase/migrations/20260724000007_workspace_starter_defaults.sql": {
+    "mtime": 1784888614.14703,
+    "ast_hash": "3e139dc6f1e3b62ede246cf48a70ed23",
+    "semantic_hash": ""
+  },
+  "agent/tools/cancel_appointment.ts": {
+    "mtime": 1784960046.0949852,
+    "ast_hash": "44043bc4adaab163a395b01ca37b92cc",
+    "semantic_hash": ""
+  },
+  "agent/tools/reschedule_appointment.ts": {
+    "mtime": 1784960863.3580544,
+    "ast_hash": "f01185e25a3e3a926deea87461b682db",
+    "semantic_hash": ""
+  },
+  "lib/agent-booking-auth.ts": {
+    "mtime": 1784960845.6025758,
+    "ast_hash": "35bd1c4ecfb806622ec33fdb6279ec16",
+    "semantic_hash": ""
+  },
+  "app/_components/invite-accept-panel.tsx": {
+    "mtime": 1784954138.7569237,
+    "ast_hash": "e1e2182c8433c1244f362e33c20dffbe",
+    "semantic_hash": ""
+  },
+  "app/_components/workspace-team-card.tsx": {
+    "mtime": 1784954138.7440276,
+    "ast_hash": "db2cdd46982ea494dd5eea72d568f071",
+    "semantic_hash": ""
+  },
+  "app/dashboard/settings/invite-actions.ts": {
+    "mtime": 1784954138.7280285,
+    "ast_hash": "07049dd3cc1e147af55adf45b50d7471",
+    "semantic_hash": ""
+  },
+  "app/invite/[token]/page.tsx": {
+    "mtime": 1784954138.7694337,
+    "ast_hash": "84dff9f11b462f09261c05f9ef89e632",
+    "semantic_hash": ""
+  },
+  "lib/workspace-invites.ts": {
+    "mtime": 1784954138.714027,
+    "ast_hash": "aa5c22a5f5fbe5a9a20dc2aa31efb215",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260724000008_workspace_invites.sql": {
+    "mtime": 1784954138.6991878,
+    "ast_hash": "9b7e8479b160853ead0c8ce8cb3bdb08",
+    "semantic_hash": ""
+  },
+  "agent/tools/list_my_appointments.ts": {
+    "mtime": 1784960015.6112309,
+    "ast_hash": "23921ded1f9156ff3fe56e0d69ec8be3",
+    "semantic_hash": ""
+  },
+  "agent/tools/request_booking_change.ts": {
+    "mtime": 1784960063.9885721,
+    "ast_hash": "bc5e8984332f8b459f9b97537245c071",
+    "semantic_hash": ""
+  },
+  "agent/tools/request_booking_otp.ts": {
+    "mtime": 1784960877.9815974,
+    "ast_hash": "f02b6d330ed4916a859d8e1dc181cc97",
+    "semantic_hash": ""
+  },
+  "agent/tools/verify_booking_code.ts": {
+    "mtime": 1784960036.0206146,
+    "ast_hash": "b5a2231a89078e03cff2cae02e3cab62",
+    "semantic_hash": ""
+  },
+  "app/api/chat/forget/route.ts": {
+    "mtime": 1784960845.9746306,
+    "ast_hash": "3c8bf6917eddc20e9b85566d6dc995b7",
+    "semantic_hash": ""
+  },
+  "lib/agent-rate-limit.ts": {
+    "mtime": 1784959889.9585962,
+    "ast_hash": "60301c5b1145e8fdd8de65f468df5a38",
+    "semantic_hash": ""
+  },
+  "lib/booking-manage-code.ts": {
+    "mtime": 1784960876.2017412,
+    "ast_hash": "ee95b01b528b013dc7198ed735e93b34",
+    "semantic_hash": ""
+  },
+  "lib/chat-redact.ts": {
+    "mtime": 1784960871.4431505,
+    "ast_hash": "fb8882118e0e5ea459bd0d33e189b390",
+    "semantic_hash": ""
+  },
+  "lib/email.ts": {
+    "mtime": 1784959951.4983025,
+    "ast_hash": "4d493d620c7cc0c35ff0e084d7749f6c",
+    "semantic_hash": ""
+  },
+  "lib/request-cookies.ts": {
+    "mtime": 1784959889.5242882,
+    "ast_hash": "60a5ce69f03f2c606a9c606bbca874b6",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260725000001_guest_booking_manage.sql": {
+    "mtime": 1784959833.479512,
+    "ast_hash": "124c9d2fb2f2c8bdfe59e66ca3dedc78",
+    "semantic_hash": ""
+  },
+  "agent/skills/booking_change.md": {
+    "mtime": 1784960086.1065292,
+    "ast_hash": "7d03da14e024b847d025a530850129ec",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/guest-booking-change.md": {
+    "mtime": 1784955760.2228458,
+    "ast_hash": "27150ce655939af0fa51e9fae3869319",
     "semantic_hash": ""
   }
 }

@@ -6,6 +6,10 @@ import {
   type ChatSessionListItem,
 } from "@/lib/chat-sessions";
 import { CHAT_MESSAGE_INITIAL_LIMIT } from "@/lib/chat-limits";
+import {
+  redactBookingSecrets,
+  redactBookingSecretsDeep,
+} from "@/lib/chat-redact";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionWorkspaceId } from "@/lib/workspace-session";
 
@@ -202,7 +206,11 @@ export async function loadConversationDetail(
 
   return {
     session,
-    messages: page.messages,
+    messages: page.messages.map((m) => ({
+      ...m,
+      content: redactBookingSecrets(m.content),
+      raw: redactBookingSecretsDeep(m.raw) as ChatMessageRow["raw"],
+    })),
     nextCursor: page.nextCursor,
     hasMore: page.hasMore,
     messageCount,

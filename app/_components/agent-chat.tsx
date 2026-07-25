@@ -353,6 +353,28 @@ function AgentChatInner({
                 <Link href="/login">{t("common.signIn")}</Link>
               </RainbowButton>
             )}
+            <button
+              className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] text-zinc-400 hover:border-white/20 hover:text-zinc-200"
+              onClick={() => {
+                void (async () => {
+                  try {
+                    await fetch("/api/chat/forget", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        chatSessionId: bootstrap?.chatSessionId,
+                      }),
+                    });
+                  } catch {
+                    // still rotate client view
+                  }
+                  window.location.reload();
+                })();
+              }}
+              type="button"
+            >
+              {t("chat.notYou")}
+            </button>
           </div>
         </header>
 
