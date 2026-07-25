@@ -35,8 +35,8 @@ const anthropic = createAnthropic({
 
 /** Native provider model ids (not gateway `provider/model` strings). */
 const NATIVE_IDS: Record<ModelSlot, string> = {
-  deepseekFlash: "deepseek-chat",
-  deepseekPro: "deepseek-reasoner",
+  deepseekFlash: "deepseek-v4-flash",
+  deepseekPro: "deepseek-v4-pro",
   geminiFlash: "gemini-2.5-flash",
   claudeHaiku: "claude-haiku-4-5",
 };

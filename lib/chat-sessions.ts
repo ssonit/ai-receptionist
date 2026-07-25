@@ -353,7 +353,8 @@ export async function updateChatSessionState(input: {
     patch.stream_index = input.streamIndex;
   }
   if (input.events !== undefined) {
-    patch.events = redactBookingSecretsDeep(input.events);
+    // Persist a bounded tail only — full Eve event logs can be huge / non-JSON-safe.
+    patch.events = redactBookingSecretsDeep(tailChatEvents(input.events));
   }
   if (input.title !== undefined) {
     patch.title = input.title.trim() || existing.title;
@@ -379,7 +380,11 @@ export async function updateChatSessionState(input: {
 
 /**
  * Append / upsert projected messages without wiping history.
- * Conflict on (session_id, eve_message_id) → keep existing row (created_at preserved).
+ * Conflict on (session_id, eve_message_id) → skip (created_at preserved).
+ *
+ * Uses select+insert instead of PostgREST `onConflict` because the unique
+ * guard is a partial index (`WHERE eve_message_id IS NOT NULL`), which
+ * PostgREST cannot target for ON CONFLICT — that path returned 500s.
  */
 export async function upsertChatMessages(input: {
   sessionId: string;
@@ -396,21 +401,44 @@ export async function upsertChatMessages(input: {
   const withoutEveId = input.messages.filter((m) => !m.eve_message_id?.trim());
 
   if (withEveId.length > 0) {
-    const rows = withEveId.map((m, index) => ({
-      session_id: input.sessionId,
-      role: m.role,
-      content: redactBookingSecrets(m.content),
-      eve_message_id: m.eve_message_id!.trim(),
-      eve_event_index: index,
-      raw: (redactBookingSecretsDeep(m.raw ?? null) as object | null) ?? null,
-      created_at: now,
-    }));
+    const eveIds = [
+      ...new Set(withEveId.map((m) => m.eve_message_id!.trim())),
+    ];
+    const { data: existing, error: existingError } = await supabase
+      .from("chat_messages")
+      .select("eve_message_id")
+      .eq("session_id", input.sessionId)
+      .in("eve_message_id", eveIds);
 
-    const { error } = await supabase.from("chat_messages").upsert(rows, {
-      onConflict: "session_id,eve_message_id",
-      ignoreDuplicates: true,
-    });
-    if (error) throw new Error(error.message);
+    if (existingError) throw new Error(existingError.message);
+
+    const seen = new Set(
+      (existing ?? [])
+        .map((row) => row.eve_message_id as string | null)
+        .filter((id): id is string => Boolean(id)),
+    );
+
+    const rows = withEveId
+      .filter((m) => {
+        const id = m.eve_message_id!.trim();
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .map((m, index) => ({
+        session_id: input.sessionId,
+        role: m.role,
+        content: redactBookingSecrets(m.content),
+        eve_message_id: m.eve_message_id!.trim(),
+        eve_event_index: index,
+        raw: (redactBookingSecretsDeep(m.raw ?? null) as object | null) ?? null,
+        created_at: now,
+      }));
+
+    if (rows.length > 0) {
+      const { error } = await supabase.from("chat_messages").insert(rows);
+      if (error) throw new Error(error.message);
+    }
   }
 
   if (withoutEveId.length > 0) {

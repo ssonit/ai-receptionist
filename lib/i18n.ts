@@ -6,6 +6,13 @@ import {
   parseAppLocale,
 } from "@/lib/locale";
 
+/**
+ * Stable IANA zone for next-intl date/time formatting so SSR and the
+ * browser never disagree (ENVIRONMENT_FALLBACK). Booking slots still use
+ * workspace / guest timezones elsewhere — this is chrome copy only.
+ */
+export const DEFAULT_INTL_TIMEZONE = "UTC";
+
 export type Messages = typeof en;
 
 const catalogs: Record<AppLocale, Messages> = {

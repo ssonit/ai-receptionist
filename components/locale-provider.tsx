@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { NextIntlClientProvider } from "next-intl";
-import { createTranslator, getMessages } from "@/lib/i18n";
+import { createTranslator, DEFAULT_INTL_TIMEZONE, getMessages } from "@/lib/i18n";
 import {
   DASHBOARD_LOCALE_COOKIE,
   DEFAULT_LOCALE,
@@ -84,7 +84,11 @@ export function LocaleProvider({
 
   return (
     <LocaleCtx.Provider value={{ locale, setLocale, kind }}>
-      <NextIntlClientProvider locale={locale} messages={messages}>
+      <NextIntlClientProvider
+        locale={locale}
+        messages={messages}
+        timeZone={DEFAULT_INTL_TIMEZONE}
+      >
         {children}
       </NextIntlClientProvider>
     </LocaleCtx.Provider>

@@ -1,7 +1,7 @@
 {
   "agent/agent.ts": {
-    "mtime": 1784888005.5150824,
-    "ast_hash": "f030071a75795e92acb06b60ed332dfc",
+    "mtime": 1784971085.4734676,
+    "ast_hash": "83594b0e2ff21fc36a9742d974ffcc68",
     "semantic_hash": ""
   },
   "agent/channels/eve.ts": {
@@ -505,8 +505,8 @@
     "semantic_hash": ""
   },
   "lib/models.ts": {
-    "mtime": 1784888005.1977403,
-    "ast_hash": "4f23bb58bf09ec142d2ce1b857903957",
+    "mtime": 1784971057.5790293,
+    "ast_hash": "61a00068d06789b761fad942a19c6553",
     "semantic_hash": ""
   },
   "lib/supabase/admin.ts": {
@@ -910,8 +910,8 @@
     "semantic_hash": ""
   },
   "app/api/chat/sessions/[id]/messages/route.ts": {
-    "mtime": 1784888004.6731393,
-    "ast_hash": "c73b2fe25d3cdb359ae37a0c5b7e2fa0",
+    "mtime": 1784971283.2972324,
+    "ast_hash": "33c57b4d36ef19e5ae171b3846024e2f",
     "semantic_hash": ""
   },
   "app/api/chat/sessions/[id]/route.ts": {
@@ -945,8 +945,8 @@
     "semantic_hash": ""
   },
   "lib/chat-sessions.ts": {
-    "mtime": 1784960875.3808925,
-    "ast_hash": "f1edb1525149b83444bdee34646b07bf",
+    "mtime": 1784971284.2474997,
+    "ast_hash": "c0fba86525e54b8e794fc90672bd4e77",
     "semantic_hash": ""
   },
   "lib/conversations-dashboard.ts": {
@@ -1084,111 +1084,6 @@
     "ast_hash": "e9bcdac7b8108686fcac269f8763bbd8",
     "semantic_hash": ""
   },
-  "supabase/migrations_archive/20260722000001_profiles_auth.sql": {
-    "mtime": 1784696056.2129653,
-    "ast_hash": "e870647115fe31ca0bb6e60cc232a92d",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260722000002_workspaces_leads_bookings.sql": {
-    "mtime": 1784713351.9533012,
-    "ast_hash": "6a2c936718a5b51f3cf16d4a9632c613",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260722000003_pilot_profile_workspace.sql": {
-    "mtime": 1784696056.2139616,
-    "ast_hash": "85555b47912a81475a37c34ecfe2b81b",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260722000004_workspace_faq_sections.sql": {
-    "mtime": 1784713353.6901374,
-    "ast_hash": "9a2220b47e3ddf206f3fe6b553fd3971",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260722000005_workspace_faq_write_policies.sql": {
-    "mtime": 1784713753.7782257,
-    "ast_hash": "d719ca9678fd928a3e9b7819afdfdb29",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260722000006_bookings_synced_at.sql": {
-    "mtime": 1784713834.0463514,
-    "ast_hash": "8bee1a6e88df762ac9ae9a6687c45980",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260722000007_restore_table_grants.sql": {
-    "mtime": 1784715331.3288991,
-    "ast_hash": "3ce47677b3aebd70a09f7d4a14d1e3b9",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260722000008_bookings_list_status.sql": {
-    "mtime": 1784716038.139211,
-    "ast_hash": "15d982f360a7938eb1f290d7cecc8a0e",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260723000001_workspace_event_types.sql": {
-    "mtime": 1784774372.8108637,
-    "ast_hash": "b6c1e177e7efc9179d8cf8bfbb6b1853",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260723000002_workspace_event_types_grants.sql": {
-    "mtime": 1784774372.8343754,
-    "ast_hash": "3a0ffce132f477f9508f1246bf2cd84c",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260723000003_workspace_faq_items.sql": {
-    "mtime": 1784773022.602247,
-    "ast_hash": "68bc9c70ddd934d1eeeec31b3572eaf3",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260723000004_workspace_ai_profile.sql": {
-    "mtime": 1784777105.1924553,
-    "ast_hash": "edaff1b2a7863fc52929785676369188",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260723000005_leads_status.sql": {
-    "mtime": 1784777691.0939708,
-    "ast_hash": "062ec669739ddb78727630ce3f30c6d8",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260723000006_agent_tool_events.sql": {
-    "mtime": 1784778300.0454063,
-    "ast_hash": "eee2ec3917403c7683272f7a53855e1a",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260723000007_chat_sessions.sql": {
-    "mtime": 1784780282.0995176,
-    "ast_hash": "5b5d804bde02ebff28a5a240da836e9f",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260723000008_notifications.sql": {
-    "mtime": 1784788453.0929396,
-    "ast_hash": "319382416d899312c3eb6439ad74fffe",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260723000009_notifications_phase2.sql": {
-    "mtime": 1784788817.4496176,
-    "ast_hash": "8294aef3ed26da87d22c9aad8b4f2b5a",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260723000010_notifications_realtime.sql": {
-    "mtime": 1784789023.1845565,
-    "ast_hash": "815c1fa1192eef013a29baf85f7be5cc",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260723000011_notifications_scale.sql": {
-    "mtime": 1784791748.84556,
-    "ast_hash": "739f8d086e263f1583fa5aded03addb4",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/20260723000012_multi_tenant.sql": {
-    "mtime": 1784795988.94364,
-    "ast_hash": "e36a1abf4231b19baf54012941939aa0",
-    "semantic_hash": ""
-  },
-  "supabase/migrations_archive/README.md": {
-    "mtime": 1784797486.3078678,
-    "ast_hash": "d47da0d108a041cbf9f0bcb29a8382c2",
-    "semantic_hash": ""
-  },
   "app/_components/workspace-booking-page.tsx": {
     "mtime": 1784970607.2124293,
     "ast_hash": "78fc0e938edd5e629a702937999fc2bd",
@@ -1250,13 +1145,13 @@
     "semantic_hash": ""
   },
   "components/locale-provider.tsx": {
-    "mtime": 1784862267.905364,
-    "ast_hash": "7e4cd733f5593ee0baafba9cad6db84c",
+    "mtime": 1784971673.3993258,
+    "ast_hash": "f185b6776d01a1d9b49098978170b756",
     "semantic_hash": ""
   },
   "lib/i18n.ts": {
-    "mtime": 1784862167.2881525,
-    "ast_hash": "2064f4b7c3d99b6ad7f7877ee3d989cd",
+    "mtime": 1784971672.5019684,
+    "ast_hash": "18e0f6642b7105b072d78faecbd9fa97",
     "semantic_hash": ""
   },
   "lib/locale.ts": {
@@ -2512,6 +2407,16 @@
   "lib/visitor-server.ts": {
     "mtime": 1784970693.5237024,
     "ast_hash": "02927ced3ac25d57746aa19e93d26126",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260725000005_chat_messages_upsert_constraint.sql": {
+    "mtime": 1784971284.6573815,
+    "ast_hash": "5f87b1d19a176fa6a9d2931b7125e12e",
+    "semantic_hash": ""
+  },
+  "agent/tools/web_search.ts": {
+    "mtime": 1784971567.9947143,
+    "ast_hash": "031dd3549994d26f18127660b692c4db",
     "semantic_hash": ""
   }
 }

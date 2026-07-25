@@ -9,7 +9,7 @@ import {
 
 /**
  * Multi-model, cost-first routing with per-provider API keys.
- * - DeepSeek: DEEPSEEK_API_KEY (flash = deepseek-chat, pro = deepseek-reasoner)
+ * - DeepSeek: DEEPSEEK_API_KEY (flash = deepseek-v4-flash, pro = deepseek-v4-pro)
  * - Google:   GOOGLE_GENERATIVE_AI_API_KEY (gemini-2.5-flash)
  * - Anthropic: ANTHROPIC_API_KEY (claude-haiku-4-5)
  *

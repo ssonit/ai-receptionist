@@ -105,6 +105,7 @@ export async function POST(request: Request, { params }: Params) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to save messages";
+    console.error("[chat] persist messages failed", message, error);
     return jsonError(message, 500);
   }
 }
