@@ -1,65 +1,42 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  verifyReminderOptOutToken,
-} from "@/lib/booking-reminders";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyReminderOptOutToken } from "@/lib/booking-reminders";
 import { getPublicBookingWorkspace } from "@/lib/workspace";
+import { UnsubscribeConfirmForm } from "./unsubscribe-confirm-form";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ token?: string }>;
 };
 
+/**
+ * GET must stay read-only — email scanners / antivirus / Gmail's proxy
+ * auto-follow every link in an email. The actual opt-out write only happens
+ * from confirmReminderOptOutAction (a POST via the confirm button below).
+ */
 export default async function ReminderUnsubscribePage({
   params,
   searchParams,
 }: PageProps) {
-  const { slug } = await params;
-  const { token } = await searchParams;
+  const [{ slug }, { token }] = await Promise.all([params, searchParams]);
   const workspace = await getPublicBookingWorkspace(slug);
   if (!workspace) notFound();
 
-  let message = "This unsubscribe link is invalid or expired.";
-  let ok = false;
-
-  const bookingId = token ? verifyReminderOptOutToken(token) : null;
-  if (bookingId) {
-    const supabase = createAdminClient();
-    const { data: booking } = await supabase
-      .from("bookings")
-      .select("id, workspace_id")
-      .eq("id", bookingId)
-      .maybeSingle();
-
-    if (booking?.workspace_id === workspace.id) {
-      await supabase
-        .from("bookings")
-        .update({ reminders_opt_out: true })
-        .eq("id", bookingId)
-        .eq("workspace_id", workspace.id);
-
-      await supabase
-        .from("booking_reminders")
-        .update({ status: "skipped", error: "opt_out" })
-        .eq("booking_id", bookingId)
-        .eq("status", "pending");
-
-      ok = true;
-      message = `You will not receive more reminders for this appointment with ${workspace.name}.`;
-    }
-  }
+  const trimmedToken = token?.trim() ?? "";
+  const bookingId = trimmedToken
+    ? verifyReminderOptOutToken(trimmedToken)
+    : null;
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
       <h1 className="font-serif text-3xl tracking-tight">{workspace.name}</h1>
-      <p className="text-muted-foreground max-w-md text-pretty">{message}</p>
-      {ok ? (
-        <p className="text-muted-foreground max-w-md text-sm text-pretty">
-          This only stops reminders for this one appointment. It does not cancel
-          the booking.
+      {bookingId ? (
+        <UnsubscribeConfirmForm slug={slug} token={trimmedToken} />
+      ) : (
+        <p className="text-muted-foreground max-w-md text-pretty">
+          This unsubscribe link is invalid or expired.
         </p>
-      ) : null}
+      )}
       <Link
         className="text-sm underline underline-offset-4"
         href={`/b/${workspace.slug}`}

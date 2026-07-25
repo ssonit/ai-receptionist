@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { WarningCircleIcon } from "@phosphor-icons/react";
+import { WarningCircleIcon } from "@phosphor-icons/react/ssr";
 
 /** Shown when workspace can use the dashboard but public booking is not live yet. */
 export function BookingLiveBanner() {

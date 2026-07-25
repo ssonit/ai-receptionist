@@ -22,5 +22,6 @@ export {
   faqItemRequiredMessage,
   suggestionInvalidMessage,
   suggestionRequiredMessage,
+  reminderLeadTooShortMessage,
 } from "@/lib/errors/app-messages";
 export { formatDbError, formatUnknownError } from "@/lib/errors/format";

@@ -13,9 +13,12 @@ import { formatSlotForGuest } from "@/lib/guest-timezone";
 import { createNotificationDebounced } from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canonicalizeTimezone } from "@/lib/timezones";
-import { publicBookingPath } from "@/lib/workspace";
+import { isWorkspaceBookingLive, publicBookingPath } from "@/lib/workspace";
 
 export type ReminderKind = "reminder_24h" | "reminder_2h";
+
+/** Bounded retry — a transient Resend/network failure gets a few more ticks. */
+const MAX_REMINDER_ATTEMPTS = 3;
 
 export type SendDueRemindersResult = {
   scheduled: number;
@@ -206,6 +209,18 @@ function kindForLeadMinutes(leadMinutes: number, shortLead: number): ReminderKin
 }
 
 /**
+ * A configured long-lead reminder must clear the short-lead window
+ * (cutoff + 30) with margin, or it collapses into the same "reminder_2h"
+ * slot and is silently dropped by `effectiveLeadMinutes`. Exported so
+ * `saveWorkspaceSettings` can reject a value before it goes silent instead
+ * of accepting it and having it vanish at send time.
+ */
+export function minLongLeadMinutes(guestChangeCutoffMinutes: number): number {
+  const cutoff = Math.max(0, Math.floor(guestChangeCutoffMinutes));
+  return cutoff + 30 + 60;
+}
+
+/**
  * Effective lead offsets: long leads from settings + short = cutoff + 30.
  */
 export function effectiveLeadMinutes(input: {
@@ -214,9 +229,10 @@ export function effectiveLeadMinutes(input: {
 }): { lead: number; kind: ReminderKind }[] {
   const cutoff = Math.max(0, Math.floor(input.guestChangeCutoffMinutes));
   const shortLead = cutoff + 30;
+  const minLongLead = minLongLeadMinutes(cutoff);
   const configured = (input.reminderLeadMinutes ?? [1440])
     .map((n) => Math.floor(Number(n)))
-    .filter((n) => Number.isFinite(n) && n > shortLead + 60);
+    .filter((n) => Number.isFinite(n) && n > minLongLead);
 
   const longs = configured.length > 0 ? configured : [1440];
   const out: { lead: number; kind: ReminderKind }[] = [];
@@ -326,6 +342,9 @@ async function loadReminderWorkspaces(
   return (data ?? []) as WorkspaceReminderRow[];
 }
 
+/** Existing booking_reminders rows we're allowed to recompute (settings changed). */
+const RECOMPUTABLE_ERROR = "quiet_hours_short_lead";
+
 async function scheduleForWorkspace(
   workspace: WorkspaceReminderRow,
 ): Promise<number> {
@@ -359,21 +378,77 @@ async function scheduleForWorkspace(
     return 0;
   }
 
-  let scheduled = 0;
   const quietStart = workspace.reminder_quiet_start ?? 21;
   const quietEnd = workspace.reminder_quiet_end ?? 8;
 
-  for (const raw of bookings ?? []) {
-    const booking = raw as BookingReminderSource;
-    if (!booking.guest_email?.trim()) continue;
-    if (isCancelledStatus(booking.status)) continue;
+  const eligibleBookings = (bookings ?? [])
+    .map((raw) => raw as BookingReminderSource)
+    .filter(
+      (booking): booking is BookingReminderSource & { guest_email: string } =>
+        Boolean(booking.guest_email?.trim()) &&
+        !isCancelledStatus(booking.status) &&
+        !Number.isNaN(new Date(booking.start_time).getTime()),
+    );
 
+  if (eligibleBookings.length === 0) {
+    await supabase
+      .from("workspaces")
+      .update({ last_reminder_scan_at: new Date().toISOString() })
+      .eq("id", workspace.id);
+    return 0;
+  }
+
+  // One lookup for every (booking, kind) already on file, so we never
+  // resend/resurrect a row that's already `sent` or terminally `failed` —
+  // only truly new rows or ones still `pending`/quiet-hours-`skipped` are
+  // (re)written, in a single batched upsert instead of one write per row.
+  const bookingIds = eligibleBookings.map((b) => b.id);
+  const { data: existingRows } = await supabase
+    .from("booking_reminders")
+    .select("booking_id, kind, status, error")
+    .eq("channel", "email")
+    .in("booking_id", bookingIds);
+
+  const existingMap = new Map<
+    string,
+    { status: string; error: string | null }
+  >();
+  for (const row of existingRows ?? []) {
+    existingMap.set(`${row.booking_id}:${row.kind}`, {
+      status: row.status as string,
+      error: (row.error as string | null) ?? null,
+    });
+  }
+
+  const rows: {
+    workspace_id: string;
+    booking_id: string;
+    kind: ReminderKind;
+    channel: string;
+    destination: string;
+    status: "pending" | "skipped";
+    scheduled_for: string;
+    error: string | null;
+  }[] = [];
+  let newCount = 0;
+
+  for (const booking of eligibleBookings) {
     const startTime = new Date(booking.start_time);
-    if (Number.isNaN(startTime.getTime())) continue;
-
     const tz = resolveReminderTimeZone(booking, workspace);
 
     for (const { lead, kind } of leads) {
+      const key = `${booking.id}:${kind}`;
+      const existing = existingMap.get(key);
+
+      if (
+        existing &&
+        existing.status !== "pending" &&
+        !(existing.status === "skipped" && existing.error === RECOMPUTABLE_ERROR)
+      ) {
+        continue; // already sent, terminally failed, or skipped for a real reason (opt-out etc).
+      }
+      if (!existing) newCount += 1;
+
       const { scheduledFor, status } = computeSchedule({
         startTime,
         leadMinutes: lead,
@@ -383,36 +458,27 @@ async function scheduleForWorkspace(
         quietEnd,
       });
 
-      // Don't create rows that are already far past due without being sent
-      // (booking created late) — still create so send path can skip/send.
-      const { error: upsertError } = await supabase
-        .from("booking_reminders")
-        .upsert(
-          {
-            workspace_id: workspace.id,
-            booking_id: booking.id,
-            kind,
-            channel: "email",
-            destination: booking.guest_email.trim().toLowerCase(),
-            status,
-            scheduled_for: scheduledFor.toISOString(),
-            error:
-              status === "skipped"
-                ? "quiet_hours_short_lead"
-                : null,
-          },
-          {
-            onConflict: "booking_id,kind,channel",
-            ignoreDuplicates: true,
-          },
-        );
+      rows.push({
+        workspace_id: workspace.id,
+        booking_id: booking.id,
+        kind,
+        channel: "email",
+        destination: booking.guest_email.trim().toLowerCase(),
+        status,
+        scheduled_for: scheduledFor.toISOString(),
+        error: status === "skipped" ? RECOMPUTABLE_ERROR : null,
+      });
+    }
+  }
 
-      if (upsertError) {
-        // Unique race or missing unique constraint name — try insert ignore.
-        console.warn("[reminders] upsert", upsertError.message);
-      } else {
-        scheduled += 1;
-      }
+  if (rows.length > 0) {
+    const { error: upsertError } = await supabase
+      .from("booking_reminders")
+      .upsert(rows, { onConflict: "booking_id,kind,channel" });
+
+    if (upsertError) {
+      console.warn("[reminders] upsert", upsertError.message);
+      newCount = 0;
     }
   }
 
@@ -421,7 +487,7 @@ async function scheduleForWorkspace(
     .update({ last_reminder_scan_at: new Date().toISOString() })
     .eq("id", workspace.id);
 
-  return scheduled;
+  return newCount;
 }
 
 async function issueManageLink(input: {
@@ -505,6 +571,12 @@ async function sendOneReminder(row: {
   }
   if (!workspace.booking_reminders_enabled) {
     await mark("skipped", "reminders_disabled");
+    return "skipped";
+  }
+  // Cal key / meeting type can be removed after reminders were scheduled —
+  // don't email a manage link into a "booking page isn't ready yet" wall.
+  if (!(await isWorkspaceBookingLive(workspace.id))) {
+    await mark("skipped", "booking_not_live");
     return "skipped";
   }
   if (booking.reminders_opt_out) {
@@ -639,7 +711,11 @@ export async function sendDueReminders(input?: {
   const { data: due, error: dueError } = await supabase
     .from("booking_reminders")
     .select("id, workspace_id, booking_id, kind, destination, attempts")
-    .eq("status", "pending")
+    // Pending rows, plus previously-failed rows still under the retry cap —
+    // a transient send failure must not permanently drop a reminder.
+    .or(
+      `status.eq.pending,and(status.eq.failed,attempts.lt.${MAX_REMINDER_ATTEMPTS})`,
+    )
     .lte("scheduled_for", nowIso)
     .in(
       "workspace_id",

@@ -5,10 +5,12 @@ import {
   APP_ERROR_CODE,
   appErrorMessage,
   formatDbError,
+  reminderLeadTooShortMessage,
   slugAvailableMessage,
   slugIsYoursMessage,
   slugTakenMessage,
 } from "@/lib/errors";
+import { minLongLeadMinutes } from "@/lib/booking-reminders";
 import { createClient } from "@/lib/supabase/server";
 import { canonicalizeTimezone } from "@/lib/timezones";
 import type { WorkspaceSettingsState } from "@/lib/workspace-settings-types";
@@ -75,6 +77,39 @@ export async function saveWorkspaceSettings(
     return { error: slugTakenMessage(slug) };
   }
 
+  const guestChangeCutoffMinutes = (() => {
+    const raw = formData.get("guestChangeCutoffMinutes");
+    if (raw === null || raw === "") return 120;
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed)) return 120;
+    return Math.max(0, Math.floor(parsed));
+  })();
+
+  const bookingRemindersEnabled =
+    formData.get("bookingRemindersEnabled") === "on";
+
+  const reminderLeadMinutesRaw = String(
+    formData.get("reminderLeadMinutes") ?? "",
+  ).trim();
+  const reminderLeadMinutesInRange = reminderLeadMinutesRaw
+    ? reminderLeadMinutesRaw
+        .split(/[,\s]+/)
+        .map((p) => Math.floor(Number(p)))
+        .filter((n) => Number.isFinite(n) && n >= 60 && n <= 10080)
+    : [];
+  const reminderLeadMinutes =
+    reminderLeadMinutesInRange.length > 0 ? reminderLeadMinutesInRange : [1440];
+
+  // A lead too close to the cancel/reschedule cutoff collapses into the
+  // short-lead slot and is silently dropped at send time — reject here
+  // instead, so the owner sees why their value "didn't stick".
+  if (bookingRemindersEnabled) {
+    const minLead = minLongLeadMinutes(guestChangeCutoffMinutes);
+    if (reminderLeadMinutes.some((n) => n <= minLead)) {
+      return { error: reminderLeadTooShortMessage(minLead) };
+    }
+  }
+
   const { error } = await auth.supabase
     .from("workspaces")
     .update({
@@ -88,25 +123,11 @@ export async function saveWorkspaceSettings(
       tagline: optionalText(formData, "tagline"),
       guest_cancel_enabled: formData.get("guestCancelEnabled") === "on",
       guest_reschedule_enabled: formData.get("guestRescheduleEnabled") === "on",
-      guest_change_cutoff_minutes: (() => {
-        const raw = formData.get("guestChangeCutoffMinutes");
-        if (raw === null || raw === "") return 120;
-        const parsed = Number(raw);
-        if (!Number.isFinite(parsed)) return 120;
-        return Math.max(0, Math.floor(parsed));
-      })(),
+      guest_change_cutoff_minutes: guestChangeCutoffMinutes,
       service_mode:
         formData.get("serviceMode") === "online" ? "online" : "onsite",
-      booking_reminders_enabled: formData.get("bookingRemindersEnabled") === "on",
-      reminder_lead_minutes: (() => {
-        const raw = String(formData.get("reminderLeadMinutes") ?? "").trim();
-        if (!raw) return [1440];
-        const parts = raw
-          .split(/[,\s]+/)
-          .map((p) => Math.floor(Number(p)))
-          .filter((n) => Number.isFinite(n) && n >= 60 && n <= 10080);
-        return parts.length > 0 ? parts : [1440];
-      })(),
+      booking_reminders_enabled: bookingRemindersEnabled,
+      reminder_lead_minutes: reminderLeadMinutes,
       reminder_quiet_start: (() => {
         const parsed = Number(formData.get("reminderQuietStart"));
         if (!Number.isFinite(parsed)) return 21;

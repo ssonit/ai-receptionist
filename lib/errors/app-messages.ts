@@ -128,3 +128,10 @@ export function suggestionInvalidMessage(index1: number): string {
 export function suggestionRequiredMessage(index1: number): string {
   return `Suggestion #${index1}: both button label and message are required.`;
 }
+
+export function reminderLeadTooShortMessage(minMinutes: number): string {
+  const hours = Math.floor(minMinutes / 60);
+  const mins = minMinutes % 60;
+  const label = mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  return `Reminder lead time must be more than ${label} before the appointment — it's too close to the cancel/reschedule cutoff and would be dropped.`;
+}
