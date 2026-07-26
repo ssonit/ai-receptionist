@@ -3,6 +3,10 @@ import { getPublicBookingWorkspace } from "@/lib/workspace";
 import { readGuestLocale } from "@/lib/read-locale-cookie";
 import { EmbedChat } from "./embed-chat";
 
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 type PageProps = {
   params: Promise<{ slug: string }>;
 };

@@ -2225,8 +2225,8 @@
     "semantic_hash": ""
   },
   "app/invite/[token]/page.tsx": {
-    "mtime": 1784954138.7694337,
-    "ast_hash": "84dff9f11b462f09261c05f9ef89e632",
+    "mtime": 1785056761.7323403,
+    "ast_hash": "3a68b23d0dc780c9d397c6e48a3ef81d",
     "semantic_hash": ""
   },
   "lib/workspace-invites.ts": {
@@ -2445,8 +2445,8 @@
     "semantic_hash": ""
   },
   "app/embed/[slug]/page.tsx": {
-    "mtime": 1785047511.5142362,
-    "ast_hash": "5bc755ea11cb078c05f248f108619241",
+    "mtime": 1785056680.9712112,
+    "ast_hash": "f399b820a4e0fda09a7fcbeec4b6c5c8",
     "semantic_hash": ""
   },
   "components/providers/posthog-provider.tsx": {
@@ -2597,6 +2597,11 @@
   "docs/ops/production-env.md": {
     "mtime": 1785056050.7656703,
     "ast_hash": "7ab0595f4a132f458891d3ef47960648",
+    "semantic_hash": ""
+  },
+  "app/robots.ts": {
+    "mtime": 1785056679.5740056,
+    "ast_hash": "21d6e8611938ed9ddd4e2f9181090300",
     "semantic_hash": ""
   }
 }
