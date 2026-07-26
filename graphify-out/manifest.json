@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "app/auth/actions.ts": {
-    "mtime": 1785047774.952082,
-    "ast_hash": "4b4f06d6525bba09c7e8922493ca2600",
+    "mtime": 1785054945.0737667,
+    "ast_hash": "e0d87350c2c024769a10dc69ee6a8915",
     "semantic_hash": ""
   },
   "app/chat/page.tsx": {
@@ -550,8 +550,8 @@
     "semantic_hash": ""
   },
   "next-env.d.ts": {
-    "mtime": 1785047651.0919492,
-    "ast_hash": "0e4a65e8b2b9aa3ed0f8957b9406bd41",
+    "mtime": 1785055160.858393,
+    "ast_hash": "c7b887684e81cfa5830eeeb7286485f6",
     "semantic_hash": ""
   },
   "next.config.ts": {
@@ -780,8 +780,8 @@
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
-    "mtime": 1785052893.4209962,
-    "ast_hash": "76feef5955b28eae7e8913ada768cb20",
+    "mtime": 1785054953.3375983,
+    "ast_hash": "87050de81c3172ac3bcd73ac89ad4fd0",
     "semantic_hash": ""
   },
   "public/landing-hero-chat.png": {
@@ -1180,8 +1180,8 @@
     "semantic_hash": ""
   },
   "proxy.ts": {
-    "mtime": 1785051921.076917,
-    "ast_hash": "a29d8ce7eeb449a646ee49c7306ec551",
+    "mtime": 1785054948.762304,
+    "ast_hash": "934dc316ceba2bbe067ef05150d3ae9d",
     "semantic_hash": ""
   },
   ".claude/rules/agent-tools.md": {
@@ -2100,13 +2100,13 @@
     "semantic_hash": ""
   },
   "lib/errors/app-codes.ts": {
-    "mtime": 1785047774.9863188,
-    "ast_hash": "4d7fbf2ac91d03cdcbeb81a2e2edcaea",
+    "mtime": 1785054942.532911,
+    "ast_hash": "822168dee32d270dc99a84edc5c39336",
     "semantic_hash": ""
   },
   "lib/errors/app-messages.ts": {
-    "mtime": 1785047774.986873,
-    "ast_hash": "848f4447c42bdb4ddecd55ab43f816ef",
+    "mtime": 1785054943.3466399,
+    "ast_hash": "580f813c4aa810a426508e485f38c0db",
     "semantic_hash": ""
   },
   "lib/errors/format.ts": {
@@ -2435,8 +2435,8 @@
     "semantic_hash": ""
   },
   "app/dashboard/embed/page.tsx": {
-    "mtime": 1785047774.952082,
-    "ast_hash": "ed1d33d498c946eb79f1b513f4851e6f",
+    "mtime": 1785054632.7163272,
+    "ast_hash": "78523092bcc6567847da148491b96f98",
     "semantic_hash": ""
   },
   "app/embed/[slug]/embed-chat.tsx": {
@@ -2525,8 +2525,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-legal-pages.md": {
-    "mtime": 1785053045.7199218,
-    "ast_hash": "9441d3c78cf66df7bd6a9b6ee4fe8c7f",
+    "mtime": 1785054289.0406134,
+    "ast_hash": "bec32ed02677299f0aa48015fbbf474c",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-migration-rollback.md": {
@@ -2555,8 +2555,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-smoke-refresh.md": {
-    "mtime": 1785053045.7516215,
-    "ast_hash": "91a931eaf042050d6bebbd50ebf2b58c",
+    "mtime": 1785054815.5698006,
+    "ast_hash": "a3af1e1b12dc2927039ea8b9ed078489",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-staging-smoke-run.md": {
@@ -2565,8 +2565,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-setup-reentry.md": {
-    "mtime": 1785053045.7406201,
-    "ast_hash": "fd193e9f61077355a1743bb8f4db6b09",
+    "mtime": 1785054504.409006,
+    "ast_hash": "b8cb877e4b81c29251d97c50c5852ec1",
     "semantic_hash": ""
   },
   "app/_components/legal-page.tsx": {
@@ -2582,6 +2582,11 @@
   "app/terms/page.tsx": {
     "mtime": 1785054049.0708787,
     "ast_hash": "ca95b1f327427b33fe5f0c4baf1bb775",
+    "semantic_hash": ""
+  },
+  "lib/signup-mode.ts": {
+    "mtime": 1785054942.375588,
+    "ast_hash": "5cc5c02d4b3e3e61af3d4890ee7b5962",
     "semantic_hash": ""
   }
 }

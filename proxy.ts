@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isPublicSignupOpen } from "@/lib/signup-mode";
 import { ensureVisitorIdOnResponse } from "@/lib/visitor";
 import { isPilotBookingLive } from "@/lib/workspace";
 
@@ -132,6 +133,16 @@ export async function proxy(request: NextRequest) {
         redirectUrl.search = "";
         return NextResponse.redirect(redirectUrl);
       }
+    }
+  }
+
+  if (path === "/signup" && !isPublicSignupOpen()) {
+    const invite = request.nextUrl.searchParams.get("invite")?.trim();
+    if (!invite) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/login";
+      redirectUrl.search = "";
+      return NextResponse.redirect(redirectUrl);
     }
   }
 

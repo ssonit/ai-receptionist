@@ -340,7 +340,6 @@
   "338": "booking_change.md",
   "339": "Trang pháp lý `/terms` + `/privacy` — Implementation Plan",
   "340": "Chạy smoke trên preview deploy (cổng cuối) — Implementation Plan",
-  "341": "buildBookingFaqMarkdown",
   "342": "20260725000004_booking_reminders.sql",
   "343": "lenis-provider.tsx",
   "344": "20260724000008_workspace_faq_defaults.sql",
@@ -354,9 +353,8 @@
   "352": "ai",
   "353": "@dnd-kit/modifiers",
   "354": "@streamdown/math",
-  "355": "agent/page.tsx",
-  "356": "particles.tsx",
   "357": "bookings/actions.ts",
   "358": "track.ts",
-  "359": "lenis-provider.tsx"
+  "359": "lenis-provider.tsx",
+  "360": "react-dom"
 }

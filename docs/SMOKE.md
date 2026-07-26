@@ -77,6 +77,7 @@ Wizard có **4 bước**: `1 Profile` → `2 Try agent` → `3 Cal.com` → `4 M
 ## Auth / setup
 
 - [ ] `/signup` tạo `profiles` row + workspace **mới**; setup chưa xong → ép về `/dashboard/setup`
+- [ ] `EVE_SIGNUP_MODE=invite_only` → `/signup` redirect `/login`; submit không kèm invite → `SIGNUP_CLOSED`; `/signup?invite=…` và `/invite/{token}` vẫn chạy
 - [ ] `/login` chạy, redirect `/dashboard` (hoặc setup)
 - [ ] Chưa đăng nhập vào `/dashboard` → redirect `/login`
 - [ ] `setup_completed_at` được set ngay cuối **bước 1 (Profile)** — mở khoá dashboard sớm là **chủ đích**
