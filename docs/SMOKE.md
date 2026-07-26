@@ -15,7 +15,7 @@
 - [ ] Windows: `npm run patch:eve` (postinstall cũng chạy) để Eve resolve `dist/` của nó dưới Next `withEve`
 - [ ] Cal.com API key + meeting type (hoặc username + slug) để test đặt lịch
 - [ ] `npx supabase start`, rồi dán URL/anon/service_role vào `.env.local`
-- [ ] `npx supabase db reset` — áp `supabase/migrations/*` rồi `supabase/seed.sql`. **13 migration** (`ls supabase/migrations/` để đối chiếu):
+- [ ] `npx supabase db reset` — áp `supabase/migrations/*` rồi `supabase/seed.sql`. **14 migration** (`ls supabase/migrations/` để đối chiếu):
 
 ```
 20260724000001_init_schema.sql              schema + RLS hợp nhất
@@ -31,6 +31,7 @@
 20260725000004_booking_reminders.sql        cron nhắc lịch + manage_link + opt-out
 20260725000005_chat_messages_upsert_constraint.sql  chống trùng tin nhắn khi retry
 20260726000001_workspace_invites_hardening.sql  invite bắt buộc email, gỡ member, chuyển owner
+20260726000002_agent_rate_limits.sql            giới hạn lượt agent bền vững (Postgres)
 ```
 
 ### Hai cổng khác nhau — hiểu trước khi chạy
@@ -164,6 +165,17 @@ Email **bắt buộc** — link mở không gắn email đã bỏ hẳn ([`invit
 
 ---
 
+## Agent rate limit
+
+1. [ ] Migration `20260726000002_agent_rate_limits.sql` đã apply
+2. [ ] Lượt thứ 31 từ cùng một visitor trong 1 giờ → trả lời báo giới hạn, không crash
+3. [ ] `select * from public.agent_rate_limits` có cả bucket `v:` và bucket `w:`
+4. [ ] `set role anon; select public.bump_agent_rate_limit(...)` → permission denied
+5. [ ] Dừng Supabase → chat vẫn trả lời (fail open, chỉ log ra stderr)
+6. [ ] `/api/cron/tick` chạy xong không lỗi prune
+
+---
+
 ## Analytics (PostHog)
 
 1. [ ] Không có `NEXT_PUBLIC_POSTHOG_KEY` → app chạy bình thường, không lỗi console (no-op có chủ đích)
@@ -207,6 +219,7 @@ Email **bắt buộc** — link mở không gắn email đã bỏ hẳn ([`invit
 | `agent/tools/*` | Agent FAQ + đặt lịch, Khách tự huỷ / đổi lịch |
 | `public/embed.js`, `app/embed/*`, `next.config.ts` (headers) | Embed widget |
 | `app/api/cron/tick/route.ts`, `lib/booking-reminders.ts`, `vercel.json` | Nhắc lịch (cron) |
+| `lib/agent-rate-limit.ts`, `supabase/migrations/*agent_rate*` | Agent rate limit |
 | `lib/analytics-events.ts` | Analytics |
 | `components/app-sidebar.tsx` (thêm/bớt trang) | Auth / setup (danh sách trang) |
 
