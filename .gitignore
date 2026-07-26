@@ -20,6 +20,10 @@ coverage
 Thumbs.db
 *.log
 
+# Superpowers / git worktrees (local scratch; never commit)
+.worktrees/
+.superpowers/
+
 # Test artifacts
 playwright-report
 test-results
