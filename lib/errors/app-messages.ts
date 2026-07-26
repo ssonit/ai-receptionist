@@ -69,6 +69,20 @@ export const APP_ERROR_MESSAGE = {
   [APP_ERROR_CODE.INVITE_ALREADY_IN_WORKSPACE]:
     "This account already belongs to another workspace.",
   [APP_ERROR_CODE.INVITE_ACCEPT_FAILED]: "Could not accept invite. Try again.",
+  [APP_ERROR_CODE.INVITE_ALREADY_MEMBER]:
+    "This account is already a member of that workspace. No changes were made.",
+  [APP_ERROR_CODE.INVITE_EMAIL_REQUIRED]:
+    "Enter the email address to invite. Open links are not supported.",
+  [APP_ERROR_CODE.INVITE_SEND_FAILED]:
+    "Invite was created but the email could not be sent. Copy the link and share it directly.",
+  [APP_ERROR_CODE.INVITE_RESEND_TOO_SOON]:
+    "An invite email was just sent. Wait a minute before resending.",
+  [APP_ERROR_CODE.MEMBER_REMOVE_FAILED]:
+    "Could not remove that member. Refresh and try again.",
+  [APP_ERROR_CODE.CANNOT_REMOVE_OWNER]:
+    "Transfer ownership to someone else before removing the owner.",
+  [APP_ERROR_CODE.OWNERSHIP_TRANSFER_FAILED]:
+    "Could not transfer ownership. Refresh and try again.",
   [APP_ERROR_CODE.BOOKING_CHANGE_CUTOFF]:
     "That appointment is too soon to change. Contact the business directly.",
   [APP_ERROR_CODE.BOOKING_CHANGE_DISABLED]:
@@ -103,6 +117,10 @@ export function appErrorMessage(code: AppErrorCode): string {
 
 export function slugTakenMessage(slug: string): string {
   return `Slug “${slug}” is already taken. Choose another.`;
+}
+
+export function inviteEmailMismatchMessage(inviteEmail: string): string {
+  return `This invite is for ${inviteEmail}. Sign in with that account to accept it.`;
 }
 
 export function slugAvailableMessage(slug: string): string {

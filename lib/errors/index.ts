@@ -16,6 +16,7 @@ export {
   APP_ERROR_MESSAGE,
   appErrorMessage,
   slugTakenMessage,
+  inviteEmailMismatchMessage,
   slugAvailableMessage,
   slugIsYoursMessage,
   faqItemInvalidMessage,
