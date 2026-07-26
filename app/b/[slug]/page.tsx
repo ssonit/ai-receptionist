@@ -7,6 +7,8 @@ import { consumeManageLink } from "@/lib/manage-link";
 import { createClient } from "@/lib/supabase/server";
 import { readGuestLocale } from "@/lib/read-locale-cookie";
 import { getPublicBookingWorkspace } from "@/lib/workspace";
+import { ANALYTICS_EVENT } from "@/lib/analytics-events";
+import { trackServer } from "@/lib/analytics-server";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -69,6 +71,9 @@ export default async function PublicBookingSlugPage({
         locale === "vi"
           ? "Đã xác minh lịch hẹn. Bạn có thể nói «đổi lịch» hoặc «hủy lịch»."
           : "Appointment verified. You can ask to reschedule or cancel.";
+      await trackServer(ANALYTICS_EVENT.REMINDER_LINK_OPENED, workspace.id, {
+        workspaceId: workspace.id,
+      });
     } else if (result.reason === "consumed" || result.reason === "expired") {
       manageLinkNotice =
         locale === "vi"

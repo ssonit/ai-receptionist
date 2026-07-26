@@ -14,6 +14,8 @@ import { resolveGuestTimeZone } from "@/lib/guest-timezone-resolve";
 import { upsertLeadAsBooked } from "@/lib/leads";
 import { createNotification } from "@/lib/notifications-write";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ANALYTICS_EVENT } from "@/lib/analytics-events";
+import { trackServer } from "@/lib/analytics-server";
 import {
   getCalApiKeyForWorkspace,
   getWorkspaceById,
@@ -191,6 +193,11 @@ export default defineTool({
           entityType: "booking",
           entityId: booking.uid,
           workspaceId,
+        });
+        await trackServer(ANALYTICS_EVENT.BOOKING_CREATED, workspaceId, {
+          workspaceId,
+          service: service ?? aiEvent.title ?? null,
+          source: "chat",
         });
       } catch (dbError) {
         const warning =
