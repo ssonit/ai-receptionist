@@ -550,18 +550,18 @@
     "semantic_hash": ""
   },
   "next-env.d.ts": {
-    "mtime": 1785055160.858393,
+    "mtime": 1785058759.10919,
     "ast_hash": "c7b887684e81cfa5830eeeb7286485f6",
     "semantic_hash": ""
   },
   "next.config.ts": {
-    "mtime": 1785047511.5247502,
-    "ast_hash": "cacbc1cd5bce13efd4ea438f3cd86e7d",
+    "mtime": 1785058747.8576586,
+    "ast_hash": "a9bea5b793f8d217954cf99f2017d761",
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1785047511.529268,
-    "ast_hash": "356d85a2b202a084b121a091bd399622",
+    "mtime": 1785058541.788906,
+    "ast_hash": "fc5822a9d20521e8d90903d9dd48e0b0",
     "semantic_hash": ""
   },
   "postcss.config.mjs": {
@@ -780,8 +780,8 @@
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
-    "mtime": 1785055495.635296,
-    "ast_hash": "8f0bf80f1c673b9519da1eb1815a6cde",
+    "mtime": 1785058642.5133443,
+    "ast_hash": "21ed182a4c5521b2df463ba5ca33ac01",
     "semantic_hash": ""
   },
   "public/landing-hero-chat.png": {
@@ -2595,13 +2595,43 @@
     "semantic_hash": ""
   },
   "docs/ops/production-env.md": {
-    "mtime": 1785056050.7656703,
-    "ast_hash": "7ab0595f4a132f458891d3ef47960648",
+    "mtime": 1785058642.057019,
+    "ast_hash": "4c5bb135e9125db8f679fa0050e64601",
     "semantic_hash": ""
   },
   "app/robots.ts": {
     "mtime": 1785056679.5740056,
     "ast_hash": "21d6e8611938ed9ddd4e2f9181090300",
+    "semantic_hash": ""
+  },
+  "app/global-error.tsx": {
+    "mtime": 1785058633.954247,
+    "ast_hash": "c9e15f3419a4e449db45a49a91fe8b0d",
+    "semantic_hash": ""
+  },
+  "instrumentation-client.ts": {
+    "mtime": 1785058626.4334066,
+    "ast_hash": "54c3fd4a07c0d8f2b5370d83a0c8c301",
+    "semantic_hash": ""
+  },
+  "instrumentation.ts": {
+    "mtime": 1785058627.2683127,
+    "ast_hash": "5b2bf247c6f094110b8b8d4f865b4027",
+    "semantic_hash": ""
+  },
+  "sentry.client.config.ts": {
+    "mtime": 1785058625.5904567,
+    "ast_hash": "5a37f948ad61e7fe98635f21d28521a7",
+    "semantic_hash": ""
+  },
+  "sentry.edge.config.ts": {
+    "mtime": 1785058625.2292166,
+    "ast_hash": "5a37f948ad61e7fe98635f21d28521a7",
+    "semantic_hash": ""
+  },
+  "sentry.server.config.ts": {
+    "mtime": 1785058624.8439918,
+    "ast_hash": "5a37f948ad61e7fe98635f21d28521a7",
     "semantic_hash": ""
   }
 }

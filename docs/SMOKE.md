@@ -187,11 +187,13 @@ Email **bắt buộc** — link mở không gắn email đã bỏ hẳn ([`invit
 
 ## Ops — nơi lỗi hiện ra
 
-- **Lỗi runtime server:** Vercel → Project → Logs. Lọc theo tiền tố: `[cron/tick]`, `[agent-rate-limit]`, `[reminders]`, `[email]`, `[app-error]`.
+Lựa chọn release: **(a) `@sentry/nextjs`** (2026-07-26).
+
+- **Lỗi runtime server:** Sentry (gom nhóm + cảnh báo) là nơi xem chính; Vercel → Project → Logs cho raw. Lọc theo tiền tố: `[cron/tick]`, `[agent-rate-limit]`, `[reminders]`, `[email]`, `[app-error]`.
 - **Cron fail:** hiện thành non-200 của `/api/cron/tick` ở Vercel → Crons.
 - **Lỗi build:** Vercel → Deployments → deploy tương ứng.
 - **PostHog chỉ nhận event sản phẩm, không bao giờ nhận exception.** Đừng tìm lỗi ở đó.
-- **Lỗi phía client trong chat:** DevTools console của khách — hiện **không** thu thập tập trung. Đây là điểm mù đã biết.
+- **Lỗi phía client trong chat:** Sentry khi có `NEXT_PUBLIC_SENTRY_DSN`; thiếu DSN thì chỉ còn DevTools của khách.
 - Deploy hỏng: [rollback + kill switch](./MIGRATIONS.md).
 
 ---

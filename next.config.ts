@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 import { withEve } from "eve/next";
 
 const nextConfig: NextConfig = {
@@ -34,4 +35,15 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withEve(nextConfig);
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN?.trim();
+
+export default withSentryConfig(withEve(nextConfig), {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: sentryAuthToken,
+  silent: true,
+  widenClientFileUpload: Boolean(sentryAuthToken),
+  sourcemaps: {
+    disable: !sentryAuthToken,
+  },
+});

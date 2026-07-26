@@ -22,6 +22,7 @@ Nguồn danh sách đầy đủ: [`.env.example`](../../.env.example).
 |------|-------------------|
 | `RESEND_API_KEY` + `EVE_MAIL_FROM` | không email mời, không email nhắc lịch, OTP khách rơi về “nhờ nhân viên” |
 | `NEXT_PUBLIC_POSTHOG_KEY` (+ optional `NEXT_PUBLIC_POSTHOG_HOST`) | analytics no-op lặng lẽ |
+| `NEXT_PUBLIC_SENTRY_DSN` (+ optional `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` cho source maps) | lỗi server/client không gom về Sentry; thiếu DSN = no-op |
 | `EVE_SIGNUP_MODE` | mặc định `open` — ai có URL cũng tạo được workspace; đặt `invite_only` để đóng `/signup` công khai ([`lib/signup-mode.ts`](../../lib/signup-mode.ts)) |
 | `AGENT_DEFAULT_MODEL` | mặc định theo code nếu thiếu; nên set tường minh trên prod |
 
