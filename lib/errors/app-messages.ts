@@ -31,6 +31,8 @@ export const APP_ERROR_MESSAGE = {
   [APP_ERROR_CODE.CAL_VERIFY_FAILED]:
     "Could not verify the Cal.com API key. Check the key and try again.",
   [APP_ERROR_CODE.CAL_NOT_CONFIGURED]: "Cal.com is not configured.",
+  [APP_ERROR_CODE.CAL_NOT_CONFIGURED_GUEST]:
+    "Online booking is not available right now. Please contact the business directly.",
   [APP_ERROR_CODE.CAL_NO_MEETING_TYPES]:
     "No meeting types on Cal.com. Create an event type, then Sync again.",
   [APP_ERROR_CODE.AI_MEETING_TYPE_REQUIRED]:

@@ -22,6 +22,7 @@ export const APP_ERROR_CODE = {
   CAL_KEY_MISSING: "cal_key_missing",
   CAL_VERIFY_FAILED: "cal_verify_failed",
   CAL_NOT_CONFIGURED: "cal_not_configured",
+  CAL_NOT_CONFIGURED_GUEST: "cal_not_configured_guest",
   CAL_NO_MEETING_TYPES: "cal_no_meeting_types",
   AI_MEETING_TYPE_REQUIRED: "ai_meeting_type_required",
   MEETING_TYPE_NOT_FOUND: "meeting_type_not_found",
