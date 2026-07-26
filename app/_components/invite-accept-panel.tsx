@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { acceptWorkspaceInviteAction } from "@/app/dashboard/settings/invite-actions";
+import { signOut } from "@/app/auth/actions";
 import { AuthShell } from "@/app/_components/auth-shell";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import { inviteEmailMismatchMessage } from "@/lib/errors";
@@ -110,12 +111,15 @@ export function InviteAcceptPanel({
               <p className="text-sm text-zinc-400">
                 Signed in as <span className="text-white">{userEmail}</span>.
               </p>
-              <Link
+              <button
                 className="inline-flex h-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-sm text-zinc-300 transition hover:border-white/20 hover:text-white"
-                href={loginHref}
+                onClick={() => {
+                  void signOut(`/invite/${token}`);
+                }}
+                type="button"
               >
                 Sign in with a different account
-              </Link>
+              </button>
             </>
           ) : (
             <>

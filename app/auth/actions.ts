@@ -77,8 +77,12 @@ export async function signIn(
   redirect(next.startsWith("/") ? next : "/dashboard");
 }
 
-export async function signOut() {
+export async function signOut(nextAfterLogin?: string) {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  // After sign-out, /login?next=… is safe — proxy only redirects authed users away from /login.
+  if (nextAfterLogin?.startsWith("/")) {
+    redirect(`/login?next=${encodeURIComponent(nextAfterLogin)}`);
+  }
   redirect("/login");
 }
