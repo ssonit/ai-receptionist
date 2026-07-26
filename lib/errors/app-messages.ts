@@ -109,6 +109,8 @@ export const APP_ERROR_MESSAGE = {
     "Too many messages right now. Please wait a few minutes and try again.",
   [APP_ERROR_CODE.WORKSPACE_RESOLVE_FAILED]:
     "Could not determine which business this chat belongs to.",
+  [APP_ERROR_CODE.SIGNUP_CLOSED]:
+    "Public signup is closed. You need an invite from a workspace owner.",
 } as const satisfies Record<AppErrorCode, string>;
 
 export function appErrorMessage(code: AppErrorCode): string {

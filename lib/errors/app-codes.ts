@@ -69,6 +69,7 @@ export const APP_ERROR_CODE = {
   BOOKING_SESSION_MISMATCH: "booking_session_mismatch",
   AGENT_RATE_LIMITED: "agent_rate_limited",
   WORKSPACE_RESOLVE_FAILED: "workspace_resolve_failed",
+  SIGNUP_CLOSED: "signup_closed",
 } as const;
 
 export type AppErrorCode = (typeof APP_ERROR_CODE)[keyof typeof APP_ERROR_CODE];
