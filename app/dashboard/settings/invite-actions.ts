@@ -11,6 +11,7 @@ import {
   APP_ERROR_CODE,
   appErrorMessage,
   formatDbError,
+  type AppErrorCode,
 } from "@/lib/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -26,13 +27,23 @@ export type InviteActionState = {
   inviteUrl?: string;
 };
 
-function mapAcceptError(code: string): string {
+function mapAcceptError(
+  code: string,
+  fallback: AppErrorCode = APP_ERROR_CODE.INVITE_ACCEPT_FAILED,
+): string {
   switch (code) {
     case "sign_in_required":
       return appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED);
     case "not_found":
+      return appErrorMessage(
+        fallback === APP_ERROR_CODE.INVITE_ACCEPT_FAILED
+          ? APP_ERROR_CODE.INVITE_INVALID
+          : fallback,
+      );
     case "invalid_token":
       return appErrorMessage(APP_ERROR_CODE.INVITE_INVALID);
+    case "invalid_target":
+      return appErrorMessage(APP_ERROR_CODE.INVALID_INPUT);
     case "expired":
       return appErrorMessage(APP_ERROR_CODE.INVITE_EXPIRED);
     case "already_accepted":
@@ -48,7 +59,7 @@ function mapAcceptError(code: string): string {
     case "owner_required":
       return appErrorMessage(APP_ERROR_CODE.OWNER_REQUIRED);
     default:
-      return appErrorMessage(APP_ERROR_CODE.INVITE_ACCEPT_FAILED);
+      return appErrorMessage(fallback);
   }
 }
 
@@ -208,8 +219,17 @@ export async function resendWorkspaceInvite(
 export async function removeWorkspaceMember(
   userId: string,
 ): Promise<{ error?: string; success?: string }> {
-  const supabase = await (await import("@/lib/supabase/server")).createClient();
-  const { data, error } = await supabase.rpc("remove_workspace_member", {
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) {
+    return {
+      error:
+        auth.error === "owner_required"
+          ? appErrorMessage(APP_ERROR_CODE.OWNER_REQUIRED)
+          : appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED),
+    };
+  }
+
+  const { data, error } = await auth.supabase.rpc("remove_workspace_member", {
     p_user_id: userId.trim(),
   });
 
@@ -218,7 +238,12 @@ export async function removeWorkspaceMember(
   }
   const row = data as { ok?: boolean; error?: string } | null;
   if (!row?.ok) {
-    return { error: mapAcceptError(String(row?.error ?? "member_remove_failed")) };
+    return {
+      error: mapAcceptError(
+        String(row?.error ?? "member_remove_failed"),
+        APP_ERROR_CODE.MEMBER_REMOVE_FAILED,
+      ),
+    };
   }
 
   revalidatePath("/dashboard/settings");
@@ -228,10 +253,22 @@ export async function removeWorkspaceMember(
 export async function transferWorkspaceOwnership(
   userId: string,
 ): Promise<{ error?: string; success?: string }> {
-  const supabase = await (await import("@/lib/supabase/server")).createClient();
-  const { data, error } = await supabase.rpc("transfer_workspace_ownership", {
-    p_to_user_id: userId.trim(),
-  });
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) {
+    return {
+      error:
+        auth.error === "owner_required"
+          ? appErrorMessage(APP_ERROR_CODE.OWNER_REQUIRED)
+          : appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED),
+    };
+  }
+
+  const { data, error } = await auth.supabase.rpc(
+    "transfer_workspace_ownership",
+    {
+      p_to_user_id: userId.trim(),
+    },
+  );
 
   if (error) {
     return {
@@ -241,7 +278,10 @@ export async function transferWorkspaceOwnership(
   const row = data as { ok?: boolean; error?: string } | null;
   if (!row?.ok) {
     return {
-      error: mapAcceptError(String(row?.error ?? "ownership_transfer_failed")),
+      error: mapAcceptError(
+        String(row?.error ?? "ownership_transfer_failed"),
+        APP_ERROR_CODE.OWNERSHIP_TRANSFER_FAILED,
+      ),
     };
   }
 
