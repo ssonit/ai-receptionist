@@ -2,9 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   createWorkspaceInvite,
+  removeWorkspaceMember,
+  resendWorkspaceInvite,
+  transferWorkspaceOwnership,
   revokeWorkspaceInvite,
   type InviteActionState,
 } from "@/app/dashboard/settings/invite-actions";
@@ -32,18 +36,30 @@ function absoluteInviteUrl(origin: string, path: string) {
   return `${origin.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+async function copyLink(url: string) {
+  try {
+    await navigator.clipboard.writeText(url);
+    toast.success("Invite link copied.");
+  } catch {
+    toast.error("Could not copy link.");
+  }
+}
+
 export function WorkspaceTeamCard({
   role,
   members,
   pendingInvites,
   inviteOrigin,
+  currentUserId,
 }: {
   role: WorkspaceRole;
   members: WorkspaceMemberRow[];
   pendingInvites: WorkspaceInviteRow[];
   inviteOrigin: string;
+  currentUserId: string;
 }) {
   const router = useRouter();
+  const t = useTranslations();
   const isOwner = role === "owner";
   const [state, action, pending] = useActionState(createWorkspaceInvite, initial);
   const [lastInviteUrl, setLastInviteUrl] = useState<string | null>(null);
@@ -58,15 +74,6 @@ export function WorkspaceTeamCard({
     }
   }, [state, inviteOrigin]);
 
-  async function copyLink(url: string) {
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Invite link copied.");
-    } catch {
-      toast.error("Could not copy link.");
-    }
-  }
-
   function onRevoke(id: string) {
     setRevokingId(id);
     startTransition(async () => {
@@ -80,12 +87,47 @@ export function WorkspaceTeamCard({
     });
   }
 
+  function onRemove(userId: string) {
+    if (!window.confirm(t("dashboard.teamConfirmRemove"))) return;
+    startTransition(async () => {
+      const result = await removeWorkspaceMember(userId);
+      if (result.error) toast.error(result.error);
+      else {
+        toast.success(result.success ?? "Member removed.");
+        router.refresh();
+      }
+    });
+  }
+
+  function onTransfer(userId: string) {
+    if (!window.confirm(t("dashboard.teamConfirmTransfer"))) return;
+    startTransition(async () => {
+      const result = await transferWorkspaceOwnership(userId);
+      if (result.error) toast.error(result.error);
+      else {
+        toast.success(result.success ?? "Ownership transferred.");
+        router.refresh();
+      }
+    });
+  }
+
+  function onResend(inviteId: string) {
+    startTransition(async () => {
+      const result = await resendWorkspaceInvite(inviteId);
+      if (result.error) toast.error(result.error);
+      else {
+        toast.success(result.success ?? "Invite resent.");
+        router.refresh();
+      }
+    });
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Team</CardTitle>
         <CardDescription>
-          Staff share this workspace dashboard. Invite links expire in 14 days.
+          Staff share this workspace dashboard. Invite links expire in 7 days.
           {isOwner
             ? " Only owners can create invites."
             : " Ask the owner if you need to invite someone."}
@@ -110,9 +152,31 @@ export function WorkspaceTeamCard({
                     </p>
                   ) : null}
                 </div>
-                <Badge variant={m.role === "owner" ? "default" : "secondary"}>
-                  {m.role}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={m.role === "owner" ? "default" : "secondary"}>
+                    {m.role}
+                  </Badge>
+                  {isOwner && m.id !== currentUserId ? (
+                    <>
+                      <Button
+                        onClick={() => onTransfer(m.id)}
+                        size="sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        {t("dashboard.teamMakeOwner")}
+                      </Button>
+                      <Button
+                        onClick={() => onRemove(m.id)}
+                        size="sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        {t("dashboard.teamRemove")}
+                      </Button>
+                    </>
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>
@@ -122,21 +186,25 @@ export function WorkspaceTeamCard({
           <>
             <form action={action} className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="invite-email">Invite email (optional)</Label>
+                <Label htmlFor="invite-email">
+                  {t("dashboard.teamInviteEmailLabel")}
+                </Label>
                 <Input
                   autoComplete="email"
                   id="invite-email"
                   name="email"
                   placeholder="staff@example.com"
+                  required
                   type="email"
                 />
                 <p className="text-muted-foreground text-xs">
-                  Leave blank for an open link. If set, only that email can
-                  accept.
+                  {t("dashboard.teamInviteEmailHint")}
                 </p>
               </div>
               <Button disabled={pending} type="submit">
-                {pending ? "Creating…" : "Create invite link"}
+                {pending
+                  ? t("dashboard.teamSending")
+                  : t("dashboard.teamSendInvite")}
               </Button>
             </form>
 
@@ -171,11 +239,14 @@ export function WorkspaceTeamCard({
                       >
                         <div className="min-w-0">
                           <p className="truncate">
-                            {inv.email ?? "Open link"}
+                            {inv.email}
                           </p>
                           <p className="text-muted-foreground text-xs">
                             Expires{" "}
-                            {new Date(inv.expires_at).toLocaleDateString()}
+                            {new Date(inv.expires_at).toLocaleDateString(
+                              "en-US",
+                              { timeZone: "UTC" },
+                            )}
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -186,6 +257,14 @@ export function WorkspaceTeamCard({
                             variant="outline"
                           >
                             Copy
+                          </Button>
+                          <Button
+                            onClick={() => onResend(inv.id)}
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            {t("dashboard.teamResend")}
                           </Button>
                           <Button
                             disabled={isPending && revokingId === inv.id}

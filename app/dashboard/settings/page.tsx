@@ -31,11 +31,16 @@ export default async function SettingsPage() {
   }
 
   let workspace: WorkspaceOpsValues | null = null;
+  let currentUserId: string | null = null;
   let members: Awaited<ReturnType<typeof listWorkspaceMembers>> = [];
   let pendingInvites: Awaited<ReturnType<typeof listPendingInvites>> = [];
 
   if (dashboard.workspaceId) {
     const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    currentUserId = user?.id ?? null;
     const { data } = await supabase
       .from("workspaces")
       .select(
@@ -108,6 +113,7 @@ export default async function SettingsPage() {
         {dashboard.workspaceId && dashboard.role ? (
           <div className="mx-auto max-w-2xl space-y-6 px-4 pb-10 lg:px-6">
             <WorkspaceTeamCard
+              currentUserId={currentUserId ?? ""}
               inviteOrigin={origin}
               members={members}
               pendingInvites={pendingInvites}
