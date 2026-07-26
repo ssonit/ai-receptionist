@@ -5,11 +5,12 @@ export type WorkspaceRole = "owner" | "staff";
 
 export type WorkspaceInviteRow = {
   id: string;
-  email: string | null;
+  email: string;
   token: string;
   role: string;
   expires_at: string;
   accepted_at: string | null;
+  last_sent_at: string | null;
   created_at: string;
 };
 
@@ -29,9 +30,9 @@ export function generateInviteToken(): string {
   return randomBytes(24).toString("hex");
 }
 
-/** Default invite TTL: 14 days. */
+/** Default invite TTL: 7 days (industry norm — long enough to act, short enough to limit leaked-link risk). */
 export function inviteExpiresAt(from = new Date()): string {
-  return new Date(from.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
+  return new Date(from.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
 }
 
 export async function requireOwnerWorkspace(): Promise<
@@ -87,7 +88,7 @@ export async function listPendingInvites(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("workspace_invites")
-    .select("id, email, token, role, expires_at, accepted_at, created_at")
+    .select("id, email, token, role, expires_at, accepted_at, last_sent_at, created_at")
     .eq("workspace_id", workspaceId)
     .is("accepted_at", null)
     .gt("expires_at", new Date().toISOString())

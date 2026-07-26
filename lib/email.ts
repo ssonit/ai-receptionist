@@ -136,6 +136,51 @@ export function bookingReminderEmailCopy(input: {
   };
 }
 
+export function workspaceInviteEmailCopy(input: {
+  locale: "en" | "vi";
+  workspaceName: string;
+  inviterName: string | null;
+  acceptUrl: string;
+}): { subject: string; html: string; text: string } {
+  const by = input.inviterName?.trim();
+
+  if (input.locale === "vi") {
+    const intro = by
+      ? `${by} mời bạn tham gia workspace <strong>${input.workspaceName}</strong> trên Eve với vai trò nhân viên.`
+      : `Bạn được mời tham gia workspace <strong>${input.workspaceName}</strong> trên Eve với vai trò nhân viên.`;
+    return {
+      subject: `Lời mời tham gia ${input.workspaceName}`,
+      text:
+        `${by ? `${by} mời` : "Bạn được mời"} tham gia workspace ${input.workspaceName} trên Eve.\n\n` +
+        `Nhận lời mời: ${input.acceptUrl}\n\n` +
+        `Liên kết có hiệu lực 7 ngày và chỉ dùng được với chính địa chỉ email này. ` +
+        `Nếu bạn không mong đợi email này, hãy bỏ qua.`,
+      html:
+        `<p>${intro}</p>` +
+        `<p><a href="${input.acceptUrl}">Nhận lời mời</a></p>` +
+        `<p>Liên kết có hiệu lực 7 ngày và chỉ dùng được với chính địa chỉ email này.</p>` +
+        `<p>Nếu bạn không mong đợi email này, hãy bỏ qua.</p>`,
+    };
+  }
+
+  const intro = by
+    ? `${by} invited you to join <strong>${input.workspaceName}</strong> on Eve as staff.`
+    : `You've been invited to join <strong>${input.workspaceName}</strong> on Eve as staff.`;
+  return {
+    subject: `Invitation to join ${input.workspaceName}`,
+    text:
+      `${by ? `${by} invited you` : "You've been invited"} to join ${input.workspaceName} on Eve as staff.\n\n` +
+      `Accept: ${input.acceptUrl}\n\n` +
+      `This link expires in 7 days and only works for this email address. ` +
+      `If you weren't expecting this, ignore this email.`,
+    html:
+      `<p>${intro}</p>` +
+      `<p><a href="${input.acceptUrl}">Accept invitation</a></p>` +
+      `<p>This link expires in 7 days and only works for this email address.</p>` +
+      `<p>If you weren't expecting this, ignore this email.</p>`,
+  };
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
