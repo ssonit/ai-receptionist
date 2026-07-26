@@ -194,7 +194,7 @@ Lựa chọn release: **(a) `@sentry/nextjs`** (2026-07-26).
 - **Lỗi build:** Vercel → Deployments → deploy tương ứng.
 - **PostHog chỉ nhận event sản phẩm, không bao giờ nhận exception.** Đừng tìm lỗi ở đó.
 - **Lỗi phía client trong chat:** Sentry khi có `NEXT_PUBLIC_SENTRY_DSN`; thiếu DSN thì chỉ còn DevTools của khách.
-- Deploy hỏng: [rollback + kill switch](./MIGRATIONS.md).
+- Deploy hỏng: [rollback + kill switch](./MIGRATIONS.md#rollback).
 
 ---
 
@@ -249,3 +249,5 @@ npm run dev
 # agent REPL không UI:
 npm exec -- eve dev --no-ui
 ```
+
+Deploy hỏng: xem [rollback + kill switch](./MIGRATIONS.md#rollback).
