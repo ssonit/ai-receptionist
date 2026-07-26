@@ -146,11 +146,9 @@
   "144": "proxy.ts",
   "145": "@dnd-kit/sortable",
   "146": "shiki",
-  "147": "tw-animate-css",
   "148": "gsap",
   "149": "badge.tsx",
   "150": "slugify",
-  "151": "@streamdown/mermaid",
   "152": "vaul",
   "153": "20260724000003_chat_branding.sql",
   "154": "meeting-types-form.tsx",
@@ -340,7 +338,6 @@
   "338": "booking_change.md",
   "339": "Trang pháp lý `/terms` + `/privacy` — Implementation Plan",
   "340": "Chạy smoke trên preview deploy (cổng cuối) — Implementation Plan",
-  "341": "account-profile-form.tsx",
   "342": "20260725000004_booking_reminders.sql",
   "343": "lenis-provider.tsx",
   "344": "20260724000008_workspace_faq_defaults.sql",
@@ -353,5 +350,12 @@
   "351": "Global Constraints",
   "352": "ai",
   "353": "@dnd-kit/modifiers",
-  "354": "@streamdown/math"
+  "354": "@streamdown/math",
+  "356": "@dnd-kit/modifiers",
+  "357": "posthog-js",
+  "358": "react-dom",
+  "359": "@shikijs/engine-javascript",
+  "360": "@streamdown/cjk",
+  "361": "@streamdown/math",
+  "362": "@vercel/connect"
 }

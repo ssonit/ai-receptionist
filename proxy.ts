@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { ensureVisitorIdOnResponse } from "@/lib/visitor";
+import { isPilotBookingLive } from "@/lib/workspace";
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -105,12 +106,19 @@ export async function proxy(request: NextRequest) {
     if (profile?.workspace_id) {
       const { data: ws } = await supabase
         .from("workspaces")
-        .select("setup_completed_at")
+        .select("setup_completed_at, cal_api_key_encrypted, cal_event_type_id")
         .eq("id", profile.workspace_id)
         .maybeSingle();
 
       const incomplete = !ws?.setup_completed_at;
       const onSetup = path === "/dashboard/setup";
+      // Booking chỉ live khi có Cal key + meeting type AI. Giữ wizard mở
+      // cho tới lúc đó, nếu không banner "Connect Cal.com" sẽ tự đá chính nó.
+      const bookingLive = isPilotBookingLive({
+        workspaceId: profile.workspace_id,
+        hasEncryptedCalKey: Boolean(ws?.cal_api_key_encrypted),
+        calEventTypeId: ws?.cal_event_type_id as number | null,
+      });
 
       if (incomplete && !onSetup) {
         const redirectUrl = request.nextUrl.clone();
@@ -118,7 +126,7 @@ export async function proxy(request: NextRequest) {
         redirectUrl.search = "";
         return NextResponse.redirect(redirectUrl);
       }
-      if (!incomplete && onSetup) {
+      if (!incomplete && bookingLive && onSetup) {
         const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = "/dashboard";
         redirectUrl.search = "";

@@ -755,8 +755,8 @@
     "semantic_hash": "fcbb4f37d67a66a53013b484dcfc9f25"
   },
   "AGENTS.md": {
-    "mtime": 1784876941.2188904,
-    "ast_hash": "4564878ff5f15058e3a40737c7df337a",
+    "mtime": 1785050387.6279771,
+    "ast_hash": "d518a17644439d32743fbdd616571c69",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -780,8 +780,8 @@
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
-    "mtime": 1784970607.1903698,
-    "ast_hash": "7257fe9761b0cd62b4c9dad27d1dfe81",
+    "mtime": 1785051477.8541691,
+    "ast_hash": "7ed739cd56124e5612da6e3dd9c793f4",
     "semantic_hash": ""
   },
   "public/landing-hero-chat.png": {
@@ -1180,8 +1180,8 @@
     "semantic_hash": ""
   },
   "proxy.ts": {
-    "mtime": 1785047774.9905193,
-    "ast_hash": "880302f5ad50a6982c115e89550f3827",
+    "mtime": 1785051410.9499161,
+    "ast_hash": "a29d8ce7eeb449a646ee49c7306ec551",
     "semantic_hash": ""
   },
   ".claude/rules/agent-tools.md": {
@@ -2510,58 +2510,63 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-cal-key-tool-errors.md": {
-    "mtime": 1785049247.263812,
-    "ast_hash": "a0f925fc432143a2aae780be18db648f",
+    "mtime": 1785050910.0778635,
+    "ast_hash": "514c766d4d5820c4c2e274577fd0dd2f",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-durable-rate-limit.md": {
-    "mtime": 1785049175.852508,
-    "ast_hash": "70843eb5bda5266a1a52260b4ff09e84",
+    "mtime": 1785050910.1032202,
+    "ast_hash": "9a66ffcb57bf38ae3bfad4dadfc3225e",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-error-monitoring.md": {
-    "mtime": 1785049391.8049939,
-    "ast_hash": "d887fd7dbeb16b72e78aaffbe298d4ea",
+    "mtime": 1785050910.1286354,
+    "ast_hash": "b0a4857676c7701be627e75dcb238f71",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-legal-pages.md": {
-    "mtime": 1785049024.4404144,
-    "ast_hash": "e2447971e75f9cde3cc68d83d1a14665",
+    "mtime": 1785050910.1444156,
+    "ast_hash": "f9810d6656b0ce66016eea7a117d8fa2",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-migration-rollback.md": {
-    "mtime": 1785049435.4769685,
-    "ast_hash": "8520f3fb2159b0d48d99d66f02d41891",
+    "mtime": 1785050910.1657183,
+    "ast_hash": "4657e6d18c8d190193b581b16ec13e03",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-production-env.md": {
-    "mtime": 1785049337.6734278,
-    "ast_hash": "7d6bdcc1f3859e13e2021a48b7ddd0e2",
+    "mtime": 1785050968.4922616,
+    "ast_hash": "6b453c5780c3078ef38e10798f90082c",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-release-readiness.md": {
-    "mtime": 1785048853.240036,
-    "ast_hash": "c4b0ca04d4b3d9a264a906ee0109539d",
+    "mtime": 1785050449.859391,
+    "ast_hash": "af19333d469b33ec3e2a6f4e658e48b5",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-seo-robots.md": {
-    "mtime": 1785049281.0221775,
-    "ast_hash": "62cdb8bd004d6fd612abe0fa1ad00917",
+    "mtime": 1785050910.2092123,
+    "ast_hash": "63d7145107c8a680dbfa63fed2f36c37",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-signup-gate.md": {
-    "mtime": 1785049089.682758,
-    "ast_hash": "d21f458d0d22d509cb73a636998f4332",
+    "mtime": 1785050910.2543619,
+    "ast_hash": "3ecefd03be7e829592ac2f1a5e40d85b",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-smoke-refresh.md": {
-    "mtime": 1785048972.5293853,
-    "ast_hash": "7909dabaab317e8b30b1d052b614b6a9",
+    "mtime": 1785051040.0857687,
+    "ast_hash": "9f2086df15b866afb2bb670d14d28371",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-staging-smoke-run.md": {
-    "mtime": 1785049497.6874897,
-    "ast_hash": "85ce19d6411fdc1143b7c72f5aec69c5",
+    "mtime": 1785050959.9758127,
+    "ast_hash": "c78ee5c95747f195b5298283065e5891",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-07-26-setup-reentry.md": {
+    "mtime": 1785050910.229212,
+    "ast_hash": "b94ad8de841cced52b5851cde808ce0d",
     "semantic_hash": ""
   }
 }
