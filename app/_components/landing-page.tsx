@@ -54,12 +54,27 @@ const features = [
   },
 ];
 
-const plans = [
+type PlanFeature = { label: string; comingSoon?: boolean };
+
+const plans: {
+  name: string;
+  price: number;
+  description: string;
+  features: PlanFeature[];
+  cta: string;
+  href: string;
+  popular: boolean;
+}[] = [
   {
     name: "Basic",
     price: 39,
     description: "For teams just getting started with booking chat.",
-    features: ["Web chat", "Cal.com booking", "FAQ + intake", "Basic dashboard"],
+    features: [
+      { label: "Web chat" },
+      { label: "Cal.com booking" },
+      { label: "FAQ + intake" },
+      { label: "Basic dashboard" },
+    ],
     cta: "Get started",
     href: "/signup",
     popular: false,
@@ -69,10 +84,10 @@ const plans = [
     price: 89,
     description: "For teams growing leads and needing reminders.",
     features: [
-      "Everything in Basic",
-      "WhatsApp (coming soon)",
-      "Outbound reminders",
-      "Priority onboarding",
+      { label: "Everything in Basic" },
+      { label: "Outbound reminders" },
+      { label: "Embed widget" },
+      { label: "WhatsApp", comingSoon: true },
     ],
     cta: "Choose Premium",
     href: "/signup",
@@ -82,9 +97,14 @@ const plans = [
     name: "Enterprise",
     price: 149,
     description: "Higher limits for teams that are scaling up.",
-    features: ["Higher limits", "Custom FAQ", "Multi-location roadmap", "1:1 support"],
-    cta: "Try demo",
-    href: "/chat",
+    features: [
+      { label: "Everything in Premium" },
+      { label: "Higher limits" },
+      { label: "Custom FAQ" },
+      { label: "1:1 support" },
+    ],
+    cta: "Get started",
+    href: "/signup",
     popular: false,
   },
   {
@@ -92,13 +112,14 @@ const plans = [
     price: 199,
     description: "Full suite for multiple workspaces and ops teams.",
     features: [
-      "Everything in Enterprise",
-      "Retell voice agent",
-      "Priority SLA",
-      "Brand-customized agent",
+      { label: "Everything in Enterprise" },
+      { label: "Priority SLA" },
+      { label: "Brand-customized agent" },
+      { label: "Voice agent", comingSoon: true },
+      { label: "Multi-location", comingSoon: true },
     ],
-    cta: "Try demo",
-    href: "/chat",
+    cta: "Get started",
+    href: "/signup",
     popular: false,
   },
 ];
@@ -378,16 +399,34 @@ function Pricing() {
                   </div>
                   <ul className="mb-8 flex flex-1 flex-col gap-2.5 text-sm">
                     {plan.features.map((item) => (
-                      <li className="flex items-start gap-2" key={item}>
+                      <li className="flex items-start gap-2" key={item.label}>
                         <CheckIcon
                           className={cn(
                             "mt-0.5 size-4 shrink-0",
                             plan.popular ? "text-black" : "text-zinc-300",
+                            item.comingSoon && "opacity-40",
                           )}
                           weight="bold"
                         />
-                        <span className={plan.popular ? "text-zinc-700" : "text-zinc-300"}>
-                          {item}
+                        <span
+                          className={cn(
+                            plan.popular ? "text-zinc-700" : "text-zinc-300",
+                            item.comingSoon && "opacity-60",
+                          )}
+                        >
+                          {item.label}
+                          {item.comingSoon ? (
+                            <span
+                              className={cn(
+                                "ml-1.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
+                                plan.popular
+                                  ? "border-zinc-300 text-zinc-500"
+                                  : "border-white/15 text-zinc-500",
+                              )}
+                            >
+                              Coming soon
+                            </span>
+                          ) : null}
                         </span>
                       </li>
                     ))}
