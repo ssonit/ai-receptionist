@@ -499,7 +499,7 @@ function SiteFooter() {
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 text-sm text-zinc-500 sm:flex-row">
         <p>Eve</p>
         <p>AI booking assistant. Not a substitute for a dentist.</p>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap justify-center gap-4">
           <Link className="hover:text-white" href="/chat">
             Try it
           </Link>
@@ -511,6 +511,12 @@ function SiteFooter() {
           </Link>
           <Link className="hover:text-white" href="/dashboard">
             Dashboard
+          </Link>
+          <Link className="hover:text-white" href="/terms">
+            Terms
+          </Link>
+          <Link className="hover:text-white" href="/privacy">
+            Privacy
           </Link>
         </div>
       </div>

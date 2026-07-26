@@ -95,8 +95,8 @@
     "semantic_hash": ""
   },
   "app/_components/landing-page.tsx": {
-    "mtime": 1785047511.5112362,
-    "ast_hash": "32367145e9b3ee490cce7eff5548ed6a",
+    "mtime": 1785054049.314006,
+    "ast_hash": "2fd55f3a1cf93959d11083622757fd3e",
     "semantic_hash": ""
   },
   "app/auth/actions.ts": {
@@ -755,8 +755,8 @@
     "semantic_hash": "fcbb4f37d67a66a53013b484dcfc9f25"
   },
   "AGENTS.md": {
-    "mtime": 1785050387.6279771,
-    "ast_hash": "d518a17644439d32743fbdd616571c69",
+    "mtime": 1785052893.4199953,
+    "ast_hash": "bb6d8f66a50e240c1bab33d650d17a0a",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -780,8 +780,8 @@
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
-    "mtime": 1785051477.8541691,
-    "ast_hash": "7ed739cd56124e5612da6e3dd9c793f4",
+    "mtime": 1785052893.4209962,
+    "ast_hash": "76feef5955b28eae7e8913ada768cb20",
     "semantic_hash": ""
   },
   "public/landing-hero-chat.png": {
@@ -1180,7 +1180,7 @@
     "semantic_hash": ""
   },
   "proxy.ts": {
-    "mtime": 1785051410.9499161,
+    "mtime": 1785051921.076917,
     "ast_hash": "a29d8ce7eeb449a646ee49c7306ec551",
     "semantic_hash": ""
   },
@@ -2510,63 +2510,78 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-cal-key-tool-errors.md": {
-    "mtime": 1785050910.0778635,
-    "ast_hash": "514c766d4d5820c4c2e274577fd0dd2f",
+    "mtime": 1785053045.7018871,
+    "ast_hash": "ed460c2dcfc9b31d57fb41de983e9518",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-durable-rate-limit.md": {
-    "mtime": 1785050910.1032202,
-    "ast_hash": "9a66ffcb57bf38ae3bfad4dadfc3225e",
+    "mtime": 1785053045.7088897,
+    "ast_hash": "1c1ce73805d8ab2dea58836dfda14e2b",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-error-monitoring.md": {
-    "mtime": 1785050910.1286354,
-    "ast_hash": "b0a4857676c7701be627e75dcb238f71",
+    "mtime": 1785053045.7148902,
+    "ast_hash": "e2b73ea03ea89fbfc93f935d9b7a9ab7",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-legal-pages.md": {
-    "mtime": 1785050910.1444156,
-    "ast_hash": "f9810d6656b0ce66016eea7a117d8fa2",
+    "mtime": 1785053045.7199218,
+    "ast_hash": "9441d3c78cf66df7bd6a9b6ee4fe8c7f",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-migration-rollback.md": {
-    "mtime": 1785050910.1657183,
-    "ast_hash": "4657e6d18c8d190193b581b16ec13e03",
+    "mtime": 1785053045.72389,
+    "ast_hash": "c5272c08773aa7858e694e6625be7345",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-production-env.md": {
-    "mtime": 1785050968.4922616,
-    "ast_hash": "6b453c5780c3078ef38e10798f90082c",
+    "mtime": 1785053045.7301474,
+    "ast_hash": "8d108a253bd277777fb04e65fb77b0c3",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-release-readiness.md": {
-    "mtime": 1785050449.859391,
-    "ast_hash": "af19333d469b33ec3e2a6f4e658e48b5",
+    "mtime": 1785052987.3078246,
+    "ast_hash": "d2bb8f75b604b35519ce79481af971ca",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-seo-robots.md": {
-    "mtime": 1785050910.2092123,
-    "ast_hash": "63d7145107c8a680dbfa63fed2f36c37",
+    "mtime": 1785053045.7354069,
+    "ast_hash": "82a7d2aecc2b81d285671d27c620bebb",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-signup-gate.md": {
-    "mtime": 1785050910.2543619,
-    "ast_hash": "3ecefd03be7e829592ac2f1a5e40d85b",
+    "mtime": 1785053045.7466195,
+    "ast_hash": "cf4632002d278a42fea33b6b43236b87",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-smoke-refresh.md": {
-    "mtime": 1785051040.0857687,
-    "ast_hash": "9f2086df15b866afb2bb670d14d28371",
+    "mtime": 1785053045.7516215,
+    "ast_hash": "91a931eaf042050d6bebbd50ebf2b58c",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-staging-smoke-run.md": {
-    "mtime": 1785050959.9758127,
-    "ast_hash": "c78ee5c95747f195b5298283065e5891",
+    "mtime": 1785053045.7566233,
+    "ast_hash": "8fff7fdaae6a0d4fb56fb2a79cf62d50",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-26-setup-reentry.md": {
-    "mtime": 1785050910.229212,
-    "ast_hash": "b94ad8de841cced52b5851cde808ce0d",
+    "mtime": 1785053045.7406201,
+    "ast_hash": "fd193e9f61077355a1743bb8f4db6b09",
+    "semantic_hash": ""
+  },
+  "app/_components/legal-page.tsx": {
+    "mtime": 1785053789.2877185,
+    "ast_hash": "ca2fa508466d1f8c6b01ef19344027d9",
+    "semantic_hash": ""
+  },
+  "app/privacy/page.tsx": {
+    "mtime": 1785054048.9515975,
+    "ast_hash": "46e220588df33aabe28316e6ecc122cb",
+    "semantic_hash": ""
+  },
+  "app/terms/page.tsx": {
+    "mtime": 1785054049.0708787,
+    "ast_hash": "ca95b1f327427b33fe5f0c4baf1bb775",
     "semantic_hash": ""
   }
 }
