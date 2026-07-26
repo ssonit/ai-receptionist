@@ -3,6 +3,7 @@
  * Short lead is always guest_change_cutoff_minutes + 30 (guest still has time to change).
  */
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { appOrigin } from "@/lib/app-origin";
 import { isCancelledStatus } from "@/lib/booking-status";
 import { hashManageLinkToken } from "@/lib/booking-manage-code";
 import {
@@ -62,20 +63,6 @@ function pepper(): string {
     process.env.WORKSPACE_SECRETS_KEY?.trim() ||
     "eve-dev-manage-code-pepper"
   );
-}
-
-function appOrigin(): string {
-  const fromEnv =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-  if (fromEnv) {
-    const withProto = fromEnv.startsWith("http")
-      ? fromEnv
-      : `https://${fromEnv}`;
-    return withProto.replace(/\/$/, "");
-  }
-  return "http://localhost:3000";
 }
 
 export function makeReminderOptOutToken(bookingId: string): string {

@@ -143,11 +143,14 @@ export function workspaceInviteEmailCopy(input: {
   acceptUrl: string;
 }): { subject: string; html: string; text: string } {
   const by = input.inviterName?.trim();
+  const workspaceName = escapeHtml(input.workspaceName);
+  const acceptUrl = escapeAttr(input.acceptUrl);
+  const byHtml = by ? escapeHtml(by) : null;
 
   if (input.locale === "vi") {
-    const intro = by
-      ? `${by} mời bạn tham gia workspace <strong>${input.workspaceName}</strong> trên Eve với vai trò nhân viên.`
-      : `Bạn được mời tham gia workspace <strong>${input.workspaceName}</strong> trên Eve với vai trò nhân viên.`;
+    const intro = byHtml
+      ? `${byHtml} mời bạn tham gia workspace <strong>${workspaceName}</strong> trên Eve với vai trò nhân viên.`
+      : `Bạn được mời tham gia workspace <strong>${workspaceName}</strong> trên Eve với vai trò nhân viên.`;
     return {
       subject: `Lời mời tham gia ${input.workspaceName}`,
       text:
@@ -157,15 +160,15 @@ export function workspaceInviteEmailCopy(input: {
         `Nếu bạn không mong đợi email này, hãy bỏ qua.`,
       html:
         `<p>${intro}</p>` +
-        `<p><a href="${input.acceptUrl}">Nhận lời mời</a></p>` +
+        `<p><a href="${acceptUrl}">Nhận lời mời</a></p>` +
         `<p>Liên kết có hiệu lực 7 ngày và chỉ dùng được với chính địa chỉ email này.</p>` +
         `<p>Nếu bạn không mong đợi email này, hãy bỏ qua.</p>`,
     };
   }
 
-  const intro = by
-    ? `${by} invited you to join <strong>${input.workspaceName}</strong> on Eve as staff.`
-    : `You've been invited to join <strong>${input.workspaceName}</strong> on Eve as staff.`;
+  const intro = byHtml
+    ? `${byHtml} invited you to join <strong>${workspaceName}</strong> on Eve as staff.`
+    : `You've been invited to join <strong>${workspaceName}</strong> on Eve as staff.`;
   return {
     subject: `Invitation to join ${input.workspaceName}`,
     text:
@@ -175,7 +178,7 @@ export function workspaceInviteEmailCopy(input: {
       `If you weren't expecting this, ignore this email.`,
     html:
       `<p>${intro}</p>` +
-      `<p><a href="${input.acceptUrl}">Accept invitation</a></p>` +
+      `<p><a href="${acceptUrl}">Accept invitation</a></p>` +
       `<p>This link expires in 7 days and only works for this email address.</p>` +
       `<p>If you weren't expecting this, ignore this email.</p>`,
   };
