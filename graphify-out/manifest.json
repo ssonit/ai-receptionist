@@ -35,13 +35,13 @@
     "semantic_hash": "930750902f8cd91142b8e6a67e5af6bb"
   },
   "agent/tools/book_appointment.ts": {
-    "mtime": 1785047511.5102372,
-    "ast_hash": "e7c67d628d006d1120d605e5b38239b8",
+    "mtime": 1785056385.7536988,
+    "ast_hash": "6eed73773e1bc190eeeebe25a90dc14c",
     "semantic_hash": ""
   },
   "agent/tools/check_availability.ts": {
-    "mtime": 1784970607.191885,
-    "ast_hash": "099e3a18593b42aeaf635d0113ec8d06",
+    "mtime": 1785056383.4839296,
+    "ast_hash": "8a7a0b7aa3e7272655768eda5ab67efc",
     "semantic_hash": ""
   },
   "agent/tools/glob.ts": {
@@ -2100,13 +2100,13 @@
     "semantic_hash": ""
   },
   "lib/errors/app-codes.ts": {
-    "mtime": 1785054942.532911,
-    "ast_hash": "822168dee32d270dc99a84edc5c39336",
+    "mtime": 1785056376.6926777,
+    "ast_hash": "734a1dbe5d3b4d9d71f7a532a515ff57",
     "semantic_hash": ""
   },
   "lib/errors/app-messages.ts": {
-    "mtime": 1785054943.3466399,
-    "ast_hash": "580f813c4aa810a426508e485f38c0db",
+    "mtime": 1785056377.01007,
+    "ast_hash": "421194608b8214ae3da97e38852bb835",
     "semantic_hash": ""
   },
   "lib/errors/format.ts": {
@@ -2195,13 +2195,13 @@
     "semantic_hash": ""
   },
   "agent/tools/cancel_appointment.ts": {
-    "mtime": 1784960046.0949852,
-    "ast_hash": "44043bc4adaab163a395b01ca37b92cc",
+    "mtime": 1785056391.9411912,
+    "ast_hash": "3572e911013bf95d37c352425b61a8dc",
     "semantic_hash": ""
   },
   "agent/tools/reschedule_appointment.ts": {
-    "mtime": 1784970607.2124293,
-    "ast_hash": "cac1537693d33551f0fb48360b1f9b9d",
+    "mtime": 1785056391.9401908,
+    "ast_hash": "189a4de7fbb53f79becdd2e5f814882c",
     "semantic_hash": ""
   },
   "lib/agent-booking-auth.ts": {
@@ -2592,6 +2592,11 @@
   "supabase/migrations/20260726000002_agent_rate_limits.sql": {
     "mtime": 1785055478.8457081,
     "ast_hash": "c601ae550e2ed7ef094e161410d816e0",
+    "semantic_hash": ""
+  },
+  "docs/ops/production-env.md": {
+    "mtime": 1785056050.7656703,
+    "ast_hash": "7ab0595f4a132f458891d3ef47960648",
     "semantic_hash": ""
   }
 }

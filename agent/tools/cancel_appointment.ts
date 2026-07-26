@@ -73,7 +73,12 @@ export default defineTool({
       const allowed = assertBookingChangeAllowed(policy, booking, "cancel");
       if (!allowed.ok) return toolError(allowed.errorCode);
 
-      const apiKey = await getCalApiKeyForWorkspace(actor.workspaceId);
+      let apiKey: string;
+      try {
+        apiKey = await getCalApiKeyForWorkspace(actor.workspaceId);
+      } catch {
+        return toolError(APP_ERROR_CODE.CAL_NOT_CONFIGURED_GUEST);
+      }
       const cancelled = await withCalApiKey(apiKey, () =>
         cancelCalBooking({
           bookingUid: booking.cal_booking_uid,

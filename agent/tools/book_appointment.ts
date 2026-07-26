@@ -16,6 +16,7 @@ import { createNotification } from "@/lib/notifications-write";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ANALYTICS_EVENT } from "@/lib/analytics-events";
 import { trackServer } from "@/lib/analytics-server";
+import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
 import {
   getCalApiKeyForWorkspace,
   getWorkspaceById,
@@ -70,7 +71,20 @@ export default defineTool({
         username: aiEvent.username,
       };
 
-      const apiKey = await getCalApiKeyForWorkspace(workspaceId);
+      let apiKey: string;
+      try {
+        apiKey = await getCalApiKeyForWorkspace(workspaceId);
+      } catch {
+        const error = appErrorMessage(APP_ERROR_CODE.CAL_NOT_CONFIGURED_GUEST);
+        await logAgentToolEvent({
+          toolName: "book_appointment",
+          ok: false,
+          error,
+          sessionId: sid,
+          workspaceId,
+        });
+        return { ok: false as const, error };
+      }
       const ws = await getWorkspaceById(workspaceId);
       const timeZone = ws?.timezone ?? bookingConfig.timezone;
       const day = start.slice(0, 10);

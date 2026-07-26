@@ -4,6 +4,7 @@ import { logAgentToolEvent } from "@/lib/agent-tool-log";
 import { authAttr } from "@/lib/agent-booking-auth";
 import { getAvailableSlots, withCalApiKey } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
+import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
 import { formatSlotForGuest } from "@/lib/guest-timezone";
 import { resolveGuestTimeZone } from "@/lib/guest-timezone-resolve";
 import {
@@ -93,7 +94,20 @@ export default defineTool({
         );
       }
 
-      const apiKey = await getCalApiKeyForWorkspace(workspaceId);
+      let apiKey: string;
+      try {
+        apiKey = await getCalApiKeyForWorkspace(workspaceId);
+      } catch {
+        const error = appErrorMessage(APP_ERROR_CODE.CAL_NOT_CONFIGURED_GUEST);
+        await logAgentToolEvent({
+          toolName: "check_availability",
+          ok: false,
+          error,
+          sessionId,
+          workspaceId,
+        });
+        return { ok: false as const, error };
+      }
       const slots = await withCalApiKey(apiKey, () =>
         getAvailableSlots({
           startDate: start,

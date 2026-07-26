@@ -98,7 +98,12 @@ export default defineTool({
         username: aiEvent.username,
       };
 
-      const apiKey = await getCalApiKeyForWorkspace(actor.workspaceId);
+      let apiKey: string;
+      try {
+        apiKey = await getCalApiKeyForWorkspace(actor.workspaceId);
+      } catch {
+        return toolError(APP_ERROR_CODE.CAL_NOT_CONFIGURED_GUEST);
+      }
       const ws = await getWorkspaceById(actor.workspaceId);
       const timeZone = ws?.timezone ?? bookingConfig.timezone;
       const guestTimeZone =
