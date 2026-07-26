@@ -144,8 +144,8 @@ Email **bắt buộc** — link mở không gắn email đã bỏ hẳn ([`invit
 4. [ ] Header `x-eve-tz` vẫn gửi từ iframe → agent biết timezone khách
 5. [ ] Reload trang nhúng → phiên chat còn; giới hạn đã biết: [`superpowers/embed-cookie-limits.md`](./superpowers/embed-cookie-limits.md)
 6. [ ] Workspace chưa `bookingLive` → route embed từ chối, không hiện chat chết
-7. [ ] `curl -sI <host>/embed/{slug}` → `frame-ancestors *`
-8. [ ] `curl -sI <host>/` → `frame-ancestors 'none'` + `X-Frame-Options: DENY`
+7. [ ] `curl -sI <host>/embed/{slug}` → `frame-ancestors *` — cấu hình ở [`next.config.ts`](../next.config.ts); **`next dev` (Turbopack) có thể không emit header này** → xác nhận trên preview / `next start`
+8. [ ] `curl -sI <host>/` → `frame-ancestors 'none'` + `X-Frame-Options: DENY` — cùng lưu ý như mục 7
 
 ---
 
@@ -219,7 +219,8 @@ Chạy đầy đủ xong thì thêm một dòng. Rỗng nghĩa là **chưa từn
 
 | Ngày | Chạy trên | Kết quả | Ghi chú |
 |------|-----------|---------|---------|
-| — | — | — | chưa có lần chạy đầy đủ nào được ghi |
+| 2026-07-26 | local (`localhost:3000` + `npx supabase db reset`) | **một phần** | `db reset`: 13 migration apply sạch. Dashboard routes (14 path trong Auth/setup) → 307→login khi chưa auth (không 404). Setup re-entry đã verify riêng (plan setup-reentry). Embed CSP mục 7–8: **không thấy header dưới `next dev`** — cần xác nhận preview. Invite email / Resend / happy-path Cal thật / guest manage: **chưa chạy** trong lần này. |
+| — | — | — | chưa có lần chạy **đầy đủ** nào được ghi |
 
 ---
 
