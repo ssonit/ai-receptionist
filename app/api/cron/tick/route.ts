@@ -89,6 +89,12 @@ export async function GET(request: Request) {
     }
   }
 
+  try {
+    await createAdminClient().rpc("prune_agent_rate_limits");
+  } catch (error) {
+    console.error("[cron/tick] rate-limit prune failed", error);
+  }
+
   let reminders: Awaited<ReturnType<typeof sendDueReminders>> | null = null;
   try {
     reminders = await sendDueReminders({ workspaceIds });

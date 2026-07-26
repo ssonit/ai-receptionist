@@ -57,13 +57,17 @@ export default eveChannel({
     localDev(),
     none(),
   ],
-  onMessage: (ctx) => {
+  onMessage: async (ctx) => {
     const request = ctx.eve.request;
     const visitorId = readVisitorIdFromCookieHeader(
       request.headers.get("cookie"),
     );
     const ip = clientIpFromRequest(request);
-    const limited = checkAgentRateLimit({ visitorId, ip });
+    const workspaceSlug = request.headers
+      .get(EVE_WORKSPACE_HEADER)
+      ?.trim()
+      .toLowerCase();
+    const limited = await checkAgentRateLimit({ visitorId, ip, workspaceSlug });
     if (!limited.ok) {
       // Soft-stamp so tools/instructions can surface a friendly limit message.
       const base = defaultEveAuth(ctx);
