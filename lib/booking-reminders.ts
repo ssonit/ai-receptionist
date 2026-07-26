@@ -15,6 +15,8 @@ import { createNotificationDebounced } from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canonicalizeTimezone } from "@/lib/timezones";
 import { isWorkspaceBookingLive, publicBookingPath } from "@/lib/workspace";
+import { ANALYTICS_EVENT } from "@/lib/analytics-events";
+import { trackServer } from "@/lib/analytics-server";
 
 export type ReminderKind = "reminder_24h" | "reminder_2h";
 
@@ -647,6 +649,12 @@ async function sendOneReminder(row: {
     await notifyReminderFailure(workspace.id, booking.id);
     return "failed";
   }
+
+  await trackServer(ANALYTICS_EVENT.REMINDER_SENT, workspace.id, {
+    workspaceId: workspace.id,
+    kind: row.kind,
+    channel: "email",
+  });
 
   await mark("sent");
   return "sent";

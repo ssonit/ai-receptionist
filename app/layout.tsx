@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
+import { PostHogProvider } from "@/components/providers/posthog-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -32,10 +33,12 @@ export default function RootLayout({ children }: { readonly children: ReactNode 
       suppressHydrationWarning
     >
       <body className="font-sans antialiased" suppressHydrationWarning>
-        <TooltipProvider>
-          {children}
-          <Toaster />
-        </TooltipProvider>
+        <PostHogProvider>
+          <TooltipProvider>
+            {children}
+            <Toaster />
+          </TooltipProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

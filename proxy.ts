@@ -10,23 +10,36 @@ export async function proxy(request: NextRequest) {
   const bookingSlug = bookingSlugMatch?.[1]
     ? decodeURIComponent(bookingSlugMatch[1]).trim().toLowerCase()
     : null;
+  const embedSlugMatch = path.match(/^\/embed\/([^/]+)\/?$/);
+  const embedSlug = embedSlugMatch?.[1]
+    ? decodeURIComponent(embedSlugMatch[1]).trim().toLowerCase()
+    : null;
+  const isEmbed =
+    Boolean(embedSlug) || path === "/embed" || path.startsWith("/embed/");
 
   const needsVisitor =
     path === "/chat" ||
     path.startsWith("/chat/") ||
     path.startsWith("/api/chat/") ||
-    Boolean(bookingSlug);
+    Boolean(bookingSlug) ||
+    isEmbed;
+
+  const visitorOpts = isEmbed ? { crossSite: true as const } : undefined;
 
   if (needsVisitor) {
-    ensureVisitorIdOnResponse(request, supabaseResponse);
+    ensureVisitorIdOnResponse(request, supabaseResponse, visitorOpts);
   }
 
   // Remember public chat tenant slug (?w= or /b/[slug])
-  const w = request.nextUrl.searchParams.get("w")?.trim() || bookingSlug;
+  const w =
+    request.nextUrl.searchParams.get("w")?.trim() ||
+    bookingSlug ||
+    embedSlug;
   if (needsVisitor && w) {
     supabaseResponse.cookies.set("eve_w", w.toLowerCase(), {
       path: "/",
-      sameSite: "lax",
+      sameSite: isEmbed ? "none" : "lax",
+      secure: isEmbed || process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 365,
     });
   }
@@ -51,14 +64,15 @@ export async function proxy(request: NextRequest) {
           supabaseResponse.cookies.set(name, value, options);
         }
         if (needsVisitor) {
-          ensureVisitorIdOnResponse(request, supabaseResponse);
-          if (w) {
-            supabaseResponse.cookies.set("eve_w", w.toLowerCase(), {
-              path: "/",
-              sameSite: "lax",
-              maxAge: 60 * 60 * 24 * 365,
-            });
-          }
+          ensureVisitorIdOnResponse(request, supabaseResponse, visitorOpts);
+        }
+        if (needsVisitor && w) {
+          supabaseResponse.cookies.set("eve_w", w.toLowerCase(), {
+            path: "/",
+            sameSite: isEmbed ? "none" : "lax",
+            secure: isEmbed || process.env.NODE_ENV === "production",
+            maxAge: 60 * 60 * 24 * 365,
+          });
         }
       },
     },
@@ -144,5 +158,7 @@ export const config = {
     "/chat/:path*",
     "/api/chat/:path*",
     "/b/:path*",
+    "/embed",
+    "/embed/:path*",
   ],
 };
