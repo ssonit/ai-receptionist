@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { acceptWorkspaceInviteAction } from "@/app/dashboard/settings/invite-actions";
 import { AuthShell } from "@/app/_components/auth-shell";
 import { RainbowButton } from "@/components/ui/rainbow-button";
+import { inviteEmailMismatchMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import type { InvitePreview } from "@/lib/workspace-invites";
 
@@ -96,34 +97,54 @@ export function InviteAcceptPanel({
     >
       <div className="flex w-full flex-col gap-4">
         {signedIn ? (
-          <>
-            <p className="text-sm text-zinc-400">
-              Signed in as{" "}
-              <span className="text-white">{userEmail ?? "your account"}</span>.
-              Accepting joins this workspace (empty unfinished workspaces are
-              removed).
-            </p>
-            {error ? (
+          preview.email &&
+          userEmail &&
+          preview.email.trim().toLowerCase() !== userEmail.trim().toLowerCase() ? (
+            <>
               <p
-                className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm text-red-300"
+                className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-100"
                 role="alert"
               >
-                {error}
+                {inviteEmailMismatchMessage(preview.email)}
               </p>
-            ) : null}
-            <RainbowButton
-              className={cn(
-                "h-11 w-full rounded-full font-semibold",
-                pending && "opacity-70",
-              )}
-              disabled={pending}
-              onClick={onAccept}
-              size="lg"
-              type="button"
-            >
-              {pending ? "Joining…" : "Accept invite"}
-            </RainbowButton>
-          </>
+              <p className="text-sm text-zinc-400">
+                Signed in as <span className="text-white">{userEmail}</span>.
+              </p>
+              <Link
+                className="inline-flex h-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-sm text-zinc-300 transition hover:border-white/20 hover:text-white"
+                href={loginHref}
+              >
+                Sign in with a different account
+              </Link>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-zinc-400">
+                Signed in as{" "}
+                <span className="text-white">{userEmail ?? "your account"}</span>.
+              </p>
+              {error ? (
+                <p
+                  className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm text-red-300"
+                  role="alert"
+                >
+                  {error}
+                </p>
+              ) : null}
+              <RainbowButton
+                className={cn(
+                  "h-11 w-full rounded-full font-semibold",
+                  pending && "opacity-70",
+                )}
+                disabled={pending}
+                onClick={onAccept}
+                size="lg"
+                type="button"
+              >
+                {pending ? "Joining…" : "Accept invite"}
+              </RainbowButton>
+            </>
+          )
         ) : (
           <>
             <RainbowButton asChild className="h-11 w-full rounded-full font-semibold" size="lg">
