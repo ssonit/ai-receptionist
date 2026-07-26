@@ -7,6 +7,7 @@ import {
   IconCalendarEvent,
   IconChartBar,
   IconDashboard,
+  IconCode,
   IconHelp,
   IconInnerShadowTop,
   IconMessage,
@@ -70,6 +71,11 @@ export function AppSidebar({
           title: t("dashboard.nav.meetingTypes"),
           url: "/dashboard/meeting-types",
           icon: IconTags,
+        },
+        {
+          title: t("dashboard.nav.embed"),
+          url: "/dashboard/embed",
+          icon: IconCode,
         },
         {
           title: t("dashboard.bookingPage"),
