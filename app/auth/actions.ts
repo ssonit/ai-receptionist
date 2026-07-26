@@ -2,10 +2,13 @@
 
 import { redirect } from "next/navigation";
 import {
+  APP_ERROR_CODE,
   AUTH_ERROR_CODE,
+  appErrorMessage,
   authErrorMessage,
   formatAuthError,
 } from "@/lib/errors";
+import { isPublicSignupOpen } from "@/lib/signup-mode";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthState = {
@@ -29,6 +32,9 @@ export async function signUp(
   }
   if (password.length < 6) {
     return { error: authErrorMessage(AUTH_ERROR_CODE.WEAK_PASSWORD) };
+  }
+  if (!inviteToken && !isPublicSignupOpen()) {
+    return { error: appErrorMessage(APP_ERROR_CODE.SIGNUP_CLOSED) };
   }
 
   const supabase = await createClient();
