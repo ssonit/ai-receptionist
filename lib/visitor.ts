@@ -10,11 +10,12 @@ export function isVisitorId(value: string | undefined | null): value is string {
   return Boolean(value && UUID_RE.test(value));
 }
 
-export function visitorCookieOptions() {
+export function visitorCookieOptions(opts?: { crossSite?: boolean }) {
+  const crossSite = opts?.crossSite === true;
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
+    secure: crossSite || process.env.NODE_ENV === "production",
+    sameSite: crossSite ? ("none" as const) : ("lax" as const),
     path: "/",
     maxAge: MAX_AGE_SEC,
   };
@@ -30,17 +31,22 @@ export function readVisitorIdFromRequest(request: NextRequest): string | null {
 export function ensureVisitorIdOnResponse(
   request: NextRequest,
   response: NextResponse,
+  opts?: { crossSite?: boolean },
 ): string {
   const existing = readVisitorIdFromRequest(request);
   if (existing) {
     // Re-apply in case response was rebuilt (e.g. Supabase setAll).
     if (!response.cookies.get(VISITOR_COOKIE)?.value) {
-      response.cookies.set(VISITOR_COOKIE, existing, visitorCookieOptions());
+      response.cookies.set(
+        VISITOR_COOKIE,
+        existing,
+        visitorCookieOptions(opts),
+      );
     }
     return existing;
   }
   const id = crypto.randomUUID();
   request.cookies.set(VISITOR_COOKIE, id);
-  response.cookies.set(VISITOR_COOKIE, id, visitorCookieOptions());
+  response.cookies.set(VISITOR_COOKIE, id, visitorCookieOptions(opts));
   return id;
 }
