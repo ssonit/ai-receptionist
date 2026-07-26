@@ -1,8 +1,10 @@
 # Không quay lại được wizard setup — Implementation Plan
 
-> **For agentic workers:** Thực thi task-by-task, đánh dấu checkbox (`- [ ]`) để theo dõi. Làm trên **nhánh feature thường**: `git switch -c feat/<tên>` → code → test → merge `main`.
+> **For agentic workers:** Thực thi task-by-task, đánh dấu checkbox (`- [ ]`) để theo dõi.
 >
-> **Không tạo git worktree.** Chủ dự án đã quyết: repo này làm tuần tự, mỗi worktree phải `npm install` riêng và không copy được `.env.local` (gitignore), nên chỉ tổ nặng. Nếu bạn dùng `superpowers:executing-plans` hay `superpowers:subagent-driven-development`, **bỏ qua bước `using-git-worktrees`** của chúng — coi như đã có sự đồng ý rõ ràng để làm trên nhánh feature.
+> **Sửa thẳng vào `main`.** Không tạo branch, không tạo git worktree — chủ dự án làm một mình một dự án và đã quyết vậy. Nếu bạn dùng `superpowers:executing-plans` hay `superpowers:subagent-driven-development`, **bỏ qua bước `using-git-worktrees`** của chúng và coi đây là sự đồng ý rõ ràng để làm trên `main`.
+>
+> Đổi lại: **commit từng task một**, message rõ ràng. Đó là cách quay lui khi hỏng (`git revert <sha>`) — thứ mà branch từng lo, giờ commit nhỏ lo.
 >
 > Thuộc nhóm [Release Readiness](2026-07-26-release-readiness.md). **Chặn release. Làm trước mọi plan code khác.**
 
@@ -200,7 +202,9 @@ npm run typecheck
 
 Mong đợi: exit 0.
 
-- [ ] **Bước 6: Kiểm chứng vòng lặp chết đã hết**
+- [x] **Bước 6: Kiểm chứng vòng lặp chết đã hết**
+
+> **Runtime 2026-07-26 (sau fix):** sau bước 1 vẫn ở wizard bước 2; `/dashboard/setup` vào lại được, mở bước Cal.com (`initialStep`). Dead loop hết.
 
 Dùng lại tài khoản dựng ở Task 1 (setup xong, không Cal):
 

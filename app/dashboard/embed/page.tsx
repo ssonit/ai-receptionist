@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { getTranslations } from "next-intl/server";
 
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getDashboardUser } from "@/lib/dashboard-user";
+import { createTranslator } from "@/lib/i18n";
+import { readDashboardLocale } from "@/lib/read-locale-cookie";
 import { createClient } from "@/lib/supabase/server";
 import { isWorkspaceBookingLive } from "@/lib/workspace";
 
@@ -17,7 +18,7 @@ export default async function EmbedDashboardPage() {
   if (!workspaceId) redirect("/dashboard/setup");
 
   const supabase = await createClient();
-  const [{ data: workspace }, bookingLive, h, t] = await Promise.all([
+  const [{ data: workspace }, bookingLive, h, locale] = await Promise.all([
     supabase
       .from("workspaces")
       .select("slug")
@@ -25,8 +26,9 @@ export default async function EmbedDashboardPage() {
       .maybeSingle(),
     isWorkspaceBookingLive(workspaceId),
     headers(),
-    getTranslations(),
+    readDashboardLocale(),
   ]);
+  const t = createTranslator(locale);
 
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const proto = h.get("x-forwarded-proto") ?? "http";

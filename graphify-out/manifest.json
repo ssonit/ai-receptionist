@@ -780,8 +780,8 @@
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
-    "mtime": 1785058642.5133443,
-    "ast_hash": "21ed182a4c5521b2df463ba5ca33ac01",
+    "mtime": 1785059007.0820649,
+    "ast_hash": "86dcda722f5d69cdf72f40cc04429d08",
     "semantic_hash": ""
   },
   "public/landing-hero-chat.png": {
@@ -1075,8 +1075,8 @@
     "semantic_hash": ""
   },
   "docs/MIGRATIONS.md": {
-    "mtime": 1784954138.828337,
-    "ast_hash": "e37243dc61a1c7ac2ca611d28c63891a",
+    "mtime": 1785059005.899297,
+    "ast_hash": "448f09be2d1af3b82449fdf8ca7dbad6",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000001_init_schema.sql": {

@@ -1,6 +1,10 @@
 # Trang pháp lý `/terms` + `/privacy` — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Thực thi task-by-task, đánh dấu checkbox (`- [ ]`) để theo dõi.
+>
+> **Sửa thẳng vào `main`.** Không tạo branch, không tạo git worktree — chủ dự án làm một mình một dự án và đã quyết vậy. Nếu bạn dùng `superpowers:executing-plans` hay `superpowers:subagent-driven-development`, **bỏ qua bước `using-git-worktrees`** của chúng và coi đây là sự đồng ý rõ ràng để làm trên `main`.
+>
+> Đổi lại: **commit từng task một**, message rõ ràng. Đó là cách quay lui khi hỏng (`git revert <sha>`) — thứ mà branch từng lo, giờ commit nhỏ lo.
 >
 > Thuộc nhóm [Release Readiness](2026-07-26-release-readiness.md).
 
@@ -45,7 +49,7 @@ Tách shell khỏi nội dung để lần sau thêm trang pháp lý thứ ba (v�
 - Consumes: `Link` từ `next/link`, `Metadata` từ `next`
 - Produces: `LegalPage({ title, updated, children }: { title: string; updated: string; children: ReactNode })` — server component, không `"use client"`.
 
-- [ ] **Bước 1: Tạo shell**
+- [x] **Bước 1: Tạo shell**
 
 Tạo `app/_components/legal-page.tsx`:
 
@@ -77,7 +81,7 @@ export function LegalPage({
 }
 ```
 
-- [ ] **Bước 2: Tạo trang chính sách bảo mật**
+- [x] **Bước 2: Tạo trang chính sách bảo mật**
 
 Tạo `app/privacy/page.tsx`. Nội dung dưới đây mô tả **đúng những gì code đang làm** (chat lưu tin nhắn, cookie visitor, Cal.com giữ lịch, Resend gửi mail, link unsubscribe trong mail nhắc lịch) — không hứa thêm gì:
 
@@ -132,7 +136,7 @@ export default function PrivacyPage() {
 }
 ```
 
-- [ ] **Bước 3: Tạo trang điều khoản**
+- [x] **Bước 3: Tạo trang điều khoản**
 
 Tạo `app/terms/page.tsx`:
 
@@ -188,7 +192,7 @@ npm run dev
 
 Mở `http://localhost:3000/privacy` và `http://localhost:3000/terms`. Mong đợi: cả hai render, có link `← Eve` quay về trang chủ, tiêu đề tab đúng theo `metadata.title`.
 
-- [ ] **Bước 5: Điền email liên hệ**
+- [x] **Bước 5: Điền email liên hệ**
 
 **Hỏi user địa chỉ hỗ trợ — không đoán domain.** Rồi thay cả hai chỗ.
 
@@ -198,7 +202,7 @@ grep -rn "REPLACE_WITH_CONTACT_EMAIL" app/
 
 Mong đợi sau khi sửa: không khớp gì.
 
-- [ ] **Bước 6: doctor + typecheck**
+- [x] **Bước 6: doctor + typecheck**
 
 ```bash
 npm run doctor
@@ -207,7 +211,7 @@ npm run typecheck
 
 Mong đợi: doctor không báo error trên file mới; typecheck exit 0.
 
-- [ ] **Bước 7: Commit**
+- [x] **Bước 7: Commit**
 
 ```bash
 git add app/terms app/privacy app/_components/legal-page.tsx
@@ -225,7 +229,7 @@ git commit -m "feat(legal): add terms and privacy pages"
 - Consumes: `/terms` và `/privacy` từ Task 1
 - Produces: không export mới.
 
-- [ ] **Bước 1: Thay khối link trong SiteFooter**
+- [x] **Bước 1: Thay khối link trong SiteFooter**
 
 Trong `app/_components/landing-page.tsx`, thay khối `<div className="flex gap-4">` (dòng 502-515) bằng:
 
@@ -262,14 +266,14 @@ npm run dev
 
 Mở `http://localhost:3000/`, cuộn xuống footer: 6 link, cả Terms và Privacy điều hướng đúng. Thu hẹp cửa sổ còn ~375px → link xuống dòng, **không** tràn ngang.
 
-- [ ] **Bước 3: doctor + typecheck**
+- [x] **Bước 3: doctor + typecheck**
 
 ```bash
 npm run doctor
 npm run typecheck
 ```
 
-- [ ] **Bước 4: Cập nhật graph và commit**
+- [x] **Bước 4: Cập nhật graph và commit**
 
 ```bash
 graphify update .
@@ -281,7 +285,7 @@ git commit -m "feat(legal): link terms and privacy from the site footer"
 
 ## Self-review trước khi đóng plan
 
-- [ ] `grep -rn "REPLACE_WITH_CONTACT_EMAIL" app/` → không khớp
+- [x] `grep -rn "REPLACE_WITH_CONTACT_EMAIL" app/` → không khớp
 - [ ] Cả `/terms` và `/privacy` trả 200 khi chạy `npm run build && npm start`
 - [ ] Footer không tràn ngang ở 375px
-- [ ] Nội dung không hứa hẹn thứ code không làm (ví dụ: không hứa "xoá trong 30 ngày" khi chưa có cơ chế xoá)
+- [x] Nội dung không hứa hẹn thứ code không làm (ví dụ: không hứa "xoá trong 30 ngày" khi chưa có cơ chế xoá)

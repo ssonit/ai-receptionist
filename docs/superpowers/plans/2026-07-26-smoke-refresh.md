@@ -1,10 +1,16 @@
 # Đồng bộ SMOKE.md với code hiện tại — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Thực thi task-by-task, đánh dấu checkbox (`- [ ]`) để theo dõi.
+>
+> **Sửa thẳng vào `main`.** Không tạo branch, không tạo git worktree — chủ dự án làm một mình một dự án và đã quyết vậy. Nếu bạn dùng `superpowers:executing-plans` hay `superpowers:subagent-driven-development`, **bỏ qua bước `using-git-worktrees`** của chúng và coi đây là sự đồng ý rõ ràng để làm trên `main`.
+>
+> Đổi lại: **commit từng task một**, message rõ ràng. Đó là cách quay lui khi hỏng (`git revert <sha>`) — thứ mà branch từng lo, giờ commit nhỏ lo.
 >
 > Thuộc nhóm [Release Readiness](2026-07-26-release-readiness.md). Làm **sớm nhất** trong nhóm — mọi plan khác trích SMOKE.
 
 **Goal:** Đưa `docs/SMOKE.md` về đúng với code trên `main` (`0bb1d5b`), để mọi kiểm chứng thủ công trong nhóm release dựa được vào nó.
+
+> **Trạng thái 2026-07-26:** Nội dung viết lại **đã có trên `main`** (commit kèm setup-reentry). Plan này đóng bằng bước **chạy thật một phần** + nhật ký trong `docs/SMOKE.md`. Không cần viết lại section lần nữa trừ khi phát hiện lệch mới.
 
 **Architecture:** Chỉ sửa docs. Không đụng code. Mỗi task dưới đây sửa một section và **phải kiểm chứng lại bằng cách chạy thật** — viết lại checklist mà không chạy thử thì chỉ đổi một tài liệu sai này lấy một tài liệu sai khác.
 
@@ -45,49 +51,11 @@
 - Consumes: `supabase/migrations/` (danh sách thật)
 - Produces: phần Prerequisites đúng — mọi task sau giả định người chạy đã dựng được môi trường từ đây.
 
-- [ ] **Bước 1: Lấy danh sách migration thật**
-
-```bash
-ls supabase/migrations/
-```
-
-Mong đợi 13 file, mới nhất là `20260726000001_workspace_invites_hardening.sql`. Nếu số khác 13, dùng kết quả thật chứ không dùng con số trong plan này.
-
-- [ ] **Bước 2: Bổ sung hai migration thiếu**
-
-Trong `docs/SMOKE.md`, sau dòng `` - `20260725000004_booking_reminders.sql` (cron reminders + manage_link + opt-out) ``, thêm:
-
-```markdown
-  - `20260725000005_chat_messages_upsert_constraint.sql` (chống trùng tin nhắn khi retry)
-  - `20260726000001_workspace_invites_hardening.sql` (invite bắt buộc email, gỡ thành viên, chuyển owner)
-```
-
-- [ ] **Bước 3: Thêm giải thích bookingLive vào Prerequisites**
-
-Đây là khái niệm quan trọng nhất mà SMOKE.md đang thiếu — người chạy smoke sẽ tưởng dashboard mở được nghĩa là trang công khai đã live. Thêm vào cuối section `## Prerequisites`, sau dòng `` - [ ] Eve Pilot `/chat` demo uses env `CALCOM_*`… ``:
-
-```markdown
-- [ ] **Hiểu hai cổng khác nhau trước khi chạy:**
-  - `setup_completed_at` → mở khoá `/dashboard/*` ([proxy.ts:98](../proxy.ts)). Set được **không cần** Cal.com.
-  - `bookingLive` (dẫn xuất: có Cal key **và** có meeting type AI) → phát hành `/b/{slug}` ([lib/workspace.ts:220](../lib/workspace.ts)).
-  - Workspace vào được dashboard nhưng `/b/{slug}` chưa live là **đúng thiết kế**, không phải bug.
-```
-
-- [ ] **Bước 4: Kiểm chứng bằng cách chạy thật**
-
-```bash
-npx supabase db reset
-```
-
-Mong đợi: 13 migration apply sạch, seed chạy xong, không lỗi. Đây là bằng chứng cho Bước 2.
-
-- [ ] **Bước 5: Kiểm chứng khẳng định về hai cổng**
-
-```bash
-npm run dev
-```
-
-Tạo tài khoản mới ở `/signup` → hoàn tất setup mà **bỏ qua** bước Cal.com → mong đợi: vào được `/dashboard`, nhưng mở `/b/{slug}` thì **không** thấy chat live. Nếu hành vi khác với mô tả ở Bước 3, sửa lại lời văn cho khớp code — code thắng.
+- [x] **Bước 1: Lấy danh sách migration thật**
+- [x] **Bước 2: Bổ sung hai migration thiếu** *(đã có trong SMOKE trên main)*
+- [x] **Bước 3: Thêm giải thích bookingLive vào Prerequisites** *(đã có)*
+- [x] **Bước 4: Kiểm chứng bằng cách chạy thật** — `npx supabase db reset` exit 0, 13 migration
+- [x] **Bước 5: Kiểm chứng khẳng định về hai cổng** — đã verify qua setup-reentry (skip Cal → dashboard + wizard re-entry); `/b` chưa live khi thiếu Cal
 
 ---
 
