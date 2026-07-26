@@ -187,11 +187,11 @@ Email **bắt buộc** — link mở không gắn email đã bỏ hẳn ([`invit
 
 ## Ops — nơi lỗi hiện ra
 
-- **Lỗi runtime server:** Vercel → Project → Logs. Lọc tiền tố `[cron/tick]`.
-- **Cron fail:** non-200 của `/api/cron/tick` ở Vercel → Crons.
-- **Lỗi build:** Vercel → Deployments.
+- **Lỗi runtime server:** Vercel → Project → Logs. Lọc theo tiền tố: `[cron/tick]`, `[agent-rate-limit]`, `[reminders]`, `[email]`, `[app-error]`.
+- **Cron fail:** hiện thành non-200 của `/api/cron/tick` ở Vercel → Crons.
+- **Lỗi build:** Vercel → Deployments → deploy tương ứng.
 - **PostHog chỉ nhận event sản phẩm, không bao giờ nhận exception.** Đừng tìm lỗi ở đó.
-- **Lỗi client trong chat:** DevTools console của khách — hiện **không** thu thập tập trung. Đây là điểm mù đã biết.
+- **Lỗi phía client trong chat:** DevTools console của khách — hiện **không** thu thập tập trung. Đây là điểm mù đã biết.
 - Deploy hỏng: [rollback + kill switch](./MIGRATIONS.md).
 
 ---
