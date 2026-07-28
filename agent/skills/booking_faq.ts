@@ -17,11 +17,13 @@ async function faqSkill(ctx: {
     };
   };
 }) {
+  console.error(`[diag] faqSkill enter ${Date.now()}`);
   const workspaceId = await resolveWorkspaceIdFromAgentContext({
     sessionId: ctx.session?.id ?? null,
     auth: ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null,
   });
   const workspace = await fetchWorkspaceFaq(workspaceId);
+  console.error(`[diag] faqSkill after fetchWorkspaceFaq ${Date.now()}`);
   return defineSkill({
     description,
     markdown: buildBookingFaqMarkdown(workspace),

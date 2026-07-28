@@ -59,6 +59,7 @@ export default eveChannel({
   ],
   onMessage: async (ctx) => {
     const request = ctx.eve.request;
+    console.error(`[diag] onMessage enter ${Date.now()}`);
     const visitorId = readVisitorIdFromCookieHeader(
       request.headers.get("cookie"),
     );
@@ -68,6 +69,7 @@ export default eveChannel({
       ?.trim()
       .toLowerCase();
     const limited = await checkAgentRateLimit({ visitorId, ip, workspaceSlug });
+    console.error(`[diag] onMessage after rateLimit ${Date.now()}`);
     if (!limited.ok) {
       // Soft-stamp so tools/instructions can surface a friendly limit message.
       const base = defaultEveAuth(ctx);

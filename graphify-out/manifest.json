@@ -70,8 +70,8 @@
     "semantic_hash": "930750902f8cd91142b8e6a67e5af6bb"
   },
   "app/_components/agent-chat.tsx": {
-    "mtime": 1785212226.8707285,
-    "ast_hash": "cd2d08861ec6831de652b2de3d8558c0",
+    "mtime": 1785214815.887468,
+    "ast_hash": "89f4749769c923ad08c1cb7c007ce4a2",
     "semantic_hash": ""
   },
   "app/_components/agent-message.tsx": {

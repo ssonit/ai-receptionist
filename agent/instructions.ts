@@ -189,12 +189,14 @@ async function instructionsForCtx(ctx: {
     };
   };
 }) {
+  console.error(`[diag] instructionsForCtx enter ${Date.now()}`);
   const auth =
     ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null;
   const workspaceId = await resolveWorkspaceIdFromAgentContext({
     sessionId: ctx.session?.id ?? null,
     auth,
   });
+  console.error(`[diag] instructionsForCtx after resolveWorkspaceId ${Date.now()}`);
   const locale = parseAppLocale(
     firstAttr(auth?.attributes, "locale"),
     DEFAULT_LOCALE,
@@ -204,14 +206,16 @@ async function instructionsForCtx(ctx: {
     getWorkspaceById(workspaceId),
     resolveGuestTimeZone({ auth, chatSessionId }),
   ]);
+  console.error(`[diag] instructionsForCtx after workspace+tz ${Date.now()}`);
 
-  return defineInstructions({
-    markdown: await buildMarkdown(workspaceId, locale, {
-      serviceMode: ws?.service_mode ?? "onsite",
-      guestTimeZone: guestTz.guestTimeZone,
-      guestTzSource: guestTz.source,
-    }),
+  const markdown = await buildMarkdown(workspaceId, locale, {
+    serviceMode: ws?.service_mode ?? "onsite",
+    guestTimeZone: guestTz.guestTimeZone,
+    guestTzSource: guestTz.source,
   });
+  console.error(`[diag] instructionsForCtx after buildMarkdown ${Date.now()}`);
+
+  return defineInstructions({ markdown });
 }
 
 export default defineDynamic({
