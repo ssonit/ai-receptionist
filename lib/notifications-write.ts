@@ -11,6 +11,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const NOTIFICATION_TYPES = [
   "lead_new",
   "lead_urgent",
+  "long_treatment_requested",
   "booking_created",
   "tool_error",
   "booking_mirror_failed",

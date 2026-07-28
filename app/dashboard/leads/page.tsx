@@ -33,6 +33,10 @@ export default async function LeadsPage() {
             Leads from the chat agent (`log_lead`). Update status when contacted or
             when the customer has booked.
           </p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Long-treatment requests are logged immediately from chat and should be
+            triaged first.
+          </p>
         </div>
         <LeadsTable rows={leads ?? []} />
       </div>

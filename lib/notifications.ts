@@ -13,7 +13,12 @@ export {
 } from "@/lib/notifications-write";
 
 export const NOTIFICATION_TYPE_GROUPS = {
-  leads: ["lead_new", "lead_urgent", "lead_stale"],
+  leads: [
+    "lead_new",
+    "lead_urgent",
+    "long_treatment_requested",
+    "lead_stale",
+  ],
   bookings: [
     "booking_created",
     "booking_mirror_failed",

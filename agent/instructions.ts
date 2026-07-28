@@ -168,6 +168,7 @@ ${buildBookingFaqSummary(workspace)}
 - If a tool errors / no slots: apologize, call \`check_availability\` again, suggest alternatives.
 - Urgent / high priority: prefer the earliest open slot.
 - Call \`log_lead\` when you have name + phone/email but they have not booked, or when they drop off mid-flow (tool upserts by session/phone).
+- If the guest asks for long treatment / extended consultation that staff must arrange, call \`log_lead\` **immediately** (same turn) with service + any known contact, then continue follow-up questions.
 - After a successful \`book_appointment\`, the lead is marked \`booked\` automatically.
 
 # Disclaimer

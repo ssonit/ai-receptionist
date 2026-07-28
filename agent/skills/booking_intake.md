@@ -15,6 +15,7 @@ After you have enough information:
 - Offer 2–3 real slots.
 - Collect full name, phone, and email before `book_appointment` (`guestName`).
 - **Required:** call `log_lead` when you have name + (phone or email) and they have not booked / dropped off.
+- **Long-treatment branch:** if the guest says they need long treatment / extended consultation arranged by staff, call `log_lead` in the same turn immediately (do not wait for full intake), then continue collecting missing contact details.
 - `urgency` should be one of: `low` | `normal` | `high` | `urgent`.
 - After a successful `book_appointment`, the lead for the same session/phone is marked `booked` — no extra `log_lead` needed.
 - After a successful book, the tool returns a one-time **manage code** (`manageCode`). Tell the guest that code once so they can cancel/reschedule later from another chat or device. Do not invent a code if the tool did not return one.

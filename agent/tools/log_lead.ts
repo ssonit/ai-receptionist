@@ -6,7 +6,10 @@ import {
   type LeadStatus,
 } from "@/lib/lead-status";
 import { findWorkspaceLead } from "@/lib/leads";
-import { createNotification } from "@/lib/notifications-write";
+import {
+  createNotification,
+  createNotificationDebounced,
+} from "@/lib/notifications-write";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveWorkspaceIdFromAgentContext } from "@/lib/workspace";
 
@@ -16,6 +19,29 @@ function nextStatusOnLog(current: string | undefined): LeadStatus {
   }
   if (current === "contacted") return "contacted";
   return "new";
+}
+
+function normalizeText(value: string | null | undefined): string {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function isLongTreatmentIntent(
+  service: string | null | undefined,
+  notes: string | null | undefined,
+): boolean {
+  const haystack = `${normalizeText(service)} ${normalizeText(notes)}`.trim();
+  if (!haystack) return false;
+  return (
+    haystack.includes("dieu tri dai") ||
+    haystack.includes("kham dieu tri dai") ||
+    haystack.includes("dieu tri lau") ||
+    haystack.includes("long treatment") ||
+    haystack.includes("extended treatment") ||
+    haystack.includes("long consultation")
+  );
 }
 
 export default defineTool({
@@ -59,6 +85,7 @@ export default defineTool({
         session_id: sessionId,
         status: nextStatusOnLog(existing?.status),
       };
+      const longTreatment = isLongTreatmentIntent(patch.service, patch.notes);
 
       if (existing) {
         const { error } = await supabase
@@ -94,6 +121,23 @@ export default defineTool({
             entityType: "lead",
             entityId: existing.id,
             workspaceId,
+          });
+        }
+        if (longTreatment) {
+          const leadLabel = patch.full_name || phone || email || "Guest";
+          const longTreatmentEntityId = `long-treatment:${existing.id}`;
+          await createNotificationDebounced({
+            type: "long_treatment_requested",
+            title: `Long treatment request: ${leadLabel}`,
+            body: [patch.service, patch.phone || patch.email, patch.notes]
+              .filter(Boolean)
+              .join(" · "),
+            severity: "high",
+            href: "/dashboard/leads",
+            entityType: "lead",
+            entityId: longTreatmentEntityId,
+            workspaceId,
+            windowMinutes: 180,
           });
         }
         return {
@@ -156,6 +200,22 @@ export default defineTool({
           entityType: "lead",
           entityId: data.id,
           workspaceId,
+        });
+      }
+      if (longTreatment) {
+        const longTreatmentEntityId = `long-treatment:${data.id}`;
+        await createNotificationDebounced({
+          type: "long_treatment_requested",
+          title: `Long treatment request: ${leadLabel}`,
+          body: [patch.service, patch.phone || patch.email, patch.notes]
+            .filter(Boolean)
+            .join(" · "),
+          severity: "high",
+          href: "/dashboard/leads",
+          entityType: "lead",
+          entityId: longTreatmentEntityId,
+          workspaceId,
+          windowMinutes: 180,
         });
       }
 

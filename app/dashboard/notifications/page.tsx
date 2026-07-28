@@ -27,6 +27,10 @@ export default async function NotificationsPage() {
             New/urgent/overdue leads, chat bookings or Cal.com reschedule/cancel,
             AI tool errors, and missing agent config. Mark as read once handled.
           </p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Long-treatment requests appear as high-priority lead notifications and
+            link to the lead queue.
+          </p>
         </div>
         <NotificationsInbox
           initialItems={page.items}
