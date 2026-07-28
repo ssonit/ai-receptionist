@@ -36,17 +36,31 @@ export default async function ChatPage() {
     : null;
 
   if (!workspace?.bookingLive) {
-    const missingEnv = !workspace;
+    // Dev-only diagnostics — never surface seed/env instructions to guests.
+    console.warn(
+      "[eve chat] Eve Pilot not ready:",
+      !workspace
+        ? "workspace missing (seed with supabase db reset)"
+        : "Cal.com env incomplete",
+    );
+    const title =
+      initialLocale === "vi"
+        ? "Chat tạm thời chưa sẵn sàng."
+        : "Chat isn't available right now.";
+    const body =
+      initialLocale === "vi"
+        ? "Vui lòng thử lại sau ít phút."
+        : "Please try again in a few minutes.";
+    const back =
+      initialLocale === "vi" ? "Về trang chủ" : "Back to home";
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-black px-6 text-center text-zinc-300">
-        <p className="text-sm">Eve Pilot demo isn&apos;t ready yet.</p>
-        <p className="text-muted-foreground max-w-md text-xs text-zinc-500">
-          {missingEnv
-            ? "Run npx supabase db reset so the eve-pilot workspace is seeded."
-            : "Set CALCOM_API_KEY and CALCOM_EVENT_TYPE_ID (or USERNAME + EVENT_TYPE_SLUG) in .env.local, then restart the dev server."}
+        <p className="text-sm">{title}</p>
+        <p className="max-w-md text-xs text-zinc-500">
+          {body}
         </p>
         <a className="text-sm text-teal-200 underline-offset-2 hover:underline" href="/">
-          Back to home
+          {back}
         </a>
       </div>
     );

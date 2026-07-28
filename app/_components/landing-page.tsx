@@ -223,7 +223,7 @@ function Hero() {
           <div className="pointer-events-none absolute -inset-x-10 -top-10 -z-10 h-40 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.18),transparent_70%)] blur-2xl" />
           <Safari
             className="size-full"
-            imageSrc="/landing-hero-chat.png"
+            imageSrc="/landing-hero-chat.png?v=5"
             url="eve.app/chat"
           />
         </div>

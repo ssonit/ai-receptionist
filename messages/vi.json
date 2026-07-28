@@ -18,7 +18,7 @@
     "language": "Ngôn ngữ",
     "dashboardLink": "Dashboard",
     "unavailableTitle": "Chat tạm thời không khả dụng",
-    "unavailableBody": "Thử gửi lại sau vài giây. Nếu vẫn lỗi, kiểm tra API key model trong .env.local (DEEPSEEK / GOOGLE / ANTHROPIC).",
+    "unavailableBody": "Thử gửi lại sau vài giây.",
     "statusError": "Lỗi",
     "statusTyping": "Đang gõ",
     "statusOnline": "Online",

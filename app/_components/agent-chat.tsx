@@ -13,7 +13,7 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
-import { LocaleProvider, LocaleToggle, useAppLocale } from "@/components/locale-provider";
+import { LocaleProvider, useAppLocale } from "@/components/locale-provider";
 import { BorderBeam } from "@/components/magicui/border-beam";
 import { AnimatedGridPattern } from "@/components/ui/animated-grid-pattern";
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
@@ -264,9 +264,7 @@ function AgentChatInner({
       } catch (error) {
         console.error("[eve chat] bootstrap failed", error);
         if (!cancelled) {
-          setBootError(
-            error instanceof Error ? error.message : t("chat.bootError"),
-          );
+          setBootError(t("chat.bootError"));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -355,14 +353,7 @@ function AgentChatInner({
           </div>
 
           <div className="flex items-center gap-2">
-            <LocaleToggle />
             {headerEnd}
-            <Link
-              className="hidden text-sm text-zinc-400 transition hover:text-white sm:inline"
-              href="/dashboard"
-            >
-              {t("chat.dashboardLink")}
-            </Link>
             {user ? (
               <ChatUserMenu user={user} />
             ) : (
@@ -370,28 +361,6 @@ function AgentChatInner({
                 <Link href="/login">{t("common.signIn")}</Link>
               </RainbowButton>
             )}
-            <button
-              className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] text-zinc-400 hover:border-white/20 hover:text-zinc-200"
-              onClick={() => {
-                void (async () => {
-                  try {
-                    await fetch("/api/chat/forget", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        chatSessionId: bootstrap?.chatSessionId,
-                      }),
-                    });
-                  } catch {
-                    // still rotate client view
-                  }
-                  window.location.reload();
-                })();
-              }}
-              type="button"
-            >
-              {t("chat.notYou")}
-            </button>
           </div>
         </header>
 

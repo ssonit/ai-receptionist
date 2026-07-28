@@ -18,7 +18,7 @@
     "language": "Language",
     "dashboardLink": "Dashboard",
     "unavailableTitle": "Chat is temporarily unavailable",
-    "unavailableBody": "Try sending again in a few seconds. If it still fails, check the model API key in .env.local (DEEPSEEK / GOOGLE / ANTHROPIC).",
+    "unavailableBody": "Try sending again in a few seconds.",
     "statusError": "Error",
     "statusTyping": "Typing",
     "statusOnline": "Online",
