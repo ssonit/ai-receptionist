@@ -2,6 +2,7 @@ import { defineAgent, defineDynamic } from "eve";
 import {
   defaultSlot,
   extractLatestUserText,
+  hasAnyProviderKey,
   languageModelFor,
   pickSlotForTurn,
   resolveLanguageModel,
@@ -14,10 +15,20 @@ import {
  * - Anthropic: ANTHROPIC_API_KEY (claude-haiku-4-5)
  *
  * LanguageModel objects are only returned from step.started (Eve requirement).
+ * Prefer resolveLanguageModel so missing keys fail/fallback before the stream hangs.
  */
+function fallbackModel() {
+  if (hasAnyProviderKey()) {
+    return resolveLanguageModel(defaultSlot());
+  }
+  // Eve requires a LanguageModel object at define time; turn will still fail
+  // fast in step.started via resolveLanguageModel when no keys are present.
+  return languageModelFor(defaultSlot());
+}
+
 export default defineAgent({
   model: defineDynamic({
-    fallback: languageModelFor(defaultSlot()),
+    fallback: fallbackModel(),
     events: {
       "step.started": (_event, ctx) => {
         const slot = pickSlotForTurn(extractLatestUserText(ctx.messages));

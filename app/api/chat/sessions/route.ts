@@ -6,7 +6,7 @@ import { getChatActor, getChatWorkspaceId, jsonError } from "@/lib/chat-api";
 
 export async function GET(request: Request) {
   try {
-    const { visitorId, userId } = await getChatActor();
+    const { visitorId, userId } = await getChatActor(request);
     const workspaceId = await getChatWorkspaceId(request);
     const sessions = await listChatSessionsForActor({
       visitorId,
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { visitorId, userId } = await getChatActor();
+    const { visitorId, userId } = await getChatActor(request);
     const workspaceId = await getChatWorkspaceId(request);
     let title: string | undefined;
     try {

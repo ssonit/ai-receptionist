@@ -83,11 +83,18 @@ export function resolveLanguageModel(preferred: ModelSlot): LanguageModel {
   ];
   for (const slot of order) {
     if (hasProviderKey(slot)) {
+      if (slot !== preferred) {
+        console.warn(
+          `[models] preferred slot "${preferred}" has no API key; using "${slot}"`,
+        );
+      }
       return languageModelFor(slot);
     }
   }
-  // Last resort: still return preferred so the provider surfaces a clear missing-key error.
-  return languageModelFor(preferred);
+  // Fail fast — returning a model without a key often hangs the stream with no usable error.
+  throw new Error(
+    "No AI provider API key configured. Set DEEPSEEK_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, or ANTHROPIC_API_KEY.",
+  );
 }
 
 export function defaultSlot(): ModelSlot {

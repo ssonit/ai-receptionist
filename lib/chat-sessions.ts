@@ -79,6 +79,10 @@ export type ChatMessagesPage = {
 const SESSION_LIST_SELECT =
   "id, title, status, eve_session_id, visitor_id, user_id, last_message_at, created_at, updated_at";
 
+/** Ownership / mutate paths — skip heavy `events` blob. */
+const SESSION_AUTH_SELECT =
+  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, continuation_token, stream_index, last_message_at, created_at, updated_at";
+
 const SESSION_FULL_SELECT =
   "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, continuation_token, stream_index, events, last_message_at, created_at, updated_at";
 
@@ -216,19 +220,35 @@ export async function getChatSessionForActor(input: {
   visitorId: string;
   userId?: string | null;
   workspaceId?: string;
+  /** When false, skip the `events` column (mutate / persist auth checks). */
+  includeEvents?: boolean;
 }): Promise<ChatSessionRow | null> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("chat_sessions")
-    .select(SESSION_FULL_SELECT)
-    .eq("id", input.id)
-    .eq("workspace_id", input.workspaceId ?? getDefaultWorkspaceId())
-    .maybeSingle();
+  const includeEvents = input.includeEvents !== false;
+  const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
 
+  const result = includeEvents
+    ? await supabase
+        .from("chat_sessions")
+        .select(SESSION_FULL_SELECT)
+        .eq("id", input.id)
+        .eq("workspace_id", workspaceId)
+        .maybeSingle()
+    : await supabase
+        .from("chat_sessions")
+        .select(SESSION_AUTH_SELECT)
+        .eq("id", input.id)
+        .eq("workspace_id", workspaceId)
+        .maybeSingle();
+
+  const { data, error } = result;
   if (error) throw new Error(error.message);
   if (!data) return null;
 
-  const row = data as ChatSessionRow;
+  const row = data as unknown as ChatSessionRow;
+  if (!includeEvents && row.events === undefined) {
+    row.events = [];
+  }
   if (!actorOwnsSession(row, input.visitorId, input.userId)) return null;
   return row;
 }
@@ -337,6 +357,7 @@ export async function updateChatSessionState(input: {
     visitorId: input.visitorId,
     userId: input.userId,
     workspaceId: input.workspaceId,
+    includeEvents: false,
   });
   if (!existing) return null;
 

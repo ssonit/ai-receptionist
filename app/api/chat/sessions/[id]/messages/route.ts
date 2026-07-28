@@ -15,7 +15,7 @@ type Params = { params: Promise<{ id: string }> };
 export async function GET(request: Request, { params }: Params) {
   try {
     const { id } = await params;
-    const { visitorId, userId } = await getChatActor();
+    const { visitorId, userId } = await getChatActor(request);
     const workspaceId = await getChatWorkspaceId(request);
     const session = await getChatSessionForActor({
       id,
@@ -46,15 +46,24 @@ export async function GET(request: Request, { params }: Params) {
 export async function POST(request: Request, { params }: Params) {
   try {
     const { id } = await params;
-    const { visitorId, userId } = await getChatActor();
+    const { visitorId, userId } = await getChatActor(request);
     const workspaceId = await getChatWorkspaceId(request);
     const session = await getChatSessionForActor({
       id,
       visitorId,
       userId,
       workspaceId,
+      includeEvents: false,
     });
-    if (!session) return jsonError("Session not found", 404);
+    if (!session) {
+      console.warn("[chat] persist session not found", {
+        id,
+        workspaceId,
+        visitor: visitorId.slice(0, 8),
+        user: userId ? "yes" : "no",
+      });
+      return jsonError("Session not found", 404);
+    }
 
     const body = (await request.json()) as {
       messages?: ProjectedChatMessage[];

@@ -19,6 +19,9 @@
     "dashboardLink": "Dashboard",
     "unavailableTitle": "Chat tạm thời không khả dụng",
     "unavailableBody": "Thử gửi lại sau vài giây.",
+    "timeoutTitle": "Phản hồi quá lâu",
+    "timeoutBody": "Trợ lý chưa trả lời kịp. Hãy mở chat mới hoặc thử gửi lại.",
+    "timeoutNewChat": "Chat mới",
     "statusError": "Lỗi",
     "statusTyping": "Đang gõ",
     "statusOnline": "Online",
@@ -102,5 +105,199 @@
     "cancel": "Hủy",
     "signIn": "Đăng nhập",
     "signOut": "Đăng xuất"
+  },
+  "landing": {
+    "brand": "Eve",
+    "nav": {
+      "features": "Tính năng",
+      "pricing": "Giá",
+      "faq": "FAQ",
+      "logIn": "Đăng nhập",
+      "startFree": "Dùng thử"
+    },
+    "hero": {
+      "badge": "Lễ tân AI cho Cal.com",
+      "title": "Lịch hẹn tự chốt.",
+      "subtitle": "Chat trả lời FAQ, kiểm tra slot thật, và đặt thẳng vào lịch — không bỏ sót lead.",
+      "ctaPrimary": "Dùng thử miễn phí",
+      "ctaSecondary": "Xem demo",
+      "tabs": {
+        "chat": "Chat đặt lịch",
+        "slots": "Slot Cal.com thật",
+        "ops": "Lead & vận hành"
+      }
+    },
+    "logos": {
+      "label": "Gắn vào stack bạn đang dùng"
+    },
+    "tour": {
+      "title": "Vòng đặt lịch, có agent.",
+      "subtitle": "Một agent lo hội thoại, lịch, và bàn giao cho team của bạn.",
+      "items": {
+        "chat": {
+          "label": "Chat 24/7",
+          "title": "Trả lời khi bạn ngủ",
+          "body": "FAQ, intake và sàng lọc luôn online. Khách nhận phản hồi trong vài giây — không phải hộp thư thoại."
+        },
+        "book": {
+          "label": "Đặt lịch thật",
+          "title": "Slot từ Cal.com, không bịa",
+          "body": "Eve kiểm tra giờ trống và tạo sự kiện trên lịch của bạn. Một nguồn sự thật — không double-booking."
+        },
+        "dash": {
+          "label": "Dashboard rõ",
+          "title": "Lead và lịch hẹn một chỗ",
+          "body": "Xem hội thoại, booking và trạng thái lịch mà không phải lội thread chat."
+        }
+      }
+    },
+    "integrations": {
+      "title": "Giữ lịch. Giữ stack.",
+      "subtitle": "Eve kết nối Cal.com hôm nay. WhatsApp, voice và hơn thế nữa khi sẵn sàng — không vaporware.",
+      "items": {
+        "cal": "Cal.com",
+        "web": "Web chat",
+        "embed": "Embed widget",
+        "whatsapp": "WhatsApp",
+        "voice": "Voice agent",
+        "soon": "Sắp có"
+      }
+    },
+    "moments": {
+      "title": "Làm đúng khoảnh khắc đặt lịch.",
+      "subtitle": "Mỗi bề mặt chỉ phục vụ một việc: biến khách thành lịch hẹn đã xác nhận.",
+      "items": {
+        "chat": {
+          "title": "Chat đặt lịch",
+          "body": "Khách chọn slot ngay trong hội thoại. Không mê cung form."
+        },
+        "cal": {
+          "title": "Giờ trống live",
+          "body": "Slot mở lấy thẳng từ Cal.com."
+        },
+        "leads": {
+          "title": "Thu lead",
+          "body": "Tên, liên hệ và nhu cầu vào dashboard."
+        },
+        "embed": {
+          "title": "Nhúng website",
+          "body": "Thả bubble lên mọi trang bằng một snippet."
+        },
+        "tenant": {
+          "title": "Workspace của bạn",
+          "body": "Mỗi doanh nghiệp một trang đặt lịch riêng."
+        },
+        "remind": {
+          "title": "Nhắc lịch",
+          "body": "Nudge outbound để giảm no-show."
+        }
+      }
+    },
+    "pricing": {
+      "title": "Giá đơn giản. Booking thật.",
+      "subtitle": "Bắt đầu miễn phí. Nâng cấp khi lịch đầy.",
+      "monthly": "Tháng",
+      "annual": "Năm",
+      "annualSave": "tặng 2 tháng",
+      "perMonth": "/th",
+      "perYear": "/năm",
+      "popular": "Phổ biến",
+      "comingSoon": "Sắp",
+      "plans": {
+        "basic": {
+          "name": "Basic",
+          "description": "Web chat + Cal.com cho team mới bắt đầu.",
+          "cta": "Bắt đầu",
+          "features": {
+            "f1": "Web chat",
+            "f2": "Đặt lịch Cal.com",
+            "f3": "FAQ + intake",
+            "f4": "Dashboard cơ bản"
+          }
+        },
+        "premium": {
+          "name": "Premium",
+          "description": "Nhắc lịch và embed khi lead tăng.",
+          "cta": "Chọn Premium",
+          "features": {
+            "f1": "Mọi thứ trong Basic",
+            "f2": "Nhắc lịch outbound",
+            "f3": "Embed widget",
+            "f4": "WhatsApp"
+          }
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "description": "Giới hạn cao hơn, brand riêng, hỗ trợ ưu tiên.",
+          "cta": "Bắt đầu",
+          "features": {
+            "f1": "Mọi thứ trong Premium",
+            "f2": "Giới hạn cao + FAQ tùy chỉnh",
+            "f3": "Hỗ trợ 1:1 + SLA ưu tiên",
+            "f4": "Agent theo brand",
+            "f5": "Voice + đa địa điểm"
+          }
+        }
+      }
+    },
+    "faq": {
+      "title": "Câu hỏi thường gặp.",
+      "subtitle": "Những gì chủ doanh nghiệp thường hỏi trước khi bật.",
+      "items": {
+        "q1": {
+          "q": "Eve là gì?",
+          "a": "Eve là trợ lý đặt lịch AI cho doanh nghiệp. Khách chat, Eve kiểm tra lịch trống thật trên Cal.com, rồi đặt hẹn."
+        },
+        "q2": {
+          "q": "Eve có bịa giờ trống không?",
+          "a": "Không. Slot mở lấy từ lịch Cal.com đã kết nối. Không trống thì Eve không đề xuất."
+        },
+        "q3": {
+          "q": "Dùng thử có cần thẻ không?",
+          "a": "Không. Bắt đầu trial miễn phí, kết nối Cal.com, đặt từ demo hoặc trang workspace của bạn."
+        },
+        "q4": {
+          "q": "Khách đặt bằng tiếng Việt được không?",
+          "a": "Được. Khách chọn EN hoặc VI trên trang đặt lịch công khai. Ngôn ngữ dashboard là riêng."
+        },
+        "q5": {
+          "q": "WhatsApp đã có chưa?",
+          "a": "WhatsApp và voice đang trên roadmap cho Premium và Enterprise. Web chat và đặt lịch Cal.com đã có hôm nay."
+        },
+        "q6": {
+          "q": "Ai sở hữu lịch và dữ liệu?",
+          "a": "Bạn. Eve đặt vào tài khoản Cal.com của bạn và giữ dữ liệu workspace theo tenant."
+        }
+      }
+    },
+    "finalCta": {
+      "title": "Đừng để cuộc gọi nhỡ mất lịch hẹn.",
+      "subtitle": "Dùng thử miễn phí. Không cần thẻ. Lên trong vài phút.",
+      "ctaPrimary": "Dùng thử miễn phí",
+      "ctaSecondary": "Xem demo"
+    },
+    "footer": {
+      "tagline": "Trợ lý đặt lịch AI cho lịch thật.",
+      "try": "Xem demo",
+      "signUp": "Đăng ký",
+      "logIn": "Đăng nhập",
+      "dashboard": "Dashboard",
+      "terms": "Điều khoản",
+      "privacy": "Riêng tư"
+    },
+    "stage": {
+      "chatUrl": "eve.app/chat",
+      "booked": "Đã đặt",
+      "cleaning": "Vệ sinh răng",
+      "guest": "Alex Nguyen",
+      "when": "T6 31/07 · 14:00",
+      "tz": "Asia/Ho Chi Minh",
+      "calSynced": "Đồng bộ Cal.com",
+      "leadsToday": "Lead hôm nay",
+      "bookingsWeek": "Lịch tuần này",
+      "response": "Phản hồi TB",
+      "responseValue": "42s",
+      "online": "Agent online"
+    }
   }
 }

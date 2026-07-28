@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build:eve": "eve build && node ./scripts/sync-eve-compile.mjs",
     "dev:eve": "eve dev",
+    "dev:eve:pinned": "eve dev --no-ui --port 2000",
     "start:eve": "eve start",
     "patch:eve": "node ./scripts/patch-eve-package-resolve.mjs",
     "sync:eve": "node ./scripts/sync-eve-compile.mjs",

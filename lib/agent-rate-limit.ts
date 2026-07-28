@@ -89,23 +89,21 @@ export async function checkAgentRateLimit(input: {
     return { ok: false, errorCode: "agent_rate_limited" };
   }
 
-  for (const key of visitorKeys) {
-    const ok = await allowedInDb(
-      key,
-      VISITOR_WINDOW_SECONDS,
-      VISITOR_MAX_PER_WINDOW,
-    );
-    if (!ok) return { ok: false, errorCode: "agent_rate_limited" };
-  }
-
   const slug = input.workspaceSlug?.trim().toLowerCase();
-  if (slug) {
-    const ok = await allowedInDb(
-      `w:${slug}`,
-      WORKSPACE_WINDOW_SECONDS,
-      WORKSPACE_MAX_PER_WINDOW,
-    );
-    if (!ok) return { ok: false, errorCode: "agent_rate_limited" };
+  const checks = await Promise.all([
+    ...visitorKeys.map((key) =>
+      allowedInDb(key, VISITOR_WINDOW_SECONDS, VISITOR_MAX_PER_WINDOW),
+    ),
+    slug
+      ? allowedInDb(
+          `w:${slug}`,
+          WORKSPACE_WINDOW_SECONDS,
+          WORKSPACE_MAX_PER_WINDOW,
+        )
+      : Promise.resolve(true),
+  ]);
+  if (checks.some((ok) => !ok)) {
+    return { ok: false, errorCode: "agent_rate_limited" };
   }
 
   return { ok: true };

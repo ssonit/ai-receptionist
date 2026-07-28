@@ -13,7 +13,7 @@ type Params = { params: Promise<{ id: string }> };
 export async function GET(request: Request, { params }: Params) {
   try {
     const { id } = await params;
-    const { visitorId, userId } = await getChatActor();
+    const { visitorId, userId } = await getChatActor(request);
     const workspaceId = await getChatWorkspaceId(request);
     const session = await getChatSessionForActor({
       id,
@@ -63,7 +63,7 @@ export async function GET(request: Request, { params }: Params) {
 export async function PATCH(request: Request, { params }: Params) {
   try {
     const { id } = await params;
-    const { visitorId, userId } = await getChatActor();
+    const { visitorId, userId } = await getChatActor(request);
     const workspaceId = await getChatWorkspaceId(request);
     const body = (await request.json()) as {
       eveSessionId?: string | null;

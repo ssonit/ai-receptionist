@@ -54,6 +54,17 @@ import {
 
 const AGENT_NAME = "Eve";
 
+/**
+ * Abort a turn that goes silent (sidecar retry / LLM hang) — measured as no
+ * stream event for this long, not total turn duration. Tool-calling turns
+ * legitimately take 30-45s+ across multiple thinking/tool phases as long as
+ * each phase keeps producing events; a fixed wall-clock cap kills those
+ * mid-flight even though they were about to finish (false positive).
+ */
+const CHAT_TURN_IDLE_TIMEOUT_MS = 25_000;
+/** Backstop for a pathological turn (e.g. runaway tool-calling loop) that keeps producing events but never finishes. */
+const CHAT_TURN_MAX_DURATION_MS = 120_000;
+
 type AgentStatus = ReturnType<typeof useEveAgent>["status"];
 
 type ThreadBootstrap = {
@@ -160,7 +171,9 @@ function AgentChatInner({
     : "";
 
   const refreshSessions = React.useCallback(async () => {
-    const res = await fetch(`/api/chat/sessions${tenantQs}`);
+    const res = await fetch(`/api/chat/sessions${tenantQs}`, {
+      cache: "no-store",
+    });
     if (!res.ok) throw new Error("Failed to list sessions");
     const data = (await res.json()) as { sessions: ChatSessionListItem[] };
     setSessions(data.sessions);
@@ -168,8 +181,11 @@ function AgentChatInner({
   }, [tenantQs]);
 
   const loadThread = React.useCallback(
-    async (id: string) => {
-      const res = await fetch(`/api/chat/sessions/${id}${tenantQs}`);
+    async (id: string): Promise<"ok" | "missing"> => {
+      const res = await fetch(`/api/chat/sessions/${id}${tenantQs}`, {
+        cache: "no-store",
+      });
+      if (res.status === 404) return "missing";
       if (!res.ok) throw new Error("Failed to load session");
       const data = (await res.json()) as {
         session: ChatSessionClientRow;
@@ -199,32 +215,51 @@ function AgentChatInner({
         hasMore: Boolean(data.hasMore),
         messageCount: data.messageCount ?? data.messages?.length ?? 0,
       });
+      return "ok";
     },
     [tenantQs],
+  );
+
+  const openFreshSession = React.useCallback(async () => {
+    const res = await fetch(`/api/chat/sessions${tenantQs}`, {
+      method: "POST",
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to create session");
+    const data = (await res.json()) as { session: ChatSessionClientRow };
+    await refreshSessions();
+    setActiveId(data.session.id);
+    setBootstrap({
+      chatSessionId: data.session.id,
+      historyMessages: [],
+      nextCursor: null,
+      hasMore: false,
+      messageCount: 0,
+    });
+  }, [refreshSessions, tenantQs]);
+
+  /** Prefer an existing session; skip 404 orphans and fall back to a new chat. */
+  const openFirstAvailable = React.useCallback(
+    async (list: ChatSessionListItem[]) => {
+      for (const item of list) {
+        const result = await loadThread(item.id);
+        if (result === "ok") return;
+        setSessions((prev) => prev.filter((s) => s.id !== item.id));
+      }
+      await openFreshSession();
+    },
+    [loadThread, openFreshSession],
   );
 
   const createAndOpen = React.useCallback(async () => {
     setBusyAction(true);
     try {
-      const res = await fetch(`/api/chat/sessions${tenantQs}`, {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("Failed to create session");
-      const data = (await res.json()) as { session: ChatSessionClientRow };
-      await refreshSessions();
-      setActiveId(data.session.id);
-      setBootstrap({
-        chatSessionId: data.session.id,
-        historyMessages: [],
-        nextCursor: null,
-        hasMore: false,
-        messageCount: 0,
-      });
+      await openFreshSession();
       setDrawerOpen(false);
     } finally {
       setBusyAction(false);
     }
-  }, [refreshSessions, tenantQs]);
+  }, [openFreshSession]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -238,28 +273,23 @@ function AgentChatInner({
           preferChatSessionId &&
           list.some((s) => s.id === preferChatSessionId)
         ) {
-          await loadThread(preferChatSessionId);
+          const result = await loadThread(preferChatSessionId);
+          if (cancelled) return;
+          if (result === "ok") return;
+          setSessions((prev) =>
+            prev.filter((s) => s.id !== preferChatSessionId),
+          );
+          await openFirstAvailable(
+            list.filter((s) => s.id !== preferChatSessionId),
+          );
           return;
         }
 
+        if (cancelled) return;
         if (list.length === 0) {
-          const res = await fetch(`/api/chat/sessions${tenantQs}`, {
-            method: "POST",
-          });
-          if (!res.ok) throw new Error("Failed to create session");
-          const data = (await res.json()) as { session: ChatSessionClientRow };
-          if (cancelled) return;
-          await refreshSessions();
-          setActiveId(data.session.id);
-          setBootstrap({
-            chatSessionId: data.session.id,
-            historyMessages: [],
-            nextCursor: null,
-            hasMore: false,
-            messageCount: 0,
-          });
+          await openFreshSession();
         } else {
-          await loadThread(list[0]!.id);
+          await openFirstAvailable(list);
         }
       } catch (error) {
         console.error("[eve chat] bootstrap failed", error);
@@ -284,7 +314,11 @@ function AgentChatInner({
     }
     setBusyAction(true);
     try {
-      await loadThread(id);
+      const result = await loadThread(id);
+      if (result === "missing") {
+        setSessions((prev) => prev.filter((s) => s.id !== id));
+        await openFreshSession();
+      }
       setDrawerOpen(false);
     } catch (error) {
       console.error("[eve chat] select failed", error);
@@ -467,12 +501,16 @@ function AgentChatThread({
   const t = useTranslations();
   const { locale } = useAppLocale();
   const persistTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stopTurnRef = React.useRef<() => void>(() => {});
+  const turnStartedAtRef = React.useRef<number>(0);
+  const lastEventAtRef = React.useRef<number>(0);
   const [history, setHistory] = React.useState(initialHistory);
   const [nextCursor, setNextCursor] = React.useState(initialNextCursor);
   const [hasMore, setHasMore] = React.useState(initialHasMore);
   const [loadingOlder, setLoadingOlder] = React.useState(false);
   const [messageCount, setMessageCount] = React.useState(initialMessageCount);
   const [nudgeDismissed, setNudgeDismissed] = React.useState(false);
+  const [turnTimedOut, setTurnTimedOut] = React.useState(false);
 
   const tenantHeaders = React.useCallback((): Record<string, string> => {
     const headers: Record<string, string> = {
@@ -497,27 +535,44 @@ function AgentChatThread({
       session: SessionState;
       events: readonly unknown[];
     }) => {
+      // Cancel debounced mid-turn PATCH — POST /messages already writes session state.
+      if (persistTimer.current) {
+        clearTimeout(persistTimer.current);
+        persistTimer.current = null;
+      }
+
+      const body = JSON.stringify({
+        messages: projectEveMessages(input.messages),
+        eveSessionId: input.session.sessionId ?? null,
+        continuationToken: input.session.continuationToken ?? null,
+        streamIndex: input.session.streamIndex ?? 0,
+        events: input.events,
+      });
+
+      const postOnce = () =>
+        fetch(`/api/chat/sessions/${chatSessionId}/messages${tenantQs}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          body,
+        });
+
       try {
-        const res = await fetch(
-          `/api/chat/sessions/${chatSessionId}/messages${tenantQs}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              messages: projectEveMessages(input.messages),
-              eveSessionId: input.session.sessionId ?? null,
-              continuationToken: input.session.continuationToken ?? null,
-              streamIndex: input.session.streamIndex ?? 0,
-              events: input.events,
-            }),
-          },
-        );
+        let res = await postOnce();
+        // One retry: final onSessionChange PATCH can race the first persist.
+        if (res.status === 404) {
+          await new Promise((r) => setTimeout(r, 150));
+          res = await postOnce();
+        }
         if (!res.ok) {
-          throw new Error(`persist failed (${res.status})`);
+          console.warn(
+            `[eve chat] persist failed (${res.status}) for ${chatSessionId}`,
+          );
+          return;
         }
         onPersisted();
       } catch (error) {
-        console.error("[eve chat] persist failed", error);
+        console.warn("[eve chat] persist failed", error);
       }
     },
     [chatSessionId, onPersisted, tenantQs],
@@ -529,18 +584,27 @@ function AgentChatThread({
     // Tail events only (or empty) — model resume uses continuationToken.
     initialEvents: initialEvents as never,
     onSessionChange: (session) => {
+      // Debounce so the final onSessionChange+onFinish pair does not PATCH+POST
+      // the same session in parallel (POST already persists tokens/events).
       if (persistTimer.current) clearTimeout(persistTimer.current);
-      void fetch(`/api/chat/sessions/${chatSessionId}${tenantQs}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eveSessionId: session.sessionId ?? null,
-          continuationToken: session.continuationToken ?? null,
-          streamIndex: session.streamIndex ?? 0,
-        }),
-      }).catch((error) => {
-        console.error("[eve chat] session patch failed", error);
-      });
+      persistTimer.current = setTimeout(() => {
+        persistTimer.current = null;
+        void fetch(`/api/chat/sessions/${chatSessionId}${tenantQs}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          body: JSON.stringify({
+            eveSessionId: session.sessionId ?? null,
+            continuationToken: session.continuationToken ?? null,
+            streamIndex: session.streamIndex ?? 0,
+          }),
+        }).catch((error) => {
+          console.warn("[eve chat] session patch failed", error);
+        });
+      }, 600);
+    },
+    onEvent: () => {
+      lastEventAtRef.current = Date.now();
     },
     onFinish: (snapshot) => {
       void persistSnapshot({
@@ -557,6 +621,41 @@ function AgentChatThread({
   React.useEffect(() => {
     onStatusChange?.(agent.status);
   }, [agent.status, onStatusChange]);
+
+  React.useEffect(() => {
+    stopTurnRef.current = agent.stop;
+  }, [agent.stop]);
+
+  // Fail closed on a turn that goes silent (sidecar retry / hung LLM never set
+  // error) — polls for "no event in N ms", not total duration, so a slow but
+  // still-progressing multi-tool-call turn is not killed mid-flight.
+  React.useEffect(() => {
+    const busy =
+      agent.status === "submitted" || agent.status === "streaming";
+    if (!busy) return;
+
+    const now = Date.now();
+    turnStartedAtRef.current = now;
+    lastEventAtRef.current = now;
+
+    const interval = setInterval(() => {
+      const elapsedSinceEvent = Date.now() - lastEventAtRef.current;
+      const elapsedTotal = Date.now() - turnStartedAtRef.current;
+      if (
+        elapsedSinceEvent < CHAT_TURN_IDLE_TIMEOUT_MS &&
+        elapsedTotal < CHAT_TURN_MAX_DURATION_MS
+      ) {
+        return;
+      }
+      console.error(
+        `[eve chat] turn timed out (idle=${elapsedSinceEvent}ms, total=${elapsedTotal}ms, status=${agent.status})`,
+      );
+      setTurnTimedOut(true);
+      stopTurnRef.current();
+    }, 1_000);
+
+    return () => clearInterval(interval);
+  }, [agent.status]);
 
   React.useEffect(() => {
     return () => {
@@ -633,6 +732,8 @@ function AgentChatThread({
     const text = message.text.trim();
     if ((text.length === 0 && message.files.length === 0) || isBusy) return;
 
+    setTurnTimedOut(false);
+
     try {
       if (message.files.length === 0) {
         await agent.send({ message: text });
@@ -690,14 +791,38 @@ function AgentChatThread({
 
   return (
     <>
-      {agent.error ? (
+      {agent.error || turnTimedOut ? (
         <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pt-3 sm:px-6">
-          <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm">
-            <AlertCircleIcon className="mt-0.5 size-4 shrink-0 text-zinc-400" />
-            <div>
-              <p className="font-medium text-zinc-100">{t("chat.unavailableTitle")}</p>
-              <p className="mt-0.5 text-zinc-400">{t("chat.unavailableBody")}</p>
+          <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <AlertCircleIcon className="mt-0.5 size-4 shrink-0 text-zinc-400" />
+              <div>
+                <p className="font-medium text-zinc-100">
+                  {turnTimedOut
+                    ? t("chat.timeoutTitle")
+                    : t("chat.unavailableTitle")}
+                </p>
+                <p className="mt-0.5 text-zinc-400">
+                  {turnTimedOut
+                    ? t("chat.timeoutBody")
+                    : t("chat.unavailableBody")}
+                </p>
+              </div>
             </div>
+            {turnTimedOut ? (
+              <Button
+                className="h-8 shrink-0 rounded-full px-3 text-xs"
+                onClick={() => {
+                  setTurnTimedOut(false);
+                  onNewChat();
+                }}
+                size="sm"
+                type="button"
+                variant="secondary"
+              >
+                {t("chat.timeoutNewChat")}
+              </Button>
+            ) : null}
           </div>
         </div>
       ) : null}

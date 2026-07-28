@@ -15,7 +15,7 @@ import { NextResponse } from "next/server";
  */
 export async function POST(request: Request) {
   try {
-    const { visitorId, userId } = await getChatActor();
+    const { visitorId, userId } = await getChatActor(request);
     const workspaceId = await getChatWorkspaceId(request);
     const body = (await request.json().catch(() => ({}))) as {
       chatSessionId?: string;

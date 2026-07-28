@@ -19,6 +19,9 @@
     "dashboardLink": "Dashboard",
     "unavailableTitle": "Chat is temporarily unavailable",
     "unavailableBody": "Try sending again in a few seconds.",
+    "timeoutTitle": "Reply is taking too long",
+    "timeoutBody": "The assistant did not respond in time. Start a new chat or try again.",
+    "timeoutNewChat": "New chat",
     "statusError": "Error",
     "statusTyping": "Typing",
     "statusOnline": "Online",
@@ -102,5 +105,199 @@
     "cancel": "Cancel",
     "signIn": "Sign in",
     "signOut": "Log out"
+  },
+  "landing": {
+    "brand": "Eve",
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "faq": "FAQ",
+      "logIn": "Log in",
+      "startFree": "Start free"
+    },
+    "hero": {
+      "badge": "AI front desk for Cal.com",
+      "title": "Bookings that close themselves.",
+      "subtitle": "Chat answers FAQ, checks real slots, and books into your calendar — so you never miss another lead.",
+      "ctaPrimary": "Start free trial",
+      "ctaSecondary": "Try the demo",
+      "tabs": {
+        "chat": "Chat that books",
+        "slots": "Real Cal.com slots",
+        "ops": "Leads & ops"
+      }
+    },
+    "logos": {
+      "label": "Built to plug into the stack you already run"
+    },
+    "tour": {
+      "title": "Your booking loop, agentified.",
+      "subtitle": "One agent handles the conversation, the calendar, and the handoff to your team.",
+      "items": {
+        "chat": {
+          "label": "Chat 24/7",
+          "title": "Answers while you sleep",
+          "body": "FAQ, intake, and qualification stay online. Guests get a reply in seconds — not a voicemail."
+        },
+        "book": {
+          "label": "Real bookings",
+          "title": "Slots from Cal.com, not invented",
+          "body": "Eve checks open times and creates the event on your calendar. One source of truth — no double-booking."
+        },
+        "dash": {
+          "label": "Clear dashboard",
+          "title": "Leads and bookings in one place",
+          "body": "See conversations, bookings, and schedule status without digging through chat threads."
+        }
+      }
+    },
+    "integrations": {
+      "title": "Bring your calendar. Keep your stack.",
+      "subtitle": "Eve plugs into Cal.com today. WhatsApp, voice, and more ship when they’re ready — not vapor.",
+      "items": {
+        "cal": "Cal.com",
+        "web": "Web chat",
+        "embed": "Embed widget",
+        "whatsapp": "WhatsApp",
+        "voice": "Voice agent",
+        "soon": "Soon"
+      }
+    },
+    "moments": {
+      "title": "Built for the booking moment.",
+      "subtitle": "Every surface is designed around one job: turn a visitor into a confirmed appointment.",
+      "items": {
+        "chat": {
+          "title": "Chat that books",
+          "body": "Guests pick a slot in-thread. No form maze."
+        },
+        "cal": {
+          "title": "Live availability",
+          "body": "Open times come straight from Cal.com."
+        },
+        "leads": {
+          "title": "Lead capture",
+          "body": "Name, contact, and intent land in your dashboard."
+        },
+        "embed": {
+          "title": "Site embed",
+          "body": "Drop a bubble on any page in one snippet."
+        },
+        "tenant": {
+          "title": "Your workspace",
+          "body": "Each business gets an isolated booking page."
+        },
+        "remind": {
+          "title": "Reminders",
+          "body": "Outbound nudges so fewer no-shows."
+        }
+      }
+    },
+    "pricing": {
+      "title": "Simple pricing. Real bookings.",
+      "subtitle": "Start free. Upgrade when the calendar fills up.",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "annualSave": "2 mo free",
+      "perMonth": "/mo",
+      "perYear": "/yr",
+      "popular": "Popular",
+      "comingSoon": "Soon",
+      "plans": {
+        "basic": {
+          "name": "Basic",
+          "description": "Web chat + Cal.com for teams just starting.",
+          "cta": "Get started",
+          "features": {
+            "f1": "Web chat",
+            "f2": "Cal.com booking",
+            "f3": "FAQ + intake",
+            "f4": "Basic dashboard"
+          }
+        },
+        "premium": {
+          "name": "Premium",
+          "description": "Reminders and embed for teams growing leads.",
+          "cta": "Choose Premium",
+          "features": {
+            "f1": "Everything in Basic",
+            "f2": "Outbound reminders",
+            "f3": "Embed widget",
+            "f4": "WhatsApp"
+          }
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "description": "Higher limits, brand control, and priority support.",
+          "cta": "Get started",
+          "features": {
+            "f1": "Everything in Premium",
+            "f2": "Higher limits + custom FAQ",
+            "f3": "1:1 support + priority SLA",
+            "f4": "Brand-customized agent",
+            "f5": "Voice + multi-location"
+          }
+        }
+      }
+    },
+    "faq": {
+      "title": "Questions, answered.",
+      "subtitle": "Everything owners usually ask before flipping the switch.",
+      "items": {
+        "q1": {
+          "q": "What is Eve?",
+          "a": "Eve is an AI booking assistant for your business. Guests chat, Eve checks real Cal.com availability, and books the appointment."
+        },
+        "q2": {
+          "q": "Does Eve invent available times?",
+          "a": "No. Open slots come from your connected Cal.com calendar. If it’s not free there, Eve won’t offer it."
+        },
+        "q3": {
+          "q": "Do I need a credit card to try it?",
+          "a": "No. Start a free trial, connect Cal.com, and book from the demo or your own workspace page."
+        },
+        "q4": {
+          "q": "Can guests book in Vietnamese?",
+          "a": "Yes. Guests pick EN or VI on the public booking page. Your dashboard language is separate."
+        },
+        "q5": {
+          "q": "Is WhatsApp available?",
+          "a": "WhatsApp and voice are on the roadmap for Premium and Enterprise. Web chat and Cal.com booking ship today."
+        },
+        "q6": {
+          "q": "Who owns the calendar and data?",
+          "a": "You do. Eve books into your Cal.com account and keeps workspace data scoped to your tenant."
+        }
+      }
+    },
+    "finalCta": {
+      "title": "Stop losing bookings to missed calls.",
+      "subtitle": "Start free. No credit card. Live in minutes.",
+      "ctaPrimary": "Start free trial",
+      "ctaSecondary": "Try the demo"
+    },
+    "footer": {
+      "tagline": "AI booking assistant for real calendars.",
+      "try": "Try demo",
+      "signUp": "Sign up",
+      "logIn": "Log in",
+      "dashboard": "Dashboard",
+      "terms": "Terms",
+      "privacy": "Privacy"
+    },
+    "stage": {
+      "chatUrl": "eve.app/chat",
+      "booked": "Booked",
+      "cleaning": "Dental cleaning",
+      "guest": "Alex Nguyen",
+      "when": "Fri 31 Jul · 2:00 PM",
+      "tz": "Asia/Ho Chi Minh",
+      "calSynced": "Synced to Cal.com",
+      "leadsToday": "Leads today",
+      "bookingsWeek": "Bookings this week",
+      "response": "Avg. reply",
+      "responseValue": "42s",
+      "online": "Agent online"
+    }
   }
 }

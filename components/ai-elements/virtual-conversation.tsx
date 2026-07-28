@@ -36,6 +36,10 @@ export function VirtualConversation({
     getScrollElement: () => parentRef.current,
     estimateSize: () => estimateSize,
     overscan,
+    // Absolute rows ignore parent py-* — use virtualizer padding so the
+    // first/last messages keep breathing room under the header/demo banner.
+    paddingStart: 32,
+    paddingEnd: 24,
   });
 
   const onScroll = React.useCallback(() => {
@@ -71,11 +75,11 @@ export function VirtualConversation({
         role="log"
       >
         <div
-          className="relative mx-auto w-full max-w-3xl px-4 py-6 sm:px-6"
+          className="relative mx-auto w-full max-w-3xl"
           style={{ height: virtualizer.getTotalSize() }}
         >
           <div
-            className="absolute top-0 left-0 w-full"
+            className="absolute top-0 left-0 w-full px-4 sm:px-6"
             style={{
               transform: `translateY(${items[0]?.start ?? 0}px)`,
             }}

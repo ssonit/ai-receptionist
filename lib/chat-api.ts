@@ -1,10 +1,19 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { readVisitorIdFromCookieHeader } from "@/lib/request-cookies";
 import { ensureVisitorId } from "@/lib/visitor-server";
 import { resolvePublicWorkspaceId } from "@/lib/workspace";
 
-export async function getChatActor() {
-  const visitorId = await ensureVisitorId();
+/**
+ * Resolve the public-chat actor. Prefer the incoming Request cookie (what
+ * proxy stamped) so route handlers do not mint a second visitor id when
+ * `cookies()` lags the middleware request mutation.
+ */
+export async function getChatActor(request?: Request) {
+  const fromHeader = request
+    ? readVisitorIdFromCookieHeader(request.headers.get("cookie"))
+    : null;
+  const visitorId = fromHeader ?? (await ensureVisitorId());
   const supabase = await createClient();
   const {
     data: { user },
