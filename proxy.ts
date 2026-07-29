@@ -4,6 +4,20 @@ import { isPublicSignupOpen } from "@/lib/signup-mode";
 import { ensureVisitorIdOnResponse } from "@/lib/visitor";
 import { isPilotBookingLive } from "@/lib/workspace";
 
+/**
+ * Server Actions + RSC soft navigations expect a Flight payload.
+ * Redirecting them to HTML (setup ↔ dashboard) yields:
+ * "An unexpected response was received from the server."
+ */
+function isNextFlightRequest(request: NextRequest): boolean {
+  return (
+    request.headers.has("next-action") ||
+    request.headers.get("rsc") === "1" ||
+    request.headers.has("next-router-state-tree") ||
+    request.headers.has("next-router-prefetch")
+  );
+}
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -121,17 +135,20 @@ export async function proxy(request: NextRequest) {
         calEventTypeId: ws?.cal_event_type_id as number | null,
       });
 
-      if (incomplete && !onSetup) {
-        const redirectUrl = request.nextUrl.clone();
-        redirectUrl.pathname = "/dashboard/setup";
-        redirectUrl.search = "";
-        return NextResponse.redirect(redirectUrl);
-      }
-      if (!incomplete && bookingLive && onSetup) {
-        const redirectUrl = request.nextUrl.clone();
-        redirectUrl.pathname = "/dashboard";
-        redirectUrl.search = "";
-        return NextResponse.redirect(redirectUrl);
+      // Document navigations only — never redirect Flight/Action requests.
+      if (!isNextFlightRequest(request)) {
+        if (incomplete && !onSetup) {
+          const redirectUrl = request.nextUrl.clone();
+          redirectUrl.pathname = "/dashboard/setup";
+          redirectUrl.search = "";
+          return NextResponse.redirect(redirectUrl);
+        }
+        if (!incomplete && bookingLive && onSetup) {
+          const redirectUrl = request.nextUrl.clone();
+          redirectUrl.pathname = "/dashboard";
+          redirectUrl.search = "";
+          return NextResponse.redirect(redirectUrl);
+        }
       }
     }
   }

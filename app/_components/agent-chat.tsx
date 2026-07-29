@@ -88,6 +88,11 @@ export function AgentChat(props: {
   headerEnd?: React.ReactNode;
   /** Marketing sandbox at `/chat` — Eve Pilot only. */
   demoMode?: boolean;
+  /**
+   * Chrome-less chat for third-party iframes (`/embed/[slug]`).
+   * Keeps session sidebar; hides home/login links and auth chrome.
+   */
+  embedMode?: boolean;
   initialLocale?: "en" | "vi";
   /** Open this chat session first (e.g. after consuming a manage link). */
   preferChatSessionId?: string | null;
@@ -109,6 +114,7 @@ function AgentChatInner({
   chatBranding,
   headerEnd,
   demoMode = false,
+  embedMode = false,
   preferChatSessionId = null,
   manageLinkNotice = null,
 }: {
@@ -119,6 +125,7 @@ function AgentChatInner({
   chatBranding?: Partial<ChatBranding> | null;
   headerEnd?: React.ReactNode;
   demoMode?: boolean;
+  embedMode?: boolean;
   preferChatSessionId?: string | null;
   manageLinkNotice?: string | null;
 }) {
@@ -343,6 +350,19 @@ function AgentChatInner({
     />
   );
 
+  const statusPill = (
+    <div className="flex min-w-0 max-w-[min(100%,16rem)] items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 sm:max-w-xs">
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-300/30 to-white/10">
+        <SparklesIcon className="size-3 text-teal-200" />
+      </span>
+      <span className="min-w-0 truncate text-sm text-zinc-200">
+        {workspaceName || AGENT_NAME}
+      </span>
+      <span className="h-3 w-px shrink-0 bg-white/10" aria-hidden />
+      <StatusDot status={agentStatus} />
+    </div>
+  );
+
   return (
     <main className="relative flex h-dvh overflow-hidden bg-black text-zinc-100">
       <Particles
@@ -370,25 +390,24 @@ function AgentChatInner({
         <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-black/55 px-4 backdrop-blur-xl sm:px-6">
           <div className="flex items-center gap-2">
             <ChatSessionsToggle onClick={() => setDrawerOpen(true)} />
-            <Link className="text-sm font-semibold tracking-tight text-white" href="/">
-              Eve
-            </Link>
+            {embedMode ? (
+              <span className="text-sm font-semibold tracking-tight text-white">
+                Eve
+              </span>
+            ) : (
+              <Link className="text-sm font-semibold tracking-tight text-white" href="/">
+                Eve
+              </Link>
+            )}
           </div>
 
-          <div className="flex min-w-0 max-w-[min(100%,16rem)] items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 sm:max-w-xs">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-300/30 to-white/10">
-              <SparklesIcon className="size-3 text-teal-200" />
-            </span>
-            <span className="min-w-0 truncate text-sm text-zinc-200">
-              {workspaceName || AGENT_NAME}
-            </span>
-            <span className="h-3 w-px shrink-0 bg-white/10" aria-hidden />
-            <StatusDot status={agentStatus} />
-          </div>
+          {statusPill}
 
           <div className="flex items-center gap-2">
-            {headerEnd}
-            {user ? (
+            {!embedMode ? headerEnd : null}
+            {embedMode ? (
+              <span className="w-[4.5rem] shrink-0" aria-hidden />
+            ) : user ? (
               <ChatUserMenu user={user} />
             ) : (
               <RainbowButton asChild className="h-8 rounded-full px-3 text-xs" size="sm">
@@ -398,7 +417,7 @@ function AgentChatInner({
           </div>
         </header>
 
-        {demoMode ? (
+        {demoMode && !embedMode ? (
           <div className="flex shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2 text-center text-xs text-amber-100/90 sm:text-[13px]">
             <span>
               <span className="font-medium text-amber-50">{t("chat.demoBanner")}</span>

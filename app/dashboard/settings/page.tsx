@@ -1,6 +1,7 @@
 import { WorkspaceSettingsForm } from "@/app/_components/workspace-settings-form";
 import { WorkspaceTeamCard } from "@/app/_components/workspace-team-card";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { absoluteAppOrigin } from "@/lib/app-origin";
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { createClient } from "@/lib/supabase/server";
 import { publicBookingPath } from "@/lib/workspace";
@@ -10,19 +11,7 @@ import {
   listWorkspaceMembers,
 } from "@/lib/workspace-invites";
 import type { WorkspaceOpsValues } from "@/lib/workspace-settings-types";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-
-async function absoluteOrigin(): Promise<string> {
-  const fromEnv =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (fromEnv) return fromEnv.replace(/\/$/, "");
-  const h = await headers();
-  const host = h.get("x-forwarded-host") || h.get("host");
-  const proto = h.get("x-forwarded-proto") || "http";
-  return host ? `${proto}://${host}` : "http://localhost:3000";
-}
 
 export default async function SettingsPage() {
   const dashboard = await getDashboardUser();
@@ -92,7 +81,7 @@ export default async function SettingsPage() {
     }
   }
 
-  const origin = await absoluteOrigin();
+  const origin = await absoluteAppOrigin();
   const publicBookingUrl = workspace?.slug
     ? `${origin}${publicBookingPath(workspace.slug)}`
     : null;

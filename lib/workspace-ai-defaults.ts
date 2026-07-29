@@ -21,7 +21,7 @@ export const DEFAULT_WORKSPACE_BUSINESS_HOURS = [
 ].join("\n");
 
 export const DEFAULT_WORKSPACE_SERVICES = [
-  "- Consultation 30 phút (đặt qua chat)",
+  "- Tư vấn / Consultation (30 phút) — Có thể đặt lịch trực tiếp qua chat.",
   "- Khám / điều trị dài hơn — nhân viên xếp lịch",
 ].join("\n");
 

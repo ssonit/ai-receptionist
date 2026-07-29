@@ -58,7 +58,7 @@ values (
   'Trợ lý đặt lịch 24/7 cho phòng khám / studio',
   'Eve Pilot là workspace demo: chat AI giúp khách hỏi FAQ, chọn slot và đặt lịch thật qua Cal.com.',
   '- Thứ 2–Thứ 7: 08:00–20:00' || E'\n' || '- Chủ nhật: 08:00–12:00' || E'\n' || '- Nghỉ các ngày lễ lớn',
-  '- Consultation 30 phút (đặt qua chat)' || E'\n' || '- Khám / điều trị dài hơn — nhân viên xếp lịch',
+  '- Tư vấn / Consultation (30 phút) — Có thể đặt lịch trực tiếp qua chat.' || E'\n' || '- Khám / điều trị dài hơn — nhân viên xếp lịch',
   '- Xưng hô lịch sự, ưu tiên slot sớm nếu khách gấp.' || E'\n' || '- Không cam kết giá cuối nếu chưa xác nhận.' || E'\n' || '- Nếu ngoài phạm vi booking: đề nghị gọi SĐT workspace.',
   'Trợ lý đặt lịch',
   'friendly',
@@ -113,7 +113,7 @@ values
   (
     '00000000-0000-4000-8000-000000000001',
     'Có những dịch vụ nào?',
-    '- Tư vấn / consultation (30 phút) — đặt qua chat' || E'\n' || '- Điều trị dài — nhân viên xếp lịch trên Cal.com',
+    '- Tư vấn / Consultation (30 phút) — Có thể đặt lịch trực tiếp qua chat.' || E'\n' || '- Điều trị dài — nhân viên xếp lịch trên Cal.com',
     1
   ),
   (

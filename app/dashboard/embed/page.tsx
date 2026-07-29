@@ -1,14 +1,18 @@
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 
 import { DashboardShell } from "@/components/dashboard-shell";
+import { absoluteAppOrigin } from "@/lib/app-origin";
+import {
+  buildEmbedSnippets,
+  formatEmbedSiteId,
+} from "@/lib/embed";
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { createTranslator } from "@/lib/i18n";
 import { readDashboardLocale } from "@/lib/read-locale-cookie";
 import { createClient } from "@/lib/supabase/server";
 import { isWorkspaceBookingLive } from "@/lib/workspace";
 
-import { EmbedSnippet } from "./embed-snippet";
+import { EmbedPageClient } from "./embed-page-client";
 
 export default async function EmbedDashboardPage() {
   const dashboard = await getDashboardUser();
@@ -18,23 +22,29 @@ export default async function EmbedDashboardPage() {
   if (!workspaceId) redirect("/dashboard/setup");
 
   const supabase = await createClient();
-  const [{ data: workspace }, bookingLive, h, locale] = await Promise.all([
+  const [{ data: workspace }, bookingLive, origin, locale] = await Promise.all([
     supabase
       .from("workspaces")
-      .select("slug")
+      .select("slug, embed_allowed_origins")
       .eq("id", workspaceId)
       .maybeSingle(),
     isWorkspaceBookingLive(workspaceId),
-    headers(),
+    absoluteAppOrigin(),
     readDashboardLocale(),
   ]);
   const t = createTranslator(locale);
 
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  const slug = workspace?.slug ?? "";
-
-  const snippet = `<script src="${proto}://${host}/embed.js"\n        data-eve-slug="${slug}" async></script>`;
+  const siteId = formatEmbedSiteId(workspaceId);
+  const snippets = buildEmbedSnippets(origin, siteId);
+  const embedPreviewUrl = siteId
+    ? `${origin}/embed/${encodeURIComponent(siteId)}`
+    : null;
+  const embedHostDemoUrl = siteId
+    ? `${origin}/embed-host-demo.html?id=${encodeURIComponent(siteId)}`
+    : null;
+  const allowedOrigins = Array.isArray(workspace?.embed_allowed_origins)
+    ? (workspace.embed_allowed_origins as string[])
+    : [];
 
   return (
     <DashboardShell
@@ -42,18 +52,14 @@ export default async function EmbedDashboardPage() {
       user={dashboard.navUser}
       workspaceId={workspaceId}
     >
-      <div className="flex flex-col gap-4 px-4 py-6 lg:px-6">
-        <p className="text-sm text-muted-foreground">
-          {t("dashboard.embedBody")}
-        </p>
-        {bookingLive ? null : (
-          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-600 dark:text-amber-400">
-            {t("dashboard.embedNotLive")}
-          </p>
-        )}
-        <EmbedSnippet snippet={snippet} />
-      </div>
+      <EmbedPageClient
+        allowedOrigins={allowedOrigins}
+        bookingLive={bookingLive}
+        embedHostDemoUrl={embedHostDemoUrl}
+        embedPreviewUrl={embedPreviewUrl}
+        siteId={siteId}
+        snippets={snippets}
+      />
     </DashboardShell>
   );
 }
-

@@ -55,9 +55,9 @@ export const FAQ_TEMPLATES: readonly FaqTemplate[] = [
     question: "Giá tham khảo như thế nào?",
     answer: () =>
       [
-        "- Tư vấn: theo bảng giá workspace",
+        "- Tư vấn / Consultation (30 phút): theo bảng giá workspace",
         "- Không cam kết giá cuối qua chat nếu chưa xác nhận",
-        "- Đặt consultation qua chat để được báo rõ hơn",
+        "- Có thể đặt lịch trực tiếp qua chat để được báo rõ hơn",
       ].join("\n"),
   },
   {

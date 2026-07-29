@@ -1,6 +1,10 @@
 import { bookingConfig } from "./booking-config";
 import { createAdminClient } from "./supabase/admin";
 import { getDefaultWorkspaceId } from "./workspace";
+import {
+  formatAiBookableMeetingTypeMarkdown,
+  type AiBookingEventType,
+} from "./workspace-cal";
 import { mapWorkspaceFaqRecord } from "./workspace-faq-map";
 import {
   WORKSPACE_FAQ_SELECT,
@@ -57,10 +61,22 @@ export async function fetchWorkspaceFaq(
   }
 }
 
+function aiBookableSummaryLine(aiEvent: AiBookingEventType | null | undefined): string {
+  if (!aiEvent) {
+    return "- **AI bookable meeting type:** not configured";
+  }
+  const title = aiEvent.title.trim() || aiEvent.slug;
+  return `- **AI bookable meeting type:** ${title} · ${aiEvent.lengthMinutes} phút (\`${aiEvent.slug}\`) — prefer this over FAQ duration`;
+}
+
 /** Short FAQ block for agent instructions. */
-export function buildBookingFaqSummary(row: WorkspaceFaqRecord | null): string {
+export function buildBookingFaqSummary(
+  row: WorkspaceFaqRecord | null,
+  aiEvent?: AiBookingEventType | null,
+): string {
   if (!row) {
     return [
+      aiBookableSummaryLine(aiEvent ?? null),
       `- **FAQ:** ${NOT_SET}`,
       `- **Minimum booking notice:** ${bookingConfig.minNoticeHours} hours (Cal.com)`,
       `- **Details:** \`load_skill\` → \`booking_faq\``,
@@ -79,6 +95,7 @@ export function buildBookingFaqSummary(row: WorkspaceFaqRecord | null): string {
     contactLine("Email", row.email),
     contactLine("Website", row.website),
     contactLine("Address", row.address),
+    aiBookableSummaryLine(aiEvent ?? null),
     row.businessHours?.trim()
       ? "- **Business hours:** configured"
       : null,
@@ -107,10 +124,17 @@ export function buildBookingFaqSummary(row: WorkspaceFaqRecord | null): string {
 }
 
 /** Full FAQ markdown for booking_faq skill. */
-export function buildBookingFaqMarkdown(row: WorkspaceFaqRecord | null): string {
+export function buildBookingFaqMarkdown(
+  row: WorkspaceFaqRecord | null,
+  aiEvent?: AiBookingEventType | null,
+): string {
+  const aiBlock = formatAiBookableMeetingTypeMarkdown(aiEvent ?? null);
+
   if (!row) {
     return [
       "# Booking FAQ",
+      "",
+      aiBlock.trimEnd(),
       "",
       NOT_SET,
       "",
@@ -133,6 +157,8 @@ export function buildBookingFaqMarkdown(row: WorkspaceFaqRecord | null): string 
     `**Timezone:** ${row.timezone}`,
     ...contacts,
     contacts.length > 0 ? "" : "",
+    aiBlock.trimEnd(),
+    "",
     ...blockSection("About", row.about),
     ...blockSection("Business hours", row.businessHours),
     ...blockSection("Services", row.servicesSummary),

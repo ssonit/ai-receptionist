@@ -1,4 +1,5 @@
 import slugify from "slugify";
+import { parseEmbedWorkspaceKey } from "@/lib/embed";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decryptSecret } from "@/lib/workspace-secrets";
 import { bookingConfig } from "@/lib/booking-config";
@@ -165,12 +166,110 @@ export type PublicBookingWorkspace = {
   setupCompletedAt: string | null;
   /** Derived: Cal key + AI meeting type — gates public /b/[slug]. */
   bookingLive: boolean;
+  /** Soft embed gate — empty = allow all hosts. */
+  embedAllowedOrigins: string[];
   faqItems: { question: string; answer: string }[];
   chatAssistantLabel: string | null;
   chatIntro: string | null;
   chatSuggestions: unknown;
   chatPlaceholder: string | null;
 };
+
+const PUBLIC_BOOKING_SELECT =
+  "id, name, slug, tagline, about, business_hours, services_summary, phone, email, address, website, setup_completed_at, cal_api_key_encrypted, cal_event_type_id, embed_allowed_origins, chat_assistant_label, chat_intro, chat_suggestions, chat_placeholder, workspace_faq_items(question, answer, sort_order)";
+
+type PublicBookingRow = {
+  id: string;
+  name: string;
+  slug: string | null;
+  tagline: string | null;
+  about: string | null;
+  business_hours: string | null;
+  services_summary: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  website: string | null;
+  setup_completed_at: string | null;
+  cal_api_key_encrypted: string | null;
+  cal_event_type_id: number | null;
+  embed_allowed_origins?: string[] | null;
+  chat_assistant_label: string | null;
+  chat_intro: string | null;
+  chat_suggestions: unknown;
+  chat_placeholder: string | null;
+  workspace_faq_items?:
+    | { question: string; answer: string; sort_order?: number }
+    | { question: string; answer: string; sort_order?: number }[]
+    | null;
+};
+
+function mapPublicBookingWorkspace(
+  data: PublicBookingRow,
+): PublicBookingWorkspace | null {
+  if (!data.slug) return null;
+
+  const rawFaq = data.workspace_faq_items;
+  const faqRows = Array.isArray(rawFaq) ? rawFaq : rawFaq ? [rawFaq] : [];
+  const faqItems: { question: string; answer: string }[] = [];
+  for (const row of [...faqRows].sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
+  )) {
+    if (faqItems.length >= 5) break;
+    const question = String(row.question ?? "").trim();
+    if (!question) continue;
+    faqItems.push({
+      question,
+      answer: String(row.answer ?? ""),
+    });
+  }
+
+  const filled = withWorkspaceAiDefaults({
+    tagline: data.tagline ?? null,
+    about: data.about ?? null,
+    businessHours: data.business_hours ?? null,
+    servicesSummary: data.services_summary ?? null,
+    chatAssistantLabel: data.chat_assistant_label ?? null,
+    chatIntro: data.chat_intro ?? null,
+    chatPlaceholder: data.chat_placeholder ?? null,
+    chatSuggestions: parseChatSuggestions(data.chat_suggestions),
+  });
+
+  const id = data.id;
+  const bookingLive = isPilotBookingLive({
+    workspaceId: id,
+    hasEncryptedCalKey: Boolean(data.cal_api_key_encrypted),
+    calEventTypeId: data.cal_event_type_id,
+  });
+
+  const embedAllowedOrigins = Array.isArray(data.embed_allowed_origins)
+    ? data.embed_allowed_origins.filter(
+        (h): h is string => typeof h === "string" && h.trim().length > 0,
+      )
+    : [];
+
+  return {
+    id,
+    name: data.name,
+    slug: data.slug,
+    tagline: filled.tagline,
+    about: filled.about,
+    businessHours: filled.businessHours,
+    servicesSummary: filled.servicesSummary,
+    phone: data.phone ?? null,
+    email: data.email ?? null,
+    address: data.address ?? null,
+    website: data.website ?? null,
+    setupCompletedAt: data.setup_completed_at ?? null,
+    bookingLive,
+    embedAllowedOrigins,
+    faqItems,
+    chatAssistantLabel: filled.chatAssistantLabel,
+    chatIntro: filled.chatIntro,
+    chatSuggestions: filled.chatSuggestions,
+    chatPlaceholder: filled.chatPlaceholder,
+  };
+}
 
 /** Public booking page `/b/[slug]` — service role (RLS is auth-only). */
 export async function getPublicBookingWorkspace(
@@ -182,67 +281,42 @@ export async function getPublicBookingWorkspace(
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("workspaces")
-    .select(
-      "id, name, slug, tagline, about, business_hours, services_summary, phone, email, address, website, setup_completed_at, cal_api_key_encrypted, cal_event_type_id, chat_assistant_label, chat_intro, chat_suggestions, chat_placeholder, workspace_faq_items(question, answer, sort_order)",
-    )
+    .select(PUBLIC_BOOKING_SELECT)
     .eq("slug", cleaned)
     .maybeSingle();
 
-  if (error || !data?.slug) return null;
+  if (error || !data) return null;
+  return mapPublicBookingWorkspace(data as PublicBookingRow);
+}
 
-  const rawFaq = data.workspace_faq_items;
-  const faqRows = Array.isArray(rawFaq) ? rawFaq : rawFaq ? [rawFaq] : [];
-  const faqItems = [...faqRows]
-    .sort(
-      (a, b) =>
-        ((a as { sort_order?: number }).sort_order ?? 0) -
-        ((b as { sort_order?: number }).sort_order ?? 0),
-    )
-    .slice(0, 5)
-    .map((row) => ({
-      question: String((row as { question: string }).question ?? ""),
-      answer: String((row as { answer: string }).answer ?? ""),
-    }))
-    .filter((row) => row.question.trim());
+/** Public embed by stable workspace UUID (Site ID / data-eve-id). */
+export async function getPublicBookingWorkspaceById(
+  workspaceId: string,
+): Promise<PublicBookingWorkspace | null> {
+  const id = workspaceId.trim().toLowerCase();
+  if (!id) return null;
 
-  const filled = withWorkspaceAiDefaults({
-    tagline: (data.tagline as string | null) ?? null,
-    about: (data.about as string | null) ?? null,
-    businessHours: (data.business_hours as string | null) ?? null,
-    servicesSummary: (data.services_summary as string | null) ?? null,
-    chatAssistantLabel: (data.chat_assistant_label as string | null) ?? null,
-    chatIntro: (data.chat_intro as string | null) ?? null,
-    chatPlaceholder: (data.chat_placeholder as string | null) ?? null,
-    chatSuggestions: parseChatSuggestions(data.chat_suggestions),
-  });
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("workspaces")
+    .select(PUBLIC_BOOKING_SELECT)
+    .eq("id", id)
+    .maybeSingle();
 
-  const id = data.id as string;
-  const bookingLive = isPilotBookingLive({
-    workspaceId: id,
-    hasEncryptedCalKey: Boolean(data.cal_api_key_encrypted),
-    calEventTypeId: data.cal_event_type_id as number | null,
-  });
+  if (error || !data) return null;
+  return mapPublicBookingWorkspace(data as PublicBookingRow);
+}
 
-  return {
-    id,
-    name: data.name as string,
-    slug: data.slug as string,
-    tagline: filled.tagline,
-    about: filled.about,
-    businessHours: filled.businessHours,
-    servicesSummary: filled.servicesSummary,
-    phone: (data.phone as string | null) ?? null,
-    email: (data.email as string | null) ?? null,
-    address: (data.address as string | null) ?? null,
-    website: (data.website as string | null) ?? null,
-    setupCompletedAt: (data.setup_completed_at as string | null) ?? null,
-    bookingLive,
-    faqItems,
-    chatAssistantLabel: filled.chatAssistantLabel,
-    chatIntro: filled.chatIntro,
-    chatSuggestions: filled.chatSuggestions,
-    chatPlaceholder: filled.chatPlaceholder,
-  };
+/** Resolve `/embed/[key]` by Site ID (`chat_<uuid>` / UUID) or legacy slug. */
+export async function resolvePublicEmbedWorkspace(
+  key: string,
+): Promise<PublicBookingWorkspace | null> {
+  const parsed = parseEmbedWorkspaceKey(key);
+  if (!parsed) return null;
+  if (parsed.kind === "id") {
+    return getPublicBookingWorkspaceById(parsed.id);
+  }
+  return getPublicBookingWorkspace(parsed.slug);
 }
 
 export function publicBookingPath(slug: string): string {

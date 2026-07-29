@@ -16,6 +16,10 @@ import {
 } from "../lib/guest-timezone";
 import { resolveGuestTimeZone } from "../lib/guest-timezone-resolve";
 import {
+  formatAiBookableMeetingTypeMarkdown,
+  getAiBookingEventType,
+} from "../lib/workspace-cal";
+import {
   getWorkspaceById,
   resolveWorkspaceIdFromAgentContext,
 } from "../lib/workspace";
@@ -65,7 +69,10 @@ async function buildMarkdown(
     guestTzSource?: string | null;
   },
 ) {
-  const workspace = await fetchWorkspaceFaq(workspaceId);
+  const [workspace, aiEvent] = await Promise.all([
+    fetchWorkspaceFaq(workspaceId),
+    getAiBookingEventType(workspaceId),
+  ]);
   const tz = workspace?.timezone?.trim() || bookingConfig.timezone;
   const today = todayYmd(tz);
   const label = todayLabel(tz);
@@ -136,9 +143,10 @@ ${timezoneBlock}
 3. **Do not** invent other reasons; **do not** claim a slot is open if the tool did not return it.
 4. If the guest is urgent: only suggest tool-returned slots; you may suggest calling the workspace phone if available.
 ${handoffBlock}
+${formatAiBookableMeetingTypeMarkdown(aiEvent)}
 # Workspace & FAQ (summary — source: Supabase)
 
-${buildBookingFaqSummary(workspace)}
+${buildBookingFaqSummary(workspace, aiEvent)}
 
 # Goals
 
@@ -150,6 +158,7 @@ ${buildBookingFaqSummary(workspace)}
 # Hard rules
 
 - You only support booking / appointment FAQ — no professional advice outside booking scope.
+- When describing what guests can book **via chat**, use the **AI bookable meeting type** title and duration above — do not invent another duration; FAQ/services must not override it.
 - Before stating any open time: call \`check_availability\`. Only mention \`start\` values returned by the tool. Prefer tool \`display\` strings for dual timezones.
 - After \`book_appointment\` or \`reschedule_appointment\`, confirm using the booking \`display\` field (both times when online).
 - Before booking: confirm with the guest (full name, phone, email, chosen time). Then call \`book_appointment\` with \`guestName\`.

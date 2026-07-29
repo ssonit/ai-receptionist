@@ -13,12 +13,12 @@ export const DEFAULT_WORKSPACE_FAQ_ITEMS: readonly FaqItemInput[] = [
   {
     question: "Có những dịch vụ nào?",
     answer:
-      "- Tư vấn / consultation (30 phút) — đặt qua chat\n- Điều trị dài — nhân viên xếp lịch trên Cal.com",
+      "- Tư vấn / Consultation (30 phút) — Có thể đặt lịch trực tiếp qua chat.\n- Điều trị dài — nhân viên xếp lịch trên Cal.com",
   },
   {
     question: "Giá tham khảo như thế nào?",
     answer:
-      "- Tư vấn: theo bảng giá workspace\n- Không cam kết giá cuối qua chat nếu chưa xác nhận",
+      "- Tư vấn / Consultation (30 phút): theo bảng giá workspace\n- Không cam kết giá cuối qua chat nếu chưa xác nhận\n- Có thể đặt lịch trực tiếp qua chat để được báo rõ hơn",
   },
   {
     question: "Đặt lịch như thế nào?",

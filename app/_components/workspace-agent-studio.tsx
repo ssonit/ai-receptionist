@@ -947,7 +947,7 @@ export function WorkspaceAgentStudio({
                       <Textarea
                         onChange={(e) => setServicesSummary(e.target.value)}
                         placeholder={
-                          "- Consultation 30 minutes\n- General checkup 90 minutes"
+                          "- Tư vấn / Consultation (30 phút) — Có thể đặt lịch trực tiếp qua chat.\n- Khám / điều trị dài hơn — nhân viên xếp lịch"
                         }
                         rows={4}
                         value={servicesSummary}

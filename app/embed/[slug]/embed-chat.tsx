@@ -33,6 +33,7 @@ export function EmbedChat({
     <div className="flex h-dvh flex-col bg-zinc-950">
       <AgentChat
         chatBranding={chatBranding}
+        embedMode
         initialLocale={initialLocale}
         user={null}
         workspaceName={workspace.name}

@@ -12,6 +12,35 @@ export type AiBookingEventType = {
   username: string;
 };
 
+/**
+ * Prompt block: what the agent may book via chat tools.
+ * Prefer this over FAQ/services copy when they disagree on duration/title.
+ */
+export function formatAiBookableMeetingTypeMarkdown(
+  aiEvent: AiBookingEventType | null,
+): string {
+  if (!aiEvent) {
+    return [
+      "## AI bookable meeting type",
+      "",
+      "Not configured yet — the owner must select one under Dashboard → Agent → Booking.",
+      "Do not invent a duration or claim guests can book a specific meeting type via chat until configured.",
+      "",
+    ].join("\n");
+  }
+
+  const title = aiEvent.title.trim() || aiEvent.slug;
+  return [
+    "## AI bookable meeting type",
+    "",
+    `- **AI bookable type:** ${title} · ${aiEvent.lengthMinutes} phút · slug \`${aiEvent.slug}\``,
+    "- When describing what guests can book **via chat**, use this title and duration.",
+    "- Do **not** invent another duration. FAQ / services text is supplementary — it must **not** override this type.",
+    "- `check_availability` / `book_appointment` always use this Cal.com meeting type.",
+    "",
+  ].join("\n");
+}
+
 export type WorkspaceEventTypeRow = {
   id: string;
   workspace_id: string;
@@ -43,20 +72,21 @@ export async function getAiBookingEventType(
   const wsId = workspaceId;
   const supabase = createAdminClient();
 
-  const { data: aiRow } = await supabase
-    .from("workspace_event_types")
-    .select(
-      "id, workspace_id, cal_event_type_id, slug, title, length_minutes, minimum_notice_minutes, is_ai_booking",
-    )
-    .eq("workspace_id", wsId)
-    .eq("is_ai_booking", true)
-    .maybeSingle();
-
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("cal_event_type_id, cal_event_type_slug, cal_username")
-    .eq("id", wsId)
-    .maybeSingle();
+  const [{ data: aiRow }, { data: workspace }] = await Promise.all([
+    supabase
+      .from("workspace_event_types")
+      .select(
+        "id, workspace_id, cal_event_type_id, slug, title, length_minutes, minimum_notice_minutes, is_ai_booking",
+      )
+      .eq("workspace_id", wsId)
+      .eq("is_ai_booking", true)
+      .maybeSingle(),
+    supabase
+      .from("workspaces")
+      .select("cal_event_type_id, cal_event_type_slug, cal_username")
+      .eq("id", wsId)
+      .maybeSingle(),
+  ]);
 
   const username =
     workspace?.cal_username || bookingConfig.cal.username || "";

@@ -124,21 +124,30 @@ export function SetupWizard({
   const [profileSaved, setProfileSaved] = React.useState(setupCompleted);
   const openedRef = React.useRef(false);
 
+  const trackSetup = (
+    event: Parameters<typeof trackSetupEventAction>[0],
+    meta?: Record<string, unknown>,
+  ) => {
+    void trackSetupEventAction(event, meta).catch(() => {
+      // Analytics must not surface as unhandledRejection.
+    });
+  };
+
   useEffect(() => {
     if (openedRef.current) return;
     openedRef.current = true;
-    void trackSetupEventAction("setup_open", { initialStep });
+    trackSetup("setup_open", { initialStep });
   }, [initialStep]);
 
   useEffect(() => {
-    if (step === 2) void trackSetupEventAction("setup_step2_view");
+    if (step === 2) trackSetup("setup_step2_view");
   }, [step]);
 
   useEffect(() => {
     if (calState.success) {
       toast.success(calState.success);
       setCalKeyDraft("");
-      void trackSetupEventAction("setup_cal_connected");
+      trackSetup("setup_cal_connected");
       router.refresh();
       setStep(4);
     } else if (calState.error) toast.error(calState.error);
@@ -158,7 +167,7 @@ export function SetupWizard({
       toast.success(finishState.success);
       setProfileDirty(false);
       setProfileSaved(true);
-      void trackSetupEventAction("setup_step1_done");
+      trackSetup("setup_step1_done");
       router.refresh();
       setStep(2);
     } else if (finishState.error) toast.error(finishState.error);
@@ -216,7 +225,7 @@ export function SetupWizard({
   };
 
   const goDashboard = (event: "setup_cal_skip" | "setup_complete_dashboard") => {
-    void trackSetupEventAction(event);
+    trackSetup(event);
     router.push("/dashboard");
   };
 
@@ -227,8 +236,9 @@ export function SetupWizard({
       if (result.error) toast.error(result.error);
       else {
         toast.success(result.success ?? "Selected");
-        void trackSetupEventAction("setup_meeting_type", { id });
-        router.refresh();
+        trackSetup("setup_meeting_type", { id });
+        // Local aiId already reflects selection; refresh can race the
+        // proxy "booking live → leave setup" document redirect.
       }
     });
   };

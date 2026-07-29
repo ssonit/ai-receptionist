@@ -4,9 +4,11 @@
   var script = document.currentScript;
   if (!script) return;
 
+  var siteId = script.getAttribute("data-eve-id");
   var slug = script.getAttribute("data-eve-slug");
-  if (!slug) {
-    console.error("[eve] missing data-eve-slug on embed script");
+  var embedKey = (siteId && siteId.trim()) || (slug && slug.trim()) || "";
+  if (!embedKey) {
+    console.error("[eve] missing data-eve-id (or legacy data-eve-slug) on embed script");
     return;
   }
 
@@ -30,7 +32,7 @@
     "box-shadow:0 12px 48px rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.08);";
 
   var iframe = document.createElement("iframe");
-  iframe.src = origin + "/embed/" + encodeURIComponent(slug);
+  iframe.src = origin + "/embed/" + encodeURIComponent(embedKey);
   iframe.title = "Booking chat";
   iframe.style.cssText = "width:100%;height:100%;border:0;display:block;";
   iframe.setAttribute("allow", "clipboard-write");

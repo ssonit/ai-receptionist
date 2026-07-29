@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Northline Studio — Embed host demo</title>
+    <style>
+      :root {
+        --ink: #1c1917;
+        --muted: #78716c;
+        --paper: #fafaf9;
+        --line: #e7e5e4;
+        --accent: #0f766e;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(ellipse 80% 50% at 10% -10%, #ccfbf1 0%, transparent 55%),
+          radial-gradient(ellipse 60% 40% at 100% 0%, #fef3c7 0%, transparent 50%),
+          var(--paper);
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--line);
+        background: rgba(250, 250, 249, 0.85);
+        backdrop-filter: blur(8px);
+      }
+      .brand {
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .brand span {
+        color: var(--accent);
+      }
+      nav {
+        display: flex;
+        gap: 1.25rem;
+        font-size: 0.875rem;
+        color: var(--muted);
+      }
+      main {
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 4rem 1.5rem 8rem;
+      }
+      h1 {
+        margin: 0 0 0.75rem;
+        font-size: clamp(1.75rem, 4vw, 2.35rem);
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+      }
+      .lede {
+        margin: 0 0 1.5rem;
+        font-size: 1.05rem;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        height: 2.75rem;
+        padding: 0 1.25rem;
+        border-radius: 999px;
+        background: var(--ink);
+        color: #fff;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .banner {
+        margin-bottom: 1.5rem;
+        padding: 0.85rem 1rem;
+        border: 1px dashed var(--accent);
+        border-radius: 0.75rem;
+        background: rgba(15, 118, 110, 0.06);
+        font-size: 0.85rem;
+        line-height: 1.45;
+        color: #134e4a;
+      }
+      .banner code {
+        font-size: 0.8em;
+      }
+      .error {
+        border-color: #b91c1c;
+        background: #fef2f2;
+        color: #7f1d1d;
+      }
+      footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 0.65rem 1.5rem;
+        border-top: 1px solid var(--line);
+        background: rgba(250, 250, 249, 0.92);
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">Northline <span>Studio</span></div>
+      <nav aria-hidden="true">
+        <span>Work</span>
+        <span>About</span>
+        <span>Contact</span>
+      </nav>
+    </header>
+
+    <main>
+      <div id="status" class="banner" hidden></div>
+      <h1>This is a fake third-party website.</h1>
+      <p class="lede">
+        It mimics a customer site that installed the Eve chat bubble. Use the
+        bubble in the corner — same UX as when the snippet is pasted on a real
+        host page.
+      </p>
+      <a class="cta" href="#book">Book a consult</a>
+    </main>
+
+    <footer>
+      Embed host demo · not a real product page · bubble loads
+      <code>/embed.js</code>
+    </footer>
+
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var siteId = (params.get("id") || "").trim();
+        var slug = (params.get("slug") || "").trim();
+        var status = document.getElementById("status");
+
+        function show(msg, isError) {
+          status.hidden = false;
+          status.textContent = msg;
+          status.classList.toggle("error", !!isError);
+        }
+
+        if (!siteId && !slug) {
+          show(
+            "Missing ?id= (or legacy ?slug=) — open this page from Dashboard → Embed → “Try on another site”.",
+            true
+          );
+          return;
+        }
+
+        var label = siteId || slug;
+        show(
+          "Host page demo for “" +
+            label +
+            "”. Click the Chat bubble (bottom-right)."
+        );
+
+        var script = document.createElement("script");
+        script.src = new URL("/embed.js", window.location.origin).href;
+        script.async = true;
+        if (siteId) script.setAttribute("data-eve-id", siteId);
+        else script.setAttribute("data-eve-slug", slug);
+        script.onerror = function () {
+          show("Failed to load /embed.js from " + window.location.origin, true);
+        };
+        document.body.appendChild(script);
+      })();
+    </script>
+  </body>
+</html>

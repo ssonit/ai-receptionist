@@ -3,6 +3,7 @@ import {
   buildBookingFaqMarkdown,
   fetchWorkspaceFaq,
 } from "../../lib/workspace-faq";
+import { getAiBookingEventType } from "../../lib/workspace-cal";
 import { resolveWorkspaceIdFromAgentContext } from "../../lib/workspace";
 
 const description =
@@ -22,11 +23,14 @@ async function faqSkill(ctx: {
     sessionId: ctx.session?.id ?? null,
     auth: ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null,
   });
-  const workspace = await fetchWorkspaceFaq(workspaceId);
+  const [workspace, aiEvent] = await Promise.all([
+    fetchWorkspaceFaq(workspaceId),
+    getAiBookingEventType(workspaceId),
+  ]);
   console.error(`[diag] faqSkill after fetchWorkspaceFaq ${Date.now()}`);
   return defineSkill({
     description,
-    markdown: buildBookingFaqMarkdown(workspace),
+    markdown: buildBookingFaqMarkdown(workspace, aiEvent),
   });
 }
 
