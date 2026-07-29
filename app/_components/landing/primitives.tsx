@@ -104,9 +104,9 @@ export function ProductFrame({
       )}
     >
       <div className="flex items-center gap-2 border-b border-white/8 px-4 py-3">
-        <span className="size-2.5 rounded-full bg-white/15" />
-        <span className="size-2.5 rounded-full bg-white/15" />
-        <span className="size-2.5 rounded-full bg-white/15" />
+        <span aria-hidden className="size-2.5 rounded-full bg-[#ff5f57]" />
+        <span aria-hidden className="size-2.5 rounded-full bg-[#febc2e]" />
+        <span aria-hidden className="size-2.5 rounded-full bg-[#28c840]" />
         {label ? (
           <span className="ml-3 truncate text-xs text-zinc-500">{label}</span>
         ) : null}

@@ -23,6 +23,10 @@ export const metadata: Metadata = {
   title: "Eve — AI Booking",
   description:
     "AI booking chat: FAQ, availability checks, and calendar bookings. Dashboard for leads and appointments.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { readonly children: ReactNode }) {

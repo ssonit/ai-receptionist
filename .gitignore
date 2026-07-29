@@ -33,9 +33,9 @@ CLAUDE.local.md
 AGENTS.override.md
 .claude/settings.local.json
 .claude/settings.local.json.bak
-.cursor/hooks.json
 .cursor/mcp.json
 .cursor/plans/
+.cursor/.graphify-session
 
 # Accidental multi-agent skill dumps from `npx react-doctor install --yes`
 # Keep only: .agents/ .claude/ .codex/ (+ .cursor/rules)

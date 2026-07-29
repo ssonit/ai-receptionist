@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { EveLogo } from "@/components/eve-logo";
 import { LocaleToggle } from "@/components/locale-provider";
 import { Container, PrimaryButton } from "./primitives";
 
@@ -11,12 +12,13 @@ export function LandingHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 bg-[#070707]/70 backdrop-blur-xl">
       <Container className="flex h-14 items-center justify-between gap-4">
-        <Link
-          className="text-sm font-semibold tracking-tight text-white"
+        <EveLogo
           href="/"
-        >
-          {t("brand")}
-        </Link>
+          label={t("brand")}
+          linkClassName="text-white"
+          showLabel
+          size="sm"
+        />
 
         <nav className="hidden items-center gap-7 text-sm text-zinc-400 md:flex">
           <a className="transition hover:text-white" href="#features">
@@ -54,9 +56,14 @@ export function LandingFooter() {
   return (
     <footer className="border-t border-white/5 py-10">
       <Container className="flex flex-col items-center justify-between gap-5 text-sm text-zinc-500 sm:flex-row">
-        <div className="text-center sm:text-left">
-          <p className="font-medium text-zinc-300">{brand("brand")}</p>
-          <p className="mt-1">{t("tagline")}</p>
+        <div className="flex flex-col items-center gap-3 text-center sm:items-start sm:text-left">
+          <EveLogo
+            label={brand("brand")}
+            labelClassName="text-zinc-300"
+            showLabel
+            size="sm"
+          />
+          <p>{t("tagline")}</p>
         </div>
         <div className="flex flex-wrap justify-center gap-x-5 gap-y-2">
           <Link className="hover:text-white" href="/chat">

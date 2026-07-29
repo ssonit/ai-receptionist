@@ -22,6 +22,7 @@ import { Particles } from "@/components/ui/particles";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import { Button } from "@/components/ui/button";
 import { VirtualConversation } from "@/components/ai-elements/virtual-conversation";
+import { EveLogo } from "@/components/eve-logo";
 import type {
   ChatMessageRow,
   ChatSessionListItem,
@@ -391,13 +392,9 @@ function AgentChatInner({
           <div className="flex items-center gap-2">
             <ChatSessionsToggle onClick={() => setDrawerOpen(true)} />
             {embedMode ? (
-              <span className="text-sm font-semibold tracking-tight text-white">
-                Eve
-              </span>
+              <EveLogo size="xs" />
             ) : (
-              <Link className="text-sm font-semibold tracking-tight text-white" href="/">
-                Eve
-              </Link>
+              <EveLogo href="/" linkClassName="text-white" size="xs" />
             )}
           </div>
 

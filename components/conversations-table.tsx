@@ -20,7 +20,10 @@ import type {
   ConversationListRow,
   ConversationOutcome,
 } from "@/lib/conversations-dashboard";
-import type { ChatMessageRow } from "@/lib/chat-sessions";
+import {
+  compareChatMessagesChronological,
+  type ChatMessageRow,
+} from "@/lib/chat-sessions";
 import { cn } from "@/lib/utils";
 
 const VIEWS = [
@@ -103,7 +106,11 @@ function ConversationDetailSheet({
         if (cancelled) return;
         setTitle(data.session?.title ?? "Conversation");
         setOutcome(data.outcome ?? "empty");
-        setMessages(data.messages ?? []);
+        setMessages(
+          ((data.messages ?? []) as ChatMessageRow[])
+            .slice()
+            .sort(compareChatMessagesChronological),
+        );
         setNextCursor(data.nextCursor ?? null);
         setHasMore(Boolean(data.hasMore));
         setLeadId(data.leadId ?? null);
@@ -135,7 +142,9 @@ function ConversationDetailSheet({
       const older = (data.messages ?? []) as ChatMessageRow[];
       setMessages((prev) => {
         const ids = new Set(prev.map((m) => m.id));
-        return [...older.filter((m) => !ids.has(m.id)), ...prev];
+        return [...older.filter((m) => !ids.has(m.id)), ...prev].sort(
+          compareChatMessagesChronological,
+        );
       });
       setNextCursor(data.nextCursor ?? null);
       setHasMore(Boolean(data.hasMore));

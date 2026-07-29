@@ -1,12 +1,16 @@
 "use client";
 
 import {
+  BellIcon,
+  BuildingsIcon,
   CalendarBlankIcon,
   ChatCircleIcon,
   CheckIcon,
+  CodeIcon,
   DevicesIcon,
   GlobeIcon,
   MicrophoneIcon,
+  UserFocusIcon,
 } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -211,6 +215,109 @@ const MOMENT_KEYS = [
   "remind",
 ] as const;
 
+function MomentVisual({ kind }: { kind: (typeof MOMENT_KEYS)[number] }) {
+  if (kind === "chat") {
+    return (
+      <div className="flex w-full flex-col justify-center gap-1">
+        <div className="ml-auto w-[78%] rounded-lg rounded-br-sm bg-white px-2 py-1 text-[10px] leading-snug text-black">
+          Friday 2pm?
+        </div>
+        <div className="w-[90%] rounded-lg rounded-bl-sm border border-white/10 bg-zinc-900 px-2 py-1 text-[10px] leading-snug text-zinc-300">
+          Booked — see you then.
+        </div>
+      </div>
+    );
+  }
+
+  if (kind === "cal") {
+    return (
+      <div className="flex w-full items-center gap-3">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-zinc-900">
+          <CalendarBlankIcon className="size-4 text-zinc-300" weight="duotone" />
+        </div>
+        <div className="flex min-w-0 flex-1 gap-1">
+          {["1:00", "2:00", "3:30"].map((slot, i) => (
+            <span
+              className={cn(
+                "rounded-md px-2 py-1 text-[10px] font-medium",
+                i === 1
+                  ? "bg-white text-black"
+                  : "border border-white/10 text-zinc-400",
+              )}
+              key={slot}
+            >
+              {slot}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (kind === "leads") {
+    return (
+      <div className="flex w-full items-center gap-3">
+        <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-900">
+          <UserFocusIcon className="size-4 text-zinc-300" weight="duotone" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-medium text-white">Maya Chen</p>
+          <p className="truncate text-[10px] text-zinc-500">
+            maya@studio.co · wants consult
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-400">
+          New
+        </span>
+      </div>
+    );
+  }
+
+  if (kind === "embed") {
+    return (
+      <div className="flex w-full items-center gap-3">
+        <div className="relative flex size-9 items-center justify-center rounded-full bg-white text-black shadow-[0_0_0_4px_rgba(255,255,255,0.08)]">
+          <ChatCircleIcon className="size-4" weight="fill" />
+        </div>
+        <div className="min-w-0 flex-1 rounded-lg border border-dashed border-white/15 bg-zinc-900/60 px-2.5 py-1.5 font-mono text-[10px] text-zinc-400">
+          <span className="inline-flex items-center gap-1.5">
+            <CodeIcon className="size-3 shrink-0" weight="bold" />
+            {"<script src=\"…/embed.js\">"}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (kind === "tenant") {
+    return (
+      <div className="flex w-full items-center gap-3">
+        <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-900">
+          <BuildingsIcon className="size-4 text-zinc-300" weight="duotone" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-mono text-[11px] text-zinc-300">/b/north-clinic</p>
+          <p className="text-[10px] text-zinc-500">Isolated workspace</p>
+        </div>
+        <span className="size-2 shrink-0 rounded-full bg-emerald-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex w-full items-center gap-3">
+      <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-900">
+        <BellIcon className="size-4 text-zinc-300" weight="duotone" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium text-white">Reminder sent</p>
+        <p className="text-[10px] text-zinc-500">Tomorrow · 2:00 PM · SMS</p>
+      </div>
+      <CheckIcon className="size-3.5 shrink-0 text-emerald-400" weight="bold" />
+    </div>
+  );
+}
+
 export function FeatureMoments() {
   const t = useTranslations("landing.moments");
 
@@ -220,24 +327,29 @@ export function FeatureMoments() {
         <BlurFade inView>
           <SectionHeading subtitle={t("subtitle")} title={t("title")} />
         </BlurFade>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {MOMENT_KEYS.map((key, i) => (
             <BlurFade
-              className={cn(i === 0 && "sm:col-span-2 lg:col-span-1", i === 1 && "lg:row-span-1")}
+              className={cn(
+                "flex h-full flex-col",
+                i === 0 && "sm:col-span-2 lg:col-span-1",
+              )}
               delay={0.05 * i}
               inView
               key={key}
             >
-              <article className="group flex h-full min-h-[160px] flex-col justify-between overflow-hidden rounded-[1.5rem] border border-white/10 bg-zinc-950/80 p-6 transition hover:border-white/20">
-                <div>
-                  <h3 className="text-lg font-semibold text-white">
+              <article className="group flex h-full flex-col rounded-[1.5rem] border border-white/10 bg-zinc-950/80 p-6 transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/20">
+                <div className="h-[5.25rem] shrink-0">
+                  <h3 className="line-clamp-1 text-lg font-semibold text-white">
                     {t(`items.${key}.title`)}
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                  <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-zinc-400">
                     {t(`items.${key}.body`)}
                   </p>
                 </div>
-                <div className="pointer-events-none mt-6 h-16 rounded-xl border border-white/5 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_55%)] opacity-80 transition group-hover:opacity-100" />
+                <div className="pointer-events-none mt-6 flex h-20 shrink-0 items-center rounded-xl border border-white/5 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_55%)] px-3 py-3 opacity-90 transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:opacity-100">
+                  <MomentVisual kind={key} />
+                </div>
               </article>
             </BlurFade>
           ))}

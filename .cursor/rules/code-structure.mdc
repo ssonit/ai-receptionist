@@ -27,6 +27,7 @@ Goal: clean boundaries so features are easy to extend without copy-paste.
 
 ## Anti-patterns
 
+- No Read/Grep/Glob exploration before `graphify query` when `graphify-out/graph.json` exists (see `.cursor/rules/graphify.mdc`).
 - No Cal.com / DB business logic embedded in React components.
 - No silent Pilot workspace fallback when a tenant slug/session hint exists.
 - No new god files; split by concern before growing past ~400 lines.

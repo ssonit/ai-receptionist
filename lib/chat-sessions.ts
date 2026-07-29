@@ -76,6 +76,32 @@ export type ChatMessagesPage = {
   hasMore: boolean;
 };
 
+/** Stable chronological order when created_at ties (same-batch inserts). */
+export function compareChatMessagesChronological(
+  a: Pick<ChatMessageRow, "created_at" | "eve_event_index" | "role" | "id">,
+  b: Pick<ChatMessageRow, "created_at" | "eve_event_index" | "role" | "id">,
+): number {
+  const ta = a.created_at;
+  const tb = b.created_at;
+  if (ta !== tb) return ta < tb ? -1 : 1;
+
+  const ea = a.eve_event_index ?? 0;
+  const eb = b.eve_event_index ?? 0;
+  if (ea !== eb) return ea - eb;
+
+  const roleRank = (role: ChatMessageRow["role"]) => {
+    if (role === "user") return 0;
+    if (role === "assistant") return 1;
+    if (role === "tool") return 2;
+    return 3;
+  };
+  const ra = roleRank(a.role);
+  const rb = roleRank(b.role);
+  if (ra !== rb) return ra - rb;
+
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
 const SESSION_LIST_SELECT =
   "id, title, status, eve_session_id, visitor_id, user_id, last_message_at, created_at, updated_at";
 
@@ -288,6 +314,7 @@ export async function getChatMessagesPage(
     .select(MESSAGE_SELECT)
     .eq("session_id", sessionId)
     .order("created_at", { ascending: false })
+    .order("eve_event_index", { ascending: false, nullsFirst: false })
     .order("id", { ascending: false })
     .limit(limit + 1);
 
@@ -304,8 +331,8 @@ export async function getChatMessagesPage(
   const rows = (data ?? []) as ChatMessageRow[];
   const hasMore = rows.length > limit;
   const slice = hasMore ? rows.slice(0, limit) : rows;
-  // Return chronological ascending for UI
-  const messages = slice.slice().reverse();
+  // Chronological ascending for UI (stable when created_at ties)
+  const messages = slice.slice().sort(compareChatMessagesChronological);
   const oldest = messages[0];
   return {
     messages,
@@ -327,7 +354,9 @@ export async function getChatMessages(
     .order("id", { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as ChatMessageRow[];
+  return ((data ?? []) as ChatMessageRow[]).slice().sort(
+    compareChatMessagesChronological,
+  );
 }
 
 export async function countChatMessages(sessionId: string): Promise<number> {
@@ -412,18 +441,26 @@ export async function upsertChatMessages(input: {
   messages: ProjectedChatMessage[];
 }): Promise<void> {
   const supabase = createAdminClient();
-  const now = new Date().toISOString();
+  const baseMs = Date.now();
 
   if (input.messages.length === 0) {
     return;
   }
 
-  const withEveId = input.messages.filter((m) => m.eve_message_id?.trim());
-  const withoutEveId = input.messages.filter((m) => !m.eve_message_id?.trim());
+  const stamped = input.messages.map((m, index) => ({
+    m,
+    index,
+    // Stagger timestamps so same-batch user→assistant keep chronological order
+    // (UUID id alone is not insertion-ordered).
+    created_at: new Date(baseMs + index).toISOString(),
+  }));
+
+  const withEveId = stamped.filter((row) => row.m.eve_message_id?.trim());
+  const withoutEveId = stamped.filter((row) => !row.m.eve_message_id?.trim());
 
   if (withEveId.length > 0) {
     const eveIds = [
-      ...new Set(withEveId.map((m) => m.eve_message_id!.trim())),
+      ...new Set(withEveId.map((row) => row.m.eve_message_id!.trim())),
     ];
     const { data: existing, error: existingError } = await supabase
       .from("chat_messages")
@@ -440,20 +477,22 @@ export async function upsertChatMessages(input: {
     );
 
     const rows = withEveId
-      .filter((m) => {
-        const id = m.eve_message_id!.trim();
+      .filter((row) => {
+        const id = row.m.eve_message_id!.trim();
         if (seen.has(id)) return false;
         seen.add(id);
         return true;
       })
-      .map((m, index) => ({
+      .map((row) => ({
         session_id: input.sessionId,
-        role: m.role,
-        content: redactBookingSecrets(m.content),
-        eve_message_id: m.eve_message_id!.trim(),
-        eve_event_index: index,
-        raw: (redactBookingSecretsDeep(m.raw ?? null) as object | null) ?? null,
-        created_at: now,
+        role: row.m.role,
+        content: redactBookingSecrets(row.m.content),
+        eve_message_id: row.m.eve_message_id!.trim(),
+        eve_event_index: row.index,
+        raw:
+          (redactBookingSecretsDeep(row.m.raw ?? null) as object | null) ??
+          null,
+        created_at: row.created_at,
       }));
 
     if (rows.length > 0) {
@@ -463,19 +502,21 @@ export async function upsertChatMessages(input: {
   }
 
   if (withoutEveId.length > 0) {
-    const rows = withoutEveId.map((m, index) => ({
+    const rows = withoutEveId.map((row) => ({
       session_id: input.sessionId,
-      role: m.role,
-      content: redactBookingSecrets(m.content),
+      role: row.m.role,
+      content: redactBookingSecrets(row.m.content),
       eve_message_id: null,
-      eve_event_index: index,
-      raw: (redactBookingSecretsDeep(m.raw ?? null) as object | null) ?? null,
-      created_at: now,
+      eve_event_index: row.index,
+      raw:
+        (redactBookingSecretsDeep(row.m.raw ?? null) as object | null) ?? null,
+      created_at: row.created_at,
     }));
     const { error } = await supabase.from("chat_messages").insert(rows);
     if (error) throw new Error(error.message);
   }
 
+  const now = new Date(baseMs + Math.max(0, input.messages.length - 1)).toISOString();
   await supabase
     .from("chat_sessions")
     .update({ last_message_at: now, updated_at: now })

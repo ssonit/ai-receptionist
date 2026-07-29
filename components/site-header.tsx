@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { IconHome, IconCalendarEvent } from "@tabler/icons-react";
+import { IconCalendarEvent } from "@tabler/icons-react";
 import { DashboardRefreshButton } from "@/components/dashboard-refresh-button";
+import { EveLogoMark } from "@/components/eve-logo";
 import { LocaleToggle } from "@/components/locale-provider";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { Button } from "@/components/ui/button";
@@ -72,7 +73,7 @@ export function SiteHeader({
             variant="default"
           >
             <Link href="/">
-              <IconHome className="size-4" />
+              <EveLogoMark className="rounded-sm" size="xs" />
               <span className="sr-only">Landing</span>
             </Link>
           </Button>

@@ -17,6 +17,8 @@
     script.getAttribute("data-eve-position") === "left" ? "left" : "right";
   var color = script.getAttribute("data-eve-color") || "#18181b";
   var label = script.getAttribute("data-eve-label") || "Chat";
+  var logoUrl =
+    script.getAttribute("data-eve-logo") || origin + "/logo.png";
 
   if (document.getElementById("eve-embed-root")) return;
 
@@ -43,14 +45,22 @@
   button.setAttribute("aria-label", label);
   button.setAttribute("aria-expanded", "false");
   button.style.cssText =
-    "display:flex;align-items:center;justify-content:center;gap:8px;height:52px;" +
-    "min-width:52px;padding:0 18px;border:0;border-radius:26px;cursor:pointer;" +
+    "display:flex;align-items:center;justify-content:center;width:56px;height:56px;" +
+    "padding:0;border:0;border-radius:50%;cursor:pointer;overflow:hidden;" +
     "background:" +
     color +
-    ";color:#fff;font:600 14px/1 system-ui,sans-serif;" +
-    "box-shadow:0 6px 20px rgba(0,0,0,.24);" +
+    ";box-shadow:0 6px 20px rgba(0,0,0,.24);" +
     (position === "left" ? "" : "margin-left:auto;");
-  button.textContent = label;
+
+  var logo = document.createElement("img");
+  logo.src = logoUrl;
+  logo.alt = "";
+  logo.setAttribute("aria-hidden", "true");
+  logo.width = 56;
+  logo.height = 56;
+  logo.style.cssText =
+    "display:block;width:56px;height:56px;object-fit:cover;pointer-events:none;";
+  button.appendChild(logo);
 
   var open = false;
   button.addEventListener("click", function () {

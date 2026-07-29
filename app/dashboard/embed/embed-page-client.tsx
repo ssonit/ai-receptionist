@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowRightIcon, ChatCircleIcon } from "@phosphor-icons/react";
+import { ArrowRightIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { EveLogoMark } from "@/components/eve-logo";
 import type { buildEmbedSnippets } from "@/lib/embed";
 
 import {
@@ -189,11 +190,9 @@ export function EmbedPageClient({
 
               <div
                 aria-hidden
-                className="pointer-events-none absolute right-5 bottom-5 flex h-13 items-center gap-2 rounded-[26px] px-4.5 text-sm font-semibold text-white shadow-[0_6px_20px_rgba(0,0,0,0.24)]"
-                style={{ background: "#18181b" }}
+                className="pointer-events-none absolute right-5 bottom-5 size-14 overflow-hidden rounded-full shadow-[0_6px_20px_rgba(0,0,0,0.24)]"
               >
-                <ChatCircleIcon className="size-5" weight="fill" />
-                Chat
+                <EveLogoMark className="size-full rounded-full" size="xl" />
               </div>
             </div>
           </CardContent>

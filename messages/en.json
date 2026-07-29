@@ -333,7 +333,17 @@
       "bookingsWeek": "Bookings this week",
       "response": "Avg. reply",
       "responseValue": "42s",
-      "online": "Agent online"
+      "online": "Agent online",
+      "sessionActive": "Book a dental cleaning this Friday afternoon",
+      "sessionActiveTime": "7/28/26, 10:37 AM",
+      "sessionHours": "What time do you open today?",
+      "sessionHoursTime": "7/28/26, 10:31 AM",
+      "sessionEarlierTime": "7/28/26, 10:27 AM",
+      "userPrompt": "Any openings Friday afternoon for a dental cleaning?",
+      "assistantReply": "This Friday (31/07/2026) has plenty of afternoon openings at District 1, HCMC:",
+      "afternoonLabel": "Afternoon",
+      "assistantFollowUp": "Want one of these for dental cleaning?",
+      "send": "Send"
     }
   }
 }

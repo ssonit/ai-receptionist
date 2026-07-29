@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { EveLogo } from "@/components/eve-logo";
 import { AnimatedGridPattern } from "@/components/ui/animated-grid-pattern";
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
 import { BlurFade } from "@/components/ui/blur-fade";
@@ -45,9 +46,7 @@ export function AuthShell({
 
       <div className="relative z-10 mx-auto grid w-full max-w-6xl flex-1 lg:grid-cols-2">
         <aside className="hidden flex-col justify-between border-r border-white/5 px-10 py-10 lg:flex xl:px-14">
-          <Link className="text-sm font-semibold tracking-tight text-white" href="/">
-            Eve
-          </Link>
+          <EveLogo href="/" linkClassName="text-white" showLabel size="sm" />
 
           <BlurFade delay={0.1} inView>
             <div className="max-w-md space-y-6">
@@ -79,9 +78,7 @@ export function AuthShell({
 
         <section className="flex flex-col justify-center px-4 py-10 sm:px-8 lg:px-12">
           <div className="mb-8 flex items-center justify-between lg:hidden">
-            <Link className="text-sm font-semibold tracking-tight text-white" href="/">
-              Eve
-            </Link>
+            <EveLogo href="/" linkClassName="text-white" showLabel size="sm" />
             <Link className="text-sm text-zinc-400 transition hover:text-white" href="/chat">
               Open chat
             </Link>
@@ -97,7 +94,11 @@ export function AuthShell({
                 size={120}
               />
               <div className="mb-7 space-y-2">
-                <p className="text-xs tracking-[0.18em] text-zinc-500 uppercase">Eve</p>
+                <EveLogo
+                  labelClassName="text-xs tracking-[0.18em] text-zinc-500 uppercase"
+                  showLabel
+                  size="xs"
+                />
                 <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
                   {title}
                 </h1>

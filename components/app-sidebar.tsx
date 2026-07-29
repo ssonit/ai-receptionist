@@ -9,7 +9,6 @@ import {
   IconDashboard,
   IconCode,
   IconHelp,
-  IconInnerShadowTop,
   IconMessage,
   IconMessageChatbot,
   IconQuestionMark,
@@ -20,6 +19,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 
+import { EveLogo } from "@/components/eve-logo";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
@@ -144,8 +144,7 @@ export function AppSidebar({
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <Link href="/dashboard">
-                <IconInnerShadowTop className="size-5!" />
-                <span className="text-base font-semibold">Eve</span>
+                <EveLogo showLabel size="sm" />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -44,6 +44,7 @@ Do **not** assume the user wants you to start `localhost:3000` unless they ask.
 
 ## Coding standards (clean + reusable)
 
+0. **graphify before explore** — when `graphify-out/graph.json` exists, run `graphify query "<question>"` (or `path` / `explain`) **before** Read/Grep/Glob. Read/Grep only files and line ranges the graph surfaces. After code edits: `graphify update .`. Cursor enforces this via `.cursor/hooks.json`; Claude Code via `.claude/settings.json` (`graphify hook-guard`). Skipping graphify wastes tokens.
 1. **One concern per module** — if a file mixes UI + Cal.com + DB writes, split into `components/` + `lib/`.
 2. **Reuse before inventing** — search `lib/` and existing tools first; extend helpers instead of copy-paste.
 3. **Tenant always explicit** — resolve `workspaceId` via `resolveWorkspaceIdFromAgentContext` / `getDashboardUser`; never silent Pilot fallback when a tenant hint exists.
@@ -53,7 +54,7 @@ Do **not** assume the user wants you to start `localhost:3000` unless they ask.
 7. **User-facing errors** — codes + copy in `lib/errors/` (`AUTH_ERROR_CODE` / `formatAuthError`). Never show raw provider strings. See `.cursor/rules/errors.mdc`.
 8. **Small diffs** — change only what the task needs; no drive-by refactors or unsolicited markdown docs.
 9. **After React/UI edits** — run `npm run doctor` (react-doctor `--scope changed`). Fix errors before considering the task done. Full scan: `npm run doctor:full`.
-10. **After code edits** — run `graphify update .` (see `.cursor/rules/graphify.mdc`).
+10. **After code edits** — run `graphify update .` (see item 0 and `.cursor/rules/graphify.mdc`).
 
 ## Non-negotiables
 

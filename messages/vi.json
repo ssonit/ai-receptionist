@@ -333,7 +333,17 @@
       "bookingsWeek": "Lịch tuần này",
       "response": "Phản hồi TB",
       "responseValue": "42s",
-      "online": "Agent online"
+      "online": "Agent online",
+      "sessionActive": "Book a dental cleaning this Friday afternoon",
+      "sessionActiveTime": "7/28/26, 10:37 AM",
+      "sessionHours": "Hôm nay mở cửa lúc mấy giờ?",
+      "sessionHoursTime": "7/28/26, 10:31 AM",
+      "sessionEarlierTime": "7/28/26, 10:27 AM",
+      "userPrompt": "Thứ Sáu chiều còn slot vệ sinh răng không?",
+      "assistantReply": "Thứ Sáu tuần này (31/07/2026) có khá nhiều khung giờ chiều tại Quận 1, TP.HCM:",
+      "afternoonLabel": "Giờ chiều",
+      "assistantFollowUp": "Bạn muốn chọn khung nào cho vệ sinh răng?",
+      "send": "Gửi"
     }
   }
 }
