@@ -15,6 +15,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
+import { useDashboardRole } from "@/components/dashboard-role-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  canAccessDashboardPath,
+  DASHBOARD_PATH,
+} from "@/lib/dashboard-access";
 
 function getInitials(name: string, email: string) {
   const source = name.trim() || email.trim();
@@ -51,7 +56,12 @@ export function NavUser({
 }) {
   const t = useTranslations();
   const { isMobile } = useSidebar();
+  const role = useDashboardRole();
   const initials = getInitials(user.name, user.email);
+  const canOpenSettings = canAccessDashboardPath(
+    role,
+    DASHBOARD_PATH.settings,
+  );
 
   return (
     <SidebarMenu>
@@ -110,12 +120,14 @@ export function NavUser({
                   {t("dashboard.notifications")}
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">
-                  <IconSettings />
-                  {t("dashboard.settings")}
-                </Link>
-              </DropdownMenuItem>
+              {canOpenSettings ? (
+                <DropdownMenuItem asChild>
+                  <Link href={DASHBOARD_PATH.settings}>
+                    <IconSettings />
+                    {t("dashboard.settings")}
+                  </Link>
+                </DropdownMenuItem>
+              ) : null}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem

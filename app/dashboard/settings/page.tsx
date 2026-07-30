@@ -2,7 +2,9 @@ import { WorkspaceSettingsForm } from "@/app/_components/workspace-settings-form
 import { WorkspaceTeamCard } from "@/app/_components/workspace-team-card";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { absoluteAppOrigin } from "@/lib/app-origin";
-import { getDashboardUser } from "@/lib/dashboard-user";
+import { assertOwnerPage } from "@/lib/dashboard-access-server";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
+import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
 import { createClient } from "@/lib/supabase/server";
 import { publicBookingPath } from "@/lib/workspace";
 import { WORKSPACE_AI_DEFAULTS } from "@/lib/workspace-ai-defaults";
@@ -11,13 +13,9 @@ import {
   listWorkspaceMembers,
 } from "@/lib/workspace-invites";
 import type { WorkspaceOpsValues } from "@/lib/workspace-settings-types";
-import { redirect } from "next/navigation";
 
 export default async function SettingsPage() {
-  const dashboard = await getDashboardUser();
-  if (!dashboard) {
-    redirect("/login?next=/dashboard/settings");
-  }
+  const dashboard = await assertOwnerPage(DASHBOARD_PATH.settings);
 
   let workspace: WorkspaceOpsValues | null = null;
   let currentUserId: string | null = null;
@@ -72,7 +70,7 @@ export default async function SettingsPage() {
 
     try {
       members = await listWorkspaceMembers(dashboard.workspaceId);
-      if (dashboard.role === "owner") {
+      if (dashboard.role === WORKSPACE_ROLE.OWNER) {
         pendingInvites = await listPendingInvites(dashboard.workspaceId);
       }
     } catch {
@@ -87,20 +85,17 @@ export default async function SettingsPage() {
     : null;
 
   return (
-    <DashboardShell title="Settings" user={dashboard.navUser} workspaceId={dashboard.workspaceId}>
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="px-4 lg:px-6">
-          <p className="text-sm text-muted-foreground">
-            Workspace identity, contact, language, booking link, and team.
-            Configure the AI greeting and persona on AI Agent.
-          </p>
-        </div>
+    <DashboardShell
+      title="Settings"
+      user={dashboard.navUser}
+      workspaceId={dashboard.workspaceId}
+    >
+      <div className="py-4 md:py-6">
         <WorkspaceSettingsForm
           publicBookingUrl={publicBookingUrl}
           workspace={workspace}
-        />
-        {dashboard.workspaceId && dashboard.role ? (
-          <div className="mx-auto max-w-2xl space-y-6 px-4 pb-10 lg:px-6">
+        >
+          {dashboard.workspaceId && dashboard.role ? (
             <WorkspaceTeamCard
               currentUserId={currentUserId ?? ""}
               inviteOrigin={origin}
@@ -108,8 +103,8 @@ export default async function SettingsPage() {
               pendingInvites={pendingInvites}
               role={dashboard.role}
             />
-          </div>
-        ) : null}
+          ) : null}
+        </WorkspaceSettingsForm>
       </div>
     </DashboardShell>
   );

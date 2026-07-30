@@ -60,7 +60,7 @@ export const APP_ERROR_MESSAGE = {
   [APP_ERROR_CODE.SET_AI_BOOKING_FAILED]:
     "Could not set AI booking meeting type.",
   [APP_ERROR_CODE.OWNER_REQUIRED]:
-    "Only the workspace owner can manage invites.",
+    "Only the workspace owner can do this.",
   [APP_ERROR_CODE.INVITE_CREATE_FAILED]: "Could not create invite. Try again.",
   [APP_ERROR_CODE.INVITE_REVOKE_FAILED]: "Could not revoke invite. Try again.",
   [APP_ERROR_CODE.INVITE_INVALID]: "That invite link is invalid.",

@@ -1,8 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { isPublicSignupOpen } from "@/lib/signup-mode";
 import { ensureVisitorIdOnResponse } from "@/lib/visitor";
 import { isPilotBookingLive } from "@/lib/workspace";
+import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
 
 /**
  * Server Actions + RSC soft navigations expect a Flight payload.
@@ -99,22 +101,22 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isProtectedRoute =
-    path.startsWith("/dashboard") || path.startsWith("/console");
+    path.startsWith(DASHBOARD_PATH.root) || path.startsWith("/console");
 
   if (isProtectedRoute && !user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set(
       "next",
-      path.startsWith("/console") ? "/dashboard" : path,
+      path.startsWith("/console") ? DASHBOARD_PATH.root : path,
     );
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && path.startsWith("/dashboard")) {
+  if (user && path.startsWith(DASHBOARD_PATH.root)) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("workspace_id")
+      .select("workspace_id, role")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -126,7 +128,8 @@ export async function proxy(request: NextRequest) {
         .maybeSingle();
 
       const incomplete = !ws?.setup_completed_at;
-      const onSetup = path === "/dashboard/setup";
+      const onSetup = path === DASHBOARD_PATH.setup;
+      const isOwner = profile.role === WORKSPACE_ROLE.OWNER;
       // Booking chỉ live khi có Cal key + meeting type AI. Giữ wizard mở
       // cho tới lúc đó, nếu không banner "Connect Cal.com" sẽ tự đá chính nó.
       const bookingLive = isPilotBookingLive({
@@ -136,16 +139,18 @@ export async function proxy(request: NextRequest) {
       });
 
       // Document navigations only — never redirect Flight/Action requests.
+      // Setup wizard is owner-only; staff must not be forced into /dashboard/setup
+      // (would bounce with assertOwnerPage → redirect loop).
       if (!isNextFlightRequest(request)) {
-        if (incomplete && !onSetup) {
+        if (incomplete && !onSetup && isOwner) {
           const redirectUrl = request.nextUrl.clone();
-          redirectUrl.pathname = "/dashboard/setup";
+          redirectUrl.pathname = DASHBOARD_PATH.setup;
           redirectUrl.search = "";
           return NextResponse.redirect(redirectUrl);
         }
         if (!incomplete && bookingLive && onSetup) {
           const redirectUrl = request.nextUrl.clone();
-          redirectUrl.pathname = "/dashboard";
+          redirectUrl.pathname = DASHBOARD_PATH.root;
           redirectUrl.search = "";
           return NextResponse.redirect(redirectUrl);
         }
@@ -174,7 +179,7 @@ export async function proxy(request: NextRequest) {
       redirectUrl.pathname = `/invite/${encodeURIComponent(invite.trim())}`;
       redirectUrl.search = "";
     } else {
-      redirectUrl.pathname = "/dashboard";
+      redirectUrl.pathname = DASHBOARD_PATH.root;
       redirectUrl.search = "";
     }
     return NextResponse.redirect(redirectUrl);

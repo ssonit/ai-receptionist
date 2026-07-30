@@ -1,7 +1,25 @@
 import { randomBytes } from "node:crypto";
+import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
+import {
+  WORKSPACE_ROLE,
+  type WorkspaceRole,
+} from "@/lib/workspace-roles";
 
-export type WorkspaceRole = "owner" | "staff";
+export type { WorkspaceRole };
+export { WORKSPACE_ROLE };
+
+/** Map `requireOwnerWorkspace` failure codes to product copy. */
+export function ownerWorkspaceErrorMessage(code: string): string {
+  switch (code) {
+    case "owner_required":
+      return appErrorMessage(APP_ERROR_CODE.OWNER_REQUIRED);
+    case "no_workspace":
+      return appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE);
+    default:
+      return appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED);
+  }
+}
 
 export type WorkspaceInviteRow = {
   id: string;
@@ -56,7 +74,7 @@ export async function requireOwnerWorkspace(): Promise<
   if (!profile?.workspace_id) {
     return { ok: false, error: "no_workspace" };
   }
-  if (profile.role !== "owner") {
+  if (profile.role !== WORKSPACE_ROLE.OWNER) {
     return { ok: false, error: "owner_required" };
   }
 
@@ -130,7 +148,7 @@ export async function getInvitePreview(token: string): Promise<InvitePreview> {
     ok: true,
     workspaceName: String(row.workspaceName ?? "Workspace"),
     email: typeof row.email === "string" ? row.email : null,
-    role: String(row.role ?? "staff"),
+    role: String(row.role ?? WORKSPACE_ROLE.STAFF),
     expiresAt: String(row.expiresAt ?? ""),
   };
 }

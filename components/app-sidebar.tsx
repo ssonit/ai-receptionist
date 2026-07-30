@@ -20,6 +20,7 @@ import {
 } from "@tabler/icons-react";
 
 import { EveLogo } from "@/components/eve-logo";
+import { useDashboardRole } from "@/components/dashboard-role-context";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
@@ -32,6 +33,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import {
+  canAccessDashboardPath,
+  DASHBOARD_PATH,
+} from "@/lib/dashboard-access";
 
 export function AppSidebar({
   user,
@@ -42,6 +47,7 @@ export function AppSidebar({
   bookingPagePath?: string;
 }) {
   const t = useTranslations();
+  const role = useDashboardRole();
 
   const navGroups = [
     {
@@ -49,12 +55,12 @@ export function AppSidebar({
       items: [
         {
           title: t("dashboard.nav.dashboard"),
-          url: "/dashboard",
+          url: DASHBOARD_PATH.root,
           icon: IconDashboard,
         },
         {
           title: t("dashboard.nav.analytics"),
-          url: "/dashboard/analytics",
+          url: DASHBOARD_PATH.analytics,
           icon: IconChartBar,
         },
       ],
@@ -64,17 +70,17 @@ export function AppSidebar({
       items: [
         {
           title: t("dashboard.nav.bookings"),
-          url: "/dashboard/bookings",
+          url: DASHBOARD_PATH.bookings,
           icon: IconCalendarEvent,
         },
         {
           title: t("dashboard.nav.meetingTypes"),
-          url: "/dashboard/meeting-types",
+          url: DASHBOARD_PATH.meetingTypes,
           icon: IconTags,
         },
         {
           title: t("dashboard.nav.embed"),
-          url: "/dashboard/embed",
+          url: DASHBOARD_PATH.embed,
           icon: IconCode,
         },
         {
@@ -82,19 +88,19 @@ export function AppSidebar({
           url: bookingPagePath,
           icon: IconMessageChatbot,
         },
-      ],
+      ].filter((item) => canAccessDashboardPath(role, item.url)),
     },
     {
       label: t("dashboard.nav.groups.customers"),
       items: [
         {
           title: t("dashboard.nav.conversations"),
-          url: "/dashboard/conversations",
+          url: DASHBOARD_PATH.conversations,
           icon: IconMessage,
         },
         {
           title: t("dashboard.nav.leads"),
-          url: "/dashboard/leads",
+          url: DASHBOARD_PATH.leads,
           icon: IconUsers,
         },
       ],
@@ -104,27 +110,27 @@ export function AppSidebar({
       items: [
         {
           title: t("dashboard.nav.agent"),
-          url: "/dashboard/agent",
+          url: DASHBOARD_PATH.agent,
           icon: IconRobot,
         },
         {
           title: t("dashboard.nav.faq"),
-          url: "/dashboard/faq",
+          url: DASHBOARD_PATH.faq,
           icon: IconQuestionMark,
         },
-      ],
+      ].filter((item) => canAccessDashboardPath(role, item.url)),
     },
-  ];
+  ].filter((group) => group.items.length > 0);
 
   const navSecondary = [
     {
       title: t("dashboard.settings"),
-      url: "/dashboard/settings",
+      url: DASHBOARD_PATH.settings,
       icon: IconSettings,
     },
     {
       title: t("dashboard.getHelp"),
-      url: "/dashboard/help",
+      url: DASHBOARD_PATH.help,
       icon: IconHelp,
     },
     {
@@ -132,7 +138,7 @@ export function AppSidebar({
       icon: IconSearch,
       action: "search" as const,
     },
-  ];
+  ].filter((item) => !item.url || canAccessDashboardPath(role, item.url));
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -143,7 +149,7 @@ export function AppSidebar({
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <Link href="/dashboard">
+              <Link href={DASHBOARD_PATH.root}>
                 <EveLogo showLabel size="sm" />
               </Link>
             </SidebarMenuButton>

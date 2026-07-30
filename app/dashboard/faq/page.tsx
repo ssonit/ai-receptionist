@@ -1,15 +1,12 @@
 import { FaqSettingsForm } from "@/app/_components/faq-settings-form";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { getDashboardUser } from "@/lib/dashboard-user";
+import { assertOwnerPage } from "@/lib/dashboard-access-server";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { buildBookingFaqMarkdown } from "@/lib/workspace-faq";
 import { fetchWorkspaceFaqForUser } from "@/lib/workspace-faq-server";
-import { redirect } from "next/navigation";
 
 export default async function FaqPage() {
-  const dashboard = await getDashboardUser();
-  if (!dashboard) {
-    redirect("/login?next=/dashboard/faq");
-  }
+  const dashboard = await assertOwnerPage(DASHBOARD_PATH.faq);
 
   const faq = dashboard.workspaceId
     ? await fetchWorkspaceFaqForUser(dashboard.workspaceId)
@@ -23,11 +20,17 @@ export default async function FaqPage() {
         <div className="px-4 lg:px-6">
           <p className="max-w-2xl text-sm text-muted-foreground">
             Manage Q&A for the agent. Workspace contact is in{" "}
-            <a className="underline underline-offset-4" href="/dashboard/settings">
+            <a
+              className="underline underline-offset-4"
+              href={DASHBOARD_PATH.settings}
+            >
               Settings
             </a>
             ; greeting and persona are under{" "}
-            <a className="underline underline-offset-4" href="/dashboard/agent">
+            <a
+              className="underline underline-offset-4"
+              href={DASHBOARD_PATH.agent}
+            >
               AI Agent
             </a>
             .

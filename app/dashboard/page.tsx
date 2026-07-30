@@ -2,8 +2,10 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { DataTable } from "@/components/data-table";
 import { SectionCards, type SectionCardStat } from "@/components/section-cards";
 import { getCalBookingViewLabel } from "@/lib/booking-status";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { createClient } from "@/lib/supabase/server";
+import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
 import { redirect } from "next/navigation";
 
 function startOfTodayIso() {
@@ -21,12 +23,16 @@ function daysAgoIso(days: number) {
 export default async function DashboardPage() {
   const dashboard = await getDashboardUser();
   if (!dashboard) {
-    redirect("/login?next=/dashboard");
+    redirect(`/login?next=${DASHBOARD_PATH.root}`);
   }
 
   const workspaceId = dashboard.workspaceId;
   if (!workspaceId) {
-    redirect("/dashboard/setup");
+    redirect(
+      dashboard.role === WORKSPACE_ROLE.OWNER
+        ? DASHBOARD_PATH.setup
+        : "/login",
+    );
   }
 
   const supabase = await createClient();

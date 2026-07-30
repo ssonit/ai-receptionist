@@ -1,8 +1,16 @@
+"use client";
+
 import Link from "next/link";
-import { WarningCircleIcon } from "@phosphor-icons/react/ssr";
+import { WarningCircleIcon } from "@phosphor-icons/react";
+
+import { useDashboardRole } from "@/components/dashboard-role-context";
+import { DASHBOARD_PATH, WORKSPACE_ROLE } from "@/lib/dashboard-access";
 
 /** Shown when workspace can use the dashboard but public booking is not live yet. */
 export function BookingLiveBanner() {
+  const role = useDashboardRole();
+  if (role !== WORKSPACE_ROLE.OWNER) return null;
+
   return (
     <div className="border-b border-amber-500/25 bg-amber-500/10 px-4 py-3 lg:px-6">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
@@ -23,7 +31,7 @@ export function BookingLiveBanner() {
         </div>
         <Link
           className="inline-flex h-9 shrink-0 items-center rounded-full bg-amber-600 px-4 text-sm font-medium text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-amber-950"
-          href="/dashboard/setup"
+          href={DASHBOARD_PATH.setup}
         >
           Connect Cal.com
         </Link>

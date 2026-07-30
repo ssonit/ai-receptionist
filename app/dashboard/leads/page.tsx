@@ -1,18 +1,24 @@
 import { LeadsTable } from "@/components/leads-table";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { createClient } from "@/lib/supabase/server";
+import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
 import { redirect } from "next/navigation";
 
 export default async function LeadsPage() {
   const dashboard = await getDashboardUser();
   if (!dashboard) {
-    redirect("/login?next=/dashboard/leads");
+    redirect(`/login?next=${DASHBOARD_PATH.leads}`);
   }
 
   const workspaceId = dashboard.workspaceId;
   if (!workspaceId) {
-    redirect("/dashboard/setup");
+    redirect(
+      dashboard.role === WORKSPACE_ROLE.OWNER
+        ? DASHBOARD_PATH.setup
+        : "/login",
+    );
   }
 
   const supabase = await createClient();

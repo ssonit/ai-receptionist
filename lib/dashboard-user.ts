@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { publicBookingPath } from "@/lib/workspace";
+import {
+  isWorkspaceRole,
+  type WorkspaceRole,
+} from "@/lib/workspace-roles";
 
 export type DashboardNavUser = {
   name: string;
@@ -12,7 +16,7 @@ export async function getDashboardUser(): Promise<{
   workspaceId: string | null;
   workspaceSlug: string | null;
   bookingPagePath: string | null;
-  role: "owner" | "staff" | null;
+  role: WorkspaceRole | null;
 } | null> {
   const supabase = await createClient();
   const {
@@ -37,10 +41,7 @@ export async function getDashboardUser(): Promise<{
     workspaceSlug = ws?.slug ?? null;
   }
 
-  const role =
-    profile?.role === "owner" || profile?.role === "staff"
-      ? profile.role
-      : null;
+  const role = isWorkspaceRole(profile?.role) ? profile.role : null;
 
   return {
     navUser: {

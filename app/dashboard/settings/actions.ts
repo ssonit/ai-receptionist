@@ -11,34 +11,16 @@ import {
   slugTakenMessage,
 } from "@/lib/errors";
 import { minLongLeadMinutes } from "@/lib/booking-reminders";
-import { createClient } from "@/lib/supabase/server";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { canonicalizeTimezone } from "@/lib/timezones";
 import type { WorkspaceSettingsState } from "@/lib/workspace-settings-types";
 import { slugifyWorkspaceName } from "@/lib/workspace";
+import {
+  ownerWorkspaceErrorMessage,
+  requireOwnerWorkspace,
+} from "@/lib/workspace-invites";
 
 export type { WorkspaceSettingsState } from "@/lib/workspace-settings-types";
-
-async function requireWorkspaceId() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile?.workspace_id) {
-    return { error: appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE) };
-  }
-
-  return { supabase, workspaceId: profile.workspace_id as string };
-}
 
 function optionalText(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim() || null;
@@ -49,8 +31,8 @@ export async function saveWorkspaceSettings(
   _prev: WorkspaceSettingsState,
   formData: FormData,
 ): Promise<WorkspaceSettingsState> {
-  const auth = await requireWorkspaceId();
-  if ("error" in auth) return { error: auth.error };
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
 
   const name = String(formData.get("name") ?? "").trim();
   const timezone = String(formData.get("timezone") ?? "").trim();
@@ -143,9 +125,9 @@ export async function saveWorkspaceSettings(
 
   if (error) return { error: formatDbError(error) };
 
-  revalidatePath("/dashboard/settings");
-  revalidatePath("/dashboard/agent");
-  revalidatePath("/dashboard/faq");
+  revalidatePath(DASHBOARD_PATH.settings);
+  revalidatePath(DASHBOARD_PATH.agent);
+  revalidatePath(DASHBOARD_PATH.faq);
   revalidatePath(`/b/${slug}`);
   return { success: "Workspace settings saved." };
 }
@@ -153,12 +135,12 @@ export async function saveWorkspaceSettings(
 export async function checkWorkspaceSlugAvailable(
   slugRaw: string,
 ): Promise<{ available: boolean; slug: string; message: string }> {
-  const auth = await requireWorkspaceId();
-  if ("error" in auth) {
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) {
     return {
       available: false,
       slug: "",
-      message: auth.error ?? appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED),
+      message: ownerWorkspaceErrorMessage(auth.error),
     };
   }
 

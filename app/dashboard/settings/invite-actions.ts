@@ -14,12 +14,14 @@ import {
   type AppErrorCode,
 } from "@/lib/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import {
   generateInviteToken,
   inviteExpiresAt,
   invitePath,
   requireOwnerWorkspace,
 } from "@/lib/workspace-invites";
+import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
 
 export type InviteActionState = {
   error?: string;
@@ -142,7 +144,7 @@ export async function createWorkspaceInvite(
     workspace_id: auth.workspaceId,
     email,
     token,
-    role: "staff",
+    role: WORKSPACE_ROLE.STAFF,
     invited_by: auth.userId,
     expires_at: inviteExpiresAt(),
   });
@@ -159,7 +161,7 @@ export async function createWorkspaceInvite(
     token,
   });
 
-  revalidatePath("/dashboard/settings");
+  revalidatePath(DASHBOARD_PATH.settings);
   return {
     success: sent ? `Invite sent to ${email}.` : undefined,
     error: sent ? undefined : appErrorMessage(APP_ERROR_CODE.INVITE_SEND_FAILED),
@@ -212,7 +214,7 @@ export async function resendWorkspaceInvite(
     return { error: appErrorMessage(APP_ERROR_CODE.INVITE_SEND_FAILED) };
   }
 
-  revalidatePath("/dashboard/settings");
+  revalidatePath(DASHBOARD_PATH.settings);
   return { success: `Invite resent to ${invite.email}.` };
 }
 
@@ -246,7 +248,7 @@ export async function removeWorkspaceMember(
     };
   }
 
-  revalidatePath("/dashboard/settings");
+  revalidatePath(DASHBOARD_PATH.settings);
   return { success: "Member removed." };
 }
 
@@ -285,8 +287,8 @@ export async function transferWorkspaceOwnership(
     };
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/settings");
+  revalidatePath(DASHBOARD_PATH.root);
+  revalidatePath(DASHBOARD_PATH.settings);
   return { success: "Ownership transferred. You are now staff." };
 }
 
@@ -318,7 +320,7 @@ export async function revokeWorkspaceInvite(
     return { error: formatDbError(error, APP_ERROR_CODE.INVITE_REVOKE_FAILED) };
   }
 
-  revalidatePath("/dashboard/settings");
+  revalidatePath(DASHBOARD_PATH.settings);
   return { success: "Invite revoked." };
 }
 
@@ -352,7 +354,7 @@ export async function acceptWorkspaceInviteAction(
     return { error: mapAcceptError(String(row?.error ?? "accept_failed")) };
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/settings");
-  redirect("/dashboard");
+  revalidatePath(DASHBOARD_PATH.root);
+  revalidatePath(DASHBOARD_PATH.settings);
+  redirect(DASHBOARD_PATH.root);
 }

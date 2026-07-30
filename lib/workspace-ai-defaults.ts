@@ -9,7 +9,7 @@ import type {
  * Matches Eve Pilot seed tone — VI-first booking assistant.
  */
 export const DEFAULT_WORKSPACE_TAGLINE =
-  "Trợ lý đặt lịch 24/7 cho phòng khám / studio";
+  "Trợ lý đặt lịch 24/7 cho tiệm / studio / coaching";
 
 export const DEFAULT_WORKSPACE_ABOUT =
   "Chúng tôi hỗ trợ khách hỏi FAQ, xem lịch trống và đặt hẹn qua chat AI. Chi tiết dịch vụ / giá xác nhận khi đặt lịch.";
@@ -22,7 +22,7 @@ export const DEFAULT_WORKSPACE_BUSINESS_HOURS = [
 
 export const DEFAULT_WORKSPACE_SERVICES = [
   "- Tư vấn / Consultation (30 phút) — Có thể đặt lịch trực tiếp qua chat.",
-  "- Khám / điều trị dài hơn — nhân viên xếp lịch",
+  "- Dịch vụ dài hơn / cần lịch riêng — nhân viên xếp lịch",
 ].join("\n");
 
 export const DEFAULT_WORKSPACE_AGENT_INSTRUCTIONS = [

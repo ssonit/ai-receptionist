@@ -14,35 +14,16 @@ import {
   formatUnknownError,
 } from "@/lib/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 import { getCalApiKeyForWorkspace, slugifyWorkspaceName } from "@/lib/workspace";
+import {
+  ownerWorkspaceErrorMessage,
+  requireOwnerWorkspace,
+} from "@/lib/workspace-invites";
 
 export type MeetingTypesActionState = {
   error?: string;
   success?: string;
 };
-
-async function requireWorkspaceId() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile?.workspace_id) {
-    return { error: appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE) };
-  }
-
-  return { workspaceId: profile.workspace_id as string, userId: user.id };
-}
 
 function mirrorRow(
   workspaceId: string,
@@ -102,8 +83,8 @@ function revalidateMeetingTypePaths() {
 }
 
 export async function syncMeetingTypesAction(): Promise<MeetingTypesActionState> {
-  const auth = await requireWorkspaceId();
-  if ("error" in auth) return { error: auth.error };
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
 
   try {
     const apiKey = await getCalApiKeyForWorkspace(auth.workspaceId);
@@ -159,8 +140,8 @@ export async function createMeetingTypeAction(
   _prev: MeetingTypesActionState,
   formData: FormData,
 ): Promise<MeetingTypesActionState> {
-  const auth = await requireWorkspaceId();
-  if ("error" in auth) return { error: auth.error };
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
 
   const title = String(formData.get("title") ?? "").trim();
   const slugRaw = String(formData.get("slug") ?? "").trim();
@@ -233,8 +214,8 @@ export async function createMeetingTypeAction(
 export async function setAiBookingMeetingTypeAction(
   meetingTypeRowId: string,
 ): Promise<MeetingTypesActionState> {
-  const auth = await requireWorkspaceId();
-  if ("error" in auth) return { error: auth.error };
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
 
   try {
     const admin = createAdminClient();

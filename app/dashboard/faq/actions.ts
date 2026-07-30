@@ -16,12 +16,15 @@ import {
   hasAnyProviderKey,
   resolveLanguageModel,
 } from "@/lib/models";
-import { createClient } from "@/lib/supabase/server";
 import {
   MAX_FAQ_ITEMS,
   type FaqItemInput,
   type FaqSettingsState,
 } from "@/lib/workspace-faq-types";
+import {
+  ownerWorkspaceErrorMessage,
+  requireOwnerWorkspace,
+} from "@/lib/workspace-invites";
 
 export type { FaqSettingsState } from "@/lib/workspace-faq-types";
 
@@ -80,36 +83,12 @@ function parseFaqItems(formData: FormData): FaqItemInput[] | { error: string } {
   return items;
 }
 
-async function requireWorkspace() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const workspaceId = profile?.workspace_id;
-  if (!workspaceId) {
-    return { error: appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE) };
-  }
-
-  return { supabase, workspaceId: workspaceId as string };
-}
-
 export async function saveFaqSettings(
   _prev: FaqSettingsState,
   formData: FormData,
 ): Promise<FaqSettingsState> {
-  const auth = await requireWorkspace();
-  if ("error" in auth) return { error: auth.error };
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
 
   const parsedItems = parseFaqItems(formData);
   if ("error" in parsedItems) {
@@ -154,8 +133,8 @@ export async function saveFaqSettings(
  * client merges into the form; user must Save.
  */
 export async function generateFaqDraftAction(): Promise<GenerateFaqDraftState> {
-  const auth = await requireWorkspace();
-  if ("error" in auth) return { error: auth.error };
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
 
   if (!hasAnyProviderKey()) {
     return {

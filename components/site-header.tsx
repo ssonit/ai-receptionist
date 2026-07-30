@@ -11,20 +11,21 @@ import { NotificationsBell } from "@/components/notifications-bell";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 
 const TITLE_BY_PATH: Record<string, string> = {
-  "/dashboard": "dashboard.nav.overview",
-  "/dashboard/bookings": "dashboard.nav.bookings",
-  "/dashboard/meeting-types": "dashboard.nav.meetingTypes",
-  "/dashboard/faq": "dashboard.nav.faq",
-  "/dashboard/agent": "dashboard.nav.agent",
-  "/dashboard/leads": "dashboard.nav.leads",
-  "/dashboard/conversations": "dashboard.nav.conversations",
-  "/dashboard/analytics": "dashboard.nav.analytics",
-  "/dashboard/settings": "dashboard.settings",
-  "/dashboard/help": "dashboard.getHelp",
-  "/dashboard/account": "dashboard.account",
-  "/dashboard/notifications": "dashboard.notifications",
+  [DASHBOARD_PATH.root]: "dashboard.nav.overview",
+  [DASHBOARD_PATH.bookings]: "dashboard.nav.bookings",
+  [DASHBOARD_PATH.meetingTypes]: "dashboard.nav.meetingTypes",
+  [DASHBOARD_PATH.faq]: "dashboard.nav.faq",
+  [DASHBOARD_PATH.agent]: "dashboard.nav.agent",
+  [DASHBOARD_PATH.leads]: "dashboard.nav.leads",
+  [DASHBOARD_PATH.conversations]: "dashboard.nav.conversations",
+  [DASHBOARD_PATH.analytics]: "dashboard.nav.analytics",
+  [DASHBOARD_PATH.settings]: "dashboard.settings",
+  [DASHBOARD_PATH.help]: "dashboard.getHelp",
+  [DASHBOARD_PATH.account]: "dashboard.account",
+  [DASHBOARD_PATH.notifications]: "dashboard.notifications",
 };
 
 export function SiteHeader({

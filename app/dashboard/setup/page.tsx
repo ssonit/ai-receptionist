@@ -1,16 +1,14 @@
 import { SetupShell } from "@/components/setup-shell";
 import { SetupWizard } from "@/components/setup-wizard";
-import { getDashboardUser } from "@/lib/dashboard-user";
+import { assertOwnerPage } from "@/lib/dashboard-access-server";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { createClient } from "@/lib/supabase/server";
 import { listWorkspaceMeetingTypes } from "@/lib/workspace-cal";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export default async function SetupPage() {
-  const dashboard = await getDashboardUser();
-  if (!dashboard) {
-    redirect("/login?next=/dashboard/setup");
-  }
+  const dashboard = await assertOwnerPage(DASHBOARD_PATH.setup);
   if (!dashboard.workspaceId) {
     redirect("/login");
   }

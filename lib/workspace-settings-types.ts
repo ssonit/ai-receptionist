@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { WorkspaceMeetingTypeRow } from "./workspace-cal";
 import type { ChatSuggestion } from "./chat-branding";
 import type {
@@ -76,6 +77,8 @@ export type WorkspaceSettingsFormProps = {
   workspace: WorkspaceOpsValues | null;
   /** Absolute public booking page URL, e.g. https://eve.app/b/slug */
   publicBookingUrl?: string | null;
+  /** Team (or other) section rendered below the save row, inside the TOC layout */
+  children?: ReactNode;
 };
 
 export type WorkspaceAgentStudioProps = {

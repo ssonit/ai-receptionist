@@ -81,7 +81,10 @@ import {
   resolveChatBranding,
   type ChatSuggestion,
 } from "@/lib/chat-branding";
-import { WORKSPACE_AI_DEFAULTS } from "@/lib/workspace-ai-defaults";
+import {
+  DEFAULT_WORKSPACE_SERVICES,
+  WORKSPACE_AI_DEFAULTS,
+} from "@/lib/workspace-ai-defaults";
 import { cn } from "@/lib/utils";
 import type {
   WorkspaceAgentStudioProps,
@@ -946,9 +949,7 @@ export function WorkspaceAgentStudio({
                     {servicesRawMode ? (
                       <Textarea
                         onChange={(e) => setServicesSummary(e.target.value)}
-                        placeholder={
-                          "- Tư vấn / Consultation (30 phút) — Có thể đặt lịch trực tiếp qua chat.\n- Khám / điều trị dài hơn — nhân viên xếp lịch"
-                        }
+                        placeholder={DEFAULT_WORKSPACE_SERVICES}
                         rows={4}
                         value={servicesSummary}
                       />

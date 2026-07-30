@@ -5,19 +5,16 @@ import {
   parseAgentTone,
 } from "@/lib/agent-reply-customs";
 import { parseChatSuggestions } from "@/lib/chat-branding";
-import { getDashboardUser } from "@/lib/dashboard-user";
+import { assertOwnerPage } from "@/lib/dashboard-access-server";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { createClient } from "@/lib/supabase/server";
 import { listWorkspaceMeetingTypes } from "@/lib/workspace-cal";
 import { fetchWorkspaceFaqForUser } from "@/lib/workspace-faq-server";
 import { withWorkspaceAiDefaults } from "@/lib/workspace-ai-defaults";
 import type { WorkspaceAgentValues } from "@/lib/workspace-settings-types";
-import { redirect } from "next/navigation";
 
 export default async function AgentPage() {
-  const dashboard = await getDashboardUser();
-  if (!dashboard) {
-    redirect("/login?next=/dashboard/agent");
-  }
+  const dashboard = await assertOwnerPage(DASHBOARD_PATH.agent);
 
   const meetingTypes = dashboard.workspaceId
     ? await listWorkspaceMeetingTypes(dashboard.workspaceId).catch(() => [])

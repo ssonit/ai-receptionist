@@ -15,7 +15,6 @@ import {
   withCalApiKey,
 } from "@/lib/calcom";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 import { canonicalizeTimezone } from "@/lib/timezones";
 import { WORKSPACE_AI_DEFAULTS } from "@/lib/workspace-ai-defaults";
 import {
@@ -23,6 +22,10 @@ import {
   getWorkspaceById,
   slugifyWorkspaceName,
 } from "@/lib/workspace";
+import {
+  ownerWorkspaceErrorMessage,
+  requireOwnerWorkspace,
+} from "@/lib/workspace-invites";
 import { encryptSecret } from "@/lib/workspace-secrets";
 
 export type SetupActionState = {
@@ -30,34 +33,12 @@ export type SetupActionState = {
   success?: string;
 };
 
-async function requireOwnerWorkspace() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile?.workspace_id) {
-    return { error: appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE) };
-  }
-
-  return { workspaceId: profile.workspace_id as string, userId: user.id };
-}
-
 export async function saveCalApiKeyAction(
   _prev: SetupActionState,
   formData: FormData,
 ): Promise<SetupActionState> {
   const auth = await requireOwnerWorkspace();
-  if ("error" in auth) return { error: auth.error };
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
 
   const apiKey = String(formData.get("calApiKey") ?? "").trim();
   if (!apiKey) {
@@ -92,7 +73,7 @@ export async function saveCalApiKeyAction(
 
 export async function syncSetupMeetingTypesAction(): Promise<SetupActionState> {
   const auth = await requireOwnerWorkspace();
-  if ("error" in auth) return { error: auth.error };
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
 
   try {
     const apiKey = await getCalApiKeyForWorkspace(auth.workspaceId);
@@ -141,7 +122,7 @@ export async function saveSetupProfileAction(
   formData: FormData,
 ): Promise<SetupActionState> {
   const auth = await requireOwnerWorkspace();
-  if ("error" in auth) return { error: auth.error };
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
 
   const name = String(formData.get("name") ?? "").trim();
   let slug = String(formData.get("slug") ?? "")
@@ -186,7 +167,7 @@ export async function saveSetupProfileAction(
 
 export async function completeSetupAction(): Promise<SetupActionState> {
   const auth = await requireOwnerWorkspace();
-  if ("error" in auth) return { error: auth.error };
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
 
   const ws = await getWorkspaceById(auth.workspaceId);
 

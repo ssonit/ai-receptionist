@@ -18,6 +18,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { useDashboardCommand } from "@/components/dashboard-command-context";
+import { useDashboardRole } from "@/components/dashboard-role-context";
 import { useOptionalAppLocale } from "@/components/locale-provider";
 import {
   CommandDialog,
@@ -28,6 +29,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
+import { canAccessDashboardPath, DASHBOARD_PATH } from "@/lib/dashboard-access";
 
 type LeadHit = {
   id: string;
@@ -55,6 +57,7 @@ export function DashboardCommand({
   const localeCtx = useOptionalAppLocale();
   const dateLocale = localeCtx?.locale === "vi" ? "vi-VN" : "en-US";
   const router = useRouter();
+  const role = useDashboardRole();
   const { open, setOpen } = useDashboardCommand();
   const [query, setQuery] = React.useState("");
   const [leads, setLeads] = React.useState<LeadHit[]>([]);
@@ -62,53 +65,70 @@ export function DashboardCommand({
   const [searching, setSearching] = React.useState(false);
 
   const pages = React.useMemo(
-    () => [
-      {
-        title: t("dashboard.nav.dashboard"),
-        href: "/dashboard",
-        icon: IconDashboard,
-      },
-      {
-        title: t("dashboard.nav.analytics"),
-        href: "/dashboard/analytics",
-        icon: IconChartBar,
-      },
-      {
-        title: t("dashboard.nav.bookings"),
-        href: "/dashboard/bookings",
-        icon: IconCalendarEvent,
-      },
-      {
-        title: t("dashboard.nav.meetingTypes"),
-        href: "/dashboard/meeting-types",
-        icon: IconTags,
-      },
-      {
-        title: t("dashboard.bookingPage"),
-        href: bookingPagePath,
-        icon: IconMessageChatbot,
-      },
-      {
-        title: t("dashboard.nav.conversations"),
-        href: "/dashboard/conversations",
-        icon: IconMessage,
-      },
-      { title: t("dashboard.nav.leads"), href: "/dashboard/leads", icon: IconUsers },
-      {
-        title: t("dashboard.nav.agent"),
-        href: "/dashboard/agent",
-        icon: IconRobot,
-      },
-      { title: t("dashboard.nav.faq"), href: "/dashboard/faq", icon: IconQuestionMark },
-      {
-        title: t("dashboard.settings"),
-        href: "/dashboard/settings",
-        icon: IconSettings,
-      },
-      { title: t("dashboard.getHelp"), href: "/dashboard/help", icon: IconHelp },
-      { title: t("dashboard.account"), href: "/dashboard/account", icon: IconUser },
-    ],
-    [bookingPagePath, t],
+    () =>
+      [
+        {
+          title: t("dashboard.nav.dashboard"),
+          href: DASHBOARD_PATH.root,
+          icon: IconDashboard,
+        },
+        {
+          title: t("dashboard.nav.analytics"),
+          href: DASHBOARD_PATH.analytics,
+          icon: IconChartBar,
+        },
+        {
+          title: t("dashboard.nav.bookings"),
+          href: DASHBOARD_PATH.bookings,
+          icon: IconCalendarEvent,
+        },
+        {
+          title: t("dashboard.nav.meetingTypes"),
+          href: DASHBOARD_PATH.meetingTypes,
+          icon: IconTags,
+        },
+        {
+          title: t("dashboard.bookingPage"),
+          href: bookingPagePath,
+          icon: IconMessageChatbot,
+        },
+        {
+          title: t("dashboard.nav.conversations"),
+          href: DASHBOARD_PATH.conversations,
+          icon: IconMessage,
+        },
+        {
+          title: t("dashboard.nav.leads"),
+          href: DASHBOARD_PATH.leads,
+          icon: IconUsers,
+        },
+        {
+          title: t("dashboard.nav.agent"),
+          href: DASHBOARD_PATH.agent,
+          icon: IconRobot,
+        },
+        {
+          title: t("dashboard.nav.faq"),
+          href: DASHBOARD_PATH.faq,
+          icon: IconQuestionMark,
+        },
+        {
+          title: t("dashboard.settings"),
+          href: DASHBOARD_PATH.settings,
+          icon: IconSettings,
+        },
+        {
+          title: t("dashboard.getHelp"),
+          href: DASHBOARD_PATH.help,
+          icon: IconHelp,
+        },
+        {
+          title: t("dashboard.account"),
+          href: DASHBOARD_PATH.account,
+          icon: IconUser,
+        },
+      ].filter((page) => canAccessDashboardPath(role, page.href)),
+    [bookingPagePath, role, t],
   );
 
   React.useEffect(() => {

@@ -16,30 +16,11 @@ import {
   parseAgentReplyLocale,
   parseAgentTone,
 } from "@/lib/agent-reply-customs";
-import { createClient } from "@/lib/supabase/server";
 import type { WorkspaceSettingsState } from "@/lib/workspace-settings-types";
-
-async function requireWorkspaceId() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile?.workspace_id) {
-    return { error: appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE) };
-  }
-
-  return { supabase, workspaceId: profile.workspace_id as string };
-}
+import {
+  ownerWorkspaceErrorMessage,
+  requireOwnerWorkspace,
+} from "@/lib/workspace-invites";
 
 function optionalText(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim() || null;
@@ -86,8 +67,8 @@ export async function saveWorkspaceAgent(
   _prev: WorkspaceSettingsState,
   formData: FormData,
 ): Promise<WorkspaceSettingsState> {
-  const auth = await requireWorkspaceId();
-  if ("error" in auth) return { error: auth.error };
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
 
   const suggestions = parseSuggestionsFromForm(formData);
   if ("error" in suggestions) return { error: suggestions.error };

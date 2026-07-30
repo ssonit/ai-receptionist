@@ -24,7 +24,12 @@ export function DashboardCommandProvider({
 
   React.useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey)) {
+      // Some IME / synthetic events omit `key`
+      if (
+        typeof e.key === "string" &&
+        e.key.toLowerCase() === "k" &&
+        (e.metaKey || e.ctrlKey)
+      ) {
         e.preventDefault();
         setOpen((v) => !v);
       }

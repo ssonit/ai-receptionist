@@ -368,15 +368,10 @@
   "366": "@dnd-kit/utilities",
   "367": "@tailwindcss/postcss",
   "368": "tw-animate-css",
-  "369": "track.ts",
-  "370": "invite-accept-panel.tsx",
+  "369": "vaul",
+  "370": "[token]/page.tsx",
   "371": "workspace-secrets.ts",
   "372": "Chat header minimal strip — Implementation Plan",
-  "373": "eve.ts",
-  "374": "meeting-types/actions.ts",
-  "375": "server.ts",
   "376": "20260729130000_embed_allowed_origins.sql",
-  "377": "toggle-group.tsx",
-  "378": "ai",
   "380": "react-dom"
 }

@@ -1,7 +1,8 @@
 import { MeetingTypesForm } from "@/app/_components/meeting-types-form";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getCalMeProfile, withCalApiKey } from "@/lib/calcom";
-import { getDashboardUser } from "@/lib/dashboard-user";
+import { assertOwnerPage } from "@/lib/dashboard-access-server";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getCalApiKeyForWorkspace,
@@ -11,12 +12,9 @@ import { listWorkspaceMeetingTypes } from "@/lib/workspace-cal";
 import { redirect } from "next/navigation";
 
 export default async function MeetingTypesPage() {
-  const dashboard = await getDashboardUser();
-  if (!dashboard) {
-    redirect("/login?next=/dashboard/meeting-types");
-  }
+  const dashboard = await assertOwnerPage(DASHBOARD_PATH.meetingTypes);
   if (!dashboard.workspaceId) {
-    redirect("/dashboard/setup");
+    redirect(DASHBOARD_PATH.setup);
   }
 
   const meetingTypes = await listWorkspaceMeetingTypes(

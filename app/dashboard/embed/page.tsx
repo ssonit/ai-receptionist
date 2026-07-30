@@ -6,7 +6,8 @@ import {
   buildEmbedSnippets,
   formatEmbedSiteId,
 } from "@/lib/embed";
-import { getDashboardUser } from "@/lib/dashboard-user";
+import { assertOwnerPage } from "@/lib/dashboard-access-server";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { createTranslator } from "@/lib/i18n";
 import { readDashboardLocale } from "@/lib/read-locale-cookie";
 import { createClient } from "@/lib/supabase/server";
@@ -15,11 +16,10 @@ import { isWorkspaceBookingLive } from "@/lib/workspace";
 import { EmbedPageClient } from "./embed-page-client";
 
 export default async function EmbedDashboardPage() {
-  const dashboard = await getDashboardUser();
-  if (!dashboard) redirect("/login?next=/dashboard/embed");
+  const dashboard = await assertOwnerPage(DASHBOARD_PATH.embed);
 
   const workspaceId = dashboard.workspaceId;
-  if (!workspaceId) redirect("/dashboard/setup");
+  if (!workspaceId) redirect(DASHBOARD_PATH.setup);
 
   const supabase = await createClient();
   const [{ data: workspace }, bookingLive, origin, locale] = await Promise.all([

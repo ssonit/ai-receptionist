@@ -3,18 +3,24 @@ import { BookingsSyncButton } from "@/components/bookings-sync-button";
 import { BookingsTable } from "@/components/bookings-table";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { bookingConfig } from "@/lib/booking-config";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { createClient } from "@/lib/supabase/server";
+import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
 
 export default async function BookingsPage() {
   const dashboard = await getDashboardUser();
   if (!dashboard) {
-    redirect("/login?next=/dashboard/bookings");
+    redirect(`/login?next=${DASHBOARD_PATH.bookings}`);
   }
 
   const workspaceId = dashboard.workspaceId;
   if (!workspaceId) {
-    redirect("/dashboard/setup");
+    redirect(
+      dashboard.role === WORKSPACE_ROLE.OWNER
+        ? DASHBOARD_PATH.setup
+        : "/login",
+    );
   }
 
   const supabase = await createClient();
