@@ -2748,5 +2748,15 @@
     "mtime": 1785386925.9310465,
     "ast_hash": "e380fcce7f6019d13f6b7d807c8d6382",
     "semantic_hash": ""
+  },
+  "supabase/migrations/20260730000002_rls_initplan_and_indexes.sql": {
+    "mtime": 1785393897.0561628,
+    "ast_hash": "0a4fb6392bb78739158531db74003328",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260730000003_signup_hardening.sql": {
+    "mtime": 1785393944.1194012,
+    "ast_hash": "8472ca54231c05bc92e3c469d8311d2c",
+    "semantic_hash": ""
   }
 }
