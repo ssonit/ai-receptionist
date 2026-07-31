@@ -68,26 +68,25 @@ export default eveChannel({
       .get(EVE_WORKSPACE_HEADER)
       ?.trim()
       .toLowerCase();
+    const base = withTenantAttributes(request, defaultEveAuth(ctx));
     const limited = await checkAgentRateLimit({ visitorId, ip, workspaceSlug });
     console.error(`[diag] onMessage after rateLimit ${Date.now()}`);
     if (!limited.ok) {
-      // Soft-stamp so tools/instructions can surface a friendly limit message.
-      const base = defaultEveAuth(ctx);
-      if (!base) return { auth: null };
+      // Soft-stamp so tools/instructions can surface a friendly limit message
+      // while keeping tenant context for correct workspace resolution.
       return {
-        auth: {
-          ...base,
-          attributes: {
-            ...base.attributes,
-            agentRateLimited: "1",
-            visitorId: visitorId ?? "",
-          },
-        },
+        auth: base
+          ? {
+              ...base,
+              attributes: {
+                ...base.attributes,
+                agentRateLimited: "1",
+              },
+            }
+          : null,
       };
     }
 
-    return {
-      auth: withTenantAttributes(request, defaultEveAuth(ctx)),
-    };
+    return { auth: base };
   },
 });

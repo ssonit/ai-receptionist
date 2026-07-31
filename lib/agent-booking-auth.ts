@@ -9,6 +9,7 @@ import { VERIFIED_UNTIL_MS } from "@/lib/booking-manage-code";
 import { formatSlotForGuest } from "@/lib/guest-timezone";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  authAttr,
   getPilotWorkspaceId,
   resolveWorkspaceIdBySlug,
   resolveWorkspaceIdFromAgentContext,
@@ -56,21 +57,7 @@ export type WorkspaceGuestPolicy = {
 const BOOKING_SELECT =
   "id, cal_booking_uid, guest_name, guest_email, guest_phone, service, start_time, status, list_status, visitor_id, chat_session_id, session_id, manage_code_hash, guest_timezone";
 
-export function authAttr(
-  attributes: Readonly<Record<string, string | readonly string[]>> | undefined,
-  key: string,
-): string | null {
-  const raw = attributes?.[key];
-  if (typeof raw === "string") {
-    const v = raw.trim();
-    return v.length > 0 ? v : null;
-  }
-  if (Array.isArray(raw) && typeof raw[0] === "string") {
-    const v = raw[0].trim();
-    return v.length > 0 ? v : null;
-  }
-  return null;
-}
+export { authAttr } from "@/lib/workspace";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();

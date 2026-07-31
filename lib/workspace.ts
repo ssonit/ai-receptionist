@@ -328,7 +328,7 @@ export const EVE_WORKSPACE_HEADER = "x-eve-w";
 /** Browser → Eve HTTP: Supabase `chat_sessions.id` for reliable tenant lookup. */
 export const EVE_CHAT_SESSION_HEADER = "x-eve-chat-session";
 
-function authAttr(
+export function authAttr(
   attributes: Readonly<Record<string, string | readonly string[]>> | undefined,
   key: string,
 ): string | null {

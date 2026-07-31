@@ -231,11 +231,13 @@ export default defineTool({
               start_time: booking.start,
               status: normalizeCalApiStatus(booking.status),
               list_status: "upcoming",
+              notes: notes ?? null,
               session_id: sid,
               visitor_id: visitorId,
               chat_session_id: chatSessionId,
               manage_code_hash: manageCodeHash,
               guest_timezone: guestTimeZone,
+              raw: booking.raw,
             },
             { onConflict: "cal_booking_uid" },
           );
