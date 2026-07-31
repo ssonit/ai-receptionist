@@ -7,32 +7,31 @@ export async function findWorkspaceLead(opts: {
 }): Promise<{ id: string; status: string } | null> {
   const supabase = createAdminClient();
 
-  if (opts.sessionId) {
-    const { data } = await supabase
-      .from("leads")
-      .select("id, status")
-      .eq("workspace_id", opts.workspaceId)
-      .eq("session_id", opts.sessionId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (data) return data;
-  }
+  const [bySession, byPhone] = await Promise.all([
+    opts.sessionId
+      ? supabase
+          .from("leads")
+          .select("id, status")
+          .eq("workspace_id", opts.workspaceId)
+          .eq("session_id", opts.sessionId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : null,
+    opts.phone
+      ? supabase
+          .from("leads")
+          .select("id, status")
+          .eq("workspace_id", opts.workspaceId)
+          .eq("phone", opts.phone)
+          .neq("status", "lost")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : null,
+  ]);
 
-  if (opts.phone) {
-    const { data } = await supabase
-      .from("leads")
-      .select("id, status")
-      .eq("workspace_id", opts.workspaceId)
-      .eq("phone", opts.phone)
-      .neq("status", "lost")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (data) return data;
-  }
-
-  return null;
+  return bySession?.data ?? byPhone?.data ?? null;
 }
 
 /** Mark an existing lead as booked, or insert a booked lead if none exists. */

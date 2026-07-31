@@ -1140,13 +1140,13 @@
     "semantic_hash": ""
   },
   "messages/en.json": {
-    "mtime": 1785491191.8244038,
-    "ast_hash": "45aca046ba4f76b7159cc62a562c05f4",
+    "mtime": 1785492882.5725944,
+    "ast_hash": "41b2c38e817d73a533e3d34495283b32",
     "semantic_hash": ""
   },
   "messages/vi.json": {
-    "mtime": 1785491194.6235895,
-    "ast_hash": "81af34696f122db8a9fbee9d677ba849",
+    "mtime": 1785492900.4787211,
+    "ast_hash": "0a3381c0032af1a59cdebd16b7dde011",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000004_slugify_vietnamese.sql": {
@@ -2640,8 +2640,8 @@
     "semantic_hash": ""
   },
   "app/_components/landing/sections.tsx": {
-    "mtime": 1785309987.205183,
-    "ast_hash": "4567b21ea6fcc18d2a867f961e9c448b",
+    "mtime": 1785492915.3936627,
+    "ast_hash": "9facb345915868fb466a5debe7008c6f",
     "semantic_hash": ""
   },
   ".claude/launch.json": {
@@ -2735,8 +2735,8 @@
     "semantic_hash": ""
   },
   "docs/ceo-evaluation.md": {
-    "mtime": 1785492768.4564981,
-    "ast_hash": "b61d89f766a37e8574c6d5b92c035837",
+    "mtime": 1785492774.3770916,
+    "ast_hash": "84bbabdfff7db4f077f5fd6834d180b6",
     "semantic_hash": ""
   },
   "agent/date-context.test.ts": {

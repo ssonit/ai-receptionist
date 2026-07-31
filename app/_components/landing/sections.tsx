@@ -12,6 +12,7 @@ import {
   MicrophoneIcon,
   UserFocusIcon,
 } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { BlurFade } from "@/components/ui/blur-fade";
@@ -508,17 +509,28 @@ export function Pricing() {
                       );
                     })}
                   </ul>
-                  <a
-                    className={cn(
-                      "inline-flex h-10 items-center justify-center rounded-full text-sm font-semibold transition",
-                      plan.popular
-                        ? "bg-black text-white hover:bg-zinc-800"
-                        : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
-                    )}
-                    href="/signup"
-                  >
-                    {t(`plans.${plan.id}.cta`)}
-                  </a>
+                  {plan.id === "enterprise" ? (
+                    <span
+                      className={cn(
+                        "inline-flex h-10 items-center justify-center rounded-full text-sm font-semibold",
+                        "border border-white/10 bg-white/5 text-zinc-500 opacity-60 cursor-default",
+                      )}
+                    >
+                      {t(`plans.${plan.id}.cta`)}
+                    </span>
+                  ) : (
+                    <Link
+                      className={cn(
+                        "inline-flex h-10 items-center justify-center rounded-full text-sm font-semibold transition",
+                        plan.popular
+                          ? "bg-black text-white hover:bg-zinc-800"
+                          : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
+                      )}
+                      href="/signup"
+                    >
+                      {t(`plans.${plan.id}.cta`)}
+                    </Link>
+                  )}
                 </article>
               </BlurFade>
             );

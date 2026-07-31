@@ -269,7 +269,7 @@
         "basic": {
           "name": "Basic",
           "description": "Web chat + Cal.com for teams just starting.",
-          "cta": "Get started",
+          "cta": "Start free trial",
           "features": {
             "f1": "Web chat",
             "f2": "Cal.com booking",
@@ -280,7 +280,7 @@
         "premium": {
           "name": "Premium",
           "description": "Reminders and embed for teams growing leads.",
-          "cta": "Choose Premium",
+          "cta": "Start free trial",
           "features": {
             "f1": "Everything in Basic",
             "f2": "Outbound reminders",
@@ -291,7 +291,7 @@
         "enterprise": {
           "name": "Enterprise",
           "description": "Higher limits, brand control, and priority support.",
-          "cta": "Get started",
+          "cta": "Coming soon",
           "features": {
             "f1": "Everything in Premium",
             "f2": "Higher limits + custom FAQ",

@@ -1,4 +1,4 @@
-import { fetchAllCalBookings, withCalApiKey } from "@/lib/calcom";
+import { type CalBookingListItem, fetchAllCalBookings, withCalApiKey } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
 import { isCancelledStatus, normalizeCalApiStatus } from "@/lib/booking-status";
 import { ensureDigestNotifications } from "@/lib/notification-digests";
@@ -33,6 +33,27 @@ type ExistingBooking = {
   guest_timezone: string | null;
 };
 
+/** Raw Cal.com webhook payload — @see https://cal.com/docs/webhooks */
+export type CalWebhookPayload = {
+  triggerEvent: string;
+  payload: {
+    uid: string;
+    title?: string;
+    startTime?: string;
+    endTime?: string;
+    attendees?: Array<{
+      name?: string;
+      email?: string;
+      phoneNumber?: string;
+    }>;
+    status?: string;
+    eventTypeId?: number;
+    metadata?: Record<string, unknown>;
+    organizer?: { id?: number; name?: string; email?: string };
+    [key: string]: unknown;
+  };
+};
+
 function formatWhen(iso: string) {
   try {
     return new Date(iso).toLocaleString("vi-VN", {
@@ -42,6 +63,151 @@ function formatWhen(iso: string) {
   } catch {
     return iso;
   }
+}
+
+/** Upsert bookings into Supabase + notify on cancel / reschedule changes. */
+export async function upsertCalBookings(
+  bookings: CalBookingListItem[],
+  workspaceId: string,
+): Promise<SyncCalBookingsResult> {
+  const supabase = createAdminClient();
+  const uids = bookings.map((b) => b.uid);
+
+  const existingByUid = new Map<string, ExistingBooking>();
+  if (uids.length > 0) {
+    const chunkSize = 200;
+    for (let i = 0; i < uids.length; i += chunkSize) {
+      const chunk = uids.slice(i, i + chunkSize);
+      const { data: existing } = await supabase
+        .from("bookings")
+        .select(
+          "cal_booking_uid, status, start_time, guest_name, guest_email, session_id, visitor_id, chat_session_id, manage_code_hash, cancelled_by, guest_timezone",
+        )
+        .in("cal_booking_uid", chunk);
+
+      for (const row of existing ?? []) {
+        if (row.cal_booking_uid) {
+          existingByUid.set(row.cal_booking_uid, row as ExistingBooking);
+        }
+      }
+    }
+  }
+
+  const syncedAt = new Date().toISOString();
+  const storeRaw = bookingConfig.sync.storeRaw;
+  const rows = bookings.map((b) => {
+    const prev = existingByUid.get(b.uid);
+    const status = normalizeCalApiStatus(b.status);
+    const nowCancelled = isCancelledStatus(String(status));
+    return {
+      workspace_id: workspaceId,
+      cal_booking_uid: b.uid,
+      guest_name: b.attendeeName,
+      guest_phone: b.attendeePhone ?? null,
+      guest_email: b.attendeeEmail,
+      service: b.title ?? null,
+      start_time: b.start,
+      status,
+      list_status: b.listStatus,
+      notes: null,
+      session_id: prev?.session_id ?? null,
+      visitor_id: prev?.visitor_id ?? null,
+      chat_session_id: prev?.chat_session_id ?? null,
+      manage_code_hash: prev?.manage_code_hash ?? null,
+      guest_timezone: prev?.guest_timezone ?? null,
+      cancelled_by: nowCancelled
+        ? prev?.cancelled_by ?? "cal"
+        : null,
+      synced_at: syncedAt,
+      ...(storeRaw ? { raw: b.raw } : {}),
+    };
+  });
+
+  let cancelledNotified = 0;
+  let rescheduledNotified = 0;
+
+  for (const row of rows) {
+    const prev = existingByUid.get(row.cal_booking_uid);
+    if (!prev) continue;
+
+    const guest =
+      row.guest_name?.trim() ||
+      row.guest_email?.trim() ||
+      prev.guest_name?.trim() ||
+      prev.guest_email?.trim() ||
+      row.cal_booking_uid.slice(0, 8);
+
+    const wasCancelled = isCancelledStatus(prev.status);
+    const nowCancelled = isCancelledStatus(String(row.status));
+
+    if (!wasCancelled && nowCancelled) {
+      const id = await createNotification({
+        type: "booking_cancelled",
+        title: "Booking cancelled on Cal.com",
+        body: `${guest} · ${formatWhen(row.start_time)}`,
+        severity: "high",
+        href: "/dashboard/bookings",
+        entityType: "booking",
+        entityId: row.cal_booking_uid,
+        workspaceId,
+      });
+      if (id) cancelledNotified += 1;
+      continue;
+    }
+
+    if (
+      !nowCancelled &&
+      prev.start_time &&
+      row.start_time &&
+      prev.start_time !== row.start_time
+    ) {
+      const id = await createNotification({
+        type: "booking_rescheduled",
+        title: "Booking rescheduled on Cal.com",
+        body: `${guest}: ${formatWhen(prev.start_time)} → ${formatWhen(row.start_time)}`,
+        severity: "high",
+        href: "/dashboard/bookings",
+        entityType: "booking",
+        entityId: `${row.cal_booking_uid}:${row.start_time}`,
+        workspaceId,
+      });
+      if (id) rescheduledNotified += 1;
+    }
+  }
+
+  if (rows.length === 0) {
+    await ensureDigestNotifications(workspaceId);
+    return {
+      synced: 0,
+      cancelledNotified,
+      rescheduledNotified,
+    };
+  }
+
+  // Upsert in chunks to keep payloads small
+  const chunkSize = 100;
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+    const { error } = await supabase.from("bookings").upsert(chunk, {
+      onConflict: "cal_booking_uid",
+    });
+    if (error) {
+      return {
+        synced: i,
+        error: error.message,
+        cancelledNotified,
+        rescheduledNotified,
+      };
+    }
+  }
+
+  await ensureDigestNotifications(workspaceId);
+
+  return {
+    synced: rows.length,
+    cancelledNotified,
+    rescheduledNotified,
+  };
 }
 
 /** Full Cal.com mirror → upsert Supabase (preserves chat `session_id`). */
@@ -78,151 +244,8 @@ export async function syncCalBookingsToSupabase(
         : "";
     const scopeLabel = `all filters · ≤${scope.pageLimit * scope.maxPages}/filter${truncHint}`;
 
-    const supabase = createAdminClient();
-    const workspaceId = wsId;
-    const uids = calBookings.map((b) => b.uid);
-
-    const existingByUid = new Map<string, ExistingBooking>();
-    if (uids.length > 0) {
-      const chunkSize = 200;
-      for (let i = 0; i < uids.length; i += chunkSize) {
-        const chunk = uids.slice(i, i + chunkSize);
-        const { data: existing } = await supabase
-          .from("bookings")
-          .select(
-            "cal_booking_uid, status, start_time, guest_name, guest_email, session_id, visitor_id, chat_session_id, manage_code_hash, cancelled_by, guest_timezone",
-          )
-          .in("cal_booking_uid", chunk);
-
-        for (const row of existing ?? []) {
-          if (row.cal_booking_uid) {
-            existingByUid.set(row.cal_booking_uid, row as ExistingBooking);
-          }
-        }
-      }
-    }
-
-    const syncedAt = new Date().toISOString();
-    const storeRaw = bookingConfig.sync.storeRaw;
-    const rows = calBookings.map((b) => {
-      const prev = existingByUid.get(b.uid);
-      const status = normalizeCalApiStatus(b.status);
-      const nowCancelled = isCancelledStatus(String(status));
-      return {
-        workspace_id: workspaceId,
-        cal_booking_uid: b.uid,
-        guest_name: b.attendeeName,
-        guest_phone: b.attendeePhone ?? null,
-        guest_email: b.attendeeEmail,
-        service: b.title ?? null,
-        start_time: b.start,
-        status,
-        list_status: b.listStatus,
-        notes: null,
-        session_id: prev?.session_id ?? null,
-        visitor_id: prev?.visitor_id ?? null,
-        chat_session_id: prev?.chat_session_id ?? null,
-        manage_code_hash: prev?.manage_code_hash ?? null,
-        guest_timezone: prev?.guest_timezone ?? null,
-        cancelled_by: nowCancelled
-          ? prev?.cancelled_by ?? "cal"
-          : null,
-        synced_at: syncedAt,
-        ...(storeRaw ? { raw: b.raw } : {}),
-      };
-    });
-
-    let cancelledNotified = 0;
-    let rescheduledNotified = 0;
-
-    for (const row of rows) {
-      const prev = existingByUid.get(row.cal_booking_uid);
-      if (!prev) continue;
-
-      const guest =
-        row.guest_name?.trim() ||
-        row.guest_email?.trim() ||
-        prev.guest_name?.trim() ||
-        prev.guest_email?.trim() ||
-        row.cal_booking_uid.slice(0, 8);
-
-      const wasCancelled = isCancelledStatus(prev.status);
-      const nowCancelled = isCancelledStatus(String(row.status));
-
-      if (!wasCancelled && nowCancelled) {
-        const id = await createNotification({
-          type: "booking_cancelled",
-          title: "Booking cancelled on Cal.com",
-          body: `${guest} · ${formatWhen(row.start_time)}`,
-          severity: "high",
-          href: "/dashboard/bookings",
-          entityType: "booking",
-          entityId: row.cal_booking_uid,
-          workspaceId,
-        });
-        if (id) cancelledNotified += 1;
-        continue;
-      }
-
-      if (
-        !nowCancelled &&
-        prev.start_time &&
-        row.start_time &&
-        prev.start_time !== row.start_time
-      ) {
-        const id = await createNotification({
-          type: "booking_rescheduled",
-          title: "Booking rescheduled on Cal.com",
-          body: `${guest}: ${formatWhen(prev.start_time)} → ${formatWhen(row.start_time)}`,
-          severity: "high",
-          href: "/dashboard/bookings",
-          entityType: "booking",
-          entityId: `${row.cal_booking_uid}:${row.start_time}`,
-          workspaceId,
-        });
-        if (id) rescheduledNotified += 1;
-      }
-    }
-
-    if (rows.length === 0) {
-      await ensureDigestNotifications(workspaceId);
-      return {
-        synced: 0,
-        scopeLabel,
-        truncated: scope.truncatedFilters.length > 0,
-        cancelledNotified,
-        rescheduledNotified,
-      };
-    }
-
-    // Upsert in chunks to keep payloads small
-    const chunkSize = 100;
-    for (let i = 0; i < rows.length; i += chunkSize) {
-      const chunk = rows.slice(i, i + chunkSize);
-      const { error } = await supabase.from("bookings").upsert(chunk, {
-        onConflict: "cal_booking_uid",
-      });
-      if (error) {
-        return {
-          synced: i,
-          error: error.message,
-          scopeLabel,
-          truncated: scope.truncatedFilters.length > 0,
-          cancelledNotified,
-          rescheduledNotified,
-        };
-      }
-    }
-
-    await ensureDigestNotifications(workspaceId);
-
-    return {
-      synced: rows.length,
-      scopeLabel,
-      truncated: scope.truncatedFilters.length > 0,
-      cancelledNotified,
-      rescheduledNotified,
-    };
+    const result = await upsertCalBookings(calBookings, wsId);
+    return { ...result, scopeLabel, truncated: scope.truncatedFilters.length > 0 };
   } catch (error) {
     return {
       synced: 0,

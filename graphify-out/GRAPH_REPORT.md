@@ -1,7 +1,7 @@
 # Graph Report - eve  (2026-07-31)
 
 ## Corpus Check
-- 584 files · ~362,237 words
+- 584 files · ~362,304 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8f1a1f00`
+- Built from commit: `d3ed76eb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -421,8 +421,8 @@
 ## Communities (391 total, 214 thin omitted)
 
 ### Community 0 - "prompt-input.tsx"
-Cohesion: 0.02
-Nodes (81): AttachmentsContext, captureScreenshot(), convertBlobUrlToDataUrl(), LocalAttachmentsContext, LocalReferencedSourcesContext, PromptInput(), PromptInputActionAddAttachments(), PromptInputActionAddAttachmentsProps (+73 more)
+Cohesion: 0.03
+Nodes (99): AttachmentsContext, captureScreenshot(), convertBlobUrlToDataUrl(), LocalAttachmentsContext, LocalReferencedSourcesContext, PromptInput(), PromptInputActionAddAttachments(), PromptInputActionAddAttachmentsProps (+91 more)
 
 ### Community 2 - "message.tsx"
 Cohesion: 0.09
@@ -453,8 +453,8 @@ Cohesion: 0.22
 Nodes (6): ProductFrame(), ChatPanel(), ProductStage(), SLOT_TIMES, Tab, TABS
 
 ### Community 9 - "sidebar.tsx"
-Cohesion: 0.21
-Nodes (22): CalConnectionCard(), Props, WorkspaceSettingsForm(), checkWorkspaceSlugAvailable(), completeSetupAction(), disconnectCalAction(), finishSetupAction(), saveCalApiKeyAction() (+14 more)
+Cohesion: 0.16
+Nodes (32): CalConnectionCard(), Props, MeetingTypesForm(), createMeetingTypeAction(), MeetingTypesActionState, mirrorRow(), revalidateMeetingTypePaths(), setAiBookingMeetingTypeAction() (+24 more)
 
 ### Community 10 - "agent-chat.tsx"
 Cohesion: 0.18
@@ -465,8 +465,8 @@ Cohesion: 0.07
 Nodes (46): AppSidebar(), DashboardCommandContext, DashboardCommandContextValue, DashboardCommandProvider(), useDashboardCommand(), DashboardCommand(), DashboardRoleContext, useDashboardRole() (+38 more)
 
 ### Community 12 - "utils.ts"
-Cohesion: 0.07
-Nodes (44): Conversation(), ConversationContent(), ConversationContentProps, ConversationDownload(), ConversationDownloadProps, ConversationEmptyState(), ConversationEmptyStateProps, ConversationProps (+36 more)
+Cohesion: 0.16
+Nodes (13): chartData, columns, schema, Checkbox(), Drawer(), DrawerClose(), DrawerContent(), DrawerDescription() (+5 more)
 
 ### Community 13 - "Smoke Checklist"
 Cohesion: 0.13
@@ -653,8 +653,8 @@ Cohesion: 0.14
 Nodes (32): absoluteInviteUrl(), copyLink(), initial, WorkspaceTeamCard(), AccountActionState, updateAccountNameAction(), EmbedSecurityState, saveEmbedAllowedOrigins() (+24 more)
 
 ### Community 67 - "@gsap/react"
-Cohesion: 0.18
-Nodes (13): optionalText(), parseSuggestionsFromForm(), saveWorkspaceAgent(), ChatBranding, ChatSuggestion, DEFAULT_CHAT_BRANDING, DEFAULT_CHAT_SUGGESTIONS, AppErrorCode (+5 more)
+Cohesion: 0.19
+Nodes (17): checkWorkspaceSlugAvailable(), optionalText(), saveWorkspaceSettings(), minLongLeadMinutes(), AppErrorCode, inviteEmailMismatchMessage(), reminderLeadTooShortMessage(), slugAvailableMessage() (+9 more)
 
 ### Community 68 - "client.ts"
 Cohesion: 0.13
@@ -693,8 +693,8 @@ Cohesion: 0.28
 Nodes (14): execute(), AdminClient, bumpAttemptLock(), checkAttemptLock(), execute(), markBookingVerified(), bookingCodesEqual(), generateManageCode() (+6 more)
 
 ### Community 80 - "recharts"
-Cohesion: 0.32
-Nodes (13): MeetingTypesForm(), createMeetingTypeAction(), MeetingTypesActionState, mirrorRow(), revalidateMeetingTypePaths(), setAiBookingMeetingTypeAction(), setAiBookingOnWorkspace(), syncMeetingTypesAction() (+5 more)
+Cohesion: 0.16
+Nodes (13): Conversation(), ConversationContent(), ConversationContentProps, ConversationDownload(), ConversationDownloadProps, ConversationEmptyState(), ConversationEmptyStateProps, ConversationProps (+5 more)
 
 ### Community 81 - "@shikijs/core"
 Cohesion: 0.33
@@ -773,8 +773,8 @@ Cohesion: 0.36
 Nodes (7): confirmReminderOptOutAction(), UnsubscribeActionState, PageProps, ReminderUnsubscribePage(), initialState, UnsubscribeConfirmForm(), verifyReminderOptOutToken()
 
 ### Community 124 - "nanoid"
-Cohesion: 0.11
-Nodes (26): AuthState, signIn(), signUp(), InviteAcceptPanel(), InvitePage(), metadata, Params, initial (+18 more)
+Cohesion: 0.14
+Nodes (19): AuthState, signIn(), signUp(), InviteAcceptPanel(), InvitePage(), metadata, Params, initial (+11 more)
 
 ### Community 125 - "hover-card.tsx"
 Cohesion: 0.28
@@ -782,7 +782,7 @@ Nodes (7): DashboardLayout(), DashboardBookingPathContext, DashboardBookingPathP
 
 ### Community 126 - "20260723000005_leads_status.sql"
 Cohesion: 0.09
-Nodes (23): @ai-sdk/anthropic, @ai-sdk/deepseek, @dnd-kit/core, lucide-react, motion, dependencies, @ai-sdk/anthropic, @ai-sdk/deepseek (+15 more)
+Nodes (23): ai, @ai-sdk/deepseek, @dnd-kit/core, lucide-react, motion, dependencies, ai, @ai-sdk/deepseek (+15 more)
 
 ### Community 128 - "@shikijs/engine-oniguruma"
 Cohesion: 0.18
@@ -817,8 +817,8 @@ Cohesion: 0.13
 Nodes (13): Commands, Config shape, Decision guide, Educating the user, Explaining and configuring rules, Workflow, After making React code changes:, Command (+5 more)
 
 ### Community 150 - "slugify"
-Cohesion: 0.16
-Nodes (15): hasText(), initial, NAV, SlugStatus, optionalText(), saveWorkspaceSettings(), minLongLeadMinutes(), reminderLeadTooShortMessage() (+7 more)
+Cohesion: 0.11
+Nodes (21): hasText(), initial, NAV, SlugStatus, WorkspaceSettingsForm(), optionalText(), parseSuggestionsFromForm(), saveWorkspaceAgent() (+13 more)
 
 ### Community 151 - "meeting-types/actions.ts"
 Cohesion: 0.22
@@ -1021,23 +1021,23 @@ Cohesion: 0.22
 Nodes (11): generateMetadata(), PageProps, PublicBookingSlugPage(), ChatPage(), LandingPage(), HomePage(), StripManageLinkParam(), getClient() (+3 more)
 
 ## Knowledge Gaps
-- **1244 isolated node(s):** `Context`, `Changes`, `Rationale`, `deploy-codex.sh script`, `deploy.sh script` (+1239 more)
+- **1244 isolated node(s):** `deploy-codex.sh script`, `deploy.sh script`, `EveAuth`, `AgentStatus`, `ThreadBootstrap` (+1239 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **214 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `cn()` connect `utils.ts` to `prompt-input.tsx`, `@shikijs/engine-oniguruma`, `message.tsx`, `code-block.tsx`, `data-table.tsx`, `label.tsx`, `landing-page.tsx`, `agent-chat.tsx`, `sidebar.tsx`, `data-table.tsx`, `command.tsx`, `chain-of-thought.tsx`, `slugify`, `login-form.tsx`, `reasoning.tsx`, `20260722000008_bookings_list_status.sql`, `workspace.ts`, `auth-shell.tsx`, `client.ts`, `nanoid`, `faq-settings-form.tsx`, `recharts`, `@shikijs/core`, `workspace-settings-form.tsx`, `shimmer.tsx`, `graphify-session.mjs`, `glob.ts`, `createClient`, `app/layout.tsx`, `nanoid`?**
-  _High betweenness centrality (0.113) - this node is a cross-community bridge._
+- **Why does `cn()` connect `prompt-input.tsx` to `@shikijs/engine-oniguruma`, `message.tsx`, `code-block.tsx`, `data-table.tsx`, `label.tsx`, `landing-page.tsx`, `agent-chat.tsx`, `sidebar.tsx`, `data-table.tsx`, `utils.ts`, `command.tsx`, `chain-of-thought.tsx`, `slugify`, `login-form.tsx`, `reasoning.tsx`, `20260722000008_bookings_list_status.sql`, `workspace.ts`, `auth-shell.tsx`, `client.ts`, `nanoid`, `faq-settings-form.tsx`, `recharts`, `@shikijs/core`, `workspace-settings-form.tsx`, `shimmer.tsx`, `graphify-session.mjs`, `glob.ts`, `createClient`, `app/layout.tsx`, `nanoid`?**
+  _High betweenness centrality (0.132) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `20260723000005_leads_status.sql` to `workspace-secrets.ts`, `@shikijs/engine-oniguruma`, `@tabler/icons-react`, `class-variance-authority`, `@gsap/react`, `next-themes`, `posthog-node`, `@supabase/ssr`, `chat-sessions.ts`, `Smoke Checklist`, `@ai-sdk/anthropic`, `badge.tsx`, `meeting-types-form.tsx`, `@dnd-kit/sortable`, `markdown-link.tsx`, `radix-ui`, `faq-settings-form.tsx`, `badge.tsx`, `auth/actions.ts`, `@vercel/connect`, `ai`, `@dnd-kit/modifiers`, `@streamdown/math`, `@sentry/nextjs`, `bash.ts`, `lenis-provider.tsx`, `grep.ts`, `read_file.ts`, `radix-ui`, `write_file.ts`, `recharts`, `@dnd-kit/utilities`, `@gsap/react`, `tw-animate-css`, `@shikijs/engine-oniguruma`, `vaul`, `@dnd-kit/core`, `streamdown`, `workspace-faq-map.ts`, `createClient`, `tailwindcss`, `@tailwindcss/postcss`, `timezone-select.tsx`, `isVisitorId`, `particles.tsx`?**
-  _High betweenness centrality (0.060) - this node is a cross-community bridge._
+  _High betweenness centrality (0.058) - this node is a cross-community bridge._
 - **Why does `react` connect `createClient` to `20260722000008_bookings_list_status.sql`, `@shikijs/engine-oniguruma`, `workspace.ts`, `readGuestLocale`, `nanoid`, `sidebar.tsx`, `data-table.tsx`, `workspace-settings-form.tsx`, `auth-shell.tsx`, `login-form.tsx`, `hover-card.tsx`, `20260723000005_leads_status.sql`?**
   _High betweenness centrality (0.058) - this node is a cross-community bridge._
-- **What connects `Context`, `Changes`, `Rationale` to the rest of the system?**
+- **What connects `deploy-codex.sh script`, `deploy.sh script`, `EveAuth` to the rest of the system?**
   _1244 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `prompt-input.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.024021962937542895 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.025787106446776613 - nodes in this community are weakly interconnected._
 - **Should `calcom.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.10144927536231885 - nodes in this community are weakly interconnected._
 - **Should `message.tsx` be split into smaller, more focused modules?**

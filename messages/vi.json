@@ -269,7 +269,7 @@
         "basic": {
           "name": "Basic",
           "description": "Web chat + Cal.com cho team mới bắt đầu.",
-          "cta": "Bắt đầu",
+          "cta": "Dùng thử miễn phí",
           "features": {
             "f1": "Web chat",
             "f2": "Đặt lịch Cal.com",
@@ -280,7 +280,7 @@
         "premium": {
           "name": "Premium",
           "description": "Nhắc lịch và embed khi lead tăng.",
-          "cta": "Chọn Premium",
+          "cta": "Dùng thử miễn phí",
           "features": {
             "f1": "Mọi thứ trong Basic",
             "f2": "Nhắc lịch outbound",
@@ -291,7 +291,7 @@
         "enterprise": {
           "name": "Enterprise",
           "description": "Giới hạn cao hơn, brand riêng, hỗ trợ ưu tiên.",
-          "cta": "Bắt đầu",
+          "cta": "Sắp ra mắt",
           "features": {
             "f1": "Mọi thứ trong Premium",
             "f2": "Giới hạn cao + FAQ tùy chỉnh",

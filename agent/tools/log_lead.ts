@@ -1,48 +1,11 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { logAgentToolEvent } from "@/lib/agent-tool-log";
-import {
-  normalizeLeadUrgency,
-  type LeadStatus,
-} from "@/lib/lead-status";
+import { normalizeLeadUrgency } from "@/lib/lead-status";
 import { findWorkspaceLead } from "@/lib/leads";
-import {
-  createNotification,
-  createNotificationDebounced,
-} from "@/lib/notifications-write";
+import { createNotification } from "@/lib/notifications-write";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveWorkspaceIdFromAgentContext } from "@/lib/workspace";
-
-function nextStatusOnLog(current: string | undefined): LeadStatus {
-  if (current === "booked" || current === "lost" || current === "qualified") {
-    return current as LeadStatus;
-  }
-  if (current === "contacted") return "contacted";
-  return "new";
-}
-
-function normalizeText(value: string | null | undefined): string {
-  return (value ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-}
-
-function isLongTreatmentIntent(
-  service: string | null | undefined,
-  notes: string | null | undefined,
-): boolean {
-  const haystack = `${normalizeText(service)} ${normalizeText(notes)}`.trim();
-  if (!haystack) return false;
-  return (
-    haystack.includes("dieu tri dai") ||
-    haystack.includes("kham dieu tri dai") ||
-    haystack.includes("dieu tri lau") ||
-    haystack.includes("long treatment") ||
-    haystack.includes("extended treatment") ||
-    haystack.includes("long consultation")
-  );
-}
 
 export default defineTool({
   description:
@@ -65,15 +28,10 @@ export default defineTool({
         auth: ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null,
       });
       workspaceIdForLog = workspaceId;
+
       const phone = input.phone?.trim() || null;
       const email = input.email?.trim() || null;
       const urgency = normalizeLeadUrgency(input.urgency);
-
-      const existing = await findWorkspaceLead({
-        workspaceId,
-        sessionId,
-        phone,
-      });
 
       const patch = {
         full_name: input.fullName?.trim() || null,
@@ -83,15 +41,20 @@ export default defineTool({
         urgency,
         notes: input.notes?.trim() || null,
         session_id: sessionId,
-        status: nextStatusOnLog(existing?.status),
       };
-      const longTreatment = isLongTreatmentIntent(patch.service, patch.notes);
+
+      const existing = await findWorkspaceLead({
+        workspaceId,
+        sessionId,
+        phone,
+      });
 
       if (existing) {
         const { error } = await supabase
           .from("leads")
           .update(patch)
           .eq("id", existing.id);
+
         if (error) {
           await logAgentToolEvent({
             toolName: "log_lead",
@@ -102,6 +65,7 @@ export default defineTool({
           });
           return { ok: false as const, error: error.message };
         }
+
         await logAgentToolEvent({
           toolName: "log_lead",
           ok: true,
@@ -109,42 +73,12 @@ export default defineTool({
           workspaceId,
           meta: { leadId: existing.id, updated: true },
         });
-        if (urgency === "high" || urgency === "urgent") {
-          await createNotification({
-            type: "lead_urgent",
-            title: `Urgent lead: ${patch.full_name || phone || "Guest"}`,
-            body: [patch.service, urgency, patch.notes]
-              .filter(Boolean)
-              .join(" · "),
-            severity: "high",
-            href: "/dashboard/leads",
-            entityType: "lead",
-            entityId: existing.id,
-            workspaceId,
-          });
-        }
-        if (longTreatment) {
-          const leadLabel = patch.full_name || phone || email || "Guest";
-          const longTreatmentEntityId = `long-treatment:${existing.id}`;
-          await createNotificationDebounced({
-            type: "long_treatment_requested",
-            title: `Long treatment request: ${leadLabel}`,
-            body: [patch.service, patch.phone || patch.email, patch.notes]
-              .filter(Boolean)
-              .join(" · "),
-            severity: "high",
-            href: "/dashboard/leads",
-            entityType: "lead",
-            entityId: longTreatmentEntityId,
-            workspaceId,
-            windowMinutes: 180,
-          });
-        }
+
         return {
           ok: true as const,
           leadId: existing.id,
           updated: true as const,
-          status: patch.status,
+          status: existing.status,
         };
       }
 
@@ -190,34 +124,6 @@ export default defineTool({
         entityId: data.id,
         workspaceId,
       });
-      if (urgency === "high" || urgency === "urgent") {
-        await createNotification({
-          type: "lead_urgent",
-          title: `Urgent lead: ${leadLabel}`,
-          body: `Urgency: ${urgency}`,
-          severity: "high",
-          href: "/dashboard/leads",
-          entityType: "lead",
-          entityId: data.id,
-          workspaceId,
-        });
-      }
-      if (longTreatment) {
-        const longTreatmentEntityId = `long-treatment:${data.id}`;
-        await createNotificationDebounced({
-          type: "long_treatment_requested",
-          title: `Long treatment request: ${leadLabel}`,
-          body: [patch.service, patch.phone || patch.email, patch.notes]
-            .filter(Boolean)
-            .join(" · "),
-          severity: "high",
-          href: "/dashboard/leads",
-          entityType: "lead",
-          entityId: longTreatmentEntityId,
-          workspaceId,
-          windowMinutes: 180,
-        });
-      }
 
       return {
         ok: true as const,
