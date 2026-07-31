@@ -21,7 +21,10 @@
     "patch:eve": "node ./scripts/patch-eve-package-resolve.mjs",
     "sync:eve": "node ./scripts/sync-eve-compile.mjs",
     "doctor": "npx react-doctor@latest --verbose --scope changed",
-    "doctor:full": "npx react-doctor@latest --verbose"
+    "doctor:full": "npx react-doctor@latest --verbose",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.18",
@@ -85,9 +88,13 @@
     "@types/node": "24.x",
     "@types/react": "19.2.15",
     "@types/react-dom": "19.2.3",
+    "@vitest/coverage-v8": "^4.1.10",
     "just-bash": "^3.1.0",
     "react-doctor": "^0.9.1",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vite": "^8.2.0",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.10"
   },
   "overrides": {
     "ai": "^7.0.26"
