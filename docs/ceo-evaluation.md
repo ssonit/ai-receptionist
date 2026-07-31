@@ -1,6 +1,6 @@
 # eve-booking — Đánh giá CEO & Chiến lược ra thị trường
 
-Ngày đánh giá: 2026-07-31 | Cập nhật: 2026-07-31 (webhook sync)
+Ngày đánh giá: 2026-07-31 | Cập nhật: 2026-07-31 (vertical positioning + pricing alignment)
 
 ## Tổng quan sản phẩm
 
@@ -60,9 +60,9 @@ PostHog, Sentry, dashboard analytics nội bộ (AI health, funnel conversion, t
 | # | Vấn đề | Lý do | Status |
 |---|--------|-------|--------|
 | 1 | **Agent tools generic** (`bash`, `glob`, `grep`, `read_file`, `write_file`) | Security risk — agent booking không cần quyền write file | Xóa file, không còn trong discovery | ✅ Done — 5 files removed, agent chỉ còn 11 booking tools |
-| 2 | **Landing page Pricing section** — static, không có backend | Gây misleading, bỏ đến khi có billing thật | ⬜ Chưa làm |
+| 2 | **Landing page Pricing section** — static, không có backend | Gây misleading, bỏ đến khi có billing thật | ✅ Done — CTA rework: "Start free trial" cho Basic/Premium, "Coming soon" non-interactive cho Enterprise |
 | 3 | **`sync-cal-bookings.ts` pull-based sync** — mirror Cal.com về Supabase | Overhead cron job, thay bằng Cal.com webhook | ✅ Done — `POST /api/cal/webhook?workspace_id=` + HMAC-SHA256 verify + `upsertCalBookings` reusable, cron giữ lại làm fallback |
-| 4 | **Magic UI / GSAP landing animations** — tăng bundle size | Landing SaaS cần load nhanh hơn animation | ⬜ Chưa làm |
+| 4 | **Magic UI / GSAP landing animations** — tăng bundle size | Landing SaaS cần load nhanh hơn animation | ✅ Done — bỏ `gsap` + `motion/react`, thay bằng native `requestAnimationFrame` + CSS transitions, tiết kiệm ~165-215KB gzipped |
 | 5 | **`log_lead` flow nửa vời** — logic phức tạp nhưng leads UI quá đơn giản | Làm mạnh CRM hoặc giản lược | ✅ Done — giản lược: bỏ long-treatment detection, urgency notifications, code từ 244 → 130 lines |
 
 ---
@@ -107,9 +107,12 @@ Sản phẩm đang ở giai đoạn **product beta — sẵn sàng bán**. Code 
 ✅ **Test suite** — 233 tests, 15 files, vitest
 ✅ **Rate limit** — `agent-rate-limit.ts`
 ✅ **Onboarding tự động** — Cal.com OAuth (authorize → token → auto-refresh → disconnect)
-✅ **Billing** — Stripe Checkout + Customer Portal + `BILLING_MODE=test` (free full access) + 14-day trial + subscription guard trên proxy
+✅ **Billing engine** — Stripe Checkout + Customer Portal + `BILLING_MODE=test` (free full access) + 14-day trial + subscription guard trên proxy
 ✅ **Retry/circuit breaker** — exponential backoff + jitter + circuit breaker (5 failures → open 30s) cho Cal.com API
-✅ **Agent tools cleanup** — 5 generic tools (bash, glob, grep, read_file, write_file) removed, agent chỉ còn 11 booking tools
+✅ **Agent tools cleanup** — 5 generic tools removed, agent chỉ còn 11 booking tools
 ✅ **Cal.com webhook sync** — `POST /api/cal/webhook` + signature verification + `upsertCalBookings`, cron tick giữ lại làm fallback reconciliation
+✅ **Landing page giản lược** — Pricing CTA rework (Basic/Premium → "Start free trial", Enterprise → "Coming soon" non-interactive) + bỏ GSAP/motion (tiết kiệm ~165-215KB)
+✅ **Vertical positioning** — rewrite landing page copy (EN + VI) nhắm thẳng spa, clinic, salon: "AI receptionist for spas, clinics & salons", "Bookings while you're with a client", body copy + FAQ xoay quanh local service businesses
+✅ **Pricing alignment** — sync `PLAN_PRICES` trong billing card với CEO eval model: Starter $19/mo, Pro $49/mo
 
-Sẵn sàng bán. Việc còn lại: giản lược landing page sections chưa có backend, chốt vertical "local service businesses ở VN", tạo Stripe products/prices trên dashboard.
+Việc còn lại: tạo Stripe products/prices thật trên Stripe dashboard + bật `BILLING_MODE=live`.

@@ -2735,8 +2735,8 @@
     "semantic_hash": ""
   },
   "docs/ceo-evaluation.md": {
-    "mtime": 1785492774.3770916,
-    "ast_hash": "84bbabdfff7db4f077f5fd6834d180b6",
+    "mtime": 1785494284.317705,
+    "ast_hash": "2353a25d1a30c3375994746fead744c0",
     "semantic_hash": ""
   },
   "agent/date-context.test.ts": {
@@ -2900,8 +2900,8 @@
     "semantic_hash": ""
   },
   "components/billing-plan-card.tsx": {
-    "mtime": 1785491324.3957942,
-    "ast_hash": "86daa933a74a07458a4c8560cf38cf1b",
+    "mtime": 1785494093.6117642,
+    "ast_hash": "0de1bbdfa968668ad4cd586b03811fe7",
     "semantic_hash": ""
   },
   "lib/billing.test.ts": {

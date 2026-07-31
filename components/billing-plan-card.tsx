@@ -26,8 +26,8 @@ const PLAN_LABELS: Record<PlanTier, string> = {
 
 const PLAN_PRICES: Record<PlanTier, string | null> = {
   free: null,
-  starter: "$39",
-  pro: "$89",
+  starter: "$19",
+  pro: "$49",
 };
 
 const PLAN_FEATURES: Record<PlanTier, string[]> = {
