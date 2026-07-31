@@ -4,7 +4,7 @@
  * guest-timezone-resolve, leads, agent-tool-log, notifications-write, analytics-server.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { supabaseMock, QueryBuilder } from "../../tests/helpers/supabase-mock";
+import { supabaseMock, QueryBuilder } from "../helpers/supabase-mock";
 
 // eve/tools mock — avoid loading 18MB runtime
 vi.mock("eve/tools", () => ({
@@ -123,7 +123,7 @@ describe("book_appointment tool", () => {
       source: "session",
     });
 
-    const tool = (await import("./book_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/book_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -182,7 +182,7 @@ describe("book_appointment tool", () => {
     ]);
     // No workspace_event_types row → getAiBookingEventType returns null for non-pilot
 
-    const tool = (await import("./book_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/book_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -240,7 +240,7 @@ describe("book_appointment tool", () => {
       },
     ]);
 
-    const tool = (await import("./book_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/book_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -279,7 +279,7 @@ describe("book_appointment tool", () => {
       { start: "2026-08-05T12:00:00.000Z" },
     ]);
 
-    const tool = (await import("./book_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/book_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -342,7 +342,7 @@ describe("book_appointment tool", () => {
     vi.spyOn(QueryBuilder.prototype, "upsert")
       .mockRejectedValueOnce(new Error("DB connection lost"));
 
-    const tool = (await import("./book_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/book_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 

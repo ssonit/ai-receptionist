@@ -74,6 +74,16 @@
     "teamMakeOwner": "Chuyển quyền owner",
     "teamConfirmRemove": "Gỡ thành viên này khỏi workspace?",
     "teamConfirmTransfer": "Chuyển quyền owner? Bạn sẽ thành staff và không thể tự hoàn tác.",
+    "cal": {
+      "connectBtn": "Kết nối Cal.com",
+      "connecting": "Đang kết nối…",
+      "connectedLabel": "Đã kết nối",
+      "disconnectBtn": "Ngắt kết nối",
+      "disconnectConfirm": "Ngắt kết nối Cal.com? Khách sẽ không đặt lịch được cho tới khi bạn kết nối lại.",
+      "disconnecting": "Đang ngắt kết nối…",
+      "legacyKeyLabel": "API key (cũ)",
+      "upgradePrompt": "Kết nối qua OAuth để tự động làm mới token."
+    },
     "embedTitle": "Nhúng vào website của bạn",
     "embedBody": "Thêm bong bóng chat vào bất kỳ trang nào. Khách đặt lịch mà không rời site của bạn.",
     "embedIntro": "Thêm bong bóng chat vào bất kỳ trang nào. Khách đặt lịch mà không rời site của bạn.",

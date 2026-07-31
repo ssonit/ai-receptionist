@@ -209,6 +209,42 @@ export async function completeSetupAction(): Promise<SetupActionState> {
   return { success: "Setup saved. You can open the dashboard anytime." };
 }
 
+export async function disconnectCalAction(
+  workspaceId: string,
+): Promise<SetupActionState> {
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
+
+  if (auth.workspaceId !== workspaceId) {
+    return { error: appErrorMessage(APP_ERROR_CODE.UNAUTHORIZED) };
+  }
+
+  try {
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("workspaces")
+      .update({
+        cal_oauth_access_encrypted: null,
+        cal_oauth_refresh_encrypted: null,
+        cal_oauth_expires_at: null,
+        cal_oauth_scope: null,
+        cal_auth_mode: null,
+        cal_api_key_encrypted: null,
+      })
+      .eq("id", workspaceId);
+
+    if (error) return { error: formatDbError(error) };
+
+    revalidatePath("/dashboard/setup");
+    revalidatePath("/dashboard/settings");
+    return { success: "Cal.com disconnected." };
+  } catch (error) {
+    return {
+      error: formatUnknownError(error, APP_ERROR_CODE.SAVE_FAILED),
+    };
+  }
+}
+
 /** Save optional profile fields from step 3, then mark setup complete. */
 export async function finishSetupAction(
   _prev: SetupActionState,

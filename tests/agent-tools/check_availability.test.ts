@@ -3,7 +3,7 @@
  * Mocks: eve/tools (identity), calcom (getAvailableSlots), workspace resolution, supabase.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { supabaseMock } from "../../tests/helpers/supabase-mock";
+import { supabaseMock } from "../helpers/supabase-mock";
 
 // eve/tools mock — avoid loading 18MB runtime
 vi.mock("eve/tools", () => ({
@@ -80,7 +80,7 @@ describe("check_availability tool", () => {
       | { ok: true; count: number; slotsByDay: Record<string, unknown>; timezone: string }
       | { ok: false; error: string };
 
-    const tool = (await import("./check_availability")).default as {
+    const tool = (await import("../../agent/tools/check_availability")).default as {
       execute: (input: { startDate: string; endDate: string }, ctx: unknown) => Promise<CheckResult>;
     };
 
@@ -122,7 +122,7 @@ describe("check_availability tool", () => {
     // But resolveWorkspaceIdFromAgentContext will throw since no session hint points to this workspace
     // and it falls back to pilot. We need to seed a chat_session.
 
-    const tool = (await import("./check_availability")).default as {
+    const tool = (await import("../../agent/tools/check_availability")).default as {
       execute: (input: { startDate: string; endDate: string }, ctx: unknown) => Promise<unknown>;
     };
 

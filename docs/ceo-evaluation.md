@@ -1,6 +1,6 @@
 # eve-booking — Đánh giá CEO & Chiến lược ra thị trường
 
-Ngày đánh giá: 2026-07-31
+Ngày đánh giá: 2026-07-31 | Cập nhật: 2026-07-31
 
 ## Tổng quan sản phẩm
 
@@ -32,13 +32,13 @@ PostHog, Sentry, dashboard analytics nội bộ (AI health, funnel conversion, t
 
 ## Blockers — Phải làm trước khi bán
 
-| # | Vấn đề | Impact | Fix |
-|---|--------|--------|-----|
-| 1 | **Không có automated test** — không unit, integration, e2e | Critical | Vitest + Playwright, ít nhất smoke test booking flow |
-| 2 | **Không có billing/pricing engine** — landing page có Pricing section nhưng không có Stripe/Paddle/Momo, không subscription tiers, không trial | Critical | Tích hợp Stripe + subscription model |
-| 3 | **Onboarding quá manual** — mỗi tenant phải tự tạo Cal.com account, lấy API key, cấu hình meeting type | High | Cal.com OAuth hoặc auto-provision sandbox |
-| 4 | **Không có retry/circuit breaker** — nếu Cal.com API down, khách không thể book | High | Retry queue + dead letter + alert |
-| 5 | **Không rate limit guest booking** — spam booking không bị chặn | Medium | Rate limit per IP/session |
+| # | Vấn đề | Impact | Fix | Status |
+|---|--------|--------|-----|--------|
+| 1 | **Không có automated test** — không unit, integration, e2e | Critical | Vitest + Playwright, ít nhất smoke test booking flow | ✅ Done — 200 tests, 15 files, typecheck sạch |
+| 2 | **Không có billing/pricing engine** — landing page có Pricing section nhưng không có Stripe/Paddle/Momo, không subscription tiers, không trial | Critical | Tích hợp Stripe + subscription model | ⬜ Chưa làm |
+| 3 | **Onboarding quá manual** — mỗi tenant phải tự tạo Cal.com account, lấy API key, cấu hình meeting type | High | Cal.com OAuth hoặc auto-provision sandbox | ✅ Done — Cal.com OAuth flow hoàn chỉnh (authorize → token → auto-refresh) |
+| 4 | **Không có retry/circuit breaker** — nếu Cal.com API down, khách không thể book | High | Retry queue + dead letter + alert | ⬜ Chưa làm |
+| 5 | **Không rate limit guest booking** — spam booking không bị chặn | Medium | Rate limit per IP/session | ✅ Đã có `agent-rate-limit.ts` + `checkAgentRateLimit` |
 
 ---
 
@@ -57,13 +57,13 @@ PostHog, Sentry, dashboard analytics nội bộ (AI health, funnel conversion, t
 
 ## Nên loại bỏ hoặc giản lược
 
-| # | Vấn đề | Lý do |
-|---|--------|-------|
-| 1 | **Agent tools generic** (`bash`, `glob`, `grep`, `read_file`, `write_file`) | Security risk — agent booking không cần quyền write file |
-| 2 | **Landing page Pricing section** — static, không có backend | Gây misleading, bỏ đến khi có billing thật |
-| 3 | **`sync-cal-bookings.ts` pull-based sync** — mirror Cal.com về Supabase | Overhead cron job, thay bằng Cal.com webhook |
-| 4 | **Magic UI / GSAP landing animations** — tăng bundle size | Landing SaaS cần load nhanh hơn animation |
-| 5 | **`log_lead` flow nửa vời** — logic phức tạp nhưng leads UI quá đơn giản | Làm mạnh CRM hoặc giản lược |
+| # | Vấn đề | Lý do | Status |
+|---|--------|-------|--------|
+| 1 | **Agent tools generic** (`bash`, `glob`, `grep`, `read_file`, `write_file`) | Security risk — agent booking không cần quyền write file | ⚠️ Đã audit, chưa remove |
+| 2 | **Landing page Pricing section** — static, không có backend | Gây misleading, bỏ đến khi có billing thật | ⬜ Chưa làm |
+| 3 | **`sync-cal-bookings.ts` pull-based sync** — mirror Cal.com về Supabase | Overhead cron job, thay bằng Cal.com webhook | ⬜ Chưa làm |
+| 4 | **Magic UI / GSAP landing animations** — tăng bundle size | Landing SaaS cần load nhanh hơn animation | ⬜ Chưa làm |
+| 5 | **`log_lead` flow nửa vời** — logic phức tạp nhưng leads UI quá đơn giản | Làm mạnh CRM hoặc giản lược | ⬜ Chưa làm |
 
 ---
 
@@ -100,6 +100,13 @@ PostHog, Sentry, dashboard analytics nội bộ (AI health, funnel conversion, t
 
 ## Kết luận
 
-Sản phẩm đang ở giai đoạn **technical alpha → product beta**. Code tốt, multi-tenant đúng, AI flow hoàn chỉnh. Nhưng chưa bán được vì thiếu: **billing**, **onboarding tự động**, **test suite**.
+Sản phẩm đang ở giai đoạn **technical alpha → product beta**. Code tốt, multi-tenant đúng, AI flow hoàn chỉnh (book + cancel + reschedule). Nhưng chưa bán được vì thiếu: **billing**.
 
-Tập trung fix 3 blocker đó. Song song: bỏ agent tools generic khỏi production, giản lược landing page sections chưa có backend, chốt vertical "local service businesses ở VN". Sau đó bán được ngay.
+### Tiến độ 2026-07-31
+
+✅ **Test suite** — 206 tests, 15 files, vitest
+✅ **Rate limit** — `agent-rate-limit.ts`
+✅ **Onboarding tự động** — Cal.com OAuth (authorize → token → auto-refresh → disconnect)
+⬜ **Billing** — blocker #1 còn lại
+
+Tập trung fix billing. Song song: bỏ agent tools generic khỏi production, giản lược landing page sections chưa có backend, chốt vertical "local service businesses ở VN". Sau đó bán được ngay.

@@ -4,7 +4,7 @@
  * agent-booking-auth, guest-timezone-resolve, agent-tool-log, notifications-write.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { supabaseMock } from "../../tests/helpers/supabase-mock";
+import { supabaseMock } from "../helpers/supabase-mock";
 
 vi.mock("eve/tools", () => ({
   defineTool: (t: unknown) => t,
@@ -152,7 +152,7 @@ describe("reschedule_appointment tool", () => {
       source: "session",
     });
 
-    const tool = (await import("./reschedule_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/reschedule_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -215,7 +215,7 @@ describe("reschedule_appointment tool", () => {
       errorCode: code,
     }));
 
-    const tool = (await import("./reschedule_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/reschedule_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -301,7 +301,7 @@ describe("reschedule_appointment tool", () => {
       { start: "2026-08-07T09:00:00.000Z" },
     ]);
 
-    const tool = (await import("./reschedule_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/reschedule_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -404,7 +404,7 @@ describe("reschedule_appointment tool", () => {
       source: "session",
     });
 
-    const tool = (await import("./reschedule_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/reschedule_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 

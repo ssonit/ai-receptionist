@@ -113,6 +113,16 @@ export const APP_ERROR_MESSAGE = {
     "Could not determine which business this chat belongs to.",
   [APP_ERROR_CODE.SIGNUP_CLOSED]:
     "Public signup is closed. You need an invite from a workspace owner.",
+  [APP_ERROR_CODE.CAL_OAUTH_NOT_CONFIGURED]:
+    "Cal.com OAuth is not configured on this server.",
+  [APP_ERROR_CODE.CAL_OAUTH_DENIED]:
+    "You declined the Cal.com connection. Try again when ready.",
+  [APP_ERROR_CODE.CAL_OAUTH_STATE_INVALID]:
+    "OAuth session expired or invalid. Start again from Setup.",
+  [APP_ERROR_CODE.CAL_OAUTH_EXCHANGE_FAILED]:
+    "Could not connect Cal.com. The authorization was not accepted. Try again.",
+  [APP_ERROR_CODE.CAL_OAUTH_REFRESH_FAILED]:
+    "Cal.com connection expired. Reconnect in Settings.",
 } as const satisfies Record<AppErrorCode, string>;
 
 export function appErrorMessage(code: AppErrorCode): string {

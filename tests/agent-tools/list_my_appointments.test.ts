@@ -3,7 +3,7 @@
  * Mocks: eve/tools, agent-booking-auth, guest-timezone-resolve, agent-tool-log.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { supabaseMock } from "../../tests/helpers/supabase-mock";
+import { supabaseMock } from "../helpers/supabase-mock";
 
 vi.mock("eve/tools", () => ({
   defineTool: (t: unknown) => t,
@@ -121,7 +121,7 @@ describe("list_my_appointments tool", () => {
       },
     ]);
 
-    const tool = (await import("./list_my_appointments")).default as unknown as {
+    const tool = (await import("../../agent/tools/list_my_appointments")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -179,7 +179,7 @@ describe("list_my_appointments tool", () => {
       },
     ]);
 
-    const tool = (await import("./list_my_appointments")).default as unknown as {
+    const tool = (await import("../../agent/tools/list_my_appointments")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -219,7 +219,7 @@ describe("list_my_appointments tool", () => {
       errorCode: code,
     }));
 
-    const tool = (await import("./list_my_appointments")).default as unknown as {
+    const tool = (await import("../../agent/tools/list_my_appointments")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -252,7 +252,7 @@ describe("list_my_appointments tool", () => {
       errorCode: code,
     }));
 
-    const tool = (await import("./list_my_appointments")).default as unknown as {
+    const tool = (await import("../../agent/tools/list_my_appointments")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 

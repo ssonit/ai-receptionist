@@ -4,7 +4,7 @@
  * agent-tool-log, notifications-write.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { supabaseMock } from "../../tests/helpers/supabase-mock";
+import { supabaseMock } from "../helpers/supabase-mock";
 
 vi.mock("eve/tools", () => ({
   defineTool: (t: unknown) => t,
@@ -110,7 +110,7 @@ describe("cancel_appointment tool", () => {
     // Seed bookings table so the update has a target
     supabaseMock.seed("bookings", [mockBooking]);
 
-    const tool = (await import("./cancel_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/cancel_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -143,7 +143,7 @@ describe("cancel_appointment tool", () => {
       errorCode: code,
     }));
 
-    const tool = (await import("./cancel_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/cancel_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -197,7 +197,7 @@ describe("cancel_appointment tool", () => {
       errorCode: code,
     }));
 
-    const tool = (await import("./cancel_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/cancel_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 
@@ -264,7 +264,7 @@ describe("cancel_appointment tool", () => {
       },
     ]);
 
-    const tool = (await import("./cancel_appointment")).default as unknown as {
+    const tool = (await import("../../agent/tools/cancel_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
 

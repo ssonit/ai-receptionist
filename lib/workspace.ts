@@ -1,7 +1,8 @@
 import slugify from "slugify";
 import { parseEmbedWorkspaceKey } from "@/lib/embed";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { decryptSecret } from "@/lib/workspace-secrets";
+import { decryptSecret, encryptSecret } from "@/lib/workspace-secrets";
+import { refreshAccessToken } from "@/lib/cal-oauth";
 import { bookingConfig } from "@/lib/booking-config";
 import { parseChatSuggestions } from "@/lib/chat-branding";
 import {
@@ -91,6 +92,7 @@ export type WorkspaceTenant = {
   cal_event_type_slug: string | null;
   setup_completed_at: string | null;
   has_cal_key: boolean;
+  cal_auth_mode: string | null;
 };
 
 export async function getWorkspaceById(
@@ -100,7 +102,7 @@ export async function getWorkspaceById(
   const { data, error } = await supabase
     .from("workspaces")
     .select(
-      "id, name, slug, timezone, service_mode, cal_username, cal_event_type_id, cal_event_type_slug, setup_completed_at, cal_api_key_encrypted",
+      "id, name, slug, timezone, service_mode, cal_username, cal_event_type_id, cal_event_type_slug, setup_completed_at, cal_api_key_encrypted, cal_auth_mode",
     )
     .eq("id", workspaceId)
     .maybeSingle();
@@ -117,6 +119,7 @@ export async function getWorkspaceById(
     cal_event_type_slug: data.cal_event_type_slug,
     setup_completed_at: data.setup_completed_at,
     has_cal_key: Boolean(data.cal_api_key_encrypted),
+    cal_auth_mode: (data.cal_auth_mode as string) ?? null,
   };
 }
 
@@ -176,7 +179,7 @@ export type PublicBookingWorkspace = {
 };
 
 const PUBLIC_BOOKING_SELECT =
-  "id, name, slug, tagline, about, business_hours, services_summary, phone, email, address, website, setup_completed_at, cal_api_key_encrypted, cal_event_type_id, embed_allowed_origins, chat_assistant_label, chat_intro, chat_suggestions, chat_placeholder, workspace_faq_items(question, answer, sort_order)";
+  "id, name, slug, tagline, about, business_hours, services_summary, phone, email, address, website, setup_completed_at, cal_api_key_encrypted, cal_event_type_id, cal_auth_mode, embed_allowed_origins, chat_assistant_label, chat_intro, chat_suggestions, chat_placeholder, workspace_faq_items(question, answer, sort_order)";
 
 type PublicBookingRow = {
   id: string;
@@ -193,6 +196,7 @@ type PublicBookingRow = {
   setup_completed_at: string | null;
   cal_api_key_encrypted: string | null;
   cal_event_type_id: number | null;
+  cal_auth_mode?: string | null;
   embed_allowed_origins?: string[] | null;
   chat_assistant_label: string | null;
   chat_intro: string | null;
@@ -240,6 +244,7 @@ function mapPublicBookingWorkspace(
     workspaceId: id,
     hasEncryptedCalKey: Boolean(data.cal_api_key_encrypted),
     calEventTypeId: data.cal_event_type_id,
+    calAuthMode: data.cal_auth_mode,
   });
 
   const embedAllowedOrigins = Array.isArray(data.embed_allowed_origins)
@@ -426,11 +431,24 @@ export async function resolveWorkspaceIdFromAgentContext(input: {
 }
 
 /**
- * Cal.com API key for a workspace.
- * - Eve Pilot (marketing `/chat` demo): always from env `CALCOM_API_KEY`.
- * - Real tenants: only their encrypted workspace key (never the shared env key).
+ * True when the workspace has any usable Cal credential
+ * (OAuth tokens, encrypted API key, or legacy non-null encrypted key).
  */
-export async function getCalApiKeyForWorkspace(
+export function hasCalCredential(row: {
+  cal_auth_mode?: string | null;
+  cal_api_key_encrypted?: string | null;
+}): boolean {
+  if (row.cal_auth_mode === "oauth" || row.cal_auth_mode === "api_key") return true;
+  return Boolean(row.cal_api_key_encrypted);
+}
+
+/**
+ * Resolve a Cal.com Bearer token for a workspace.
+ * - Eve Pilot: env `CALCOM_API_KEY`
+ * - OAuth: decrypt + auto-refresh on expiry
+ * - API key: decrypt encrypted workspace key
+ */
+export async function getCalAccessTokenForWorkspace(
   workspaceId: string,
 ): Promise<string> {
   const pilotId = getDefaultWorkspaceId();
@@ -445,19 +463,85 @@ export async function getCalApiKeyForWorkspace(
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("workspaces")
-    .select("cal_api_key_encrypted")
+    .select(
+      "cal_api_key_encrypted, cal_auth_mode, cal_oauth_access_encrypted, cal_oauth_refresh_encrypted, cal_oauth_expires_at",
+    )
     .eq("id", workspaceId)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
+  if (!data) throw new Error("Workspace not found");
 
-  if (data?.cal_api_key_encrypted) {
-    return decryptSecret(data.cal_api_key_encrypted);
+  // OAuth — auto-refresh if expiring within 60 seconds
+  if (data.cal_auth_mode === "oauth") {
+    if (data.cal_oauth_access_encrypted && data.cal_oauth_refresh_encrypted) {
+      const expiresAt = data.cal_oauth_expires_at
+        ? new Date(data.cal_oauth_expires_at as string).getTime()
+        : 0;
+      const now = Date.now();
+
+      if (expiresAt - 60_000 > now) {
+        return decryptSecret(data.cal_oauth_access_encrypted as string);
+      }
+
+      // Refresh
+      const refreshToken = decryptSecret(data.cal_oauth_refresh_encrypted as string);
+      let newTokens;
+      try {
+        newTokens = await refreshAccessToken(refreshToken);
+      } catch {
+        // Clear dead OAuth credentials
+        await supabase
+          .from("workspaces")
+          .update({
+            cal_oauth_access_encrypted: null,
+            cal_oauth_refresh_encrypted: null,
+            cal_oauth_expires_at: null,
+            cal_oauth_scope: null,
+            cal_auth_mode: null,
+          })
+          .eq("id", workspaceId);
+        throw new Error("CAL_OAUTH_REFRESH_FAILED");
+      }
+
+      const newExpiresAt = new Date(Date.now() + newTokens.expires_in * 1000).toISOString();
+      await supabase
+        .from("workspaces")
+        .update({
+          cal_oauth_access_encrypted: encryptSecret(newTokens.access_token),
+          cal_oauth_refresh_encrypted: encryptSecret(newTokens.refresh_token),
+          cal_oauth_expires_at: newExpiresAt,
+          cal_oauth_scope: newTokens.scope,
+        })
+        .eq("id", workspaceId);
+
+      return newTokens.access_token;
+    }
+
+    throw new Error(
+      "Cal.com OAuth tokens are missing. Reconnect in Settings.",
+    );
+  }
+
+  // API key (explicit mode or legacy encrypted key)
+  if (data.cal_api_key_encrypted) {
+    return decryptSecret(data.cal_api_key_encrypted as string);
   }
 
   throw new Error(
-    "Cal.com API key is not configured. Go to Setup / Settings to paste the workspace API key.",
+    "Cal.com is not configured. Go to Setup / Settings to connect your calendar.",
   );
+}
+
+/**
+ * Cal.com API key for a workspace (thin wrapper — prefer getCalAccessTokenForWorkspace).
+ * - Eve Pilot (marketing `/chat` demo): always from env `CALCOM_API_KEY`.
+ * - Real tenants: only their encrypted workspace key (never the shared env key).
+ */
+export async function getCalApiKeyForWorkspace(
+  workspaceId: string,
+): Promise<string> {
+  return getCalAccessTokenForWorkspace(workspaceId);
 }
 
 export async function isWorkspaceSetupComplete(
@@ -477,17 +561,19 @@ export async function isWorkspaceBookingLive(
     workspaceId: ws.id,
     hasEncryptedCalKey: ws.has_cal_key,
     calEventTypeId: ws.cal_event_type_id,
+    calAuthMode: ws.cal_auth_mode,
   });
 }
 
 /**
  * Pilot marketing demo (`/chat`, `/b/eve-pilot`) uses env `CALCOM_*`, not an
- * encrypted workspace key. Tenants need encrypted key + AI meeting type.
+ * encrypted workspace key. Tenants need any Cal credential + AI meeting type.
  */
 export function isPilotBookingLive(input: {
   workspaceId: string;
   hasEncryptedCalKey: boolean;
   calEventTypeId: number | null | undefined;
+  calAuthMode?: string | null;
 }): boolean {
   const pilotId = getDefaultWorkspaceId();
   const isPilot =
@@ -504,5 +590,9 @@ export function isPilotBookingLive(input: {
     );
   }
 
-  return Boolean(input.hasEncryptedCalKey && input.calEventTypeId);
+  const hasCred = hasCalCredential({
+    cal_auth_mode: input.calAuthMode,
+    cal_api_key_encrypted: input.hasEncryptedCalKey ? "1" : null,
+  });
+  return Boolean(hasCred && input.calEventTypeId);
 }

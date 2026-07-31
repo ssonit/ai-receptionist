@@ -71,6 +71,11 @@ export const APP_ERROR_CODE = {
   AGENT_RATE_LIMITED: "agent_rate_limited",
   WORKSPACE_RESOLVE_FAILED: "workspace_resolve_failed",
   SIGNUP_CLOSED: "signup_closed",
+  CAL_OAUTH_NOT_CONFIGURED: "cal_oauth_not_configured",
+  CAL_OAUTH_DENIED: "cal_oauth_denied",
+  CAL_OAUTH_STATE_INVALID: "cal_oauth_state_invalid",
+  CAL_OAUTH_EXCHANGE_FAILED: "cal_oauth_exchange_failed",
+  CAL_OAUTH_REFRESH_FAILED: "cal_oauth_refresh_failed",
 } as const;
 
 export type AppErrorCode = (typeof APP_ERROR_CODE)[keyof typeof APP_ERROR_CODE];

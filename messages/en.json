@@ -74,6 +74,16 @@
     "teamMakeOwner": "Make owner",
     "teamConfirmRemove": "Remove this member from the workspace?",
     "teamConfirmTransfer": "Transfer ownership? You will become staff and cannot undo this yourself.",
+    "cal": {
+      "connectBtn": "Connect Cal.com",
+      "connecting": "Connecting…",
+      "connectedLabel": "Connected",
+      "disconnectBtn": "Disconnect",
+      "disconnectConfirm": "Disconnect Cal.com? Guests will not be able to book until you reconnect.",
+      "disconnecting": "Disconnecting…",
+      "legacyKeyLabel": "API key (legacy)",
+      "upgradePrompt": "Connect via OAuth for automatic token refresh."
+    },
     "embedTitle": "Embed on your website",
     "embedBody": "Add a chat bubble to any page. Guests book without leaving your site.",
     "embedIntro": "Add a chat bubble to any page. Guests book without leaving your site.",

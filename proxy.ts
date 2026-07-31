@@ -123,7 +123,7 @@ export async function proxy(request: NextRequest) {
     if (profile?.workspace_id) {
       const { data: ws } = await supabase
         .from("workspaces")
-        .select("setup_completed_at, cal_api_key_encrypted, cal_event_type_id")
+        .select("setup_completed_at, cal_api_key_encrypted, cal_event_type_id, cal_auth_mode")
         .eq("id", profile.workspace_id)
         .maybeSingle();
 
@@ -136,6 +136,7 @@ export async function proxy(request: NextRequest) {
         workspaceId: profile.workspace_id,
         hasEncryptedCalKey: Boolean(ws?.cal_api_key_encrypted),
         calEventTypeId: ws?.cal_event_type_id as number | null,
+        calAuthMode: ws?.cal_auth_mode as string | null,
       });
 
       // Document navigations only — never redirect Flight/Action requests.

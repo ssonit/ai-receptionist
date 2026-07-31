@@ -1,3 +1,4 @@
+import { CalConnectionCard } from "@/app/_components/cal-connection-card";
 import { WorkspaceSettingsForm } from "@/app/_components/workspace-settings-form";
 import { WorkspaceTeamCard } from "@/app/_components/workspace-team-card";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -18,6 +19,8 @@ export default async function SettingsPage() {
   const dashboard = await assertOwnerPage(DASHBOARD_PATH.settings);
 
   let workspace: WorkspaceOpsValues | null = null;
+  let calAuthModeForSettings: string | null = null;
+  let calUsernameForSettings: string | null = null;
   let currentUserId: string | null = null;
   let members: Awaited<ReturnType<typeof listWorkspaceMembers>> = [];
   let pendingInvites: Awaited<ReturnType<typeof listPendingInvites>> = [];
@@ -31,7 +34,7 @@ export default async function SettingsPage() {
     const { data } = await supabase
       .from("workspaces")
       .select(
-        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end",
+        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end, cal_auth_mode, cal_username",
       )
       .eq("id", dashboard.workspaceId)
       .maybeSingle();
@@ -66,6 +69,10 @@ export default async function SettingsPage() {
             ? data.reminder_quiet_end
             : 8,
       };
+      calAuthModeForSettings =
+        (data as Record<string, unknown>).cal_auth_mode as string | null;
+      calUsernameForSettings =
+        (data as Record<string, unknown>).cal_username as string | null;
     }
 
     try {
@@ -105,6 +112,30 @@ export default async function SettingsPage() {
             />
           ) : null}
         </WorkspaceSettingsForm>
+
+        {dashboard.workspaceId ? (
+          <div className="mx-auto max-w-6xl px-4 pb-16 lg:px-6">
+            <div className="border-t border-border/70 pt-8 lg:pt-10">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,13rem)_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+                <div className="space-y-1.5 lg:pt-0.5">
+                  <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                    Cal.com
+                  </h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
+                    Connect or disconnect your Cal.com calendar for booking.
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <CalConnectionCard
+                    calAuthMode={calAuthModeForSettings}
+                    calUsername={calUsernameForSettings}
+                    workspaceId={dashboard.workspaceId}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </DashboardShell>
   );

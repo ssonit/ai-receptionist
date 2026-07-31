@@ -17,7 +17,7 @@ export default async function SetupPage() {
   const { data: workspace } = await supabase
     .from("workspaces")
     .select(
-      "id, name, slug, timezone, about, cal_username, cal_event_type_id, cal_api_key_encrypted, setup_completed_at",
+      "id, name, slug, timezone, about, cal_username, cal_event_type_id, cal_api_key_encrypted, cal_auth_mode, setup_completed_at",
     )
     .eq("id", dashboard.workspaceId)
     .maybeSingle();
@@ -32,6 +32,7 @@ export default async function SetupPage() {
 
   const aiRow = meetingTypes.find((r) => r.is_ai_booking) ?? null;
   const hasCalKey = Boolean(workspace.cal_api_key_encrypted);
+  const calAuthMode = (workspace.cal_auth_mode as string | null) ?? (hasCalKey ? "api_key" : null);
   const setupCompleted = Boolean(workspace.setup_completed_at);
 
   let initialStep: 1 | 2 | 3 | 4 = 1;
@@ -59,6 +60,7 @@ export default async function SetupPage() {
           about: workspace.about?.trim() || null,
           calUsername: workspace.cal_username,
           hasCalKey,
+          calAuthMode,
           aiMeetingTypeId: aiRow?.id ?? null,
         }}
       />

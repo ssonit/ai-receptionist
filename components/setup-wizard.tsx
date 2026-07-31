@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import {
   completeSetupAction,
+  disconnectCalAction,
   finishSetupAction,
   saveCalApiKeyAction,
   saveSetupProfileAction,
@@ -56,7 +57,7 @@ const STEPS = [
     label: "Cal.com",
     required: false,
     title: "Connect your booking calendar",
-    question: "Paste your Cal.com API key.",
+    question: "Connect your Cal.com account.",
     hint: "Optional for now — needed before guests can book on your public page.",
   },
   {
@@ -80,6 +81,7 @@ export type SetupWizardProps = {
     about: string | null;
     calUsername: string | null;
     hasCalKey: boolean;
+    calAuthMode: string | null;
     aiMeetingTypeId: string | null;
   };
   meetingTypes: WorkspaceMeetingTypeRow[];
@@ -120,6 +122,7 @@ export function SetupWizard({
   } | null>(null);
   const [slugChecking, setSlugChecking] = React.useState(false);
   const [calKeyDraft, setCalKeyDraft] = React.useState("");
+  const [disconnecting, setDisconnecting] = React.useState(false);
   const [profileDirty, setProfileDirty] = React.useState(false);
   const [profileSaved, setProfileSaved] = React.useState(setupCompleted);
   const openedRef = React.useRef(false);
@@ -207,6 +210,46 @@ export function SetupWizard({
   const formDirty =
     (step === 3 && !workspace.hasCalKey && calKeyDraft.trim().length > 0) ||
     (step === 1 && profileDirty);
+
+  // Detect OAuth callback success
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("cal_oauth_ok")) {
+      toast.success("Cal.com connected");
+      trackSetup("setup_cal_connected");
+      router.refresh();
+      // Clean URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete("cal_oauth_ok");
+      window.history.replaceState({}, "", url.toString());
+    } else if (params.get("cal_oauth_error")) {
+      const code = params.get("cal_oauth_error");
+      const messages: Record<string, string> = {
+        denied: "Connection declined. Try again when ready.",
+        state_invalid: "Session expired. Start again.",
+        exchange_failed: "Could not connect. Try again.",
+      };
+      toast.error(messages[code ?? ""] ?? "Connection failed. Try again.");
+      const url = new URL(window.location.href);
+      url.searchParams.delete("cal_oauth_error");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [router]);
+
+  const handleDisconnect = () => {
+    if (!window.confirm("Disconnect Cal.com? Guests will not be able to book until you reconnect.")) return;
+    setDisconnecting(true);
+    disconnectCalAction(workspace.id)
+      .then((result) => {
+        if (result.error) toast.error(result.error);
+        else {
+          toast.success("Cal.com disconnected.");
+          router.refresh();
+        }
+      })
+      .catch(() => toast.error("Could not disconnect. Try again."))
+      .finally(() => setDisconnecting(false));
+  };
 
   useEffect(() => {
     if (!formDirty) return;
@@ -427,7 +470,33 @@ export function SetupWizard({
 
         {step === 3 ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-            {workspace.hasCalKey ? (
+            {workspace.calAuthMode === "oauth" ? (
+              <div className="space-y-5">
+                <div className="flex items-start gap-3">
+                  <CheckCircleIcon
+                    className="mt-0.5 size-5 shrink-0 text-emerald-400"
+                    weight="fill"
+                  />
+                  <div>
+                    <p className="font-medium text-white">Cal.com connected</p>
+                    <p className="mt-1 text-sm text-zinc-400">
+                      {workspace.calUsername
+                        ? `@${workspace.calUsername}`
+                        : "Connected via OAuth"}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  className="rounded-full border-red-400/30 text-red-300 hover:bg-red-400/10 hover:text-red-200"
+                  disabled={disconnecting}
+                  type="button"
+                  variant="outline"
+                  onClick={handleDisconnect}
+                >
+                  {disconnecting ? "Disconnecting…" : "Disconnect"}
+                </Button>
+              </div>
+            ) : workspace.calAuthMode === "api_key" ? (
               <div className="space-y-5">
                 <div className="flex items-start gap-3">
                   <CheckCircleIcon
@@ -443,58 +512,92 @@ export function SetupWizard({
                     </p>
                   </div>
                 </div>
+                <div className="space-y-3">
+                  <a
+                    className="inline-flex h-10 items-center justify-center rounded-full bg-white px-5 text-sm font-medium text-black hover:bg-zinc-200"
+                    href={`/api/cal/oauth/start?returnTo=/dashboard/setup`}
+                  >
+                    Upgrade to OAuth
+                  </a>
+                  <details className="group text-sm">
+                    <summary className="cursor-pointer text-zinc-400 underline-offset-4 hover:text-zinc-200 hover:underline">
+                      Change API key
+                    </summary>
+                    <form action={calAction} className="mt-4 space-y-3">
+                      <Input
+                        autoComplete="off"
+                        className="h-11 border-white/10 bg-black/40 text-white placeholder:text-zinc-600"
+                        name="calApiKey"
+                        placeholder="cal_live_…"
+                        required
+                        type="password"
+                        value={calKeyDraft}
+                        onChange={(e) => setCalKeyDraft(e.target.value)}
+                      />
+                      <Button
+                        className="rounded-full"
+                        disabled={calPending}
+                        type="submit"
+                      >
+                        Save new key
+                      </Button>
+                    </form>
+                  </details>
+                  <Button
+                    className="rounded-full border-red-400/30 text-red-300 hover:bg-red-400/10 hover:text-red-200"
+                    disabled={disconnecting}
+                    type="button"
+                    variant="outline"
+                    onClick={handleDisconnect}
+                  >
+                    {disconnecting ? "Disconnecting…" : "Disconnect"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                <a
+                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-medium text-black hover:bg-zinc-200"
+                  href={`/api/cal/oauth/start?returnTo=/dashboard/setup`}
+                >
+                  <CalendarBlankIcon className="size-4" weight="fill" />
+                  Connect Cal.com
+                </a>
+                <p className="text-center text-xs text-zinc-500">
+                  You'll be redirected to Cal.com to authorize this app.
+                </p>
                 <details className="group text-sm">
-                  <summary className="cursor-pointer text-zinc-400 underline-offset-4 hover:text-zinc-200 hover:underline">
-                    Change API key
+                  <summary className="cursor-pointer text-zinc-500 underline-offset-4 hover:text-zinc-300 hover:underline">
+                    Paste API key instead
                   </summary>
-                  <form action={calAction} className="mt-4 space-y-3">
-                    <Input
-                      autoComplete="off"
-                      className="h-11 border-white/10 bg-black/40 text-white placeholder:text-zinc-600"
-                      name="calApiKey"
-                      placeholder="cal_live_…"
-                      required
-                      type="password"
-                      value={calKeyDraft}
-                      onChange={(e) => setCalKeyDraft(e.target.value)}
-                    />
-                    <Button
-                      className="rounded-full"
-                      disabled={calPending}
-                      type="submit"
+                  <form action={calAction} className="mt-4 space-y-3" id="setup-cal-form">
+                    <div className="space-y-2">
+                      <Label className="text-zinc-200" htmlFor="calApiKey">
+                        Cal.com API key
+                      </Label>
+                      <Input
+                        autoComplete="off"
+                        className="h-11 border-white/10 bg-black/40 text-white placeholder:text-zinc-600"
+                        id="calApiKey"
+                        name="calApiKey"
+                        placeholder="cal_live_… or cal_test_…"
+                        required
+                        type="password"
+                        value={calKeyDraft}
+                        onChange={(e) => setCalKeyDraft(e.target.value)}
+                      />
+                    </div>
+                    <a
+                      className="inline-block text-sm text-zinc-400 underline underline-offset-4 transition hover:text-zinc-200"
+                      href="https://app.cal.com/settings/developer/api-keys"
+                      rel="noreferrer"
+                      target="_blank"
                     >
-                      Save new key
-                    </Button>
+                      Open Cal.com API key settings
+                    </a>
                   </form>
                 </details>
               </div>
-            ) : (
-              <form action={calAction} className="space-y-5" id="setup-cal-form">
-                <div className="space-y-2">
-                  <Label className="text-zinc-200" htmlFor="calApiKey">
-                    Cal.com API key
-                  </Label>
-                  <Input
-                    autoComplete="off"
-                    className="h-11 border-white/10 bg-black/40 text-white placeholder:text-zinc-600"
-                    id="calApiKey"
-                    name="calApiKey"
-                    placeholder="cal_live_… or cal_test_…"
-                    required
-                    type="password"
-                    value={calKeyDraft}
-                    onChange={(e) => setCalKeyDraft(e.target.value)}
-                  />
-                </div>
-                <a
-                  className="inline-block text-sm text-zinc-400 underline underline-offset-4 transition hover:text-zinc-200"
-                  href="https://app.cal.com/settings/developer/api-keys"
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  Open Cal.com API key settings
-                </a>
-              </form>
             )}
           </div>
         ) : null}
@@ -658,7 +761,7 @@ export function SetupWizard({
               >
                 Skip for now
               </Button>
-              {workspace.hasCalKey ? (
+              {workspace.calAuthMode ? (
                 <Button
                   className="h-10 rounded-full bg-white px-5 font-medium text-black hover:bg-zinc-200"
                   type="button"
