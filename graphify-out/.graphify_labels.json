@@ -376,5 +376,15 @@
   "374": "tailwindcss",
   "375": "@vercel/connect",
   "376": "20260729130000_embed_allowed_origins.sql",
-  "380": "react-dom"
+  "377": "ai",
+  "378": "date-context.test.ts",
+  "379": "booking-manage-code.test.ts",
+  "380": "react-dom",
+  "381": "booking-status.test.ts",
+  "382": "embed.test.ts",
+  "383": "guest-timezone.test.ts",
+  "384": "locale.test.ts",
+  "385": "workspace-secrets.test.ts",
+  "386": "workspace.test.ts",
+  "387": "vitest.config.mts"
 }

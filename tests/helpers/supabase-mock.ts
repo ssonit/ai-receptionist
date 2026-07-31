@@ -11,6 +11,12 @@ interface OrderOp {
   ascending: boolean;
 }
 
+type Mutation =
+  | { kind: "insert"; rows: Row[] }
+  | { kind: "upsert"; row: Row; conflictKey: string }
+  | { kind: "update"; patch: Row }
+  | { kind: "delete" };
+
 export class QueryBuilder {
   private rows: Row[];
 
@@ -20,13 +26,75 @@ export class QueryBuilder {
 
   private limitVal: number | null = null;
 
+  private mutation: Mutation | null = null;
+
+  private _inserts: { table: string; row: Row }[] | null;
+
+  private _table: string;
+
   constructor(
     rows: Row[],
-    private logInserts: { table: string; row: Row }[] | null,
-    private tableName: string,
+    inserts: { table: string; row: Row }[] | null,
+    tableName: string,
   ) {
     this.rows = [...rows];
+    this._inserts = inserts;
+    this._table = tableName;
   }
+
+  // ------ thenable: await triggers execution ------
+
+  then<TResult1 = { data: Row[]; error: null }, TResult2 = never>(
+    onfulfilled?: ((value: { data: Row[]; error: null }) => TResult1 | PromiseLike<TResult1>) | null,
+    _onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+  ): Promise<TResult1 | TResult2> {
+    return this._execute().then(onfulfilled as (value: { data: Row[]; error: null }) => TResult1 | PromiseLike<TResult1>, _onrejected);
+  }
+
+  // Prevent `new QueryBuilder()` from working with `await` — only chain builders.
+  // This property makes the object "thenable" but the real logic is in then().
+  private async _execute(): Promise<{ data: Row[]; error: null }> {
+    if (this.mutation) {
+      const m = this.mutation;
+      this.mutation = null;
+      const filtered = this.applyFilters();
+      if (m.kind === "insert") {
+        for (const r of m.rows) {
+          if (this._inserts) this._inserts.push({ table: this._table, row: r });
+        }
+        return { data: m.rows, error: null };
+      }
+      if (m.kind === "upsert") {
+        if (this._inserts) {
+          this._inserts.push({ table: this._table, row: { ...m.row, _upsert: true as const } });
+        }
+        const idx = this.rows.findIndex((r) => r[m.conflictKey] === m.row[m.conflictKey]);
+        if (idx >= 0) {
+          this.rows[idx] = { ...this.rows[idx], ...m.row };
+        } else {
+          this.rows.push({ ...m.row });
+        }
+        return { data: [m.row], error: null };
+      }
+      if (m.kind === "update") {
+        for (const r of filtered) {
+          const idx = this.rows.indexOf(r);
+          if (idx >= 0) this.rows[idx] = { ...this.rows[idx], ...m.patch };
+        }
+        return { data: filtered, error: null };
+      }
+      if (m.kind === "delete") {
+        for (const r of filtered) {
+          const idx = this.rows.indexOf(r);
+          if (idx >= 0) this.rows.splice(idx, 1);
+        }
+        return { data: filtered, error: null };
+      }
+    }
+    return this.exec();
+  }
+
+  // ------ filter / ordering (chainable) ------
 
   select(_cols?: string): this {
     return this;
@@ -88,16 +156,39 @@ export class QueryBuilder {
   }
 
   order(col: string, opts?: { ascending?: boolean }): this {
-    this.orders.push({
-      col,
-      ascending: opts?.ascending !== false,
-    });
+    this.orders.push({ col, ascending: opts?.ascending !== false });
     return this;
   }
 
+  // ------ mutations (chainable — terminal via await) ------
+
+  insert(row: Row | Row[]): this {
+    this.mutation = { kind: "insert", rows: Array.isArray(row) ? row : [row] };
+    return this;
+  }
+
+  upsert(row: Row, opts?: { onConflict?: string; ignoreDuplicates?: boolean }): this {
+    this.mutation = { kind: "upsert", row, conflictKey: opts?.onConflict ?? "id" };
+    return this;
+  }
+
+  update(patch: Row): this {
+    this.mutation = { kind: "update", patch };
+    return this;
+  }
+
+  delete(): this {
+    this.mutation = { kind: "delete" };
+    return this;
+  }
+
+  // Suppress count queries — not needed for current tests
+  count = undefined;
+
+  // ------ helpers ------
+
   private applyFilters(): Row[] {
     let result = [...this.rows];
-
     for (const f of this.filters) {
       if (f.op === "or") {
         const orStr = f.val as string;
@@ -118,14 +209,10 @@ export class QueryBuilder {
         );
         continue;
       }
-
-      if (f.op === "eq") {
-        result = result.filter((r) => r[f.col] === f.val);
-      } else if (f.op === "neq") {
-        result = result.filter((r) => r[f.col] !== f.val);
-      } else if (f.op === "not_is" && f.val === null) {
-        result = result.filter((r) => r[f.col] != null);
-      } else if (f.op === "in") {
+      if (f.op === "eq") result = result.filter((r) => r[f.col] === f.val);
+      else if (f.op === "neq") result = result.filter((r) => r[f.col] !== f.val);
+      else if (f.op === "not_is" && f.val === null) result = result.filter((r) => r[f.col] != null);
+      else if (f.op === "in") {
         const vals = f.val as unknown[];
         result = result.filter((r) => vals.includes(r[f.col]));
       } else if (f.op === "ilike") {
@@ -134,43 +221,29 @@ export class QueryBuilder {
           "^" + p.replace(/%/g, ".*").replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$",
           "i",
         );
-        result = result.filter(
-          (r) => typeof r[f.col] === "string" && re.test(r[f.col] as string),
-        );
-      } else if (f.op === "gt") {
-        result = result.filter((r) => String(r[f.col]) > String(f.val));
-      } else if (f.op === "gte") {
-        result = result.filter((r) => String(r[f.col]) >= String(f.val));
-      } else if (f.op === "lt") {
-        result = result.filter((r) => String(r[f.col]) < String(f.val));
-      } else if (f.op === "lte") {
-        result = result.filter((r) => String(r[f.col]) <= String(f.val));
-      }
+        result = result.filter((r) => typeof r[f.col] === "string" && re.test(r[f.col] as string));
+      } else if (f.op === "gt") result = result.filter((r) => String(r[f.col]) > String(f.val));
+      else if (f.op === "gte") result = result.filter((r) => String(r[f.col]) >= String(f.val));
+      else if (f.op === "lt") result = result.filter((r) => String(r[f.col]) < String(f.val));
+      else if (f.op === "lte") result = result.filter((r) => String(r[f.col]) <= String(f.val));
     }
-
     return result;
   }
 
-  private applyOrders(input: Row[]): Row[] {
-    if (this.orders.length === 0) return input;
-    return [...input].sort((a, b) => {
-      for (const o of this.orders) {
-        const va = String(a[o.col] ?? "");
-        const vb = String(b[o.col] ?? "");
-        const cmp = va.localeCompare(vb);
-        if (cmp !== 0) return o.ascending ? cmp : -cmp;
-      }
-      return 0;
-    });
-  }
-
-  /** Execute query — returns filtered + ordered + limited rows. */
   exec(): { data: Row[]; error: null } {
     let result = this.applyFilters();
-    result = this.applyOrders(result);
-    if (this.limitVal !== null) {
-      result = result.slice(0, this.limitVal);
+    if (this.orders.length > 0) {
+      result = [...result].sort((a, b) => {
+        for (const o of this.orders) {
+          const va = String(a[o.col] ?? "");
+          const vb = String(b[o.col] ?? "");
+          const cmp = va.localeCompare(vb);
+          if (cmp !== 0) return o.ascending ? cmp : -cmp;
+        }
+        return 0;
+      });
     }
+    if (this.limitVal !== null) result = result.slice(0, this.limitVal);
     return { data: result, error: null };
   }
 
@@ -178,65 +251,6 @@ export class QueryBuilder {
     const { data } = this.exec();
     return { data: data[0] ?? null, error: null };
   }
-
-  async insert(
-    row: Row | Row[],
-  ): Promise<{ error: null; data?: Row[] }> {
-    const rows = Array.isArray(row) ? row : [row];
-    for (const r of rows) {
-      if (this.logInserts) {
-        this.logInserts.push({ table: this.tableName, row: r });
-      }
-    }
-    return { error: null, data: rows };
-  }
-
-  async upsert(
-    row: Row,
-    opts?: { onConflict?: string; ignoreDuplicates?: boolean },
-  ): Promise<{ error: null }> {
-    if (this.logInserts) {
-      this.logInserts.push({ table: this.tableName, row: { ...row, _upsert: true as const } });
-    }
-    // Merge into stored rows: replace matching row by onConflict key or append
-    const conflictKey = opts?.onConflict ?? "id";
-    const idx = this.rows.findIndex(
-      (r) => r[conflictKey] === row[conflictKey],
-    );
-    if (idx >= 0) {
-      this.rows[idx] = { ...this.rows[idx], ...row };
-    } else {
-      this.rows.push({ ...row });
-    }
-    return { error: null };
-  }
-
-  async update(
-    patch: Row,
-  ): Promise<{ error: null }> {
-    const { data } = this.exec();
-    for (const r of data) {
-      const idx = this.rows.indexOf(r);
-      if (idx >= 0) {
-        this.rows[idx] = { ...this.rows[idx], ...patch };
-      }
-    }
-    return { error: null };
-  }
-
-  async delete(): Promise<{ error: null }> {
-    const { data } = this.exec();
-    for (const r of data) {
-      const idx = this.rows.indexOf(r);
-      if (idx >= 0) {
-        this.rows.splice(idx, 1);
-      }
-    }
-    return { error: null };
-  }
-
-  // Suppress count queries — not needed for current tests
-  count = undefined;
 }
 
 export interface MockAdminClient {
