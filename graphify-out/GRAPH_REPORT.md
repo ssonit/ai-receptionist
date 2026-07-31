@@ -1,7 +1,7 @@
 # Graph Report - eve  (2026-07-31)
 
 ## Corpus Check
-- 584 files · ~362,304 words
+- 584 files · ~362,375 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d3ed76eb`
+- Built from commit: `5e8650fa`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -141,7 +141,7 @@
 - class-variance-authority
 - @tailwindcss/postcss
 - data-table.tsx
-- label.tsx
+- particles.tsx
 - radix-ui
 - agent-chat.tsx
 - @ai-sdk/anthropic
@@ -157,7 +157,7 @@
 - 20260724000003_chat_branding.sql
 - meeting-types-form.tsx
 - 5. Re-render Optimization
-- manage-link.ts
+- email.ts
 - 5. Re-render Optimization
 - 7. JavaScript Performance
 - Quick Reference
@@ -332,7 +332,7 @@
 - Cổng đăng ký công khai `EVE_SIGNUP_MODE` — Implementation Plan
 - 20260725000001_guest_booking_manage.sql
 - unsubscribe/page.tsx
-- faq-settings-form.tsx
+- lenis-provider.tsx
 - booking_change.md
 - Trang pháp lý `/terms` + `/privacy` — Implementation Plan
 - Chạy smoke trên preview deploy (cổng cuối) — Implementation Plan
@@ -354,6 +354,7 @@
 - lenis-provider.tsx
 - @shikijs/engine-oniguruma
 - @gsap/react
+- @ai-sdk/anthropic
 - radix-ui
 - recharts
 - streamdown
@@ -369,7 +370,6 @@
 - 20260729130000_embed_allowed_origins.sql
 - ai
 - date-context.test.ts
-- app/layout.tsx
 - isVisitorId
 - embed.test.ts
 - workspace-secrets.ts
@@ -749,8 +749,8 @@ Cohesion: 0.13
 Nodes (13): Commands, Config shape, Decision guide, Educating the user, Explaining and configuring rules, Workflow, After making React code changes:, Command (+5 more)
 
 ### Community 103 - "bash.ts"
-Cohesion: 0.40
-Nodes (4): LenisProvider(), LenisProviderProps, lenis, lenis
+Cohesion: 0.24
+Nodes (8): metadata, mono, RootLayout(), sans, PostHogProvider(), Toaster(), TooltipProvider(), initAnalytics()
 
 ### Community 104 - "glob.ts"
 Cohesion: 0.17
@@ -792,7 +792,7 @@ Nodes (23): execute(), TimezoneSelect(), ABBREV, formatInZone(), formatSlotForGu
 Cohesion: 0.12
 Nodes (25): LandingFooter(), LandingHeader(), LandingHero(), Container(), GhostButton(), LandingShell(), PrimaryButton(), SectionHeading() (+17 more)
 
-### Community 135 - "label.tsx"
+### Community 135 - "particles.tsx"
 Cohesion: 0.47
 Nodes (5): Circle, hexToRgb(), MousePosition, Particles(), ParticlesProps
 
@@ -828,7 +828,7 @@ Nodes (7): FilterOp, getMockAdminClient(), MockAdminClient, Mutation, OrderOp, r
 Cohesion: 0.12
 Nodes (16): 5.10 Subscribe to Derived State, 5.11 Use Functional setState Updates, 5.12 Use Lazy State Initialization, 5.13 Use Transitions for Non-Urgent Updates, 5.14 Use useDeferredValue for Expensive Derived Renders, 5.15 Use useRef for Transient Values, 5.1 Calculate Derived State During Rendering, 5.2 Defer State Reads to Usage Point (+8 more)
 
-### Community 156 - "manage-link.ts"
+### Community 156 - "email.ts"
 Cohesion: 0.67
 Nodes (5): bookingReminderEmailCopy(), escapeAttr(), escapeHtml(), SendTransactionalEmailInput, workspaceInviteEmailCopy()
 
@@ -968,6 +968,10 @@ Nodes (4): public.booking_verifications, public.bookings, public.notifications, 
 Cohesion: 0.25
 Nodes (7): Bắt buộc (thiếu là hỏng hoặc mất an toàn), Chỉ Pilot / local (không thay thế khoá tenant), Ghi chú xoay khoá, Kiểm chứng sau deploy, Nên có, Production env checklist, Tuyệt đối KHÔNG đặt nhầm cho tenant thật
 
+### Community 337 - "lenis-provider.tsx"
+Cohesion: 0.40
+Nodes (4): LenisProvider(), LenisProviderProps, lenis, lenis
+
 ### Community 339 - "Trang pháp lý `/terms` + `/privacy` — Implementation Plan"
 Cohesion: 0.29
 Nodes (7): Chặn ở đâu, File Structure, Global Constraints, Self-review trước khi đóng plan, Task 1: Shell dùng chung + hai trang nội dung, Task 2: Link từ footer trang chủ, Trang pháp lý `/terms` + `/privacy` — Implementation Plan
@@ -1008,10 +1012,6 @@ Nodes (4): LegalPage(), metadata, metadata, EveLogo()
 Cohesion: 0.50
 Nodes (3): Chat header minimal strip — Implementation Plan, Global Constraints, Task 1: Simplify `agent-chat.tsx` header
 
-### Community 379 - "app/layout.tsx"
-Cohesion: 0.24
-Nodes (8): metadata, mono, RootLayout(), sans, PostHogProvider(), Toaster(), TooltipProvider(), initAnalytics()
-
 ### Community 385 - "workspace-secrets.test.ts"
 Cohesion: 0.15
 Nodes (22): GET(), GET(), buildCalOAuthAuthorizeUrl(), CAL_OAUTH_SCOPES, exchangeCodeForToken(), getCalMeProfileWithToken(), OAuthTokenResponse, OAuthTokenStore (+14 more)
@@ -1028,9 +1028,9 @@ Nodes (11): generateMetadata(), PageProps, PublicBookingSlugPage(), ChatPage(), 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `cn()` connect `prompt-input.tsx` to `@shikijs/engine-oniguruma`, `message.tsx`, `code-block.tsx`, `data-table.tsx`, `label.tsx`, `landing-page.tsx`, `agent-chat.tsx`, `sidebar.tsx`, `data-table.tsx`, `utils.ts`, `command.tsx`, `chain-of-thought.tsx`, `slugify`, `login-form.tsx`, `reasoning.tsx`, `20260722000008_bookings_list_status.sql`, `workspace.ts`, `auth-shell.tsx`, `client.ts`, `nanoid`, `faq-settings-form.tsx`, `recharts`, `@shikijs/core`, `workspace-settings-form.tsx`, `shimmer.tsx`, `graphify-session.mjs`, `glob.ts`, `createClient`, `app/layout.tsx`, `nanoid`?**
+- **Why does `cn()` connect `prompt-input.tsx` to `@shikijs/engine-oniguruma`, `message.tsx`, `code-block.tsx`, `data-table.tsx`, `particles.tsx`, `landing-page.tsx`, `agent-chat.tsx`, `sidebar.tsx`, `data-table.tsx`, `utils.ts`, `command.tsx`, `chain-of-thought.tsx`, `slugify`, `login-form.tsx`, `reasoning.tsx`, `20260722000008_bookings_list_status.sql`, `workspace.ts`, `auth-shell.tsx`, `client.ts`, `nanoid`, `faq-settings-form.tsx`, `recharts`, `@shikijs/core`, `workspace-settings-form.tsx`, `shimmer.tsx`, `graphify-session.mjs`, `bash.ts`, `glob.ts`, `createClient`, `nanoid`?**
   _High betweenness centrality (0.132) - this node is a cross-community bridge._
-- **Why does `dependencies` connect `20260723000005_leads_status.sql` to `workspace-secrets.ts`, `@shikijs/engine-oniguruma`, `@tabler/icons-react`, `class-variance-authority`, `@gsap/react`, `next-themes`, `posthog-node`, `@supabase/ssr`, `chat-sessions.ts`, `Smoke Checklist`, `@ai-sdk/anthropic`, `badge.tsx`, `meeting-types-form.tsx`, `@dnd-kit/sortable`, `markdown-link.tsx`, `radix-ui`, `faq-settings-form.tsx`, `badge.tsx`, `auth/actions.ts`, `@vercel/connect`, `ai`, `@dnd-kit/modifiers`, `@streamdown/math`, `@sentry/nextjs`, `bash.ts`, `lenis-provider.tsx`, `grep.ts`, `read_file.ts`, `radix-ui`, `write_file.ts`, `recharts`, `@dnd-kit/utilities`, `@gsap/react`, `tw-animate-css`, `@shikijs/engine-oniguruma`, `vaul`, `@dnd-kit/core`, `streamdown`, `workspace-faq-map.ts`, `createClient`, `tailwindcss`, `@tailwindcss/postcss`, `timezone-select.tsx`, `isVisitorId`, `particles.tsx`?**
+- **Why does `dependencies` connect `20260723000005_leads_status.sql` to `workspace-secrets.ts`, `@shikijs/engine-oniguruma`, `@tabler/icons-react`, `class-variance-authority`, `@gsap/react`, `next-themes`, `posthog-node`, `@supabase/ssr`, `chat-sessions.ts`, `Smoke Checklist`, `@ai-sdk/anthropic`, `badge.tsx`, `meeting-types-form.tsx`, `@dnd-kit/sortable`, `markdown-link.tsx`, `radix-ui`, `lenis-provider.tsx`, `badge.tsx`, `auth/actions.ts`, `@vercel/connect`, `ai`, `@dnd-kit/modifiers`, `@streamdown/math`, `@sentry/nextjs`, `lenis-provider.tsx`, `@shikijs/engine-oniguruma`, `grep.ts`, `@ai-sdk/anthropic`, `radix-ui`, `read_file.ts`, `write_file.ts`, `@dnd-kit/utilities`, `recharts`, `tw-animate-css`, `@gsap/react`, `vaul`, `@dnd-kit/core`, `streamdown`, `workspace-faq-map.ts`, `createClient`, `tailwindcss`, `@tailwindcss/postcss`, `timezone-select.tsx`, `isVisitorId`, `particles.tsx`?**
   _High betweenness centrality (0.058) - this node is a cross-community bridge._
 - **Why does `react` connect `createClient` to `20260722000008_bookings_list_status.sql`, `@shikijs/engine-oniguruma`, `workspace.ts`, `readGuestLocale`, `nanoid`, `sidebar.tsx`, `data-table.tsx`, `workspace-settings-form.tsx`, `auth-shell.tsx`, `login-form.tsx`, `hover-card.tsx`, `20260723000005_leads_status.sql`?**
   _High betweenness centrality (0.058) - this node is a cross-community bridge._

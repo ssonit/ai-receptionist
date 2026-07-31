@@ -178,9 +178,9 @@
       "startFree": "Dùng thử"
     },
     "hero": {
-      "badge": "Lễ tân AI cho Cal.com",
-      "title": "Lịch hẹn tự chốt.",
-      "subtitle": "Chat trả lời FAQ, kiểm tra slot thật, và đặt thẳng vào lịch — không bỏ sót lead.",
+      "badge": "Lễ tân AI cho spa, clinic & salon",
+      "title": "Nhận lịch trong lúc tay bạn đang bận.",
+      "subtitle": "Khách nhắn, Eve trả lời liền, kiểm tra lịch trống thật, và chốt hẹn. Bạn cứ làm việc.",
       "ctaPrimary": "Dùng thử miễn phí",
       "ctaSecondary": "Xem demo",
       "tabs": {
@@ -194,12 +194,12 @@
     },
     "tour": {
       "title": "Vòng đặt lịch, có agent.",
-      "subtitle": "Một agent lo hội thoại, lịch, và bàn giao cho team của bạn.",
+      "subtitle": "Một agent lo hội thoại, lịch, và bàn giao — để bạn tập trung vào khách đang làm.",
       "items": {
         "chat": {
           "label": "Chat 24/7",
           "title": "Trả lời khi bạn ngủ",
-          "body": "FAQ, intake và sàng lọc luôn online. Khách nhận phản hồi trong vài giây — không phải hộp thư thoại."
+          "body": "FAQ, intake và đặt lịch luôn online. Khách nhận phản hồi trong vài giây — không phải cuộc gọi nhỡ."
         },
         "book": {
           "label": "Đặt lịch thật",
@@ -209,7 +209,7 @@
         "dash": {
           "label": "Dashboard rõ",
           "title": "Lead và lịch hẹn một chỗ",
-          "body": "Xem hội thoại, booking và trạng thái lịch mà không phải lội thread chat."
+          "body": "Xem lịch hẹn hôm nay giữa các ca làm. Không cần lội thread chat."
         }
       }
     },
@@ -227,31 +227,31 @@
     },
     "moments": {
       "title": "Làm đúng khoảnh khắc đặt lịch.",
-      "subtitle": "Mỗi bề mặt chỉ phục vụ một việc: biến khách thành lịch hẹn đã xác nhận.",
+      "subtitle": "Mỗi bề mặt chỉ phục vụ một việc: biến người hỏi thành khách đã đặt lịch.",
       "items": {
         "chat": {
           "title": "Chat đặt lịch",
-          "body": "Khách chọn slot ngay trong hội thoại. Không mê cung form."
+          "body": "Khách chọn slot ngay trong chat. Không form, không gọi đi gọi lại."
         },
         "cal": {
           "title": "Giờ trống live",
           "body": "Slot mở lấy thẳng từ Cal.com."
         },
         "leads": {
-          "title": "Thu lead",
-          "body": "Tên, liên hệ và nhu cầu vào dashboard."
+          "title": "Thu khách",
+          "body": "Tên, liên hệ và dịch vụ muốn làm vào dashboard."
         },
         "embed": {
           "title": "Nhúng website",
-          "body": "Thả bubble lên mọi trang bằng một snippet."
+          "body": "Thả bubble đặt lịch lên Facebook hoặc website của bạn."
         },
         "tenant": {
           "title": "Workspace của bạn",
-          "body": "Mỗi doanh nghiệp một trang đặt lịch riêng."
+          "body": "Mỗi chi nhánh một trang đặt lịch riêng với brand của bạn."
         },
         "remind": {
           "title": "Nhắc lịch",
-          "body": "Nudge outbound để giảm no-show."
+          "body": "Tự động nhắc lịch để giảm khách không đến."
         }
       }
     },
@@ -308,7 +308,7 @@
       "items": {
         "q1": {
           "q": "Eve là gì?",
-          "a": "Eve là trợ lý đặt lịch AI cho doanh nghiệp. Khách chat, Eve kiểm tra lịch trống thật trên Cal.com, rồi đặt hẹn."
+          "a": "Eve là lễ tân AI cho spa, clinic và salon. Khách nhắn, Eve kiểm tra lịch trống thật, và đặt hẹn — trong lúc bạn đang làm khách khác."
         },
         "q2": {
           "q": "Eve có bịa giờ trống không?",
@@ -316,7 +316,7 @@
         },
         "q3": {
           "q": "Dùng thử có cần thẻ không?",
-          "a": "Không. Bắt đầu trial miễn phí, kết nối Cal.com, đặt từ demo hoặc trang workspace của bạn."
+          "a": "Không. Bắt đầu dùng thử miễn phí, kết nối Cal.com, và nhận đặt lịch từ trang workspace của bạn — không cần thẻ."
         },
         "q4": {
           "q": "Khách đặt bằng tiếng Việt được không?",
@@ -333,13 +333,13 @@
       }
     },
     "finalCta": {
-      "title": "Đừng để cuộc gọi nhỡ mất lịch hẹn.",
+      "title": "Khách đang nhắn ngay lúc này.",
       "subtitle": "Dùng thử miễn phí. Không cần thẻ. Lên trong vài phút.",
       "ctaPrimary": "Dùng thử miễn phí",
       "ctaSecondary": "Xem demo"
     },
     "footer": {
-      "tagline": "Trợ lý đặt lịch AI cho lịch thật.",
+      "tagline": "Lễ tân AI cho doanh nghiệp địa phương.",
       "try": "Xem demo",
       "signUp": "Đăng ký",
       "logIn": "Đăng nhập",

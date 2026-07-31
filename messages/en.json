@@ -178,9 +178,9 @@
       "startFree": "Start free"
     },
     "hero": {
-      "badge": "AI front desk for Cal.com",
-      "title": "Bookings that close themselves.",
-      "subtitle": "Chat answers FAQ, checks real slots, and books into your calendar — so you never miss another lead.",
+      "badge": "AI receptionist for spas, clinics & salons",
+      "title": "Bookings while you're with a client.",
+      "subtitle": "Your clients message, Eve replies in seconds, checks your real calendar, and locks in the appointment. You keep working.",
       "ctaPrimary": "Start free trial",
       "ctaSecondary": "Try the demo",
       "tabs": {
@@ -194,12 +194,12 @@
     },
     "tour": {
       "title": "Your booking loop, agentified.",
-      "subtitle": "One agent handles the conversation, the calendar, and the handoff to your team.",
+      "subtitle": "One agent handles the conversation, the calendar, and the handoff — so you stay with your client.",
       "items": {
         "chat": {
           "label": "Chat 24/7",
           "title": "Answers while you sleep",
-          "body": "FAQ, intake, and qualification stay online. Guests get a reply in seconds — not a voicemail."
+          "body": "FAQ, intake, and booking while you're with a client. Guests get a reply in seconds — not a missed call."
         },
         "book": {
           "label": "Real bookings",
@@ -209,7 +209,7 @@
         "dash": {
           "label": "Clear dashboard",
           "title": "Leads and bookings in one place",
-          "body": "See conversations, bookings, and schedule status without digging through chat threads."
+          "body": "Check today's bookings between appointments. No chat threads to scroll through."
         }
       }
     },
@@ -227,31 +227,31 @@
     },
     "moments": {
       "title": "Built for the booking moment.",
-      "subtitle": "Every surface is designed around one job: turn a visitor into a confirmed appointment.",
+      "subtitle": "Every surface is designed around one job: turn a passer-by into a booked client.",
       "items": {
         "chat": {
           "title": "Chat that books",
-          "body": "Guests pick a slot in-thread. No form maze."
+          "body": "Clients pick a slot in chat. No forms, no phone tag."
         },
         "cal": {
           "title": "Live availability",
           "body": "Open times come straight from Cal.com."
         },
         "leads": {
-          "title": "Lead capture",
-          "body": "Name, contact, and intent land in your dashboard."
+          "title": "Client capture",
+          "body": "Name, contact, and requested treatment land in your dashboard."
         },
         "embed": {
           "title": "Site embed",
-          "body": "Drop a bubble on any page in one snippet."
+          "body": "Drop a booking bubble on your Facebook page or website."
         },
         "tenant": {
           "title": "Your workspace",
-          "body": "Each business gets an isolated booking page."
+          "body": "Each location gets its own booking page with your branding."
         },
         "remind": {
           "title": "Reminders",
-          "body": "Outbound nudges so fewer no-shows."
+          "body": "Auto-reminders so fewer empty chairs."
         }
       }
     },
@@ -308,7 +308,7 @@
       "items": {
         "q1": {
           "q": "What is Eve?",
-          "a": "Eve is an AI booking assistant for your business. Guests chat, Eve checks real Cal.com availability, and books the appointment."
+          "a": "Eve is an AI receptionist for spas, clinics, and salons. Clients message, Eve checks your real calendar, and books the appointment — while you're with another client."
         },
         "q2": {
           "q": "Does Eve invent available times?",
@@ -316,7 +316,7 @@
         },
         "q3": {
           "q": "Do I need a credit card to try it?",
-          "a": "No. Start a free trial, connect Cal.com, and book from the demo or your own workspace page."
+          "a": "No. Start a free trial, connect Cal.com, and start booking from your own workspace page — no credit card needed."
         },
         "q4": {
           "q": "Can guests book in Vietnamese?",
@@ -333,13 +333,13 @@
       }
     },
     "finalCta": {
-      "title": "Stop losing bookings to missed calls.",
+      "title": "Your next client is messaging right now.",
       "subtitle": "Start free. No credit card. Live in minutes.",
       "ctaPrimary": "Start free trial",
       "ctaSecondary": "Try the demo"
     },
     "footer": {
-      "tagline": "AI booking assistant for real calendars.",
+      "tagline": "AI receptionist for local businesses.",
       "try": "Try demo",
       "signUp": "Sign up",
       "logIn": "Log in",

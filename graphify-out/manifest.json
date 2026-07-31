@@ -1140,13 +1140,13 @@
     "semantic_hash": ""
   },
   "messages/en.json": {
-    "mtime": 1785492882.5725944,
-    "ast_hash": "41b2c38e817d73a533e3d34495283b32",
+    "mtime": 1785493744.326375,
+    "ast_hash": "92be4952ef83f55855a43537a6b1d286",
     "semantic_hash": ""
   },
   "messages/vi.json": {
-    "mtime": 1785492900.4787211,
-    "ast_hash": "0a3381c0032af1a59cdebd16b7dde011",
+    "mtime": 1785493788.3570654,
+    "ast_hash": "54ca676cf037eaedf48e28d595cca85b",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000004_slugify_vietnamese.sql": {
@@ -2640,8 +2640,8 @@
     "semantic_hash": ""
   },
   "app/_components/landing/sections.tsx": {
-    "mtime": 1785492915.3936627,
-    "ast_hash": "9facb345915868fb466a5debe7008c6f",
+    "mtime": 1785492971.4348361,
+    "ast_hash": "9499429d8673aac2355857bc463448e3",
     "semantic_hash": ""
   },
   ".claude/launch.json": {
