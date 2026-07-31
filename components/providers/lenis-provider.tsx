@@ -1,19 +1,19 @@
 "use client";
 
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
-import { useEffect, type ReactNode } from "react";
-
-gsap.registerPlugin(ScrollTrigger);
+import { useEffect, type ReactNode, useRef } from "react";
 
 type LenisProviderProps = {
   readonly children: ReactNode;
 };
 
 export function LenisProvider({ children }: LenisProviderProps) {
+  const rafRef = useRef<number | null>(null);
+
   useEffect(() => {
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     if (prefersReduced) return;
 
     const lenis = new Lenis({
@@ -22,18 +22,17 @@ export function LenisProvider({ children }: LenisProviderProps) {
       orientation: "vertical",
     });
 
-    lenis.on("scroll", ScrollTrigger.update);
-
-    const ticker = (time: number) => {
+    const raf = (time: number) => {
       lenis.raf(time * 1000);
+      rafRef.current = requestAnimationFrame(raf);
     };
-    gsap.ticker.add(ticker);
-    gsap.ticker.lagSmoothing(0);
+    rafRef.current = requestAnimationFrame(raf);
 
     return () => {
-      gsap.ticker.remove(ticker);
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
       lenis.destroy();
-      ScrollTrigger.clearScrollMemory();
     };
   }, []);
 

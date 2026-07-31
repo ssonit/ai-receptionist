@@ -1,40 +1,23 @@
-"use client"
+"use client";
 
-import { useRef } from "react"
-import {
-  AnimatePresence,
-  motion,
-  useInView,
-  type MotionProps,
-  type UseInViewOptions,
-  type Variants,
-} from "motion/react"
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
-type MarginType = UseInViewOptions["margin"]
-
-interface BlurFadeProps extends MotionProps {
-  children: React.ReactNode
-  className?: string
-  variant?: {
-    hidden: { y: number }
-    visible: { y: number }
-  }
-  duration?: number
-  delay?: number
-  offset?: number
-  direction?: "up" | "down" | "left" | "right"
-  inView?: boolean
-  inViewMargin?: MarginType
-  blur?: string
+interface BlurFadeProps {
+  children: ReactNode;
+  className?: string;
+  duration?: number;
+  delay?: number;
+  offset?: number;
+  direction?: "up" | "down" | "left" | "right";
+  inView?: boolean;
+  inViewMargin?: string;
+  blur?: string;
+  style?: CSSProperties;
 }
-
-const getFilter = (v: Variants[string]) =>
-  typeof v === "function" ? undefined : v.filter
 
 export function BlurFade({
   children,
   className,
-  variant,
   duration = 0.4,
   delay = 0,
   offset = 6,
@@ -42,53 +25,55 @@ export function BlurFade({
   inView = false,
   inViewMargin = "-50px",
   blur = "6px",
-  ...props
+  style,
 }: BlurFadeProps) {
-  const ref = useRef(null)
-  const inViewResult = useInView(ref, { once: true, margin: inViewMargin })
-  const isInView = !inView || inViewResult
-  const defaultVariants: Variants = {
-    hidden: {
-      [direction === "left" || direction === "right" ? "x" : "y"]:
-        direction === "right" || direction === "down" ? -offset : offset,
-      opacity: 0,
-      filter: `blur(${blur})`,
-    },
-    visible: {
-      [direction === "left" || direction === "right" ? "x" : "y"]: 0,
-      opacity: 1,
-      filter: `blur(0px)`,
-    },
-  }
-  const combinedVariants = variant ?? defaultVariants
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(!inView);
 
-  const hiddenFilter = getFilter(combinedVariants.hidden)
-  const visibleFilter = getFilter(combinedVariants.visible)
+  useEffect(() => {
+    if (visible) return;
+    const el = ref.current;
+    if (!el) return;
 
-  const shouldTransitionFilter =
-    hiddenFilter != null &&
-    visibleFilter != null &&
-    hiddenFilter !== visibleFilter
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: inViewMargin },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [visible, inViewMargin]);
+
+  const axis = direction === "left" || direction === "right" ? "x" : "y";
+  const distance =
+    direction === "right" || direction === "down" ? -offset : offset;
+  const transitionDelay = 0.04 + delay;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        ref={ref}
-        initial="hidden"
-        animate={isInView ? "visible" : "hidden"}
-        exit="hidden"
-        variants={combinedVariants}
-        transition={{
-          delay: 0.04 + delay,
-          duration,
-          ease: "easeOut",
-          ...(shouldTransitionFilter ? { filter: { duration } } : {}),
-        }}
-        className={className}
-        {...props}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
-  )
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        filter: visible ? "blur(0px)" : `blur(${blur})`,
+        transform: visible
+          ? "translate(0, 0)"
+          : axis === "x"
+            ? `translateX(${distance}px)`
+            : `translateY(${distance}px)`,
+        transition: [
+          `opacity ${duration}s ease-out ${transitionDelay}s`,
+          `filter ${duration}s ease-out ${transitionDelay}s`,
+          `transform ${duration}s ease-out ${transitionDelay}s`,
+        ].join(", "),
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
 }

@@ -1,6 +1,6 @@
 # eve-booking — Đánh giá CEO & Chiến lược ra thị trường
 
-Ngày đánh giá: 2026-07-31 | Cập nhật: 2026-07-31
+Ngày đánh giá: 2026-07-31 | Cập nhật: 2026-07-31 (webhook sync)
 
 ## Tổng quan sản phẩm
 
@@ -61,9 +61,9 @@ PostHog, Sentry, dashboard analytics nội bộ (AI health, funnel conversion, t
 |---|--------|-------|--------|
 | 1 | **Agent tools generic** (`bash`, `glob`, `grep`, `read_file`, `write_file`) | Security risk — agent booking không cần quyền write file | Xóa file, không còn trong discovery | ✅ Done — 5 files removed, agent chỉ còn 11 booking tools |
 | 2 | **Landing page Pricing section** — static, không có backend | Gây misleading, bỏ đến khi có billing thật | ⬜ Chưa làm |
-| 3 | **`sync-cal-bookings.ts` pull-based sync** — mirror Cal.com về Supabase | Overhead cron job, thay bằng Cal.com webhook | ⬜ Chưa làm |
+| 3 | **`sync-cal-bookings.ts` pull-based sync** — mirror Cal.com về Supabase | Overhead cron job, thay bằng Cal.com webhook | ✅ Done — `POST /api/cal/webhook?workspace_id=` + HMAC-SHA256 verify + `upsertCalBookings` reusable, cron giữ lại làm fallback |
 | 4 | **Magic UI / GSAP landing animations** — tăng bundle size | Landing SaaS cần load nhanh hơn animation | ⬜ Chưa làm |
-| 5 | **`log_lead` flow nửa vời** — logic phức tạp nhưng leads UI quá đơn giản | Làm mạnh CRM hoặc giản lược | ⬜ Chưa làm |
+| 5 | **`log_lead` flow nửa vời** — logic phức tạp nhưng leads UI quá đơn giản | Làm mạnh CRM hoặc giản lược | ✅ Done — giản lược: bỏ long-treatment detection, urgency notifications, code từ 244 → 130 lines |
 
 ---
 
@@ -110,5 +110,6 @@ Sản phẩm đang ở giai đoạn **product beta — sẵn sàng bán**. Code 
 ✅ **Billing** — Stripe Checkout + Customer Portal + `BILLING_MODE=test` (free full access) + 14-day trial + subscription guard trên proxy
 ✅ **Retry/circuit breaker** — exponential backoff + jitter + circuit breaker (5 failures → open 30s) cho Cal.com API
 ✅ **Agent tools cleanup** — 5 generic tools (bash, glob, grep, read_file, write_file) removed, agent chỉ còn 11 booking tools
+✅ **Cal.com webhook sync** — `POST /api/cal/webhook` + signature verification + `upsertCalBookings`, cron tick giữ lại làm fallback reconciliation
 
 Sẵn sàng bán. Việc còn lại: giản lược landing page sections chưa có backend, chốt vertical "local service businesses ở VN", tạo Stripe products/prices trên dashboard.

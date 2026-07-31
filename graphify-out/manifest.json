@@ -15,8 +15,8 @@
     "semantic_hash": "1eac378aa1c8511c8e4118fefbcbb61e"
   },
   "agent/instructions.ts": {
-    "mtime": 1785300479.4728284,
-    "ast_hash": "b015411db578b1544b8ebfa6dce9f81a",
+    "mtime": 1785492298.8669314,
+    "ast_hash": "baf8073ef3a506bc5d4631d75ad3ea4a",
     "semantic_hash": ""
   },
   "agent/sandbox.ts": {
@@ -40,8 +40,8 @@
     "semantic_hash": ""
   },
   "agent/tools/log_lead.ts": {
-    "mtime": 1785222925.702528,
-    "ast_hash": "741b52b727dd846d8a7f5bf3a442ce8e",
+    "mtime": 1785492225.7426972,
+    "ast_hash": "ed766911cf644d9487676598674e5a79",
     "semantic_hash": ""
   },
   "app/_components/agent-chat.tsx": {
@@ -255,9 +255,9 @@
     "semantic_hash": ""
   },
   "components/providers/lenis-provider.tsx": {
-    "mtime": 1784696056.2129653,
-    "ast_hash": "50bf5b75645d3df7e4a1d55c25d84a35",
-    "semantic_hash": "50bf5b75645d3df7e4a1d55c25d84a35"
+    "mtime": 1785492292.525065,
+    "ast_hash": "27e8a8f55bea0921115a5d7d753a6d6c",
+    "semantic_hash": ""
   },
   "components/section-cards.tsx": {
     "mtime": 1784696056.2079618,
@@ -290,9 +290,9 @@
     "semantic_hash": "8510911fff59be294d64dbfc67f5c710"
   },
   "components/ui/blur-fade.tsx": {
-    "mtime": 1784694847.9576077,
-    "ast_hash": "181967229e4e03afa4490cc7ef6538f5",
-    "semantic_hash": "181967229e4e03afa4490cc7ef6538f5"
+    "mtime": 1785492324.4289956,
+    "ast_hash": "44dff466a32a4dc4cd8048a5f140f570",
+    "semantic_hash": ""
   },
   "components/ui/breadcrumb.tsx": {
     "mtime": 1784695236.6320841,
@@ -500,8 +500,8 @@
     "semantic_hash": ""
   },
   "lib/sync-cal-bookings.ts": {
-    "mtime": 1784970607.2059176,
-    "ast_hash": "ec9ffb9647b3a2b10c9aa9373c490a85",
+    "mtime": 1785492474.2998042,
+    "ast_hash": "b97a7731688ca03680fb006bb9ba9385",
     "semantic_hash": ""
   },
   "lib/utils.ts": {
@@ -535,8 +535,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1785490884.7105024,
-    "ast_hash": "e9b89c46d28b019e8248b5e5e0b2d8ea",
+    "mtime": 1785492351.1284385,
+    "ast_hash": "eb4188723d7d9151c7ef82efa54844a5",
     "semantic_hash": ""
   },
   "postcss.config.mjs": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "agent/skills/booking_intake.md": {
-    "mtime": 1785222943.3406,
-    "ast_hash": "c46b469ac51d92e8042279d1a30f21fb",
+    "mtime": 1785492260.5225365,
+    "ast_hash": "7466aeef5503eae34908440068868cff",
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
@@ -845,8 +845,8 @@
     "semantic_hash": ""
   },
   "lib/leads.ts": {
-    "mtime": 1784777715.6803565,
-    "ast_hash": "f2101acbb5702d55d79e7c832c88b2a4",
+    "mtime": 1785492233.3308313,
+    "ast_hash": "42586d0ee356d882ed4732425826dc3f",
     "semantic_hash": ""
   },
   "app/dashboard/analytics/page.tsx": {
@@ -2735,8 +2735,8 @@
     "semantic_hash": ""
   },
   "docs/ceo-evaluation.md": {
-    "mtime": 1785491946.7167356,
-    "ast_hash": "040eeadbb11207969a16acf88185aa76",
+    "mtime": 1785492768.4564981,
+    "ast_hash": "b61d89f766a37e8574c6d5b92c035837",
     "semantic_hash": ""
   },
   "agent/date-context.test.ts": {
@@ -2927,6 +2927,16 @@
   "lib/retry.ts": {
     "mtime": 1785491789.7602139,
     "ast_hash": "f0cc561cb73e62f25717eee908fcf523",
+    "semantic_hash": ""
+  },
+  "app/api/cal/webhook/route.ts": {
+    "mtime": 1785492389.3020842,
+    "ast_hash": "5ce9f713996e2c791d25009441c0109b",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-07-31-pricing-cta-static-design.md": {
+    "mtime": 1785492751.841916,
+    "ast_hash": "ab2eb6e1da96b86fffb3d2c5fa918543",
     "semantic_hash": ""
   }
 }
