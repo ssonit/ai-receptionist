@@ -12,6 +12,7 @@ export default defineConfig({
     setupFiles: ["./tests/setup.ts"],
     env: {
       NODE_ENV: "test",
+      BILLING_MODE: "test",
       NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
       SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
       CALCOM_API_KEY: "test-cal-api-key",

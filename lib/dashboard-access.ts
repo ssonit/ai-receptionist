@@ -22,6 +22,7 @@ export const DASHBOARD_PATH = {
   account: "/dashboard/account",
   notifications: "/dashboard/notifications",
   setup: "/dashboard/setup",
+  billing: "/dashboard/billing",
 } as const;
 
 export type DashboardPath =
@@ -35,6 +36,7 @@ export const OWNER_ONLY_PATHS = [
   DASHBOARD_PATH.faq,
   DASHBOARD_PATH.meetingTypes,
   DASHBOARD_PATH.embed,
+  DASHBOARD_PATH.billing,
 ] as const;
 
 export function isOwnerOnlyPath(pathname: string): boolean {

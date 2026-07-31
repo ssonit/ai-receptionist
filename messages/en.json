@@ -65,6 +65,10 @@
     "language": "Language",
     "languageCardTitle": "Dashboard language",
     "languageCardBody": "Only affects your operator UI (labels, nav). It does not change the guest language on your public booking page — guests pick EN / VI there.",
+    "role": {
+      "owner": "Owner",
+      "staff": "Staff"
+    },
     "teamInviteEmailLabel": "Invite email",
     "teamInviteEmailHint": "Only this address can accept the invite. It expires in 7 days.",
     "teamSendInvite": "Send invite",
@@ -136,12 +140,24 @@
       "leads": "Leads",
       "conversations": "Conversations",
       "analytics": "Analytics",
+      "billing": "Billing",
       "groups": {
         "overview": "Overview",
         "booking": "Booking",
         "customers": "Customers",
         "agent": "Agent"
       }
+    },
+    "billing": {
+      "title": "Billing",
+      "subtitle": "Manage your subscription and plan.",
+      "currentPlan": "Current plan",
+      "trialRemaining": "Trial days remaining",
+      "upgradeTo": "Upgrade to {plan}",
+      "manageBilling": "Manage billing",
+      "testModeBanner": "Test Mode — All features unlocked",
+      "subscriptionInactive": "Subscription inactive",
+      "subscriptionInactiveHint": "Your trial has ended or your subscription is past due. Upgrade to restore access."
     }
   },
   "common": {

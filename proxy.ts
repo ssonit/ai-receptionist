@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { isPublicSignupOpen } from "@/lib/signup-mode";
 import { ensureVisitorIdOnResponse } from "@/lib/visitor";
+import { getBillingMode, isSubActive, type SubscriptionStatus } from "@/lib/billing";
 import { isPilotBookingLive } from "@/lib/workspace";
 import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
 
@@ -123,7 +124,7 @@ export async function proxy(request: NextRequest) {
     if (profile?.workspace_id) {
       const { data: ws } = await supabase
         .from("workspaces")
-        .select("setup_completed_at, cal_api_key_encrypted, cal_event_type_id, cal_auth_mode")
+        .select("setup_completed_at, cal_api_key_encrypted, cal_event_type_id, cal_auth_mode, plan_tier, subscription_status, trial_ends_at")
         .eq("id", profile.workspace_id)
         .maybeSingle();
 
@@ -154,6 +155,30 @@ export async function proxy(request: NextRequest) {
           redirectUrl.pathname = DASHBOARD_PATH.root;
           redirectUrl.search = "";
           return NextResponse.redirect(redirectUrl);
+        }
+
+        // Subscription guard — redirect to billing if trial expired + no active sub.
+        // Skip for billing page itself and setup wizard. Owner-only; staff always pass.
+        if (
+          !incomplete &&
+          isOwner &&
+          getBillingMode() !== "test" &&
+          path !== DASHBOARD_PATH.billing &&
+          !path.startsWith("/api/")
+        ) {
+          const subActive = isSubActive({
+            planTier: (ws?.plan_tier as "free" | "starter" | "pro") ?? "free",
+            subscriptionStatus: (ws?.subscription_status as SubscriptionStatus | null) ?? null,
+            stripeCustomerId: null,
+            stripeSubscriptionId: null,
+            trialEndsAt: (ws?.trial_ends_at as string | null) ?? null,
+          });
+          if (!subActive) {
+            const redirectUrl = request.nextUrl.clone();
+            redirectUrl.pathname = DASHBOARD_PATH.billing;
+            redirectUrl.search = "";
+            return NextResponse.redirect(redirectUrl);
+          }
         }
       }
     }

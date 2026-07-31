@@ -91,8 +91,10 @@ description: eve-booking multi-tenant architecture — workspace/tenant model an
   `lib/sync-cal-bookings.ts`, never agent-initiated today.
 - No automated test suite (no vitest/jest/playwright in `package.json`) —
   verification is manual (see `.claude/skills/test-feature/SKILL.md`).
-- No staff-invite-to-existing-workspace flow — every signup creates a brand
-  new workspace.
+- Staff invites: owner can invite staff via email (`workspace_invites` +
+  `workspace-team-card.tsx`); staff join via `/invite/[token]` or
+  `/signup?invite=TOKEN`. Staff dashboard is role-scoped (sidebar + page
+  guards). Only owners can access Settings/Setup/Agent/FAQ/Meeting Types/Embed.
 - No public-signup gating flag — `/signup` is reachable by anyone who finds
   the URL; low risk today only because each real tenant still needs someone
   to manually configure their Cal.com key/meeting type before the workspace

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import {
   IconCalendarEvent,
   IconChartBar,
+  IconCreditCard,
   IconDashboard,
   IconHelp,
   IconMessage,
@@ -111,6 +112,11 @@ export function DashboardCommand({
           title: t("dashboard.nav.faq"),
           href: DASHBOARD_PATH.faq,
           icon: IconQuestionMark,
+        },
+        {
+          title: t("dashboard.nav.billing"),
+          href: DASHBOARD_PATH.billing,
+          icon: IconCreditCard,
         },
         {
           title: t("dashboard.settings"),

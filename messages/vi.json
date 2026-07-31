@@ -65,6 +65,10 @@
     "language": "Ngôn ngữ",
     "languageCardTitle": "Ngôn ngữ dashboard",
     "languageCardBody": "Chỉ ảnh hưởng UI vận hành của bạn (nhãn, menu). Không đổi ngôn ngữ trang đặt lịch của khách — khách chọn EN / VI trên trang chat.",
+    "role": {
+      "owner": "Chủ sở hữu",
+      "staff": "Nhân viên"
+    },
     "teamInviteEmailLabel": "Email người được mời",
     "teamInviteEmailHint": "Chỉ địa chỉ này nhận được lời mời. Liên kết hết hạn sau 7 ngày.",
     "teamSendInvite": "Gửi lời mời",
@@ -136,12 +140,24 @@
       "leads": "Lead",
       "conversations": "Hội thoại",
       "analytics": "Phân tích",
+      "billing": "Thanh toán",
       "groups": {
         "overview": "Tổng quan",
         "booking": "Đặt lịch",
         "customers": "Khách hàng",
         "agent": "Agent"
       }
+    },
+    "billing": {
+      "title": "Thanh toán",
+      "subtitle": "Quản lý gói đăng ký của bạn.",
+      "currentPlan": "Gói hiện tại",
+      "trialRemaining": "Ngày dùng thử còn lại",
+      "upgradeTo": "Nâng cấp lên {plan}",
+      "manageBilling": "Quản lý thanh toán",
+      "testModeBanner": "Chế độ Test — Tất cả tính năng đã mở",
+      "subscriptionInactive": "Đăng ký không hoạt động",
+      "subscriptionInactiveHint": "Thời gian dùng thử đã hết hoặc đăng ký của bạn đang quá hạn. Nâng cấp để khôi phục quyền truy cập."
     }
   },
   "common": {

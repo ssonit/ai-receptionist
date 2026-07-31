@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import {
   IconCalendarEvent,
   IconChartBar,
+  IconCreditCard,
   IconDashboard,
   IconCode,
   IconHelp,
@@ -123,6 +124,11 @@ export function AppSidebar({
   ].filter((group) => group.items.length > 0);
 
   const navSecondary = [
+    {
+      title: t("dashboard.nav.billing"),
+      url: DASHBOARD_PATH.billing,
+      icon: IconCreditCard,
+    },
     {
       title: t("dashboard.settings"),
       url: DASHBOARD_PATH.settings,

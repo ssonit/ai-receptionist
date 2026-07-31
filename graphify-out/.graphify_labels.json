@@ -383,6 +383,16 @@
   "381": "booking-status.test.ts",
   "382": "embed.test.ts",
   "383": "guest-timezone.test.ts",
+  "384": "workspace-secrets.ts",
   "385": "workspace-secrets.test.ts",
-  "387": "vitest.config.mts"
+  "386": "ai",
+  "387": "vitest.config.mts",
+  "388": "@dnd-kit/core",
+  "389": "@gsap/react",
+  "390": "next-themes",
+  "391": "posthog-node",
+  "392": "streamdown",
+  "393": "@supabase/ssr",
+  "394": "@tanstack/react-virtual",
+  "395": "vaul"
 }

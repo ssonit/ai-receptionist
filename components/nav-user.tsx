@@ -35,6 +35,7 @@ import {
   canAccessDashboardPath,
   DASHBOARD_PATH,
 } from "@/lib/dashboard-access";
+import { Badge } from "@/components/ui/badge";
 
 function getInitials(name: string, email: string) {
   const source = name.trim() || email.trim();
@@ -82,6 +83,11 @@ export function NavUser({
                   {user.email}
                 </span>
               </div>
+              {role ? (
+                <Badge variant={role === "owner" ? "default" : "secondary"} className="shrink-0">
+                  {t(`dashboard.role.${role}`)}
+                </Badge>
+              ) : null}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -104,6 +110,11 @@ export function NavUser({
                     {user.email}
                   </span>
                 </div>
+                {role ? (
+                  <Badge variant={role === "owner" ? "default" : "secondary"} className="shrink-0">
+                    {t(`dashboard.role.${role}`)}
+                  </Badge>
+                ) : null}
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

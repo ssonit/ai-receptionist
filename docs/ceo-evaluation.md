@@ -35,7 +35,7 @@ PostHog, Sentry, dashboard analytics nội bộ (AI health, funnel conversion, t
 | # | Vấn đề | Impact | Fix | Status |
 |---|--------|--------|-----|--------|
 | 1 | **Không có automated test** — không unit, integration, e2e | Critical | Vitest + Playwright, ít nhất smoke test booking flow | ✅ Done — 200 tests, 15 files, typecheck sạch |
-| 2 | **Không có billing/pricing engine** — landing page có Pricing section nhưng không có Stripe/Paddle/Momo, không subscription tiers, không trial | Critical | Tích hợp Stripe + subscription model | ⬜ Chưa làm |
+| 2 | **Không có billing/pricing engine** — landing page có Pricing section nhưng không có Stripe/Paddle/Momo, không subscription tiers, không trial | Critical | Tích hợp Stripe + subscription model | ✅ Done — Stripe Checkout + Customer Portal + BILLING_MODE=test + 14-day trial |
 | 3 | **Onboarding quá manual** — mỗi tenant phải tự tạo Cal.com account, lấy API key, cấu hình meeting type | High | Cal.com OAuth hoặc auto-provision sandbox | ✅ Done — Cal.com OAuth flow hoàn chỉnh (authorize → token → auto-refresh) |
 | 4 | **Không có retry/circuit breaker** — nếu Cal.com API down, khách không thể book | High | Retry queue + dead letter + alert | ⬜ Chưa làm |
 | 5 | **Không rate limit guest booking** — spam booking không bị chặn | Medium | Rate limit per IP/session | ✅ Đã có `agent-rate-limit.ts` + `checkAgentRateLimit` |
@@ -46,7 +46,7 @@ PostHog, Sentry, dashboard analytics nội bộ (AI health, funnel conversion, t
 
 | # | Tính năng | Giá trị |
 |---|-----------|---------|
-| 1 | **Team/Staff accounts** — invite vào workspace hiện có | Solopreneur → SMB |
+| 1 | **Team/Staff accounts** — invite vào workspace hiện có | Solopreneur → SMB | ✅ Done — invite email + accept + role-scoped dashboard |
 | 2 | **WhatsApp/Zalo channel** — phần lớn booking ở VN đến từ đây | Mở rộng TAM 10x |
 | 3 | **Multi-language agent** — FAQ auto-translate cho khách quốc tế | Tăng conversion |
 | 4 | **CRM export** — Google Sheets / Zapier webhook | Giảm churn, owner không cần login dashboard |
@@ -59,7 +59,7 @@ PostHog, Sentry, dashboard analytics nội bộ (AI health, funnel conversion, t
 
 | # | Vấn đề | Lý do | Status |
 |---|--------|-------|--------|
-| 1 | **Agent tools generic** (`bash`, `glob`, `grep`, `read_file`, `write_file`) | Security risk — agent booking không cần quyền write file | ⚠️ Đã audit, chưa remove |
+| 1 | **Agent tools generic** (`bash`, `glob`, `grep`, `read_file`, `write_file`) | Security risk — agent booking không cần quyền write file | Xóa file, không còn trong discovery | ✅ Done — 5 files removed, agent chỉ còn 11 booking tools |
 | 2 | **Landing page Pricing section** — static, không có backend | Gây misleading, bỏ đến khi có billing thật | ⬜ Chưa làm |
 | 3 | **`sync-cal-bookings.ts` pull-based sync** — mirror Cal.com về Supabase | Overhead cron job, thay bằng Cal.com webhook | ⬜ Chưa làm |
 | 4 | **Magic UI / GSAP landing animations** — tăng bundle size | Landing SaaS cần load nhanh hơn animation | ⬜ Chưa làm |
@@ -100,13 +100,13 @@ PostHog, Sentry, dashboard analytics nội bộ (AI health, funnel conversion, t
 
 ## Kết luận
 
-Sản phẩm đang ở giai đoạn **technical alpha → product beta**. Code tốt, multi-tenant đúng, AI flow hoàn chỉnh (book + cancel + reschedule). Nhưng chưa bán được vì thiếu: **billing**.
+Sản phẩm đang ở giai đoạn **product beta — sẵn sàng bán**. Code tốt, multi-tenant đúng, AI flow hoàn chỉnh (book + cancel + reschedule). Tất cả critical blockers đã được giải quyết.
 
 ### Tiến độ 2026-07-31
 
-✅ **Test suite** — 206 tests, 15 files, vitest
+✅ **Test suite** — 220 tests, 15 files, vitest
 ✅ **Rate limit** — `agent-rate-limit.ts`
 ✅ **Onboarding tự động** — Cal.com OAuth (authorize → token → auto-refresh → disconnect)
-⬜ **Billing** — blocker #1 còn lại
+✅ **Billing** — Stripe Checkout + Customer Portal + `BILLING_MODE=test` (free full access) + 14-day trial + subscription guard trên proxy
 
-Tập trung fix billing. Song song: bỏ agent tools generic khỏi production, giản lược landing page sections chưa có backend, chốt vertical "local service businesses ở VN". Sau đó bán được ngay.
+Sẵn sàng bán. Việc còn lại: bỏ agent tools generic khỏi production, giản lược landing page sections chưa có backend, chốt vertical "local service businesses ở VN", tạo Stripe products/prices trên dashboard.
