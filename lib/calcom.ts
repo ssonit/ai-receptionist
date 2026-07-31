@@ -23,6 +23,7 @@ import {
   normalizeCalApiStatus,
   type CalBookingListFilter,
 } from "@/lib/booking-status";
+import { withRetry, type RetryConfig } from "@/lib/retry";
 
 const SLOTS_API_VERSION = "2024-09-04";
 const BOOKINGS_API_VERSION = "2024-08-13";
@@ -159,38 +160,41 @@ async function calFetch<T>(
   init: RequestInit & { apiVersion: string },
 ): Promise<T> {
   const { apiKey, apiBaseUrl } = requireCalApiKey();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), CAL_FETCH_TIMEOUT_MS);
 
-  let res: Response;
-  try {
-    res = await fetch(`${apiBaseUrl}${path}`, {
-      ...init,
-      signal: controller.signal,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "cal-api-version": init.apiVersion,
-        ...(init.headers ?? {}),
-      },
-    });
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error(`Cal.com request timed out after ${CAL_FETCH_TIMEOUT_MS / 1000}s`);
+  return withRetry(async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), CAL_FETCH_TIMEOUT_MS);
+
+    let res: Response;
+    try {
+      res = await fetch(`${apiBaseUrl}${path}`, {
+        ...init,
+        signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "cal-api-version": init.apiVersion,
+          ...(init.headers ?? {}),
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error(`Cal.com request timed out after ${CAL_FETCH_TIMEOUT_MS / 1000}s`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
-    throw error;
-  } finally {
-    clearTimeout(timeout);
-  }
 
-  const body = (await res.json().catch(() => ({}))) as T & CalErrorBody;
-  if (!res.ok) {
-    const message =
-      body.message ?? body.error?.message ?? `Cal.com request failed (${res.status})`;
-    throw new Error(message);
-  }
-  return body;
+    const body = (await res.json().catch(() => ({}))) as T & CalErrorBody;
+    if (!res.ok) {
+      const message =
+        body.message ?? body.error?.message ?? `Cal.com request failed (${res.status})`;
+      throw new Error(message);
+    }
+    return body;
+  });
 }
 
 /** Docs: date-only `start` → start of day; date-only `end` → end of day. Keep YYYY-MM-DD. */

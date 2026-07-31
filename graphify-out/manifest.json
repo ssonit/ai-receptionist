@@ -29,11 +29,6 @@
     "ast_hash": "41136240bec203d0c6ce33071d6513fa",
     "semantic_hash": ""
   },
-  "agent/tools/bash.ts": {
-    "mtime": 1784701630.4744928,
-    "ast_hash": "930750902f8cd91142b8e6a67e5af6bb",
-    "semantic_hash": "930750902f8cd91142b8e6a67e5af6bb"
-  },
   "agent/tools/book_appointment.ts": {
     "mtime": 1785479533.1178012,
     "ast_hash": "c938543f948c2a7295bd64be7b7b704b",
@@ -44,30 +39,10 @@
     "ast_hash": "8a7a0b7aa3e7272655768eda5ab67efc",
     "semantic_hash": ""
   },
-  "agent/tools/glob.ts": {
-    "mtime": 1784701632.221623,
-    "ast_hash": "930750902f8cd91142b8e6a67e5af6bb",
-    "semantic_hash": "930750902f8cd91142b8e6a67e5af6bb"
-  },
-  "agent/tools/grep.ts": {
-    "mtime": 1784701633.0645564,
-    "ast_hash": "930750902f8cd91142b8e6a67e5af6bb",
-    "semantic_hash": "930750902f8cd91142b8e6a67e5af6bb"
-  },
   "agent/tools/log_lead.ts": {
     "mtime": 1785222925.702528,
     "ast_hash": "741b52b727dd846d8a7f5bf3a442ce8e",
     "semantic_hash": ""
-  },
-  "agent/tools/read_file.ts": {
-    "mtime": 1784701632.2231479,
-    "ast_hash": "930750902f8cd91142b8e6a67e5af6bb",
-    "semantic_hash": "930750902f8cd91142b8e6a67e5af6bb"
-  },
-  "agent/tools/write_file.ts": {
-    "mtime": 1784701631.4642031,
-    "ast_hash": "930750902f8cd91142b8e6a67e5af6bb",
-    "semantic_hash": "930750902f8cd91142b8e6a67e5af6bb"
   },
   "app/_components/agent-chat.tsx": {
     "mtime": 1785308570.4523635,
@@ -495,8 +470,8 @@
     "semantic_hash": ""
   },
   "lib/calcom.ts": {
-    "mtime": 1784954138.640647,
-    "ast_hash": "c3d2502e04b45ac56a765cc54cb40f45",
+    "mtime": 1785491819.5322492,
+    "ast_hash": "861538c28b3556ce249f9e02bbf676c2",
     "semantic_hash": ""
   },
   "lib/dashboard-user.ts": {
@@ -2760,8 +2735,8 @@
     "semantic_hash": ""
   },
   "docs/ceo-evaluation.md": {
-    "mtime": 1785490097.5528464,
-    "ast_hash": "f802cd8bf87f84629fb450211411ae0e",
+    "mtime": 1785491946.7167356,
+    "ast_hash": "040eeadbb11207969a16acf88185aa76",
     "semantic_hash": ""
   },
   "agent/date-context.test.ts": {
@@ -2942,6 +2917,16 @@
   "supabase/migrations/20260731000001_billing.sql": {
     "mtime": 1785490975.3457844,
     "ast_hash": "dadef47fd1e800af2bc82ee3a2fc78f1",
+    "semantic_hash": ""
+  },
+  "lib/retry.test.ts": {
+    "mtime": 1785491847.6438568,
+    "ast_hash": "6f0e4e026ffc192817625f06d4020744",
+    "semantic_hash": ""
+  },
+  "lib/retry.ts": {
+    "mtime": 1785491789.7602139,
+    "ast_hash": "f0cc561cb73e62f25717eee908fcf523",
     "semantic_hash": ""
   }
 }
