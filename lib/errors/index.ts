@@ -25,4 +25,5 @@ export {
   suggestionRequiredMessage,
   reminderLeadTooShortMessage,
 } from "@/lib/errors/app-messages";
+export { AppError, isAppError } from "@/lib/errors/app-error";
 export { formatDbError, formatUnknownError } from "@/lib/errors/format";

@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import slugify from "slugify";
 import { parseEmbedWorkspaceKey } from "@/lib/embed";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -5,6 +6,8 @@ import { decryptSecret, encryptSecret } from "@/lib/workspace-secrets";
 import { refreshAccessToken } from "@/lib/cal-oauth";
 import { bookingConfig } from "@/lib/booking-config";
 import { parseChatSuggestions } from "@/lib/chat-branding";
+import { getBillingMode, isSubActive, type SubscriptionStatus } from "@/lib/billing";
+import { APP_ERROR_CODE, AppError } from "@/lib/errors";
 import {
   parseServiceMode,
   type WorkspaceServiceMode,
@@ -391,6 +394,8 @@ export async function resolveWorkspaceIdFromAgentContext(input: {
   const slug = authAttr(attrs, "workspaceSlug");
   const hadTenantHint = Boolean(chatSessionId || slug);
 
+  let workspaceId: string | null = null;
+
   if (chatSessionId) {
     const supabase = createAdminClient();
     const { data } = await supabase
@@ -399,15 +404,14 @@ export async function resolveWorkspaceIdFromAgentContext(input: {
       .eq("id", chatSessionId)
       .not("workspace_id", "is", null)
       .maybeSingle();
-    if (data?.workspace_id) return data.workspace_id as string;
+    if (data?.workspace_id) workspaceId = data.workspace_id as string;
   }
 
-  if (slug) {
-    const fromSlug = await resolveWorkspaceIdBySlug(slug);
-    if (fromSlug) return fromSlug;
+  if (!workspaceId && slug) {
+    workspaceId = await resolveWorkspaceIdBySlug(slug);
   }
 
-  if (input.sessionId?.trim()) {
+  if (!workspaceId && input.sessionId?.trim()) {
     const supabase = createAdminClient();
     const id = input.sessionId.trim();
     const { data } = await supabase
@@ -417,17 +421,71 @@ export async function resolveWorkspaceIdFromAgentContext(input: {
       .not("workspace_id", "is", null)
       .limit(1)
       .maybeSingle();
-    if (data?.workspace_id) return data.workspace_id as string;
+    if (data?.workspace_id) workspaceId = data.workspace_id as string;
   }
 
-  if (hadTenantHint) {
-    throw new Error(
-      "Could not determine workspace from chat session — refusing to write to another workspace.",
+  if (!workspaceId) {
+    if (hadTenantHint) {
+      throw new Error(
+        "Could not determine workspace from chat session — refusing to write to another workspace.",
+      );
+    }
+    // CLI / Eve Pilot demo only (no tenant headers).
+    return getDefaultWorkspaceId();
+  }
+
+  await assertWorkspaceSubscriptionActive(workspaceId);
+
+  return workspaceId;
+}
+
+/**
+ * Subscription gate for the AI receptionist. Pilot demo and `BILLING_MODE=test`
+ * always pass.
+ *
+ * Fails **closed**: a workspace row we cannot read is treated as inactive. An
+ * unreadable billing row must never silently unlock paid capacity — the guest
+ * sees the same "booking paused" copy either way.
+ *
+ * @throws AppError SUBSCRIPTION_INACTIVE
+ */
+export async function assertWorkspaceSubscriptionActive(
+  workspaceId: string,
+): Promise<void> {
+  if (
+    workspaceId === getDefaultWorkspaceId() ||
+    workspaceId === PILOT_WORKSPACE_ID ||
+    getBillingMode() === "test"
+  ) {
+    return;
+  }
+
+  const supabase = createAdminClient();
+  const { data: ws, error } = await supabase
+    .from("workspaces")
+    .select("plan_tier, subscription_status, trial_ends_at")
+    .eq("id", workspaceId)
+    .maybeSingle();
+
+  if (error || !ws) {
+    console.error(
+      `[billing] could not read billing state for workspace ${workspaceId} — blocking`,
+      error,
     );
+    throw new AppError(APP_ERROR_CODE.SUBSCRIPTION_INACTIVE);
   }
 
-  // CLI / Eve Pilot demo only (no tenant headers).
-  return getDefaultWorkspaceId();
+  const active = isSubActive({
+    planTier: (ws.plan_tier as "free" | "starter" | "pro") ?? "free",
+    subscriptionStatus: (ws.subscription_status as SubscriptionStatus | null) ?? null,
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    trialEndsAt: (ws.trial_ends_at as string | null) ?? null,
+  });
+
+  if (!active) {
+    throw new AppError(APP_ERROR_CODE.SUBSCRIPTION_INACTIVE);
+  }
 }
 
 /**
@@ -544,6 +602,40 @@ export async function getCalApiKeyForWorkspace(
   return getCalAccessTokenForWorkspace(workspaceId);
 }
 
+/**
+ * Messenger page access token for a workspace (long-lived, no refresh needed).
+ * - Pilot: checks env MESSENGER_PAGE_ACCESS_TOKEN (global fallback).
+ * - Real tenants: decrypt from workspace row.
+ */
+export async function getMessengerCredentialsForWorkspace(
+  workspaceId: string,
+): Promise<{ pageId: string; pageAccessToken: string }> {
+  const pilotId = getDefaultWorkspaceId();
+  if (workspaceId === pilotId || workspaceId === PILOT_WORKSPACE_ID) {
+    const envToken = process.env.MESSENGER_PAGE_ACCESS_TOKEN?.trim();
+    const envPageId = process.env.MESSENGER_PAGE_ID?.trim();
+    if (envToken && envPageId) return { pageId: envPageId, pageAccessToken: envToken };
+    throw new Error("MESSENGER_NOT_CONFIGURED");
+  }
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("workspaces")
+    .select("messenger_page_id, messenger_page_access_token_encrypted")
+    .eq("id", workspaceId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data?.messenger_page_access_token_encrypted) {
+    throw new Error("MESSENGER_NOT_CONFIGURED");
+  }
+
+  return {
+    pageId: (data.messenger_page_id as string) ?? "",
+    pageAccessToken: decryptSecret(data.messenger_page_access_token_encrypted as string),
+  };
+}
+
 export async function isWorkspaceSetupComplete(
   workspaceId: string,
 ): Promise<boolean> {
@@ -595,4 +687,95 @@ export function isPilotBookingLive(input: {
     cal_api_key_encrypted: input.hasEncryptedCalKey ? "1" : null,
   });
   return Boolean(hasCred && input.calEventTypeId);
+}
+
+/** Generate a cryptographically random webhook secret (64 hex chars). */
+function generateWebhookSecret(): string {
+  return randomBytes(32).toString("hex");
+}
+
+/**
+ * Ensure the workspace has a webhook secret, generating one if needed.
+ * Returns the plaintext secret for display in dashboard settings.
+ */
+export async function ensureWebhookSecret(workspaceId: string): Promise<string> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("workspaces")
+    .select("webhook_secret_encrypted")
+    .eq("id", workspaceId)
+    .maybeSingle();
+
+  if (data?.webhook_secret_encrypted) {
+    return decryptSecret(data.webhook_secret_encrypted as string);
+  }
+
+  const plain = generateWebhookSecret();
+  const encrypted = encryptSecret(plain);
+  const { error } = await supabase
+    .from("workspaces")
+    .update({ webhook_secret_encrypted: encrypted })
+    .eq("id", workspaceId);
+
+  // Never hand back a secret we failed to persist — the owner would paste it
+  // into Cal.com and every webhook would then fail signature verification.
+  if (error) {
+    console.error(
+      `[webhook] failed to persist webhook secret for workspace ${workspaceId}`,
+      error,
+    );
+    throw new AppError(APP_ERROR_CODE.WEBHOOK_SECRET_FAILED);
+  }
+
+  return plain;
+}
+
+/**
+ * Resolve the webhook secret for verifying a Cal.com webhook request.
+ * Per-workspace secret takes priority. Falls back to the deprecated shared
+ * CALCOM_WEBHOOK_SECRET env var for workspaces that haven't migrated yet.
+ *
+ * Returns null when no secret is configured at all (caller must reject).
+ */
+export async function getWebhookSecretForWorkspace(
+  workspaceId: string,
+): Promise<string | null> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("workspaces")
+    .select("webhook_secret_encrypted")
+    .eq("id", workspaceId)
+    .maybeSingle();
+
+  if (data?.webhook_secret_encrypted) {
+    return decryptSecret(data.webhook_secret_encrypted as string);
+  }
+
+  const envSecret = process.env.CALCOM_WEBHOOK_SECRET?.trim();
+  if (envSecret) {
+    // DEPRECATED: one secret shared by every tenant, so any tenant holding it
+    // can sign a payload for someone else's workspace_id. Generate a
+    // per-workspace secret in Settings → Cal.com webhook, then drop this env
+    // var (keep it for the Pilot demo only).
+    console.warn(
+      `[webhook] workspace ${workspaceId} is using the shared CALCOM_WEBHOOK_SECRET — generate a per-workspace secret in Settings`,
+    );
+    return envSecret;
+  }
+
+  return null;
+}
+
+/** True when the workspace has its own secret (i.e. not on the shared env one). */
+export async function hasOwnWebhookSecret(
+  workspaceId: string,
+): Promise<boolean> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("workspaces")
+    .select("webhook_secret_encrypted")
+    .eq("id", workspaceId)
+    .maybeSingle();
+
+  return Boolean(data?.webhook_secret_encrypted);
 }

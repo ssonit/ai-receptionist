@@ -123,6 +123,18 @@ export const APP_ERROR_MESSAGE = {
     "Could not connect Cal.com. The authorization was not accepted. Try again.",
   [APP_ERROR_CODE.CAL_OAUTH_REFRESH_FAILED]:
     "Cal.com connection expired. Reconnect in Settings.",
+  [APP_ERROR_CODE.MESSENGER_NOT_CONFIGURED]:
+    "Messenger is not connected. Connect a Facebook Page in Settings.",
+  [APP_ERROR_CODE.MESSENGER_SEND_FAILED]:
+    "Could not send message via Messenger. The Page connection may have expired.",
+  [APP_ERROR_CODE.MESSENGER_OAUTH_FAILED]:
+    "Could not connect Facebook Page. Try again from Settings.",
+  [APP_ERROR_CODE.MESSENGER_DISCONNECT_FAILED]:
+    "Could not disconnect Messenger. Try again.",
+  [APP_ERROR_CODE.SUBSCRIPTION_INACTIVE]:
+    "Online booking is currently paused for this business. Please contact them directly.",
+  [APP_ERROR_CODE.WEBHOOK_SECRET_FAILED]:
+    "Could not generate the webhook signing secret. Try again.",
 } as const satisfies Record<AppErrorCode, string>;
 
 export function appErrorMessage(code: AppErrorCode): string {

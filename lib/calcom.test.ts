@@ -1,7 +1,7 @@
 /**
  * Cal.com API client integration tests.
  * Stubs global `fetch` to assert URL/payload/headers and error handling.
- * vi.resetModules() before each test resets the `calApiKeyOverride` singleton.
+ * vi.resetModules() before each test gives every case a fresh module instance.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -242,6 +242,109 @@ describe("calcom", () => {
           attendeeEmail: "g@e.com",
         }),
       ).rejects.toThrow("missing uid");
+    });
+  });
+
+  describe("retry policy", () => {
+    /** Keep backoff sub-millisecond so these stay fast. */
+    function stubFastBackoff() {
+      vi.stubEnv("CAL_RETRY_BASE_DELAY_MS", "1");
+      vi.stubEnv("CAL_RETRY_MAX_DELAY_MS", "2");
+    }
+
+    it("retries a GET on 5xx and resolves once upstream recovers", async () => {
+      stubFastBackoff();
+      const fetchSpy = vi
+        .fn()
+        .mockResolvedValueOnce(new Response("{}", { status: 500 }))
+        .mockResolvedValueOnce(new Response("{}", { status: 503 }))
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({ status: "success", data: { "2026-08-05": ["2026-08-05T09:00:00Z"] } }),
+            { status: 200 },
+          ),
+        );
+      vi.stubGlobal("fetch", fetchSpy);
+
+      const { getAvailableSlots } = await import("./calcom");
+      const slots = await getAvailableSlots({
+        startDate: "2026-08-05",
+        endDate: "2026-08-05",
+        eventTypeId: 123,
+      });
+
+      expect(slots).toHaveLength(1);
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
+    });
+
+    it("does not retry a GET on 4xx and preserves the upstream message", async () => {
+      stubFastBackoff();
+      const fetchSpy = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ message: "Event type not found" }), { status: 404 }),
+      );
+      vi.stubGlobal("fetch", fetchSpy);
+
+      const { getAvailableSlots } = await import("./calcom");
+      const rejection = await getAvailableSlots({
+        startDate: "2026-08-05",
+        endDate: "2026-08-05",
+        eventTypeId: 999,
+      }).catch((error: unknown) => error);
+
+      // Regression guard: p-retry hands its callbacks a context object, not the
+      // error — a callback that rethrows its argument rejects with a plain
+      // object and callers lose `.message`.
+      expect(rejection).toBeInstanceOf(Error);
+      expect((rejection as Error).message).toBe("Event type not found");
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("honours CAL_RETRY_MAX_ATTEMPTS=1 as 'no retry' instead of falling back to the default", async () => {
+      stubFastBackoff();
+      vi.stubEnv("CAL_RETRY_MAX_ATTEMPTS", "1");
+      const fetchSpy = vi.fn().mockResolvedValue(new Response("{}", { status: 500 }));
+      vi.stubGlobal("fetch", fetchSpy);
+
+      const { getAvailableSlots } = await import("./calcom");
+      await expect(
+        getAvailableSlots({ startDate: "2026-08-05", endDate: "2026-08-05", eventTypeId: 1 }),
+      ).rejects.toThrow("Cal.com request failed (500)");
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("clamps CAL_RETRY_MAX_ATTEMPTS=0 instead of handing p-retry a negative count", async () => {
+      stubFastBackoff();
+      vi.stubEnv("CAL_RETRY_MAX_ATTEMPTS", "0");
+      const fetchSpy = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ status: "success", data: {} }), { status: 200 }),
+      );
+      vi.stubGlobal("fetch", fetchSpy);
+
+      const { getAvailableSlots } = await import("./calcom");
+      // `retries: -1` would make p-retry throw "Expected `retries` to be a
+      // non-negative number" on every single Cal.com GET.
+      await expect(
+        getAvailableSlots({ startDate: "2026-08-05", endDate: "2026-08-05", eventTypeId: 1 }),
+      ).resolves.toEqual([]);
+    });
+
+    it("never retries a booking POST — a duplicate booking is worse than a failure", async () => {
+      stubFastBackoff();
+      const fetchSpy = vi.fn().mockResolvedValue(new Response("{}", { status: 500 }));
+      vi.stubGlobal("fetch", fetchSpy);
+
+      const { createBooking } = await import("./calcom");
+      await expect(
+        createBooking({
+          start: "2026-08-05T09:00:00Z",
+          attendeeName: "Guest",
+          attendeeEmail: "g@e.com",
+          eventTypeId: 123,
+        }),
+      ).rejects.toThrow("Cal.com request failed (500)");
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
     });
   });
 

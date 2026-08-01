@@ -24,6 +24,7 @@ export type CreateCheckoutParams = {
   planTier: "starter" | "pro";
   successUrl: string;
   cancelUrl: string;
+  stripeCustomerId?: string | null;
 };
 
 export type CreateBillingPortalParams = {
@@ -32,9 +33,17 @@ export type CreateBillingPortalParams = {
 };
 
 export function getBillingMode(): BillingMode {
-  const mode = (process.env.BILLING_MODE ?? "test").trim().toLowerCase();
-  if (mode !== "live") return "test";
-  return "live";
+  const raw = process.env.BILLING_MODE?.trim().toLowerCase();
+  if (raw === "live") return "live";
+  if (raw === "test") return "test";
+
+  // No explicit BILLING_MODE — infer from environment.
+  // In production, never silently default to test (fail-open paywall + dead Stripe).
+  if (process.env.NODE_ENV === "production") {
+    console.warn("[billing] BILLING_MODE not set — defaulting to live in production");
+    return "live";
+  }
+  return "test";
 }
 
 let _stripe: Stripe | null | undefined;
@@ -106,11 +115,15 @@ export async function createCheckoutSession(
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
+    ...(params.stripeCustomerId ? { customer: params.stripeCustomerId } : {}),
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: params.successUrl,
     cancel_url: params.cancelUrl,
     client_reference_id: params.workspaceId,
     metadata: { workspace_id: params.workspaceId, plan_tier: params.planTier },
+    subscription_data: {
+      metadata: { workspace_id: params.workspaceId, plan_tier: params.planTier },
+    },
   });
 
   if (!session.url) {

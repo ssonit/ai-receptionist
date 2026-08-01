@@ -76,6 +76,12 @@ export const APP_ERROR_CODE = {
   CAL_OAUTH_STATE_INVALID: "cal_oauth_state_invalid",
   CAL_OAUTH_EXCHANGE_FAILED: "cal_oauth_exchange_failed",
   CAL_OAUTH_REFRESH_FAILED: "cal_oauth_refresh_failed",
+  MESSENGER_NOT_CONFIGURED: "messenger_not_configured",
+  MESSENGER_SEND_FAILED: "messenger_send_failed",
+  MESSENGER_OAUTH_FAILED: "messenger_oauth_failed",
+  MESSENGER_DISCONNECT_FAILED: "messenger_disconnect_failed",
+  SUBSCRIPTION_INACTIVE: "subscription_inactive",
+  WEBHOOK_SECRET_FAILED: "webhook_secret_failed",
 } as const;
 
 export type AppErrorCode = (typeof APP_ERROR_CODE)[keyof typeof APP_ERROR_CODE];

@@ -117,16 +117,20 @@ export async function proxy(request: NextRequest) {
   if (user && path.startsWith(DASHBOARD_PATH.root)) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("workspace_id, role")
+      .select("workspace_id, role, workspaces(setup_completed_at, cal_api_key_encrypted, cal_event_type_id, cal_auth_mode, plan_tier, subscription_status, trial_ends_at)")
       .eq("id", user.id)
       .maybeSingle();
 
     if (profile?.workspace_id) {
-      const { data: ws } = await supabase
-        .from("workspaces")
-        .select("setup_completed_at, cal_api_key_encrypted, cal_event_type_id, cal_auth_mode, plan_tier, subscription_status, trial_ends_at")
-        .eq("id", profile.workspace_id)
-        .maybeSingle();
+      // PostgREST returns a single object for a many-to-one embed
+      // (profiles.workspace_id → workspaces.id), but an array when the
+      // relationship is inferred as to-many. Accept both.
+      const wsRel = profile.workspaces as
+        | Record<string, unknown>
+        | Record<string, unknown>[]
+        | null
+        | undefined;
+      const ws = (Array.isArray(wsRel) ? wsRel[0] : wsRel) ?? undefined;
 
       const incomplete = !ws?.setup_completed_at;
       const onSetup = path === DASHBOARD_PATH.setup;
@@ -163,8 +167,7 @@ export async function proxy(request: NextRequest) {
           !incomplete &&
           isOwner &&
           getBillingMode() !== "test" &&
-          path !== DASHBOARD_PATH.billing &&
-          !path.startsWith("/api/")
+          path !== DASHBOARD_PATH.billing
         ) {
           const subActive = isSubActive({
             planTier: (ws?.plan_tier as "free" | "starter" | "pro") ?? "free",

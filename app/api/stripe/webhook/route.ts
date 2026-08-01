@@ -1,8 +1,31 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import Stripe from "stripe";
-import { getBillingMode, getStripe, type PlanTier } from "@/lib/billing";
+import { getBillingMode, getStripe, type PlanTier, type SubscriptionStatus } from "@/lib/billing";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+const VALID_PLAN_TIERS = new Set<PlanTier>(["free", "starter", "pro"]);
+
+function validatePlanTier(v: unknown): PlanTier | null {
+  if (typeof v === "string" && VALID_PLAN_TIERS.has(v as PlanTier)) {
+    return v as PlanTier;
+  }
+  return null;
+}
+
+function mapStripeStatus(stripeStatus: string): SubscriptionStatus {
+  const mapping: Record<string, SubscriptionStatus> = {
+    active: "active",
+    past_due: "past_due",
+    canceled: "canceled",
+    incomplete: "incomplete",
+    trialing: "trialing",
+    unpaid: "past_due",
+    paused: "canceled",
+    incomplete_expired: "incomplete",
+  };
+  return mapping[stripeStatus] ?? "canceled";
+}
 
 export async function POST(request: NextRequest) {
   const mode = getBillingMode();
@@ -40,57 +63,80 @@ export async function POST(request: NextRequest) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       const workspaceId = session.client_reference_id ?? session.metadata?.workspace_id;
-      const planTier = (session.metadata?.plan_tier ?? "starter") as PlanTier;
 
       if (!workspaceId) break;
 
+      const planTier = validatePlanTier(session.metadata?.plan_tier);
       const customerId =
         typeof session.customer === "string" ? session.customer : session.customer?.id;
+      const subscriptionId =
+        typeof session.subscription === "string"
+          ? session.subscription
+          : session.subscription?.id ?? null;
 
-      await supabase
+      const updateData: Record<string, unknown> = {
+        subscription_status: "active",
+        stripe_customer_id: customerId ?? null,
+        stripe_subscription_id: subscriptionId,
+      };
+      if (planTier) {
+        updateData.plan_tier = planTier;
+      }
+
+      const { error } = await supabase
         .from("workspaces")
-        .update({
-          plan_tier: planTier,
-          subscription_status: "active",
-          stripe_customer_id: customerId ?? null,
-          stripe_subscription_id:
-            typeof session.subscription === "string"
-              ? session.subscription
-              : session.subscription?.id ?? null,
-        })
+        .update(updateData)
         .eq("id", workspaceId);
+
+      if (error) {
+        console.error("[stripe-webhook] checkout.session.completed update failed:", error);
+        return NextResponse.json({ error: "db_update_failed" }, { status: 500 });
+      }
       break;
     }
 
     case "customer.subscription.updated": {
       const sub = event.data.object as Stripe.Subscription;
-      const workspaceId =
-        (sub.metadata as Record<string, string> | null)?.workspace_id ?? null;
+      const meta = (sub.metadata as Record<string, string> | null) ?? null;
 
-      if (!workspaceId) break;
+      const subscriptionStatus = mapStripeStatus(sub.status);
+      const planTier =
+        validatePlanTier(meta?.plan_tier) ??
+        validatePlanTier(sub.items?.data?.[0]?.price?.lookup_key);
 
-      await supabase
+      const updateData: Record<string, unknown> = {
+        subscription_status: subscriptionStatus,
+      };
+      if (planTier) {
+        updateData.plan_tier = planTier;
+      }
+
+      const { error } = await supabase
         .from("workspaces")
-        .update({
-          subscription_status: sub.status,
-          plan_tier:
-            (sub.metadata as Record<string, string> | null)?.plan_tier ??
-            (sub.items?.data?.[0]?.price?.lookup_key as string | undefined) ??
-            "starter",
-        })
+        .update(updateData)
         .eq("stripe_subscription_id", sub.id);
+
+      if (error) {
+        console.error("[stripe-webhook] customer.subscription.updated update failed:", error);
+        return NextResponse.json({ error: "db_update_failed" }, { status: 500 });
+      }
       break;
     }
 
     case "customer.subscription.deleted": {
       const sub = event.data.object as Stripe.Subscription;
-      await supabase
+      const { error } = await supabase
         .from("workspaces")
         .update({
           subscription_status: "canceled",
           plan_tier: "free",
         })
         .eq("stripe_subscription_id", sub.id);
+
+      if (error) {
+        console.error("[stripe-webhook] customer.subscription.deleted update failed:", error);
+        return NextResponse.json({ error: "db_update_failed" }, { status: 500 });
+      }
       break;
     }
 

@@ -2,7 +2,11 @@ import {
   createChatSession,
   listChatSessionsForActor,
 } from "@/lib/chat-sessions";
-import { getChatActor, getChatWorkspaceId, jsonError } from "@/lib/chat-api";
+import {
+  chatErrorResponse,
+  getChatActor,
+  getChatWorkspaceId,
+} from "@/lib/chat-api";
 
 export async function GET(request: Request) {
   try {
@@ -15,9 +19,7 @@ export async function GET(request: Request) {
     });
     return Response.json({ sessions, workspaceId });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to list sessions";
-    return jsonError(message, 500);
+    return chatErrorResponse(error, "Failed to list sessions");
   }
 }
 
@@ -40,8 +42,6 @@ export async function POST(request: Request) {
     });
     return Response.json({ session });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to create session";
-    return jsonError(message, 500);
+    return chatErrorResponse(error, "Failed to create session");
   }
 }

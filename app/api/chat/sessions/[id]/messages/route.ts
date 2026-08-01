@@ -7,7 +7,12 @@ import {
   CHAT_MESSAGE_PAGE_LIMIT,
   type ProjectedChatMessage,
 } from "@/lib/chat-sessions";
-import { getChatActor, getChatWorkspaceId, jsonError } from "@/lib/chat-api";
+import {
+  chatErrorResponse,
+  getChatActor,
+  getChatWorkspaceId,
+  jsonError,
+} from "@/lib/chat-api";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -37,9 +42,7 @@ export async function GET(request: Request, { params }: Params) {
 
     return Response.json(page);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to load messages";
-    return jsonError(message, 500);
+    return chatErrorResponse(error, "Failed to load messages");
   }
 }
 
@@ -112,9 +115,6 @@ export async function POST(request: Request, { params }: Params) {
         : null,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to save messages";
-    console.error("[chat] persist messages failed", message, error);
-    return jsonError(message, 500);
+    return chatErrorResponse(error, "Failed to save messages");
   }
 }

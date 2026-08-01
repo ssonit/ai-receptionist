@@ -5,6 +5,7 @@ import {
   APP_ERROR_CODE,
   appErrorMessage,
   formatDbError,
+  formatUnknownError,
   reminderLeadTooShortMessage,
   slugAvailableMessage,
   slugIsYoursMessage,
@@ -188,4 +189,53 @@ export async function checkWorkspaceSlugAvailable(
     slug,
     message: slugAvailableMessage(slug),
   };
+}
+
+/**
+ * Reveal the workspace's Cal.com webhook signing secret, generating one on
+ * first use. Deliberately owner-triggered rather than generated on page load:
+ * the moment a workspace has its own secret it stops accepting payloads signed
+ * with the shared `CALCOM_WEBHOOK_SECRET`, so the owner must be standing by to
+ * paste the new value into Cal.com.
+ */
+export async function revealWebhookSecretAction(
+  workspaceId: string,
+): Promise<{ secret?: string; error?: string }> {
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
+
+  if (auth.workspaceId !== workspaceId) {
+    return { error: appErrorMessage(APP_ERROR_CODE.UNAUTHORIZED) };
+  }
+
+  try {
+    const { ensureWebhookSecret } = await import("@/lib/workspace");
+    const secret = await ensureWebhookSecret(workspaceId);
+    revalidatePath(DASHBOARD_PATH.settings);
+    return { secret };
+  } catch (error) {
+    return {
+      error: formatUnknownError(error, APP_ERROR_CODE.WEBHOOK_SECRET_FAILED),
+    };
+  }
+}
+
+export async function disconnectMessengerAction(
+  workspaceId: string,
+): Promise<{ error?: string }> {
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
+
+  if (auth.workspaceId !== workspaceId) {
+    return { error: appErrorMessage(APP_ERROR_CODE.UNAUTHORIZED) };
+  }
+
+  try {
+    const { clearMessengerTokens } = await import("@/lib/messenger-oauth");
+    await clearMessengerTokens(workspaceId);
+    revalidatePath(DASHBOARD_PATH.settings);
+    return {};
+  } catch {
+    return { error: appErrorMessage(APP_ERROR_CODE.MESSENGER_DISCONNECT_FAILED) };
+  }
 }

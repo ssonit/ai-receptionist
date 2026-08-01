@@ -23,6 +23,8 @@ export type ChatSessionRow = {
   continuation_token: string | null;
   stream_index: number;
   events: unknown;
+  channel: string | null;
+  external_user_id: string | null;
   last_message_at: string | null;
   created_at: string;
   updated_at: string;
@@ -52,6 +54,8 @@ export type ChatSessionListItem = Pick<
   | "eve_session_id"
   | "visitor_id"
   | "user_id"
+  | "channel"
+  | "external_user_id"
   | "last_message_at"
   | "created_at"
   | "updated_at"
@@ -103,14 +107,14 @@ export function compareChatMessagesChronological(
 }
 
 const SESSION_LIST_SELECT =
-  "id, title, status, eve_session_id, visitor_id, user_id, last_message_at, created_at, updated_at";
+  "id, title, status, eve_session_id, visitor_id, user_id, channel, external_user_id, last_message_at, created_at, updated_at";
 
 /** Ownership / mutate paths — skip heavy `events` blob. */
 const SESSION_AUTH_SELECT =
-  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, continuation_token, stream_index, last_message_at, created_at, updated_at";
+  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, continuation_token, stream_index, channel, external_user_id, last_message_at, created_at, updated_at";
 
 const SESSION_FULL_SELECT =
-  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, continuation_token, stream_index, events, last_message_at, created_at, updated_at";
+  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, continuation_token, stream_index, events, channel, external_user_id, last_message_at, created_at, updated_at";
 
 const MESSAGE_SELECT =
   "id, session_id, role, content, eve_message_id, eve_event_index, raw, created_at";
@@ -571,3 +575,105 @@ export function titleFromFirstUserMessage(content: string): string {
 }
 
 export { CHAT_MESSAGE_INITIAL_LIMIT, CHAT_MESSAGE_PAGE_LIMIT };
+
+// ── Channel-keyed sessions (Messenger, Zalo, etc.) ──
+
+/** Synthetic visitorId for channel sessions so booking ownership (S1) works unchanged. */
+export function channelVisitorId(channel: string, externalUserId: string): string {
+  return `${channel}:${externalUserId}`;
+}
+
+export async function getChannelSession(input: {
+  workspaceId: string;
+  channel: string;
+  externalUserId: string;
+}): Promise<ChatSessionRow | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("chat_sessions")
+    .select(SESSION_FULL_SELECT)
+    .eq("workspace_id", input.workspaceId)
+    .eq("channel", input.channel)
+    .eq("external_user_id", input.externalUserId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return (data as ChatSessionRow) ?? null;
+}
+
+export async function getOrCreateChannelSession(input: {
+  workspaceId: string;
+  channel: string;
+  externalUserId: string;
+  visitorId: string;
+  title?: string;
+}): Promise<ChatSessionRow> {
+  const existing = await getChannelSession(input);
+  if (existing) return existing;
+
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from("chat_sessions")
+    .insert({
+      workspace_id: input.workspaceId,
+      channel: input.channel,
+      external_user_id: input.externalUserId,
+      visitor_id: input.visitorId,
+      title: input.title?.trim() || "New chat",
+      status: "active",
+      stream_index: 0,
+      events: [],
+      created_at: now,
+      updated_at: now,
+    })
+    .select(SESSION_FULL_SELECT)
+    .single();
+
+  if (error) {
+    // Race: another request created the session between our read and insert.
+    if (error.code === "23505") {
+      const retry = await getChannelSession(input);
+      if (retry) return retry;
+    }
+    throw new Error(error.message);
+  }
+  return data as ChatSessionRow;
+}
+
+/** Resolve a chat_session row by the eve runtime session id. */
+export async function findChatSessionByEveSessionId(
+  eveSessionId: string,
+): Promise<ChatSessionRow | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("chat_sessions")
+    .select(SESSION_FULL_SELECT)
+    .eq("eve_session_id", eveSessionId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return (data as ChatSessionRow) ?? null;
+}
+
+/**
+ * Bump session metadata from a trusted (server-side) channel handler.
+ * Does NOT run the visitor-ownership gate — channels are server-trusted.
+ */
+export async function touchChannelSession(input: {
+  id: string;
+  title?: string;
+  eveSessionId?: string;
+  continuationToken?: string;
+}): Promise<void> {
+  const supabase = createAdminClient();
+  const patch: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+  if (input.title !== undefined) patch.title = input.title;
+  if (input.eveSessionId !== undefined) patch.eve_session_id = input.eveSessionId;
+  if (input.continuationToken !== undefined) patch.continuation_token = input.continuationToken;
+
+  await supabase.from("chat_sessions").update(patch).eq("id", input.id);
+}

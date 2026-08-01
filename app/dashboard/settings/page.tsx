@@ -1,5 +1,7 @@
 import { CalConnectionCard } from "@/app/_components/cal-connection-card";
+import { MessengerConnectionCard } from "@/app/_components/messenger-connection-card";
 import { WorkspaceSettingsForm } from "@/app/_components/workspace-settings-form";
+import { WebhookSecretCard } from "@/app/_components/webhook-secret-card";
 import { WorkspaceTeamCard } from "@/app/_components/workspace-team-card";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { absoluteAppOrigin } from "@/lib/app-origin";
@@ -21,6 +23,9 @@ export default async function SettingsPage() {
   let workspace: WorkspaceOpsValues | null = null;
   let calAuthModeForSettings: string | null = null;
   let calUsernameForSettings: string | null = null;
+  let messengerPageId: string | null = null;
+  let messengerPageName: string | null = null;
+  let hasOwnWebhookSecret = false;
   let currentUserId: string | null = null;
   let members: Awaited<ReturnType<typeof listWorkspaceMembers>> = [];
   let pendingInvites: Awaited<ReturnType<typeof listPendingInvites>> = [];
@@ -34,7 +39,7 @@ export default async function SettingsPage() {
     const { data } = await supabase
       .from("workspaces")
       .select(
-        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end, cal_auth_mode, cal_username",
+        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end, cal_auth_mode, cal_username, messenger_page_id, messenger_page_name, webhook_secret_encrypted",
       )
       .eq("id", dashboard.workspaceId)
       .maybeSingle();
@@ -73,6 +78,14 @@ export default async function SettingsPage() {
         (data as Record<string, unknown>).cal_auth_mode as string | null;
       calUsernameForSettings =
         (data as Record<string, unknown>).cal_username as string | null;
+      messengerPageId =
+        (data as Record<string, unknown>).messenger_page_id as string | null;
+      messengerPageName =
+        (data as Record<string, unknown>).messenger_page_name as string | null;
+      // Presence only — the ciphertext never leaves the server.
+      hasOwnWebhookSecret = Boolean(
+        (data as Record<string, unknown>).webhook_secret_encrypted,
+      );
     }
 
     try {
@@ -130,6 +143,46 @@ export default async function SettingsPage() {
                     calAuthMode={calAuthModeForSettings}
                     calUsername={calUsernameForSettings}
                     workspaceId={dashboard.workspaceId}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border/70 pt-8 lg:pt-10">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,13rem)_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+                <div className="space-y-1.5 lg:pt-0.5">
+                  <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                    Messenger
+                  </h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
+                    Connect your Facebook Page so guests can book via Messenger.
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <MessengerConnectionCard
+                    workspaceId={dashboard.workspaceId}
+                    messengerPageId={messengerPageId}
+                    messengerPageName={messengerPageName}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border/70 pt-8 lg:pt-10">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,13rem)_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+                <div className="space-y-1.5 lg:pt-0.5">
+                  <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                    Webhook
+                  </h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
+                    Keep bookings in sync when they change on Cal.com.
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <WebhookSecretCard
+                    workspaceId={dashboard.workspaceId}
+                    webhookUrl={`${origin}/api/cal/webhook?workspace_id=${dashboard.workspaceId}`}
+                    hasOwnSecret={hasOwnWebhookSecret}
                   />
                 </div>
               </div>

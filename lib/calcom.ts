@@ -16,6 +16,7 @@
  * @see https://cal.com/docs/api-reference/v2/bookings/get-all-bookings
  * @see https://cal.com/docs/api-reference/v2/event-types/create-an-event-type
  */
+import { AsyncLocalStorage } from "node:async_hooks";
 import { bookingConfig } from "@/lib/booking-config";
 import {
   CAL_BOOKING_LIST_FILTERS,
@@ -23,7 +24,7 @@ import {
   normalizeCalApiStatus,
   type CalBookingListFilter,
 } from "@/lib/booking-status";
-import { withRetry, type RetryConfig } from "@/lib/retry";
+import pRetry from "p-retry";
 
 const SLOTS_API_VERSION = "2024-09-04";
 const BOOKINGS_API_VERSION = "2024-08-13";
@@ -51,6 +52,8 @@ export type CreateBookingInput = {
   attendeeEmail: string;
   attendeePhone?: string;
   timeZone?: string;
+  /** Cal.com attendee language — defaults to "en". */
+  language?: string;
   notes?: string;
   eventTypeId?: number;
   eventTypeSlug?: string;
@@ -110,25 +113,18 @@ export type CalEventRef = {
   username?: string;
 };
 
-/** API key only — enough for event-type list/create and unscoped booking lists. */
-let calApiKeyOverride: string | null = null;
+const calApiKeyStore = new AsyncLocalStorage<string>();
 
 /** Run Cal.com calls with a workspace-specific API key. */
 export async function withCalApiKey<T>(
   apiKey: string,
   fn: () => Promise<T>,
 ): Promise<T> {
-  const prev = calApiKeyOverride;
-  calApiKeyOverride = apiKey;
-  try {
-    return await fn();
-  } finally {
-    calApiKeyOverride = prev;
-  }
+  return calApiKeyStore.run(apiKey, fn);
 }
 
 export function requireCalApiKey() {
-  const apiKey = calApiKeyOverride ?? bookingConfig.cal.apiKey;
+  const apiKey = calApiKeyStore.getStore() ?? bookingConfig.cal.apiKey;
   const { apiBaseUrl } = bookingConfig.cal;
   if (!apiKey) {
     throw new Error("CALCOM_API_KEY is not configured");
@@ -155,13 +151,40 @@ function requireCalConfig(override?: CalEventRef) {
 
 const CAL_FETCH_TIMEOUT_MS = 12_000;
 
+/**
+ * `Number(env) || fallback` swallows a deliberate 0, so read the env var
+ * explicitly. Attempts are clamped to >= 1 — `CAL_RETRY_MAX_ATTEMPTS=0` would
+ * otherwise reach p-retry as `retries: -1`, which throws on every call.
+ */
+function envInt(name: string, fallback: number, min: number): number {
+  const raw = process.env[name]?.trim();
+  if (!raw) return fallback;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.trunc(parsed));
+}
+
+function isRetryableCalError(error: unknown): boolean {
+  if (error instanceof Error) {
+    if (error.name === "AbortError") return true;
+    const msg = error.message;
+    if (msg.includes("Cal.com request failed (5")) return true;
+    if (msg.includes("Cal.com request timed out")) return true;
+    if (msg.includes("fetch failed") || msg.includes("network")) return true;
+    if ((error as NodeJS.ErrnoException).code === "ECONNRESET") return true;
+    if ((error as NodeJS.ErrnoException).code === "ETIMEDOUT") return true;
+    if ((error as NodeJS.ErrnoException).code === "ENOTFOUND") return true;
+  }
+  return false;
+}
+
 async function calFetch<T>(
   path: string,
   init: RequestInit & { apiVersion: string },
 ): Promise<T> {
   const { apiKey, apiBaseUrl } = requireCalApiKey();
 
-  return withRetry(async () => {
+  const doFetch = async (): Promise<T> => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), CAL_FETCH_TIMEOUT_MS);
 
@@ -194,7 +217,22 @@ async function calFetch<T>(
       throw new Error(message);
     }
     return body;
-  });
+  };
+
+  // Only retry GET — POST/PUT/DELETE are not idempotent and retrying
+  // them can create duplicate bookings, cancellations, or reschedules.
+  if (init.method === "GET") {
+    return pRetry(doFetch, {
+      retries: envInt("CAL_RETRY_MAX_ATTEMPTS", 3, 1) - 1,
+      minTimeout: envInt("CAL_RETRY_BASE_DELAY_MS", 1000, 0),
+      maxTimeout: envInt("CAL_RETRY_MAX_DELAY_MS", 10_000, 0),
+      // `shouldRetry` receives `{ error, attemptNumber, ... }` — not the error
+      // itself. Returning false makes p-retry rethrow the *original* error, so
+      // callers still get the real Cal.com message. Do not throw from here.
+      shouldRetry: ({ error }) => isRetryableCalError(error),
+    });
+  }
+  return doFetch();
 }
 
 /** Docs: date-only `start` → start of day; date-only `end` → end of day. Keep YYYY-MM-DD. */
@@ -315,7 +353,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
       name: input.attendeeName,
       email: input.attendeeEmail,
       timeZone: input.timeZone ?? bookingConfig.timezone,
-      language: "vi",
+      language: input.language ?? "en",
       ...(input.attendeePhone ? { phoneNumber: input.attendeePhone } : {}),
     },
     ...(input.notes

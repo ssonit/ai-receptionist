@@ -1,5 +1,10 @@
 import { clearSessionVerifications } from "@/lib/agent-booking-auth";
-import { getChatActor, getChatWorkspaceId, jsonError } from "@/lib/chat-api";
+import {
+  chatErrorResponse,
+  getChatActor,
+  getChatWorkspaceId,
+  jsonError,
+} from "@/lib/chat-api";
 import { getChatSessionForActor } from "@/lib/chat-sessions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -16,7 +21,10 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const { visitorId, userId } = await getChatActor(request);
-    const workspaceId = await getChatWorkspaceId(request);
+    // Privacy action — must keep working even when the workspace is unpaid.
+    const workspaceId = await getChatWorkspaceId(request, {
+      skipSubscriptionCheck: true,
+    });
     const body = (await request.json().catch(() => ({}))) as {
       chatSessionId?: string;
     };
@@ -79,8 +87,6 @@ export async function POST(request: Request) {
     res.cookies.set(VISITOR_COOKIE, newVisitorId, visitorCookieOptions());
     return res;
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to end session";
-    return jsonError(message, 500);
+    return chatErrorResponse(error, "Failed to end session");
   }
 }

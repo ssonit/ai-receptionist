@@ -4,7 +4,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { upsertCalBookings, type CalWebhookPayload } from "@/lib/sync-cal-bookings";
 import { getCalBookingView, normalizeCalApiStatus } from "@/lib/booking-status";
 import type { CalBookingListItem } from "@/lib/calcom";
-import { getCalApiKeyForWorkspace } from "@/lib/workspace";
+import { getWebhookSecretForWorkspace } from "@/lib/workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +52,27 @@ function webhookToBookingItem(event: CalWebhookPayload): CalBookingListItem | nu
   };
 }
 
+async function processEvent(rawBody: string, workspaceId: string) {
+  let event: CalWebhookPayload;
+  try {
+    event = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
+  }
+
+  if (!RELEVANT_EVENTS.has(event.triggerEvent)) {
+    return NextResponse.json({ ok: true, skipped: true });
+  }
+
+  const item = webhookToBookingItem(event);
+  if (!item) {
+    return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
+  }
+
+  const result = await upsertCalBookings([item], workspaceId);
+  return NextResponse.json({ ok: true, ...result });
+}
+
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const workspaceId = searchParams.get("workspace_id")?.trim();
@@ -63,19 +84,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Verify the workspace exists and has a Cal key configured.
-  try {
-    await getCalApiKeyForWorkspace(workspaceId);
-  } catch {
-    return NextResponse.json(
-      { error: "workspace_not_found_or_no_cal_key" },
-      { status: 404 },
-    );
+  const secret = await getWebhookSecretForWorkspace(workspaceId);
+  if (!secret) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        `[webhook] No webhook secret configured for workspace ${workspaceId} — accepting unsigned payload (dev only)`,
+      );
+    } else {
+      return NextResponse.json(
+        { error: "webhook_not_configured" },
+        { status: 501 },
+      );
+    }
   }
 
-  const webhookSecret = (process.env.CALCOM_WEBHOOK_SECRET ?? "").trim();
-  if (webhookSecret) {
-    const sig = request.headers.get("x-cal-signature-256")?.trim() ?? "";
+  const sig = request.headers.get("x-cal-signature-256")?.trim() ?? "";
+
+  if (secret) {
     if (!sig) {
       return NextResponse.json(
         { error: "missing_signature" },
@@ -84,63 +109,20 @@ export async function POST(request: NextRequest) {
     }
 
     const rawBody = await request.text();
-    if (!verifySignature(rawBody, sig, webhookSecret)) {
+    if (!verifySignature(rawBody, sig, secret)) {
       return NextResponse.json(
         { error: "invalid_signature" },
         { status: 401 },
       );
     }
 
-    let event: CalWebhookPayload;
-    try {
-      event = JSON.parse(rawBody);
-    } catch {
-      return NextResponse.json(
-        { error: "invalid_json" },
-        { status: 400 },
-      );
-    }
-
-    if (!RELEVANT_EVENTS.has(event.triggerEvent)) {
-      return NextResponse.json({ ok: true, skipped: true });
-    }
-
-    const item = webhookToBookingItem(event);
-    if (!item) {
-      return NextResponse.json(
-        { error: "invalid_payload" },
-        { status: 400 },
-      );
-    }
-
-    const result = await upsertCalBookings([item], workspaceId);
-    return NextResponse.json({ ok: true, ...result });
+    return processEvent(rawBody, workspaceId);
   }
 
-  // No webhook secret configured — accept unsigned (dev/test only).
-  const rawBody = await request.text();
-  let event: CalWebhookPayload;
-  try {
-    event = JSON.parse(rawBody);
-  } catch {
-    return NextResponse.json(
-      { error: "invalid_json" },
-      { status: 400 },
-    );
-  }
-
-  if (!RELEVANT_EVENTS.has(event.triggerEvent)) {
-    return NextResponse.json({ ok: true, skipped: true });
-  }
-
-  const item = webhookToBookingItem(event);
-  if (!item) {
-    return NextResponse.json(
-      { error: "invalid_payload" },
-      { status: 400 },
-    );
-  }
-
-  const result = await upsertCalBookings([item], workspaceId);
-  return NextResponse.json({ ok: true, ...result });
+  // Dev-only unsigned path — never reached in production (secret is always
+  // required above, and the dev fallback sets secret="" not null).
+  // Keeping the block for clarity: in dev without any secret configured,
+  // we process unsigned payloads with a loud console warning.
+  const rawBody2 = await request.text();
+  return processEvent(rawBody2, workspaceId);
 }

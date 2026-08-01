@@ -6,7 +6,12 @@ import {
   updateChatSessionState,
   CHAT_MESSAGE_INITIAL_LIMIT,
 } from "@/lib/chat-sessions";
-import { getChatActor, getChatWorkspaceId, jsonError } from "@/lib/chat-api";
+import {
+  chatErrorResponse,
+  getChatActor,
+  getChatWorkspaceId,
+  jsonError,
+} from "@/lib/chat-api";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -54,9 +59,7 @@ export async function GET(request: Request, { params }: Params) {
       messageCount,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to load session";
-    return jsonError(message, 500);
+    return chatErrorResponse(error, "Failed to load session");
   }
 }
 
@@ -92,8 +95,6 @@ export async function PATCH(request: Request, { params }: Params) {
       session: toClientSession(session, { includeEventTail: false }),
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to update session";
-    return jsonError(message, 500);
+    return chatErrorResponse(error, "Failed to update session");
   }
 }

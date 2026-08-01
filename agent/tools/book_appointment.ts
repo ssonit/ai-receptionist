@@ -87,6 +87,12 @@ export default defineTool({
       }
       const ws = await getWorkspaceById(workspaceId);
       const timeZone = ws?.timezone ?? bookingConfig.timezone;
+      const auth =
+        ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null;
+      const locale =
+        typeof auth?.attributes?.locale === "string"
+          ? (auth.attributes.locale as string)
+          : undefined;
       const day = start.slice(0, 10);
       const slots = await withCalApiKey(apiKey, () =>
         getAvailableSlots({
@@ -125,13 +131,13 @@ export default defineTool({
           attendeeName: guestName,
           attendeeEmail: email,
           attendeePhone: phone,
+          timeZone,
+          language: locale,
           notes: [service, notes].filter(Boolean).join(" | ") || undefined,
           ...eventRef,
         }),
       );
 
-      const auth =
-        ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null;
       const guestActor = await resolveGuestBookingActor({
         sessionId: sid,
         auth,

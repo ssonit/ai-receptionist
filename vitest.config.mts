@@ -7,7 +7,13 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: false,
-    include: ["lib/**/*.test.ts", "agent/**/*.test.ts", "app/api/**/*.test.ts"],
+    include: [
+      "lib/**/*.test.ts",
+      "agent/**/*.test.ts",
+      "app/api/**/*.test.ts",
+      // tests/agent-tools/** lived outside these globs and silently never ran.
+      "tests/**/*.test.ts",
+    ],
     exclude: ["node_modules/**", "dist/**", ".next/**", ".output/**"],
     setupFiles: ["./tests/setup.ts"],
     env: {
