@@ -46,6 +46,31 @@ type OAuthTokenResponse = {
   scope: string;
 };
 
+/**
+ * Token-endpoint failure that remembers whether Cal.com *rejected* the grant
+ * or merely failed to answer.
+ *
+ * The distinction matters: callers wipe the workspace's stored OAuth
+ * credentials on rejection, and a timeout or a 5xx must not trigger that.
+ */
+export class CalOAuthError extends Error {
+  readonly status: number;
+
+  /** Cal.com refused the grant — the stored token is genuinely dead. */
+  readonly definitive: boolean;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "CalOAuthError";
+    this.status = status;
+    this.definitive = status === 400 || status === 401;
+  }
+}
+
+export function isDefinitiveCalOAuthError(error: unknown): boolean {
+  return error instanceof CalOAuthError && error.definitive;
+}
+
 async function postToken(body: Record<string, string>): Promise<OAuthTokenResponse> {
   const { clientId, clientSecret, redirectUri } = validateOAuthEnv();
 
@@ -66,6 +91,14 @@ async function postToken(body: Record<string, string>): Promise<OAuthTokenRespon
       headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
       body: params.toString(),
     });
+  } catch (error) {
+    // Network failure / abort — status 0 keeps this non-definitive.
+    throw new CalOAuthError(
+      error instanceof Error && error.name === "AbortError"
+        ? "Cal.com token request timed out"
+        : "Cal.com token request failed",
+      0,
+    );
   } finally {
     clearTimeout(timeout);
   }
@@ -74,11 +107,14 @@ async function postToken(body: Record<string, string>): Promise<OAuthTokenRespon
 
   if (!res.ok) {
     const msg = typeof json.error === "string" ? json.error : typeof json.message === "string" ? json.message : `Token request failed (${res.status})`;
-    throw new Error(msg);
+    throw new CalOAuthError(msg, res.status);
   }
 
   if (typeof json.access_token !== "string" || typeof json.refresh_token !== "string") {
-    throw new Error("Cal.com token response missing access_token or refresh_token");
+    throw new CalOAuthError(
+      "Cal.com token response missing access_token or refresh_token",
+      res.status,
+    );
   }
 
   return {

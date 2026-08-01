@@ -9,7 +9,7 @@ import {
 import { createBooking, getAvailableSlots, withCalApiKey } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
 import { normalizeCalApiStatus } from "@/lib/booking-status";
-import { formatSlotForGuest } from "@/lib/guest-timezone";
+import { calendarDayInTimeZone, formatSlotForGuest } from "@/lib/guest-timezone";
 import { resolveGuestTimeZone } from "@/lib/guest-timezone-resolve";
 import { upsertLeadAsBooked } from "@/lib/leads";
 import { createNotification } from "@/lib/notifications-write";
@@ -93,7 +93,7 @@ export default defineTool({
         typeof auth?.attributes?.locale === "string"
           ? (auth.attributes.locale as string)
           : undefined;
-      const day = start.slice(0, 10);
+      const day = calendarDayInTimeZone(start, timeZone);
       const slots = await withCalApiKey(apiKey, () =>
         getAvailableSlots({
           startDate: day,
@@ -181,7 +181,7 @@ export default defineTool({
             guest_timezone: guestTimeZone,
             raw: booking.raw,
           },
-          { onConflict: "cal_booking_uid" },
+          { onConflict: "workspace_id,cal_booking_uid" },
         );
 
         await upsertLeadAsBooked({
@@ -245,7 +245,7 @@ export default defineTool({
               guest_timezone: guestTimeZone,
               raw: booking.raw,
             },
-            { onConflict: "cal_booking_uid" },
+            { onConflict: "workspace_id,cal_booking_uid" },
           );
         } catch {
           // ignore second failure — still return manageCode below

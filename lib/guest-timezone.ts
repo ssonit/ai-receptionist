@@ -198,6 +198,30 @@ export function resolveTimeZoneFromText(text: string): string | null {
   return null;
 }
 
+/**
+ * Intl formatters are expensive to construct and these run per slot —
+ * check_availability formats up to 40, each needing a slot + a zone-name
+ * formatter for both the guest and the business zone. Cache by their key.
+ */
+function cachedFormatter(
+  cache: Map<string, Intl.DateTimeFormat>,
+  key: string,
+  build: () => Intl.DateTimeFormat,
+): Intl.DateTimeFormat | null {
+  const hit = cache.get(key);
+  if (hit) return hit;
+  try {
+    const fmt = build();
+    cache.set(key, fmt);
+    return fmt;
+  } catch {
+    return null;
+  }
+}
+
+const slotFormatters = new Map<string, Intl.DateTimeFormat>();
+const tzNameFormatters = new Map<string, Intl.DateTimeFormat>();
+
 function formatInZone(
   iso: string,
   timeZone: string,
@@ -205,23 +229,32 @@ function formatInZone(
 ): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return new Intl.DateTimeFormat(locale, {
-    timeZone,
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(d);
+  const fmt = cachedFormatter(
+    slotFormatters,
+    `${locale}|${timeZone}`,
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        timeZone,
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }),
+  );
+  return fmt ? fmt.format(d) : iso;
 }
 
 function shortTzName(iso: string, timeZone: string): string {
+  const fmt = cachedFormatter(
+    tzNameFormatters,
+    timeZone,
+    () => new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "short" }),
+  );
+  if (!fmt) return timeZone;
   try {
-    const parts = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      timeZoneName: "short",
-    }).formatToParts(new Date(iso));
+    const parts = fmt.formatToParts(new Date(iso));
     return parts.find((p) => p.type === "timeZoneName")?.value ?? timeZone;
   } catch {
     return timeZone;
@@ -231,6 +264,36 @@ function shortTzName(iso: string, timeZone: string): string {
 /**
  * Dual display for guest vs business. Same tz → single string.
  */
+/**
+ * Calendar date (YYYY-MM-DD) of an instant *in the given zone*.
+ *
+ * Cal.com's `/slots` takes a date-only range interpreted in `timeZone`, so
+ * deriving the day with `iso.slice(0, 10)` asks for the wrong day whenever the
+ * zone offset pushes the instant across midnight — e.g. `2026-08-01T18:00Z` is
+ * already 2026-08-02 in Asia/Ho_Chi_Minh, and the slot check would look at the
+ * previous day and reject a perfectly open slot.
+ */
+const ymdFormatters = new Map<string, Intl.DateTimeFormat>();
+
+export function calendarDayInTimeZone(iso: string, timeZone: string): string {
+  const ms = Date.parse(iso);
+  if (Number.isNaN(ms)) return iso.slice(0, 10);
+  const fmt = cachedFormatter(
+    ymdFormatters,
+    timeZone,
+    // en-CA formats as YYYY-MM-DD.
+    () =>
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }),
+  );
+  if (!fmt) return new Date(ms).toISOString().slice(0, 10);
+  return fmt.format(new Date(ms));
+}
+
 export function formatSlotForGuest(
   iso: string,
   guestTz: string | null | undefined,

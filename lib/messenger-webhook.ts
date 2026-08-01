@@ -33,8 +33,6 @@ export function verifyMessengerSignature(
 
 // ── Event types ──
 
-export type MessengerWebhookEvent = MessengerMessageEvent | MessengerUnknownEvent;
-
 export interface MessengerMessageEvent {
   type: "message";
   psid: string;
@@ -42,11 +40,6 @@ export interface MessengerMessageEvent {
   text: string;
   mid: string;
   timestamp: number;
-}
-
-export interface MessengerUnknownEvent {
-  type: "unknown";
-  eventName: string;
 }
 
 // ── Parsing ──
@@ -74,20 +67,26 @@ interface MetaWebhookBody {
 }
 
 /**
- * Parse a Messenger webhook body. Returns the first actionable messaging event
- * or null if the payload is a non-message event (echo, read receipt, etc.).
+ * Parse a Messenger webhook body into every actionable message event.
+ *
+ * Meta batches deliveries: one POST can carry several `entry` objects (a burst
+ * from one guest, or messages from different guests). Returning only the first
+ * match silently drops the rest.
+ *
+ * Non-message events (echo, read receipt, delivery) are filtered out, so an
+ * empty array means "nothing to do".
  */
-export function parseMessengerEvent(
-  rawBody: string,
-): MessengerWebhookEvent | null {
+export function parseMessengerEvents(rawBody: string): MessengerMessageEvent[] {
   let body: MetaWebhookBody;
   try {
     body = JSON.parse(rawBody);
   } catch {
-    return null;
+    return [];
   }
 
-  if (body.object !== "page" || !body.entry?.length) return null;
+  if (body.object !== "page" || !body.entry?.length) return [];
+
+  const events: MessengerMessageEvent[] = [];
 
   for (const entry of body.entry) {
     const pageId = entry.id;
@@ -101,18 +100,18 @@ export function parseMessengerEvent(
       const text = msg.message?.text?.trim();
       if (!text) continue;
 
-      return {
+      events.push({
         type: "message",
         psid: msg.sender.id,
         pageId: pageId ?? msg.recipient?.id ?? "",
         text,
         mid: msg.message?.mid ?? "",
         timestamp: msg.timestamp ?? Date.now(),
-      };
+      });
     }
   }
 
-  return null;
+  return events;
 }
 
 // ── Verify token (webhook challenge) ──

@@ -12,6 +12,7 @@ import {
 } from "@/lib/booking-manage-code";
 import { bookingOtpEmailCopy, sendTransactionalEmail } from "@/lib/email";
 import { APP_ERROR_CODE } from "@/lib/errors";
+import { escapeLikePattern } from "@/lib/sql-like";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const INVARIANT_OTP_MSG =
@@ -82,7 +83,9 @@ export default defineTool({
         .from("bookings")
         .select("id, list_status")
         .eq("workspace_id", actor.workspaceId)
-        .ilike("guest_email", dest)
+        // Escaped: `dest` is typed by the guest, so unescaped wildcards would
+        // bind the OTP to whichever stranger's booking happened to match.
+        .ilike("guest_email", escapeLikePattern(dest))
         .gte("start_time", nowIso)
         .limit(5);
 

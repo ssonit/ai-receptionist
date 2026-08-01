@@ -7,6 +7,7 @@ import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
 import { isCancelledStatus } from "@/lib/booking-status";
 import { VERIFIED_UNTIL_MS } from "@/lib/booking-manage-code";
 import { formatSlotForGuest } from "@/lib/guest-timezone";
+import { escapeLikePattern } from "@/lib/sql-like";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   authAttr,
@@ -301,7 +302,9 @@ export async function findClaimableBookings(
       .from("bookings")
       .select(BOOKING_SELECT)
       .eq("workspace_id", actor.workspaceId)
-      .ilike("guest_email", actor.profileEmail)
+      // Escaped: an ordinary underscore in the profile email would otherwise
+      // act as a wildcard and auto-claim (tier A+) a stranger's booking.
+      .ilike("guest_email", escapeLikePattern(actor.profileEmail))
       .gte("start_time", nowIso)
       .limit(30);
     for (const raw of data ?? []) {
@@ -510,7 +513,7 @@ export async function markBookingVerified(input: {
 }): Promise<void> {
   const supabase = createAdminClient();
   const now = Date.now();
-  await supabase.from("booking_verifications").insert({
+  const { error } = await supabase.from("booking_verifications").insert({
     workspace_id: input.workspaceId,
     chat_session_id: input.chatSessionId,
     booking_id: input.bookingId,
@@ -522,6 +525,10 @@ export async function markBookingVerified(input: {
     consumed_at: new Date(now).toISOString(),
     verified_until: new Date(now + VERIFIED_UNTIL_MS).toISOString(),
   });
+
+  // This row *is* the proof of ownership. Silently losing it means the guest
+  // passes verification and is then asked to verify all over again.
+  if (error) throw new Error(error.message);
 }
 
 /** Clear verified_until for a chat session (forget visitor). */
@@ -529,9 +536,12 @@ export async function clearSessionVerifications(
   chatSessionId: string,
 ): Promise<void> {
   const supabase = createAdminClient();
-  await supabase
+  const { error } = await supabase
     .from("booking_verifications")
     .update({ verified_until: new Date().toISOString() })
     .eq("chat_session_id", chatSessionId)
     .not("verified_until", "is", null);
+
+  // "Forget me" must not report success while the session keeps its claims.
+  if (error) throw new Error(error.message);
 }

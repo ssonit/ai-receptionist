@@ -675,5 +675,14 @@ export async function touchChannelSession(input: {
   if (input.eveSessionId !== undefined) patch.eve_session_id = input.eveSessionId;
   if (input.continuationToken !== undefined) patch.continuation_token = input.continuationToken;
 
-  await supabase.from("chat_sessions").update(patch).eq("id", input.id);
+  const { error } = await supabase
+    .from("chat_sessions")
+    .update(patch)
+    .eq("id", input.id);
+
+  // A lost eve_session_id makes findChatSessionByEveSessionId() return null,
+  // so the agent's reply is never delivered back to the channel.
+  if (error) {
+    console.error(`[chat] touchChannelSession failed for ${input.id}`, error);
+  }
 }

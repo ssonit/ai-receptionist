@@ -1,10 +1,16 @@
+import { containsLikePattern } from "@/lib/sql-like";
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionWorkspaceId } from "@/lib/workspace-session";
 import { NextResponse } from "next/server";
 
-function sanitizeIlike(q: string) {
-  return q.replace(/[%_]/g, " ").replace(/\s+/g, " ").trim();
+/**
+ * Collapse whitespace only. Wildcards are escaped at pattern-build time, so
+ * `john_doe@x.com` still matches its literal underscore instead of being
+ * blanked out.
+ */
+function normalizeQuery(q: string) {
+  return q.replace(/\s+/g, " ").trim();
 }
 
 function uniqueById<T extends { id: string }>(rows: T[]): T[] {
@@ -25,7 +31,7 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const q = sanitizeIlike((searchParams.get("q") ?? "").trim());
+  const q = normalizeQuery(searchParams.get("q") ?? "");
   if (q.length < 2) {
     return NextResponse.json({ leads: [], bookings: [] });
   }
@@ -35,7 +41,7 @@ export async function GET(request: Request) {
   if (!workspaceId) {
     return NextResponse.json({ leads: [], bookings: [] });
   }
-  const pattern = `%${q}%`;
+  const pattern = containsLikePattern(q);
 
   const leadSelect = "id, full_name, phone, email, status" as const;
   const bookingSelect =

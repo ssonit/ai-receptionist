@@ -1,12 +1,17 @@
 import { defineChannel, POST, GET } from "eve/channels";
 import {
   verifyMessengerSignature,
-  parseMessengerEvent,
+  parseMessengerEvents,
   verifyWebhookToken,
   type MessengerMessageEvent,
 } from "@/lib/messenger-webhook";
 import { sendMessengerText } from "@/lib/messenger";
-import { getMessengerCredentialsForWorkspace } from "@/lib/workspace";
+import {
+  assertWorkspaceSubscriptionActive,
+  getMessengerCredentialsForWorkspace,
+  getWorkspaceReplyLocale,
+} from "@/lib/workspace";
+import { createTranslator } from "@/lib/i18n";
 import {
   getOrCreateChannelSession,
   channelVisitorId,
@@ -63,12 +68,11 @@ export default defineChannel({
         return new Response("invalid_signature", { status: 401 });
       }
 
-      const event = parseMessengerEvent(rawBody);
-      if (!event || event.type !== "message") {
+      // Meta batches deliveries — one POST can carry several messages.
+      const events = parseMessengerEvents(rawBody);
+      if (events.length === 0) {
         return Response.json({ ok: true, skipped: true });
       }
-
-      const msg = event as MessengerMessageEvent;
 
       // Resolve workspace. URL pattern: /eve/v1/messenger/webhook?workspace_id=<id>
       const workspaceId = getWorkspaceIdFromUrl(req);
@@ -83,81 +87,100 @@ export default defineChannel({
         return new Response("messenger_not_configured", { status: 404 });
       }
 
-      // Double-check the page_id from the event matches the workspace.
-      if (msg.pageId && creds.pageId && msg.pageId !== creds.pageId) {
-        // Page mismatch — possibly a misconfigured webhook.
-        return Response.json({ ok: true, skipped: true });
+      // Same paywall as guest web chat — otherwise an unpaid workspace still
+      // burns LLM turns through Messenger.
+      try {
+        await assertWorkspaceSubscriptionActive(workspaceId);
+      } catch {
+        return Response.json({ ok: true, skipped: "subscription_inactive" });
       }
 
-      const externalUserId = msg.psid;
-      const visitorId = channelVisitorId("messenger", externalUserId);
-
-      // Find or create session.
-      const session = await getOrCreateChannelSession({
-        workspaceId,
-        channel: "messenger",
-        externalUserId,
-        visitorId,
-        title: msg.text.slice(0, 48),
-      });
-
-      // Rate limit.
+      const locale = await getWorkspaceReplyLocale(workspaceId);
+      const t = createTranslator(locale);
       const ip = args.requestIp ?? "0.0.0.0";
-      const limited = await checkAgentRateLimit({
-        visitorId,
-        ip,
-        workspaceSlug: undefined,
-      });
 
-      if (!limited.ok) {
-        try {
-          await sendMessengerText(
-            creds.pageAccessToken,
-            externalUserId,
-            "Bạn nhắn tin hơi nhanh. Đợi một chút rồi thử lại nhé.",
-          );
-        } catch {
-          // Best-effort.
+      const handle = async (msg: MessengerMessageEvent) => {
+        // Double-check the page_id from the event matches the workspace.
+        if (msg.pageId && creds.pageId && msg.pageId !== creds.pageId) {
+          // Page mismatch — possibly a misconfigured webhook.
+          return;
         }
-        return Response.json({ ok: true, limited: true });
-      }
 
-      // Persist inbound message.
-      await upsertChatMessages({
-        sessionId: session.id,
-        messages: [{ role: "user", content: msg.text }],
-      });
+        const externalUserId = msg.psid;
+        const visitorId = channelVisitorId("messenger", externalUserId);
+
+        // Find or create session.
+        const session = await getOrCreateChannelSession({
+          workspaceId,
+          channel: "messenger",
+          externalUserId,
+          visitorId,
+          title: msg.text.slice(0, 48),
+        });
+
+        // Rate limit.
+        const limited = await checkAgentRateLimit({
+          visitorId,
+          ip,
+          workspaceSlug: undefined,
+        });
+
+        if (!limited.ok) {
+          try {
+            await sendMessengerText(
+              creds.pageAccessToken,
+              externalUserId,
+              t("chat.rateLimited"),
+            );
+          } catch (error) {
+            console.error("[messenger] rate-limit notice failed", error);
+          }
+          return;
+        }
+
+        // Persist inbound message.
+        await upsertChatMessages({
+          sessionId: session.id,
+          messages: [{ role: "user", content: msg.text }],
+        });
+
+        const run = await args.send(
+          { message: msg.text },
+          {
+            auth: {
+              authenticator: "messenger",
+              principalType: "user",
+              principalId: externalUserId,
+              attributes: {
+                chatSessionId: session.id,
+                visitorId,
+                locale,
+                channel: "messenger",
+                externalUserId,
+              },
+            },
+            continuationToken: `messenger:${workspaceId}:${externalUserId}`,
+            title: msg.text.slice(0, 48),
+          },
+        );
+        await touchChannelSession({ id: session.id, eveSessionId: run.id });
+      };
 
       // Drive the agent in the background (Meta requires fast 200 OK).
+      // Sequential so two messages from the same guest keep their order.
       args.waitUntil(
         (async () => {
-          const run = await args.send(
-            { message: msg.text },
-            {
-              auth: {
-                authenticator: "messenger",
-                principalType: "user",
-                principalId: externalUserId,
-                attributes: {
-                  chatSessionId: session.id,
-                  visitorId,
-                  locale: "vi",
-                  channel: "messenger",
-                  externalUserId,
-                },
-              },
-              continuationToken: `messenger:${workspaceId}:${externalUserId}`,
-              title: msg.text.slice(0, 48),
-            },
-          );
-          await touchChannelSession({
-            id: session.id,
-            eveSessionId: run.id,
-          });
+          for (const msg of events) {
+            try {
+              await handle(msg);
+            } catch (error) {
+              console.error("[messenger] failed to handle message", msg.mid, error);
+            }
+          }
         })(),
       );
 
-      return Response.json({ ok: true });
+      return Response.json({ ok: true, received: events.length });
     }),
   ],
 
@@ -185,12 +208,16 @@ export default defineChannel({
         ],
       });
 
-      // Send reply via Messenger.
+      // Send reply via Messenger. Never throw into the turn loop, but do not
+      // swallow silently either — a dropped reply is invisible to the guest.
       try {
         const creds = await getMessengerCredentialsForWorkspace(chat.workspace_id);
         await sendMessengerText(creds.pageAccessToken, chat.external_user_id, data.message);
-      } catch {
-        // Delivery failure — logged by runtime, don't throw into turn loop.
+      } catch (error) {
+        console.error(
+          `[messenger] reply delivery failed for workspace ${chat.workspace_id}`,
+          error,
+        );
       }
     },
   },

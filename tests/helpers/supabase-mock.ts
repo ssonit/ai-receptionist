@@ -13,7 +13,7 @@ interface OrderOp {
 
 type Mutation =
   | { kind: "insert"; rows: Row[] }
-  | { kind: "upsert"; row: Row; conflictKey: string }
+  | { kind: "upsert"; rows: Row[]; conflictKeys: string[] }
   | { kind: "update"; patch: Row }
   | { kind: "delete" };
 
@@ -32,12 +32,16 @@ export class QueryBuilder {
 
   private _table: string;
 
+  /** The seeded array itself, so insert/upsert can append to stored state. */
+  private _stored: Row[];
+
   constructor(
     rows: Row[],
     inserts: { table: string; row: Row }[] | null,
     tableName: string,
   ) {
     this.rows = [...rows];
+    this._stored = rows;
     this._inserts = inserts;
     this._table = tableName;
   }
@@ -61,25 +65,39 @@ export class QueryBuilder {
       if (m.kind === "insert") {
         for (const r of m.rows) {
           if (this._inserts) this._inserts.push({ table: this._table, row: r });
+          const created = { ...r };
+          this.rows.push(created);
+          this._stored.push(created);
         }
         return { data: m.rows, error: null };
       }
       if (m.kind === "upsert") {
-        if (this._inserts) {
-          this._inserts.push({ table: this._table, row: { ...m.row, _upsert: true as const } });
+        for (const row of m.rows) {
+          if (this._inserts) {
+            this._inserts.push({ table: this._table, row: { ...row, _upsert: true as const } });
+          }
+          // Composite conflict targets ("workspace_id,cal_booking_uid") must
+          // compare every column. Treating the whole string as one key made
+          // every row look like a match on `undefined === undefined`.
+          const existing = this.rows.find((r) =>
+            m.conflictKeys.every((key) => r[key] === row[key]),
+          );
+          if (existing) {
+            Object.assign(existing, row);
+          } else {
+            const created = { ...row };
+            this.rows.push(created);
+            this._stored.push(created);
+          }
         }
-        const idx = this.rows.findIndex((r) => r[m.conflictKey] === m.row[m.conflictKey]);
-        if (idx >= 0) {
-          this.rows[idx] = { ...this.rows[idx], ...m.row };
-        } else {
-          this.rows.push({ ...m.row });
-        }
-        return { data: [m.row], error: null };
+        return { data: m.rows, error: null };
       }
       if (m.kind === "update") {
+        // Mutate in place: `rows` is a shallow copy of the seeded array, so
+        // replacing the element would only patch the copy and `getRows()`
+        // would still report the pre-update state.
         for (const r of filtered) {
-          const idx = this.rows.indexOf(r);
-          if (idx >= 0) this.rows[idx] = { ...this.rows[idx], ...m.patch };
+          Object.assign(r, m.patch);
         }
         return { data: filtered, error: null };
       }
@@ -112,6 +130,11 @@ export class QueryBuilder {
 
   not(col: string, op: string, val: unknown): this {
     this.filters.push({ col, op: `not_${op}`, val });
+    return this;
+  }
+
+  is(col: string, val: unknown): this {
+    this.filters.push({ col, op: "is", val });
     return this;
   }
 
@@ -167,8 +190,20 @@ export class QueryBuilder {
     return this;
   }
 
-  upsert(row: Row, opts?: { onConflict?: string; ignoreDuplicates?: boolean }): this {
-    this.mutation = { kind: "upsert", row, conflictKey: opts?.onConflict ?? "id" };
+  upsert(
+    row: Row | Row[],
+    opts?: { onConflict?: string; ignoreDuplicates?: boolean },
+  ): this {
+    const conflictKeys = (opts?.onConflict ?? "id")
+      .split(",")
+      .map((k) => k.trim())
+      .filter(Boolean);
+    // PostgREST accepts a batch; upsertCalBookings sends one.
+    this.mutation = {
+      kind: "upsert",
+      rows: Array.isArray(row) ? row : [row],
+      conflictKeys,
+    };
     return this;
   }
 
@@ -212,6 +247,7 @@ export class QueryBuilder {
       if (f.op === "eq") result = result.filter((r) => r[f.col] === f.val);
       else if (f.op === "neq") result = result.filter((r) => r[f.col] !== f.val);
       else if (f.op === "not_is" && f.val === null) result = result.filter((r) => r[f.col] != null);
+      else if (f.op === "is" && f.val === null) result = result.filter((r) => r[f.col] == null);
       else if (f.op === "in") {
         const vals = f.val as unknown[];
         result = result.filter((r) => vals.includes(r[f.col]));
@@ -244,7 +280,10 @@ export class QueryBuilder {
       });
     }
     if (this.limitVal !== null) result = result.slice(0, this.limitVal);
-    return { data: result, error: null };
+    // Copy on read: PostgREST hands back freshly parsed JSON, so callers must
+    // not receive live references into the seeded rows (a later update would
+    // otherwise appear to mutate a value the caller read earlier).
+    return { data: result.map((r) => ({ ...r })), error: null };
   }
 
   async maybeSingle(): Promise<{ data: Row | null; error: null }> {

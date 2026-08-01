@@ -5,7 +5,7 @@ import { authAttr } from "@/lib/agent-booking-auth";
 import { getAvailableSlots, withCalApiKey } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
 import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
-import { formatSlotForGuest } from "@/lib/guest-timezone";
+import { calendarDayInTimeZone, formatSlotForGuest } from "@/lib/guest-timezone";
 import { resolveGuestTimeZone } from "@/lib/guest-timezone-resolve";
 import {
   getCalApiKeyForWorkspace,
@@ -134,7 +134,10 @@ export default defineTool({
           guestDisplay: display.guest,
           businessDisplay: display.business,
         };
-        const day = slot.start.slice(0, 10);
+        // Key by the business day, not the UTC day — `today` above comes from
+        // todayYmd(businessTz), and west-of-UTC evening slots would otherwise
+        // land in tomorrow's bucket and read as "no slots today".
+        const day = calendarDayInTimeZone(slot.start, businessTz);
         byDay[day] ??= [];
         byDay[day].push(row);
         return row;

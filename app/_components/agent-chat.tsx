@@ -10,6 +10,7 @@ import * as React from "react";
 import {
   PromptInput,
   type PromptInputMessage,
+  PromptInputProvider,
   PromptInputSubmit,
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
@@ -516,6 +517,7 @@ function AgentChatThread({
 }) {
   const t = useTranslations();
   const { locale } = useAppLocale();
+
   const persistTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const stopTurnRef = React.useRef<() => void>(() => {});
   const turnStartedAtRef = React.useRef<number>(0);
@@ -793,13 +795,15 @@ function AgentChatThread({
         duration={10}
         size={90}
       />
-      <PromptInput className="border-0 bg-transparent shadow-none" onSubmit={handleSubmit}>
-        <PromptInputTextarea
-          className="min-h-[52px] text-zinc-100 placeholder:text-zinc-500"
-          placeholder={branding.placeholder}
-        />
-        <PromptInputSubmit onStop={agent.stop} status={agent.status} />
-      </PromptInput>
+      <PromptInputProvider>
+        <PromptInput className="border-0 bg-transparent shadow-none" onSubmit={handleSubmit}>
+          <PromptInputTextarea
+            className="min-h-[52px] text-zinc-100 placeholder:text-zinc-500"
+            placeholder={branding.placeholder}
+          />
+          <PromptInputSubmit onStop={agent.stop} status={agent.status} />
+        </PromptInput>
+      </PromptInputProvider>
     </div>
   );
 

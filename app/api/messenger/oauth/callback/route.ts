@@ -4,6 +4,7 @@ import {
   exchangeCodeForUserToken,
   exchangeForLongLivedUserToken,
   getPagesForUser,
+  subscribePageToApp,
 } from "@/lib/messenger";
 import { resolveMessengerRedirectUri, persistMessengerTokens } from "@/lib/messenger-oauth";
 import { OAUTH_STATE_COOKIE, parseOAuthState } from "@/lib/cal-oauth-state";
@@ -78,20 +79,13 @@ export async function GET(request: Request) {
   // Pick the first page (or let user choose v2)
   const page = pages[0];
 
-  // 4. Subscribe the page to the app (best-effort)
-  try {
-    await fetch(
-      `https://graph.facebook.com/v22.0/${page.id}/subscribed_apps?access_token=${page.accessToken}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subscribed_fields: ["messages", "messaging_postbacks"],
-        }),
-      },
+  // 4. Subscribe the page to the app (best-effort). Non-fatal — the page can
+  // be subscribed by hand in the Meta App dashboard.
+  const subscribed = await subscribePageToApp(page.id, page.accessToken);
+  if (!subscribed.ok) {
+    console.error(
+      `[messenger] page ${page.id} not subscribed to app: ${subscribed.error}`,
     );
-  } catch {
-    // Non-fatal — page can be manually subscribed in Meta App dashboard.
   }
 
   // 5. Persist

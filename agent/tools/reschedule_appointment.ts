@@ -17,7 +17,7 @@ import {
 } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
 import { normalizeCalApiStatus } from "@/lib/booking-status";
-import { formatSlotForGuest } from "@/lib/guest-timezone";
+import { calendarDayInTimeZone, formatSlotForGuest } from "@/lib/guest-timezone";
 import { resolveGuestTimeZone } from "@/lib/guest-timezone-resolve";
 import { APP_ERROR_CODE } from "@/lib/errors";
 import { createNotification } from "@/lib/notifications-write";
@@ -115,7 +115,7 @@ export default defineTool({
               })
             ).guestTimeZone
           : null;
-      const day = newStart.slice(0, 10);
+      const day = calendarDayInTimeZone(newStart, timeZone);
       const slots = await withCalApiKey(apiKey, () =>
         getAvailableSlots({
           startDate: day,
@@ -154,8 +154,13 @@ export default defineTool({
       const status = normalizeCalApiStatus(moved.status);
       const nowIso = new Date().toISOString();
 
+      // Cal.com already moved the booking. The mirror below is best-effort:
+      // report failures instead of letting the dashboard drift silently until
+      // the next cron sync.
+      const mirrorErrors: string[] = [];
+
       if (moved.uid !== booking.cal_booking_uid) {
-        await supabase
+        const { error: retireError } = await supabase
           .from("bookings")
           .update({
             status: "cancelled",
@@ -164,8 +169,9 @@ export default defineTool({
             synced_at: nowIso,
           })
           .eq("id", booking.id);
+        if (retireError) mirrorErrors.push(`retire_old: ${retireError.message}`);
 
-        await supabase.from("bookings").upsert(
+        const { error: insertError } = await supabase.from("bookings").upsert(
           {
             workspace_id: actor.workspaceId,
             cal_booking_uid: moved.uid,
@@ -186,10 +192,11 @@ export default defineTool({
             raw: moved.raw,
             synced_at: nowIso,
           },
-          { onConflict: "cal_booking_uid" },
+          { onConflict: "workspace_id,cal_booking_uid" },
         );
+        if (insertError) mirrorErrors.push(`insert_new: ${insertError.message}`);
       } else {
-        await supabase
+        const { error: moveError } = await supabase
           .from("bookings")
           .update({
             start_time: moved.start || newStart,
@@ -199,6 +206,24 @@ export default defineTool({
             synced_at: nowIso,
           })
           .eq("id", booking.id);
+        if (moveError) mirrorErrors.push(`move: ${moveError.message}`);
+      }
+
+      if (mirrorErrors.length > 0) {
+        console.error(
+          `[reschedule_appointment] mirror failed for ${booking.cal_booking_uid} -> ${moved.uid}`,
+          mirrorErrors,
+        );
+        await createNotification({
+          type: "booking_mirror_failed",
+          title: "Reschedule saved on Cal.com but not mirrored",
+          body: `${booking.guest_name} · ${moved.start || newStart} · ${mirrorErrors.join("; ")}`,
+          severity: "medium",
+          href: "/dashboard/bookings",
+          entityType: "booking",
+          entityId: moved.uid,
+          workspaceId: actor.workspaceId,
+        });
       }
 
       await logAgentToolEvent({

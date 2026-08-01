@@ -87,7 +87,7 @@ export default defineTool({
       );
 
       const supabase = createAdminClient();
-      await supabase
+      const { error: mirrorError } = await supabase
         .from("bookings")
         .update({
           status: "cancelled",
@@ -97,6 +97,15 @@ export default defineTool({
           synced_at: new Date().toISOString(),
         })
         .eq("id", booking.id);
+
+      // Cal.com already cancelled — a silent mirror failure would leave the
+      // dashboard showing the slot as still booked until the next cron sync.
+      if (mirrorError) {
+        console.error(
+          `[cancel_appointment] mirror failed for ${booking.cal_booking_uid}`,
+          mirrorError,
+        );
+      }
 
       await logAgentToolEvent({
         toolName: "cancel_appointment",

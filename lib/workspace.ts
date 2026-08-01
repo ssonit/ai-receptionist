@@ -3,11 +3,12 @@ import slugify from "slugify";
 import { parseEmbedWorkspaceKey } from "@/lib/embed";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decryptSecret, encryptSecret } from "@/lib/workspace-secrets";
-import { refreshAccessToken } from "@/lib/cal-oauth";
+import { isDefinitiveCalOAuthError, refreshAccessToken } from "@/lib/cal-oauth";
 import { bookingConfig } from "@/lib/booking-config";
 import { parseChatSuggestions } from "@/lib/chat-branding";
 import { getBillingMode, isSubActive, type SubscriptionStatus } from "@/lib/billing";
 import { APP_ERROR_CODE, AppError } from "@/lib/errors";
+import { DEFAULT_LOCALE, parseAppLocale, type AppLocale } from "@/lib/locale";
 import {
   parseServiceMode,
   type WorkspaceServiceMode,
@@ -547,8 +548,34 @@ export async function getCalAccessTokenForWorkspace(
       let newTokens;
       try {
         newTokens = await refreshAccessToken(refreshToken);
-      } catch {
-        // Clear dead OAuth credentials
+      } catch (refreshError) {
+        // Cal.com rotates the refresh token, so a concurrent request that
+        // refreshed first leaves ours invalid. Re-read before concluding the
+        // credentials are dead — otherwise a busy tenant disconnects itself.
+        const { data: fresh } = await supabase
+          .from("workspaces")
+          .select("cal_oauth_access_encrypted, cal_oauth_refresh_encrypted")
+          .eq("id", workspaceId)
+          .maybeSingle();
+
+        if (
+          fresh?.cal_oauth_access_encrypted &&
+          fresh.cal_oauth_refresh_encrypted !== data.cal_oauth_refresh_encrypted
+        ) {
+          return decryptSecret(fresh.cal_oauth_access_encrypted as string);
+        }
+
+        // Only a rejected grant means the token is genuinely dead. A timeout
+        // or a Cal.com 5xx must not wipe a working integration — the owner
+        // would have to redo the whole OAuth flow over a blip.
+        if (!isDefinitiveCalOAuthError(refreshError)) {
+          console.error(
+            `[cal-oauth] transient refresh failure for workspace ${workspaceId}`,
+            refreshError,
+          );
+          throw new Error("CAL_OAUTH_REFRESH_FAILED");
+        }
+
         await supabase
           .from("workspaces")
           .update({
@@ -563,7 +590,7 @@ export async function getCalAccessTokenForWorkspace(
       }
 
       const newExpiresAt = new Date(Date.now() + newTokens.expires_in * 1000).toISOString();
-      await supabase
+      const { error: persistError } = await supabase
         .from("workspaces")
         .update({
           cal_oauth_access_encrypted: encryptSecret(newTokens.access_token),
@@ -572,6 +599,16 @@ export async function getCalAccessTokenForWorkspace(
           cal_oauth_scope: newTokens.scope,
         })
         .eq("id", workspaceId);
+
+      // The rotated refresh token only exists in this response. Losing the
+      // write means the DB keeps a refresh token Cal.com has already retired,
+      // and the next refresh fails for good.
+      if (persistError) {
+        console.error(
+          `[cal-oauth] failed to persist refreshed tokens for workspace ${workspaceId}`,
+          persistError,
+        );
+      }
 
       return newTokens.access_token;
     }
@@ -732,8 +769,9 @@ export async function ensureWebhookSecret(workspaceId: string): Promise<string> 
 
 /**
  * Resolve the webhook secret for verifying a Cal.com webhook request.
- * Per-workspace secret takes priority. Falls back to the deprecated shared
- * CALCOM_WEBHOOK_SECRET env var for workspaces that haven't migrated yet.
+ *
+ * Per-workspace secret only, except the Pilot demo which may still use the
+ * shared `CALCOM_WEBHOOK_SECRET` env var — same rule as `CALCOM_API_KEY`.
  *
  * Returns null when no secret is configured at all (caller must reject).
  */
@@ -751,19 +789,33 @@ export async function getWebhookSecretForWorkspace(
     return decryptSecret(data.webhook_secret_encrypted as string);
   }
 
-  const envSecret = process.env.CALCOM_WEBHOOK_SECRET?.trim();
-  if (envSecret) {
-    // DEPRECATED: one secret shared by every tenant, so any tenant holding it
-    // can sign a payload for someone else's workspace_id. Generate a
-    // per-workspace secret in Settings → Cal.com webhook, then drop this env
-    // var (keep it for the Pilot demo only).
-    console.warn(
-      `[webhook] workspace ${workspaceId} is using the shared CALCOM_WEBHOOK_SECRET — generate a per-workspace secret in Settings`,
-    );
-    return envSecret;
+  // Pilot-only fallback — real tenants must have a per-workspace secret.
+  const pilotId = getPilotWorkspaceId();
+  if (workspaceId === pilotId || workspaceId === PILOT_WORKSPACE_ID) {
+    const envSecret = process.env.CALCOM_WEBHOOK_SECRET?.trim();
+    if (envSecret) return envSecret;
   }
-
   return null;
+}
+
+/**
+ * Reply language for channels that carry no browser locale header (Messenger,
+ * Zalo, …). `agent_reply_locale` is `auto | vi | en`; `auto` means "follow the
+ * guest UI", which those channels don't have, so it falls back to the default.
+ */
+export async function getWorkspaceReplyLocale(
+  workspaceId: string,
+): Promise<AppLocale> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("workspaces")
+    .select("agent_reply_locale")
+    .eq("id", workspaceId)
+    .maybeSingle();
+
+  const configured = (data?.agent_reply_locale as string | null)?.trim();
+  if (!configured || configured === "auto") return DEFAULT_LOCALE;
+  return parseAppLocale(configured);
 }
 
 /** True when the workspace has its own secret (i.e. not on the shared env one). */

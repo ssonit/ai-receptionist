@@ -5,15 +5,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { encryptSecret } from "@/lib/workspace-secrets";
 
-export function getMessengerRedirectUri(): string {
-  const envUri = process.env.META_REDIRECT_URI?.trim();
-  if (envUri) return envUri;
-
-  // Fallback: derive from the request host in the route handler.
-  // Export this so handlers can build the default when META_REDIRECT_URI is unset.
-  return "";
-}
-
 export function resolveMessengerRedirectUri(requestUrl: string): string {
   const envUri = process.env.META_REDIRECT_URI?.trim();
   if (envUri) return envUri;
@@ -49,7 +40,7 @@ export async function persistMessengerTokens(input: {
 
 export async function clearMessengerTokens(workspaceId: string): Promise<void> {
   const admin = createAdminClient();
-  await admin
+  const { error } = await admin
     .from("workspaces")
     .update({
       messenger_page_id: null,
@@ -57,4 +48,8 @@ export async function clearMessengerTokens(workspaceId: string): Promise<void> {
       messenger_page_access_token_encrypted: null,
     })
     .eq("id", workspaceId);
+
+  // Without this the settings action reports "disconnected" while the page
+  // token is still stored and the bot keeps answering.
+  if (error) throw new Error(error.message);
 }

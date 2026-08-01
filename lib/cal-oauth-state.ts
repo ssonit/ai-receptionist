@@ -59,11 +59,27 @@ function timingSafeEqual(a: Buffer, b: Buffer): boolean {
   return diff === 0;
 }
 
+/**
+ * Same-origin path guard for the post-OAuth redirect.
+ *
+ * `startsWith("/")` alone is not enough: a protocol-relative `//evil.com`
+ * passes it, and `new URL("//evil.com", "https://app…")` resolves to
+ * `https://evil.com` — an open redirect reachable through any OAuth start
+ * route via `?returnTo=//evil.com`.
+ */
+export function safeReturnTo(returnTo: string, fallback: string): string {
+  const value = returnTo.trim();
+  if (!value.startsWith("/")) return fallback;
+  // Reject protocol-relative ("//host") and backslash variants ("/\host").
+  if (value.startsWith("//") || value.startsWith("/\\")) return fallback;
+  return value;
+}
+
 /** Create a signed state token for OAuth authorize redirect. */
 export function createOAuthState(workspaceId: string, returnTo: string): { token: string; payload: OAuthStatePayload } {
   const payload: OAuthStatePayload = {
     workspaceId,
-    returnTo: returnTo.startsWith("/") ? returnTo : "/dashboard/setup",
+    returnTo: safeReturnTo(returnTo, "/dashboard/setup"),
     nonce: randomBytes(16).toString("hex"),
     exp: Date.now() + STATE_TTL_MS,
   };
@@ -75,7 +91,9 @@ export function parseOAuthState(token: string, expectedWorkspaceId: string): OAu
   const payload = verifyPayload(token);
   if (!payload) return null;
   if (payload.workspaceId !== expectedWorkspaceId) return null;
-  return payload;
+  // Re-check on read: tokens minted before the guard existed are still valid
+  // signatures for their 10-minute TTL.
+  return { ...payload, returnTo: safeReturnTo(payload.returnTo, "/dashboard/setup") };
 }
 
 export const OAUTH_STATE_COOKIE = "eve_cal_oauth_state";

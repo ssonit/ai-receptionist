@@ -83,6 +83,10 @@ export async function upsertCalBookings(
         .select(
           "cal_booking_uid, status, start_time, guest_name, guest_email, session_id, visitor_id, chat_session_id, manage_code_hash, cancelled_by, guest_timezone",
         )
+        // Admin client bypasses RLS, so scope by hand. Without this, two
+        // workspaces sharing a Cal.com account would carry each other's
+        // manage_code_hash / visitor_id / chat_session_id across the upsert.
+        .eq("workspace_id", workspaceId)
         .in("cal_booking_uid", chunk);
 
       for (const row of existing ?? []) {
@@ -189,7 +193,7 @@ export async function upsertCalBookings(
   for (let i = 0; i < rows.length; i += chunkSize) {
     const chunk = rows.slice(i, i + chunkSize);
     const { error } = await supabase.from("bookings").upsert(chunk, {
-      onConflict: "cal_booking_uid",
+      onConflict: "workspace_id,cal_booking_uid",
     });
     if (error) {
       return {
