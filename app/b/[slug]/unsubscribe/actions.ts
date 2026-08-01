@@ -7,6 +7,8 @@
  */
 import { verifyReminderOptOutToken } from "@/lib/booking-reminders";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ANALYTICS_EVENT } from "@/lib/analytics-events";
+import { trackServer } from "@/lib/analytics-server";
 
 export type UnsubscribeActionState = {
   ok: boolean;
@@ -66,6 +68,10 @@ export async function confirmReminderOptOutAction(
     .update({ status: "skipped", error: "opt_out" })
     .eq("booking_id", bookingId)
     .eq("status", "pending");
+
+  await trackServer(ANALYTICS_EVENT.REMINDER_OPTED_OUT, workspace.id, {
+    bookingId,
+  });
 
   return {
     ok: true,

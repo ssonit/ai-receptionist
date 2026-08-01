@@ -6,6 +6,7 @@ export const ANALYTICS_EVENT = {
   LANDING_VIEWED: "landing_viewed",
   SIGNUP_STARTED: "signup_started",
   SIGNUP_COMPLETED: "signup_completed",
+  SIGNIN_COMPLETED: "signin_completed",
 
   SETUP_OPENED: "setup_opened",
   SETUP_PROFILE_SAVED: "setup_profile_saved",

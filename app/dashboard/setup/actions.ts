@@ -27,6 +27,8 @@ import {
   requireOwnerWorkspace,
 } from "@/lib/workspace-invites";
 import { encryptSecret } from "@/lib/workspace-secrets";
+import { ANALYTICS_EVENT } from "@/lib/analytics-events";
+import { trackServer } from "@/lib/analytics-server";
 
 export type SetupActionState = {
   error?: string;
@@ -61,6 +63,10 @@ export async function saveCalApiKeyAction(
       .eq("id", auth.workspaceId);
 
     if (error) return { error: formatDbError(error) };
+
+    await trackServer(ANALYTICS_EVENT.SETUP_CAL_CONNECTED, auth.workspaceId, {
+      calUsername: me.username,
+    });
 
     revalidatePath("/dashboard/setup");
     return { success: `Connected Cal.com · @${me.username}` };
@@ -161,6 +167,8 @@ export async function saveSetupProfileAction(
 
   if (error) return { error: formatDbError(error) };
 
+  await trackServer(ANALYTICS_EVENT.SETUP_PROFILE_SAVED, auth.workspaceId);
+
   revalidatePath("/dashboard/setup");
   return { success: "Workspace profile saved." };
 }
@@ -202,6 +210,14 @@ export async function completeSetupAction(): Promise<SetupActionState> {
     .eq("id", auth.workspaceId);
 
   if (error) return { error: formatDbError(error) };
+
+  const hasCal = Boolean(ws?.has_cal_key);
+  if (!hasCal) {
+    await trackServer(ANALYTICS_EVENT.SETUP_CAL_SKIPPED, auth.workspaceId);
+  }
+  await trackServer(ANALYTICS_EVENT.SETUP_COMPLETED, auth.workspaceId, {
+    hasCalKey: hasCal,
+  });
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/setup");

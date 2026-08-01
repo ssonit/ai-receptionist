@@ -46,6 +46,8 @@ import {
   EVE_WORKSPACE_HEADER,
 } from "@/lib/workspace";
 import { cn } from "@/lib/utils";
+import { ANALYTICS_EVENT } from "@/lib/analytics-events";
+import { track } from "@/lib/analytics-client";
 import { AgentMessage } from "./agent-message";
 import { ChatUserMenu, type ChatUser } from "./chat-user-menu";
 import {
@@ -755,6 +757,11 @@ function AgentChatThread({
     try {
       if (message.files.length === 0) {
         await agent.send({ message: text });
+        track(ANALYTICS_EVENT.CHAT_MESSAGE_SENT, {
+          workspaceSlug: workspaceSlug ?? undefined,
+          hasFiles: false,
+          messageLength: text.length,
+        });
         return;
       }
 
@@ -772,6 +779,11 @@ function AgentChatThread({
       }
 
       await agent.send({ message: parts });
+      track(ANALYTICS_EVENT.CHAT_MESSAGE_SENT, {
+        workspaceSlug: workspaceSlug ?? undefined,
+        hasFiles: true,
+        messageLength: text.length,
+      });
     } catch (error) {
       console.error("[eve chat] send failed", error);
     }

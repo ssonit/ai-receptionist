@@ -20,6 +20,10 @@ export function EmbedChat({
       workspaceId: workspace.id,
       slug: workspace.slug,
     });
+    track(ANALYTICS_EVENT.EMBED_OPENED, {
+      workspaceId: workspace.id,
+      slug: workspace.slug,
+    });
   }, [workspace.id, workspace.slug]);
 
   const chatBranding = resolveChatBranding({

@@ -27,6 +27,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TimezoneSelect } from "@/components/timezone-select";
+import { ANALYTICS_EVENT } from "@/lib/analytics-events";
+import { track } from "@/lib/analytics-client";
 import type { WorkspaceMeetingTypeRow } from "@/lib/workspace-cal";
 import { WORKSPACE_AI_DEFAULTS } from "@/lib/workspace-ai-defaults";
 import { resolveWorkspaceSlugField, slugifyWorkspaceName } from "@/lib/workspace";
@@ -139,7 +141,9 @@ export function SetupWizard({
   useEffect(() => {
     if (openedRef.current) return;
     openedRef.current = true;
+    track(ANALYTICS_EVENT.SETUP_OPENED, { workspaceId: workspace.id });
     trackSetup("setup_open", { initialStep });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialStep]);
 
   useEffect(() => {

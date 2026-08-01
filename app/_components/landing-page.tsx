@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { LenisProvider } from "@/components/providers/lenis-provider";
 import { LocaleProvider } from "@/components/locale-provider";
 import type { AppLocale } from "@/lib/locale";
+import { ANALYTICS_EVENT } from "@/lib/analytics-events";
+import { track } from "@/lib/analytics-client";
 import { LandingFooter, LandingHeader } from "./landing/chrome";
 import { LandingHero } from "./landing/hero";
 import { LandingShell } from "./landing/primitives";
@@ -21,6 +24,10 @@ export function LandingPage({
 }: {
   initialLocale?: AppLocale;
 }) {
+  useEffect(() => {
+    track(ANALYTICS_EVENT.LANDING_VIEWED);
+  }, []);
+
   return (
     <LocaleProvider initialLocale={initialLocale} kind="guest">
       <LenisProvider>

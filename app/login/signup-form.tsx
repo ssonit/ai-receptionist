@@ -6,6 +6,8 @@ import { signUp, type AuthState } from "@/app/auth/actions";
 import { Label } from "@/components/ui/label";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import { cn } from "@/lib/utils";
+import { ANALYTICS_EVENT } from "@/lib/analytics-events";
+import { track } from "@/lib/analytics-client";
 
 const initial: AuthState = {};
 
@@ -25,7 +27,11 @@ export function SignupForm({
   const joining = Boolean(inviteToken?.trim());
 
   return (
-    <form action={action} className="flex w-full flex-col gap-5">
+    <form
+      action={action}
+      className="flex w-full flex-col gap-5"
+      onSubmit={() => track(ANALYTICS_EVENT.SIGNUP_STARTED)}
+    >
       {joining ? (
         <input name="inviteToken" type="hidden" value={inviteToken!.trim()} />
       ) : null}

@@ -33,3 +33,17 @@ export async function trackServer(
   }
 }
 
+export async function identifyUserServer(
+  distinctId: string,
+  props?: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const ph = getClient();
+    if (!ph) return;
+    ph.identify({ distinctId, properties: props });
+    await ph.flush();
+  } catch (error) {
+    console.error("[analytics] server identify failed", error);
+  }
+}
+

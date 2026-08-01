@@ -10,6 +10,8 @@ import {
 } from "@/lib/errors";
 import { isPublicSignupOpen } from "@/lib/signup-mode";
 import { createClient } from "@/lib/supabase/server";
+import { ANALYTICS_EVENT } from "@/lib/analytics-events";
+import { identifyUserServer, trackServer } from "@/lib/analytics-server";
 
 export type AuthState = {
   error?: string;
@@ -38,7 +40,7 @@ export async function signUp(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -54,6 +56,17 @@ export async function signUp(
 
   if (error) {
     return { error: formatAuthError(error, "signUp") };
+  }
+
+  if (data.user) {
+    await identifyUserServer(data.user.id, {
+      email: data.user.email,
+      name: fullName,
+    });
+    await trackServer(ANALYTICS_EVENT.SIGNUP_COMPLETED, data.user.id, {
+      isInvite: Boolean(inviteToken),
+      plan: "starter",
+    });
   }
 
   redirect(inviteToken ? "/dashboard" : "/dashboard/setup");
@@ -74,10 +87,20 @@ export async function signIn(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
   if (error) {
     return { error: formatAuthError(error, "signIn") };
+  }
+
+  if (data.user) {
+    await identifyUserServer(data.user.id, {
+      email: data.user.email,
+    });
+    await trackServer(ANALYTICS_EVENT.SIGNIN_COMPLETED, data.user.id);
   }
 
   redirect(next.startsWith("/") ? next : "/dashboard");
