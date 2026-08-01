@@ -158,7 +158,9 @@
       "manageBilling": "Quản lý thanh toán",
       "testModeBanner": "Chế độ Test — Tất cả tính năng đã mở",
       "subscriptionInactive": "Đăng ký không hoạt động",
-      "subscriptionInactiveHint": "Thời gian dùng thử đã hết hoặc đăng ký của bạn đang quá hạn. Nâng cấp để khôi phục quyền truy cập."
+      "subscriptionInactiveHint": "Thời gian dùng thử đã hết hoặc đăng ký của bạn đang quá hạn. Nâng cấp để khôi phục quyền truy cập.",
+      "disabledTitle": "Thanh toán đã tắt",
+      "disabledHint": "Đặt BILLING_MODE=test hoặc BILLING_MODE=live trong môi trường để bật gói đăng ký."
     }
   },
   "common": {

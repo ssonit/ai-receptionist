@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 
-export type BillingMode = "test" | "live";
+export type BillingMode = "none" | "test" | "live";
 
 export type PlanTier = "free" | "starter" | "pro";
 
@@ -34,6 +34,7 @@ export type CreateBillingPortalParams = {
 
 export function getBillingMode(): BillingMode {
   const raw = process.env.BILLING_MODE?.trim().toLowerCase();
+  if (raw === "none") return "none";
   if (raw === "live") return "live";
   if (raw === "test") return "test";
 
@@ -44,6 +45,10 @@ export function getBillingMode(): BillingMode {
     return "live";
   }
   return "test";
+}
+
+export function isBillingEnabled(): boolean {
+  return getBillingMode() !== "none";
 }
 
 let _stripe: Stripe | null | undefined;
@@ -67,7 +72,8 @@ export function getStripe(): Stripe | null {
 }
 
 export function isSubActive(ws: WorkspaceBilling): boolean {
-  if (getBillingMode() === "test") return true;
+  const mode = getBillingMode();
+  if (mode === "none" || mode === "test") return true;
 
   if (
     ws.subscriptionStatus === "active" ||
@@ -96,6 +102,10 @@ export function formatTrialDaysLeft(trialEndsAt: string | null): number {
 export async function createCheckoutSession(
   params: CreateCheckoutParams,
 ): Promise<string> {
+  if (getBillingMode() === "none") {
+    throw new Error("BILLING_DISABLED");
+  }
+
   const stripe = getStripe();
   if (!stripe) {
     if (getBillingMode() === "test") {
@@ -136,6 +146,10 @@ export async function createCheckoutSession(
 export async function createBillingPortalSession(
   params: CreateBillingPortalParams,
 ): Promise<string> {
+  if (getBillingMode() === "none") {
+    throw new Error("BILLING_DISABLED");
+  }
+
   const stripe = getStripe();
   if (!stripe) {
     if (getBillingMode() === "test") {

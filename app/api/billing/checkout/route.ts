@@ -25,12 +25,21 @@ export async function POST(request: Request) {
   const successUrl = `${origin}/dashboard/billing?checkout=success`;
   const cancelUrl = `${origin}/dashboard/billing?checkout=canceled`;
 
-  const url = await createCheckoutSession({
-    workspaceId: auth.workspaceId,
-    planTier,
-    successUrl,
-    cancelUrl,
-  });
-
-  return NextResponse.json({ url });
+  try {
+    const url = await createCheckoutSession({
+      workspaceId: auth.workspaceId,
+      planTier,
+      successUrl,
+      cancelUrl,
+    });
+    return NextResponse.json({ url });
+  } catch (err) {
+    if (err instanceof Error && err.message === "BILLING_DISABLED") {
+      return NextResponse.json(
+        { error: "billing_disabled" },
+        { status: 403 },
+      );
+    }
+    throw err;
+  }
 }

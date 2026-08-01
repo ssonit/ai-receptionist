@@ -86,22 +86,22 @@
       "disconnectBtn": "Disconnect",
       "disconnectConfirm": "Disconnect Cal.com? Guests will not be able to book until you reconnect.",
       "disconnecting": "Disconnecting…",
-      "legacyKeyLabel": "API key (legacy)",
-      "upgradePrompt": "Connect via OAuth for automatic token refresh."
+      "legacyKeyLabel": "Connected (legacy key)",
+      "upgradePrompt": "Connect securely so your calendar stays connected automatically."
     },
     "embedTitle": "Embed on your website",
     "embedBody": "Add a chat bubble to any page. Guests book without leaving your site.",
     "embedIntro": "Add a chat bubble to any page. Guests book without leaving your site.",
     "embedCopy": "Copy snippet",
     "embedCopied": "Copied",
-    "embedNotLive": "Connect Cal.com and pick a meeting type first — the widget won't accept bookings until then.",
+    "embedNotLive": "Connect your calendar and choose a service first — the widget won't accept bookings until then.",
     "embedStatusLive": "Live",
     "embedStatusNotLive": "Not ready",
     "embedInstallTitle": "Install",
     "embedInstallStep1": "Copy the snippet below.",
-    "embedInstallStep2": "Paste it before the closing '<'/body'>' tag — or use the React / Next / WordPress / Shopify tab.",
+    "embedInstallStep2": "Paste it before the closing '<'/body'>' tag — or use the WordPress / Shopify tab.",
     "embedInstallStep3": "Publish — the chat bubble appears in the corner.",
-    "embedSnippetHint": "Works on any static or CMS page that allows custom HTML.",
+    "embedSnippetHint": "Works on any website that lets you add custom code.",
     "embedPreviewTitle": "Preview",
     "embedPreviewCaption": "How the bubble looks on a typical page.",
     "embedOpenPreview": "Open embed preview",
@@ -112,21 +112,18 @@
     "embedHow3": "Confirmed appointments land in your calendar.",
     "embedTryHostTitle": "3. Try it on another site",
     "embedTryHostBody": "Open a fake third-party page with your snippet already installed. Check that the bubble appears, opens chat, and can book.",
-    "embedTryHostNote": "This demo is same-origin for convenience. Cookie behavior on a real other domain needs HTTPS preview — see embed cookie limits.",
+    "embedTryHostNote": "This is a preview. The real widget works on your own site over HTTPS.",
     "embedTryHostCta": "Open host site demo",
     "embedPlatformHtml": "HTML",
-    "embedPlatformReact": "React",
-    "embedPlatformNext": "Next.js",
-    "embedPlatformVue": "Vue",
     "embedPlatformWordpress": "WordPress",
     "embedPlatformShopify": "Shopify",
     "embedSiteIdTitle": "Site ID & security",
-    "embedSiteIdBody": "Your Site ID stays stable when you rename the booking slug. Paste it as data-eve-id — no secret API key belongs in the snippet.",
+    "embedSiteIdBody": "This is your site's ID — use it when embedding. Keep it handy.",
     "embedSiteIdLabel": "Site ID",
-    "embedSiteIdNote": "Format: chat_ + workspace UUID. Slug embeds still work for older installs.",
+    "embedSiteIdNote": "Shown as chat_ followed by your workspace ID.",
     "embedAllowedDomainsLabel": "Allowed domains (optional)",
     "embedAllowedDomainsPlaceholder": "example.com\nwww.example.com",
-    "embedAllowedDomainsHint": "One hostname per line. Empty = allow any site. Soft check via Referer/Origin — browsers may strip Referer, so this is a light fence, not a secret.",
+    "embedAllowedDomainsHint": "One hostname per line. Empty = allow any site. This is a basic check, not a secret.",
     "embedSecuritySave": "Save domains",
     "embedSecuritySaving": "Saving…",
     "embedSecuritySaved": "Allowed domains saved",
@@ -158,7 +155,9 @@
       "manageBilling": "Manage billing",
       "testModeBanner": "Test Mode — All features unlocked",
       "subscriptionInactive": "Subscription inactive",
-      "subscriptionInactiveHint": "Your trial has ended or your subscription is past due. Upgrade to restore access."
+      "subscriptionInactiveHint": "Your trial has ended or your subscription is past due. Upgrade to restore access.",
+      "disabledTitle": "Billing is disabled",
+      "disabledHint": "Subscription plans are not available for this account yet. Contact support if you'd like to upgrade."
     }
   },
   "common": {
@@ -186,12 +185,12 @@
       "ctaSecondary": "Try the demo",
       "tabs": {
         "chat": "Chat that books",
-        "slots": "Real Cal.com slots",
+        "slots": "Real calendar slots",
         "ops": "Leads & ops"
       }
     },
     "logos": {
-      "label": "Built to plug into the stack you already run"
+      "label": "Works with the calendar you already use"
     },
     "tour": {
       "title": "Your booking loop, agentified.",
@@ -204,8 +203,8 @@
         },
         "book": {
           "label": "Real bookings",
-          "title": "Slots from Cal.com, not invented",
-          "body": "Eve checks open times and creates the event on your calendar. One source of truth — no double-booking."
+          "title": "Real openings, not guesses",
+          "body": "Eve checks open times and adds the booking to your calendar. No double-booking — ever."
         },
         "dash": {
           "label": "Clear dashboard",
@@ -215,8 +214,8 @@
       }
     },
     "integrations": {
-      "title": "Bring your calendar. Keep your stack.",
-      "subtitle": "Eve plugs into Cal.com today. WhatsApp, voice, and more ship when they’re ready — not vapor.",
+      "title": "Bring your calendar. Keep working the way you do.",
+      "subtitle": "Eve connects to your calendar today. WhatsApp and voice are on the way.",
       "items": {
         "cal": "Cal.com",
         "web": "Web chat",
@@ -236,7 +235,7 @@
         },
         "cal": {
           "title": "Live availability",
-          "body": "Open times come straight from Cal.com."
+          "body": "Open times come straight from your calendar."
         },
         "leads": {
           "title": "Client capture",
@@ -269,11 +268,11 @@
       "plans": {
         "basic": {
           "name": "Basic",
-          "description": "Web chat + Cal.com for teams just starting.",
+          "description": "Web chat + calendar for teams just starting.",
           "cta": "Start free trial",
           "features": {
             "f1": "Web chat",
-            "f2": "Cal.com booking",
+            "f2": "Calendar booking",
             "f3": "FAQ + intake",
             "f4": "Basic dashboard"
           }
@@ -313,11 +312,11 @@
         },
         "q2": {
           "q": "Does Eve invent available times?",
-          "a": "No. Open slots come from your connected Cal.com calendar. If it’s not free there, Eve won’t offer it."
+          "a": "No. Open slots come from your connected calendar. If it’s not free there, Eve won’t offer it."
         },
         "q3": {
           "q": "Do I need a credit card to try it?",
-          "a": "No. Start a free trial, connect Cal.com, and start booking from your own workspace page — no credit card needed."
+          "a": "No. Start a free trial, connect your calendar, and start booking from your own workspace page — no credit card needed."
         },
         "q4": {
           "q": "Can guests book in Vietnamese?",
@@ -325,11 +324,11 @@
         },
         "q5": {
           "q": "Is WhatsApp available?",
-          "a": "WhatsApp and voice are on the roadmap for Premium and Enterprise. Web chat and Cal.com booking ship today."
+          "a": "WhatsApp and voice are on the roadmap for Premium and Enterprise. Web chat and calendar booking are available today."
         },
         "q6": {
           "q": "Who owns the calendar and data?",
-          "a": "You do. Eve books into your Cal.com account and keeps workspace data scoped to your tenant."
+          "a": "You do. Eve books into your own calendar and keeps each business's data separate."
         }
       }
     },
@@ -355,7 +354,7 @@
       "guest": "Alex Nguyen",
       "when": "Fri 31 Jul · 2:00 PM",
       "tz": "Asia/Ho Chi Minh",
-      "calSynced": "Synced to Cal.com",
+      "calSynced": "Synced to your calendar",
       "leadsToday": "Leads today",
       "bookingsWeek": "Bookings this week",
       "response": "Avg. reply",

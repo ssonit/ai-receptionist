@@ -9,6 +9,7 @@ import { createTranslator } from "@/lib/i18n";
 import { DASHBOARD_LOCALE_COOKIE } from "@/lib/locale";
 import {
   getBillingMode,
+  isBillingEnabled,
   isSubActive,
   formatTrialDaysLeft,
   type WorkspaceBilling,
@@ -18,6 +19,7 @@ export default async function BillingPage() {
   const dashboard = await assertOwnerPage(DASHBOARD_PATH.billing);
 
   const billingMode = getBillingMode();
+  const billingEnabled = isBillingEnabled();
   let workspaceBilling: WorkspaceBilling = {
     planTier: "free",
     subscriptionStatus: null,
@@ -69,52 +71,68 @@ export default async function BillingPage() {
           </p>
         </div>
 
-        {billingMode === "test" ? (
-          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            <IconAlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
-            <div>
-              <p className="font-medium">{t("billing.testModeBanner")}</p>
-              <p className="text-amber-700">
-                Set{" "}
-                <code className="text-xs bg-amber-100 px-1 rounded">
-                  BILLING_MODE=live
-                </code>{" "}
-                and configure Stripe keys to enable real checkout.
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        {workspaceBilling.planTier === "free" && trialDays > 0 ? (
-          <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-            <IconCreditCard className="mt-0.5 h-5 w-5 shrink-0" />
+        {!billingEnabled ? (
+          <div className="flex items-start gap-3 rounded-lg border border-muted bg-muted/30 p-6 text-sm">
+            <IconCreditCard className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
             <div>
               <p className="font-medium">
-                {t("billing.trialRemaining")}: {trialDays}{" "}
-                {trialDays === 1 ? "day" : "days"}
+                {t("billing.disabledTitle")}
+              </p>
+              <p className="text-muted-foreground">
+                {t("billing.disabledHint")}
               </p>
             </div>
           </div>
-        ) : null}
+        ) : (
+          <>
+            {billingMode === "test" ? (
+              <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                <IconAlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-medium">{t("billing.testModeBanner")}</p>
+                  <p className="text-amber-700">
+                    Set{" "}
+                    <code className="text-xs bg-amber-100 px-1 rounded">
+                      BILLING_MODE=live
+                    </code>{" "}
+                    and configure Stripe keys to enable real checkout.
+                  </p>
+                </div>
+              </div>
+            ) : null}
 
-        {!subActive && workspaceBilling.planTier !== "free" ? (
-          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
-            <IconAlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
-            <div>
-              <p className="font-medium">
-                {t("billing.subscriptionInactive")}
-              </p>
-              <p className="text-red-700">
-                {t("billing.subscriptionInactiveHint")}
-              </p>
-            </div>
-          </div>
-        ) : null}
+            {workspaceBilling.planTier === "free" && trialDays > 0 ? (
+              <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+                <IconCreditCard className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-medium">
+                    {t("billing.trialRemaining")}: {trialDays}{" "}
+                    {trialDays === 1 ? "day" : "days"}
+                  </p>
+                </div>
+              </div>
+            ) : null}
 
-        <BillingPlanCard
-          workspaceBilling={workspaceBilling}
-          workspaceId={dashboard.workspaceId ?? ""}
-        />
+            {!subActive && workspaceBilling.planTier !== "free" ? (
+              <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+                <IconAlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-medium">
+                    {t("billing.subscriptionInactive")}
+                  </p>
+                  <p className="text-red-700">
+                    {t("billing.subscriptionInactiveHint")}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            <BillingPlanCard
+              workspaceBilling={workspaceBilling}
+              workspaceId={dashboard.workspaceId ?? ""}
+            />
+          </>
+        )}
       </div>
     </DashboardShell>
   );

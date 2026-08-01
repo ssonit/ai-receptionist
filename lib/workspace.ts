@@ -456,6 +456,7 @@ export async function assertWorkspaceSubscriptionActive(
   if (
     workspaceId === getDefaultWorkspaceId() ||
     workspaceId === PILOT_WORKSPACE_ID ||
+    getBillingMode() === "none" ||
     getBillingMode() === "test"
   ) {
     return;
