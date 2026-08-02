@@ -34,11 +34,13 @@ alter table public.workspace_channel_connections enable row level security;
 -- Backfill existing Messenger connections.
 insert into public.workspace_channel_connections
   (workspace_id, provider, external_id, display_name, access_encrypted)
-select id,
+select distinct on (messenger_page_id)
+       id,
        'messenger',
        messenger_page_id,
        messenger_page_name,
        messenger_page_access_token_encrypted
   from public.workspaces
  where messenger_page_id is not null
+ order by messenger_page_id, updated_at desc
 on conflict (workspace_id, provider) do nothing;
