@@ -19,6 +19,7 @@ export type OAuthStatePayload = {
   returnTo: string;
   nonce: string;
   exp: number;
+  codeVerifier?: string;
 };
 
 function signPayload(payload: OAuthStatePayload): string {
@@ -76,12 +77,19 @@ export function safeReturnTo(returnTo: string, fallback: string): string {
 }
 
 /** Create a signed state token for OAuth authorize redirect. */
-export function createOAuthState(workspaceId: string, returnTo: string): { token: string; payload: OAuthStatePayload } {
+export function createOAuthState(
+  workspaceId: string,
+  returnTo: string,
+  codeVerifier?: string,
+): { token: string; payload: OAuthStatePayload } {
   const payload: OAuthStatePayload = {
     workspaceId,
     returnTo: safeReturnTo(returnTo, "/dashboard/setup"),
     nonce: randomBytes(16).toString("hex"),
     exp: Date.now() + STATE_TTL_MS,
+    // PKCE: the verifier must survive the redirect, and this cookie is already
+    // signed, httpOnly and TTL-bounded — exactly the properties it needs.
+    ...(codeVerifier ? { codeVerifier } : {}),
   };
   return { token: signPayload(payload), payload };
 }
@@ -97,4 +105,9 @@ export function parseOAuthState(token: string, expectedWorkspaceId: string): OAu
 }
 
 export const OAUTH_STATE_COOKIE = "eve_cal_oauth_state";
+/**
+ * Separate from the Cal/Messenger cookie so a Zalo connect started in one tab
+ * cannot clobber a Cal connect started in another.
+ */
+export const ZALO_OAUTH_STATE_COOKIE = "eve_zalo_oauth_state";
 export { STATE_TTL_MS };
