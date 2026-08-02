@@ -1,5 +1,6 @@
 import { CalConnectionCard } from "@/app/_components/cal-connection-card";
 import { MessengerConnectionCard } from "@/app/_components/messenger-connection-card";
+import { ZaloConnectionCard } from "@/app/_components/zalo-connection-card";
 import { WorkspaceSettingsForm } from "@/app/_components/workspace-settings-form";
 import { WebhookSecretCard } from "@/app/_components/webhook-secret-card";
 import { WorkspaceTeamCard } from "@/app/_components/workspace-team-card";
@@ -28,11 +29,14 @@ export default async function SettingsPage() {
   let calUsernameForSettings: string | null = null;
   let messengerPageId: string | null = null;
   let messengerPageName: string | null = null;
+  let zaloOaId: string | null = null;
+  let zaloOaName: string | null = null;
   let hasOwnWebhookSecret = false;
   let currentUserId: string | null = null;
   let members: Awaited<ReturnType<typeof listWorkspaceMembers>> = [];
   let pendingInvites: Awaited<ReturnType<typeof listPendingInvites>> = [];
   let canConnectMessenger = false;
+  let canConnectZalo = false;
 
   if (dashboard.workspaceId) {
     const supabase = await createClient();
@@ -63,6 +67,21 @@ export default async function SettingsPage() {
         trialEndsAt: (workspaceRow?.trial_ends_at as string | null) ?? null,
       },
       PLAN_FEATURE.MESSENGER,
+    );
+
+    canConnectZalo = canUseFeature(
+      {
+        planTier: (workspaceRow?.plan_tier as PlanTier) ?? "free",
+        subscriptionStatus:
+          (workspaceRow?.subscription_status as SubscriptionStatus | null) ??
+          null,
+        billingProvider: null,
+        billingCustomerId: null,
+        billingSubscriptionId: null,
+        periodEndsAt: null,
+        trialEndsAt: (workspaceRow?.trial_ends_at as string | null) ?? null,
+      },
+      PLAN_FEATURE.ZALO,
     );
 
     if (data) {
@@ -105,12 +124,14 @@ export default async function SettingsPage() {
       );
     }
 
-    const messengerConn = await getChannelConnection(
-      dashboard.workspaceId,
-      "messenger",
-    );
+    const [messengerConn, zaloConn] = await Promise.all([
+      getChannelConnection(dashboard.workspaceId, "messenger"),
+      getChannelConnection(dashboard.workspaceId, "zalo"),
+    ]);
     messengerPageId = messengerConn?.externalId ?? null;
     messengerPageName = messengerConn?.displayName ?? null;
+    zaloOaId = zaloConn?.externalId ?? null;
+    zaloOaName = zaloConn?.displayName ?? null;
 
     try {
       members = await listWorkspaceMembers(dashboard.workspaceId);
@@ -188,6 +209,27 @@ export default async function SettingsPage() {
                     messengerPageId={messengerPageId}
                     messengerPageName={messengerPageName}
                     canConnect={canConnectMessenger}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border/70 pt-8 lg:pt-10">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,13rem)_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+                <div className="space-y-1.5 lg:pt-0.5">
+                  <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                    Zalo
+                  </h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
+                    Connect your Zalo Official Account so guests can book over Zalo.
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <ZaloConnectionCard
+                    workspaceId={dashboard.workspaceId}
+                    zaloOaId={zaloOaId}
+                    zaloOaName={zaloOaName}
+                    canConnect={canConnectZalo}
                   />
                 </div>
               </div>

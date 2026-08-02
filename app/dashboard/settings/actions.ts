@@ -240,3 +240,23 @@ export async function disconnectMessengerAction(
     return { error: appErrorMessage(APP_ERROR_CODE.MESSENGER_DISCONNECT_FAILED) };
   }
 }
+
+export async function disconnectZaloAction(
+  workspaceId: string,
+): Promise<{ error?: string }> {
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) return { error: ownerWorkspaceErrorMessage(auth.error) };
+
+  if (auth.workspaceId !== workspaceId) {
+    return { error: appErrorMessage(APP_ERROR_CODE.UNAUTHORIZED) };
+  }
+
+  try {
+    const { disconnectZalo } = await import("@/lib/zalo-oauth");
+    await disconnectZalo(workspaceId);
+    revalidatePath(DASHBOARD_PATH.settings);
+    return {};
+  } catch {
+    return { error: appErrorMessage(APP_ERROR_CODE.ZALO_DISCONNECT_FAILED) };
+  }
+}
