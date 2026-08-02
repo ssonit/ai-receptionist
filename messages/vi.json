@@ -160,7 +160,19 @@
       "subscriptionInactive": "Đăng ký không hoạt động",
       "subscriptionInactiveHint": "Thời gian dùng thử đã hết hoặc đăng ký của bạn đang quá hạn. Nâng cấp để khôi phục quyền truy cập.",
       "disabledTitle": "Thanh toán đã tắt",
-      "disabledHint": "Đặt BILLING_MODE=test hoặc BILLING_MODE=live trong môi trường để bật gói đăng ký."
+      "disabledHint": "Đặt BILLING_MODE=test hoặc BILLING_MODE=live trong môi trường để bật gói đăng ký.",
+      "planNames": {
+        "starter": "Starter",
+        "pro": "Pro"
+      },
+      "features": {
+        "web_embed": "Chat widget trên website",
+        "cal_booking": "Đặt lịch trên lịch thật",
+        "faq_intake": "FAQ + thu thập thông tin khách",
+        "bilingual_agent": "Trợ lý song ngữ Anh–Việt",
+        "reminders": "Nhắc lịch hẹn",
+        "messenger": "Facebook Messenger"
+      }
     }
   },
   "common": {

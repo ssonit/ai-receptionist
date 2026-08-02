@@ -13,44 +13,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type {
-  PlanTier,
-  WorkspaceBilling,
-} from "@/lib/billing";
-
-const PLAN_LABELS: Record<PlanTier, string> = {
-  free: "Free",
-  starter: "Starter",
-  pro: "Pro",
-};
-
-const PLAN_PRICES: Record<PlanTier, string | null> = {
-  free: null,
-  starter: "$19",
-  pro: "$49",
-};
-
-const PLAN_FEATURES: Record<PlanTier, string[]> = {
-  free: [
-    "14-day trial",
-    "Web chat",
-    "Cal.com booking",
-    "FAQ + intake",
-    "Basic dashboard",
-  ],
-  starter: [
-    "50 bookings/mo",
-    "1 user",
-    "Web embed",
-    "EN/VI AI agent",
-  ],
-  pro: [
-    "200 bookings/mo",
-    "3 users",
-    "Zalo / WhatsApp",
-    "Email reminders",
-  ],
-};
+import type { WorkspaceBilling } from "@/lib/billing";
+import { featuresForTier, PLAN_PRICE_USD } from "@/lib/plan-features";
 
 type Props = {
   workspaceBilling: WorkspaceBilling;
@@ -79,13 +43,15 @@ export function BillingPlanCard({ workspaceBilling, workspaceId: _workspaceId }:
     <div className="grid gap-6 md:grid-cols-2">
       {tiers.map((tier) => {
         const isCurrent = currentTier === tier;
-        const price = PLAN_PRICES[tier];
+        const price = `$${PLAN_PRICE_USD[tier]}`;
+        const planName = t(`dashboard.billing.planNames.${tier}`);
+        const features = featuresForTier(tier);
 
         return (
           <Card key={tier} className={isCurrent ? "border-primary" : ""}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                {PLAN_LABELS[tier]}
+                {planName}
                 {isCurrent ? (
                   <Badge variant="default">
                     {t("dashboard.billing.currentPlan")}
@@ -96,17 +62,15 @@ export function BillingPlanCard({ workspaceBilling, workspaceId: _workspaceId }:
                 <span className="text-2xl font-bold text-foreground">
                   {price}
                 </span>
-                {price ? (
-                  <span className="text-muted-foreground">/mo</span>
-                ) : null}
+                <span className="text-muted-foreground">/mo</span>
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm">
-                {PLAN_FEATURES[tier].map((f) => (
-                  <li key={f} className="flex items-center gap-2">
+                {features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-2">
                     <IconCheck className="h-4 w-4 text-primary" />
-                    {f}
+                    {t(`dashboard.billing.features.${feature}`)}
                   </li>
                 ))}
               </ul>
@@ -124,7 +88,7 @@ export function BillingPlanCard({ workspaceBilling, workspaceId: _workspaceId }:
                 >
                   <IconCreditCard className="mr-2 h-4 w-4" />
                   {t("dashboard.billing.upgradeTo", {
-                    plan: PLAN_LABELS[tier],
+                    plan: planName,
                   })}
                 </Button>
               )}

@@ -157,7 +157,19 @@
       "subscriptionInactive": "Subscription inactive",
       "subscriptionInactiveHint": "Your trial has ended or your subscription is past due. Upgrade to restore access.",
       "disabledTitle": "Billing is disabled",
-      "disabledHint": "Subscription plans are not available for this account yet. Contact support if you'd like to upgrade."
+      "disabledHint": "Subscription plans are not available for this account yet. Contact support if you'd like to upgrade.",
+      "planNames": {
+        "starter": "Starter",
+        "pro": "Pro"
+      },
+      "features": {
+        "web_embed": "Website chat widget",
+        "cal_booking": "Real calendar booking",
+        "faq_intake": "FAQ + client intake",
+        "bilingual_agent": "English & Vietnamese agent",
+        "reminders": "Appointment reminders",
+        "messenger": "Facebook Messenger"
+      }
     }
   },
   "common": {
