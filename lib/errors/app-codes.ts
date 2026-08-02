@@ -82,6 +82,7 @@ export const APP_ERROR_CODE = {
   MESSENGER_DISCONNECT_FAILED: "messenger_disconnect_failed",
   SUBSCRIPTION_INACTIVE: "subscription_inactive",
   WEBHOOK_SECRET_FAILED: "webhook_secret_failed",
+  PLAN_UPGRADE_REQUIRED: "plan_upgrade_required",
 } as const;
 
 export type AppErrorCode = (typeof APP_ERROR_CODE)[keyof typeof APP_ERROR_CODE];

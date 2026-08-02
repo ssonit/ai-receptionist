@@ -135,6 +135,8 @@ export const APP_ERROR_MESSAGE = {
     "Online booking is currently paused for this business. Please contact them directly.",
   [APP_ERROR_CODE.WEBHOOK_SECRET_FAILED]:
     "Could not generate the webhook signing secret. Try again.",
+  [APP_ERROR_CODE.PLAN_UPGRADE_REQUIRED]:
+    "That channel is included in the Pro plan. Upgrade in Billing to connect it.",
 } as const satisfies Record<AppErrorCode, string>;
 
 export function appErrorMessage(code: AppErrorCode): string {
