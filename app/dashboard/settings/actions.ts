@@ -12,6 +12,7 @@ import {
   slugTakenMessage,
 } from "@/lib/errors";
 import { minLongLeadMinutes } from "@/lib/booking-reminders";
+import { bookingRoute } from "@/lib/routes";
 import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { canonicalizeTimezone } from "@/lib/timezones";
 import type { WorkspaceSettingsState } from "@/lib/workspace-settings-types";
@@ -129,7 +130,7 @@ export async function saveWorkspaceSettings(
   revalidatePath(DASHBOARD_PATH.settings);
   revalidatePath(DASHBOARD_PATH.agent);
   revalidatePath(DASHBOARD_PATH.faq);
-  revalidatePath(`/b/${slug}`);
+  revalidatePath(bookingRoute(slug));
   return { success: "Workspace settings saved." };
 }
 

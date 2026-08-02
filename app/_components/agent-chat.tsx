@@ -50,6 +50,7 @@ import { ANALYTICS_EVENT } from "@/lib/analytics-events";
 import { track } from "@/lib/analytics-client";
 import { AgentMessage } from "./agent-message";
 import { ChatUserMenu, type ChatUser } from "./chat-user-menu";
+import { ROUTES } from "@/lib/routes";
 import {
   ChatSessionDrawer,
   ChatSessionSidebar,
@@ -411,7 +412,7 @@ function AgentChatInner({
               <ChatUserMenu user={user} />
             ) : (
               <RainbowButton asChild className="h-8 rounded-full px-3 text-xs" size="sm">
-                <Link href="/login">{t("common.signIn")}</Link>
+                <Link href={ROUTES.LOGIN}>{t("common.signIn")}</Link>
               </RainbowButton>
             )}
           </div>
@@ -430,7 +431,7 @@ function AgentChatInner({
             <span className="text-amber-100/40">·</span>
             <Link
               className="font-medium text-teal-200 underline-offset-2 hover:underline"
-              href="/signup"
+              href={ROUTES.SIGNUP}
             >
               {t("chat.createWorkspace")}
             </Link>

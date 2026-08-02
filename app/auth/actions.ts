@@ -8,6 +8,7 @@ import {
   authErrorMessage,
   formatAuthError,
 } from "@/lib/errors";
+import { ROUTES } from "@/lib/routes";
 import { isPublicSignupOpen } from "@/lib/signup-mode";
 import { createClient } from "@/lib/supabase/server";
 import { ANALYTICS_EVENT } from "@/lib/analytics-events";
@@ -69,7 +70,7 @@ export async function signUp(
     });
   }
 
-  redirect(inviteToken ? "/dashboard" : "/dashboard/setup");
+  redirect(inviteToken ? ROUTES.DASHBOARD : ROUTES.DASHBOARD_SETUP);
 }
 
 export async function signIn(
@@ -78,7 +79,7 @@ export async function signIn(
 ): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/dashboard");
+  const next = String(formData.get("next") ?? ROUTES.DASHBOARD);
 
   if (!email || !password) {
     return {
@@ -103,7 +104,48 @@ export async function signIn(
     await trackServer(ANALYTICS_EVENT.SIGNIN_COMPLETED, data.user.id);
   }
 
-  redirect(next.startsWith("/") ? next : "/dashboard");
+  redirect(next.startsWith("/") ? next : ROUTES.DASHBOARD);
+}
+
+export async function forgotPassword(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) {
+    return { error: authErrorMessage(AUTH_ERROR_CODE.EMAIL_PASSWORD_REQUIRED) };
+  }
+
+  const supabase = await createClient();
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}${ROUTES.AUTH_CALLBACK}?next=${ROUTES.RESET_PASSWORD}`,
+  });
+
+  if (error) {
+    return { error: formatAuthError(error, "signIn") };
+  }
+
+  return { success: authErrorMessage(AUTH_ERROR_CODE.PASSWORD_RESET_SENT) };
+}
+
+export async function resetPassword(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 6) {
+    return { error: authErrorMessage(AUTH_ERROR_CODE.WEAK_PASSWORD) };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    return { error: authErrorMessage(AUTH_ERROR_CODE.INVALID_RESET_TOKEN) };
+  }
+
+  redirect(ROUTES.LOGIN);
 }
 
 export async function signOut(nextAfterLogin?: string) {
@@ -111,7 +153,7 @@ export async function signOut(nextAfterLogin?: string) {
   await supabase.auth.signOut();
   // After sign-out, /login?next=… is safe — proxy only redirects authed users away from /login.
   if (nextAfterLogin?.startsWith("/")) {
-    redirect(`/login?next=${encodeURIComponent(nextAfterLogin)}`);
+    redirect(`${ROUTES.LOGIN}?next=${encodeURIComponent(nextAfterLogin)}`);
   }
-  redirect("/login");
+  redirect(ROUTES.LOGIN);
 }

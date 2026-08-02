@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { bookingRoute } from "@/lib/routes";
 import {
   MAX_CHAT_SUGGESTIONS,
   type ChatSuggestion,
@@ -116,7 +117,7 @@ export async function saveWorkspaceAgent(
   revalidatePath("/dashboard/agent");
   revalidatePath("/dashboard/faq");
   revalidatePath("/dashboard/settings");
-  if (ws?.slug) revalidatePath(`/b/${ws.slug}`);
+  if (ws?.slug) revalidatePath(bookingRoute(ws.slug));
 
   return { success: "AI Agent saved." };
 }

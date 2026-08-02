@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { ROUTES, inviteRoute } from "@/lib/routes";
 import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { isPublicSignupOpen } from "@/lib/signup-mode";
 import { ensureVisitorIdOnResponse } from "@/lib/visitor";
@@ -37,7 +38,7 @@ export async function proxy(request: NextRequest) {
     Boolean(embedSlug) || path === "/embed" || path.startsWith("/embed/");
 
   const needsVisitor =
-    path === "/chat" ||
+    path === ROUTES.CHAT ||
     path.startsWith("/chat/") ||
     path.startsWith("/api/chat/") ||
     Boolean(bookingSlug) ||
@@ -102,14 +103,14 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isProtectedRoute =
-    path.startsWith(DASHBOARD_PATH.root) || path.startsWith("/console");
+    path.startsWith(DASHBOARD_PATH.root) || path.startsWith(ROUTES.CONSOLE);
 
   if (isProtectedRoute && !user) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/login";
+    redirectUrl.pathname = ROUTES.LOGIN;
     redirectUrl.searchParams.set(
       "next",
-      path.startsWith("/console") ? DASHBOARD_PATH.root : path,
+      path.startsWith(ROUTES.CONSOLE) ? DASHBOARD_PATH.root : path,
     );
     return NextResponse.redirect(redirectUrl);
   }
@@ -187,25 +188,25 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if (path === "/signup" && !isPublicSignupOpen()) {
+  if (path === ROUTES.SIGNUP && !isPublicSignupOpen()) {
     const invite = request.nextUrl.searchParams.get("invite")?.trim();
     if (!invite) {
       const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = "/login";
+      redirectUrl.pathname = ROUTES.LOGIN;
       redirectUrl.search = "";
       return NextResponse.redirect(redirectUrl);
     }
   }
 
-  if ((path === "/login" || path === "/signup") && user) {
+  if ((path === ROUTES.LOGIN || path === ROUTES.SIGNUP) && user) {
     const next = request.nextUrl.searchParams.get("next");
     const invite = request.nextUrl.searchParams.get("invite");
     const redirectUrl = request.nextUrl.clone();
     if (next?.startsWith("/")) {
       redirectUrl.pathname = next;
       redirectUrl.search = "";
-    } else if (path === "/signup" && invite?.trim()) {
-      redirectUrl.pathname = `/invite/${encodeURIComponent(invite.trim())}`;
+    } else if (path === ROUTES.SIGNUP && invite?.trim()) {
+      redirectUrl.pathname = inviteRoute(encodeURIComponent(invite.trim()));
       redirectUrl.search = "";
     } else {
       redirectUrl.pathname = DASHBOARD_PATH.root;

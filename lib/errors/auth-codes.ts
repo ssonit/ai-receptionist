@@ -10,6 +10,10 @@ export const AUTH_ERROR_CODE = {
   NETWORK: "network_error",
   SIGN_IN_FAILED: "sign_in_failed",
   SIGN_UP_FAILED: "sign_up_failed",
+  PASSWORD_RESET_SENT: "password_reset_sent",
+  PASSWORD_RESET_FAILED: "password_reset_failed",
+  INVALID_RESET_TOKEN: "invalid_reset_token",
+  NAME_REQUIRED: "name_required",
 } as const;
 
 export type AuthErrorCode =

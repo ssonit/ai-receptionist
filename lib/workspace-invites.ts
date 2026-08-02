@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
+import { ROUTES, inviteRoute } from "@/lib/routes";
 import {
   WORKSPACE_ROLE,
   type WorkspaceRole,
@@ -41,7 +42,7 @@ export type WorkspaceMemberRow = {
 };
 
 export function invitePath(token: string): string {
-  return `/invite/${encodeURIComponent(token)}`;
+  return inviteRoute(encodeURIComponent(token));
 }
 
 export function generateInviteToken(): string {

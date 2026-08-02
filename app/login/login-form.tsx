@@ -6,6 +6,7 @@ import { signIn, type AuthState } from "@/app/auth/actions";
 import { Label } from "@/components/ui/label";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/routes";
 
 const initial: AuthState = {};
 
@@ -89,7 +90,7 @@ export function LoginForm({ nextPath }: { readonly nextPath: string }) {
 
       <p className="text-center text-sm text-zinc-500">
         No account yet?{" "}
-        <Link className="text-white underline-offset-4 hover:underline" href="/signup">
+        <Link className="text-white underline-offset-4 hover:underline" href={ROUTES.SIGNUP}>
           Create one
         </Link>
       </p>

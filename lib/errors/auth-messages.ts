@@ -21,6 +21,14 @@ export const AUTH_ERROR_MESSAGE = {
     "Could not sign in. Check your email and password, then try again.",
   [AUTH_ERROR_CODE.SIGN_UP_FAILED]:
     "Could not create your account. Check the details and try again.",
+  [AUTH_ERROR_CODE.PASSWORD_RESET_SENT]:
+    "If an account with that email exists, we've sent a reset link. Check your inbox.",
+  [AUTH_ERROR_CODE.PASSWORD_RESET_FAILED]:
+    "Could not send the reset link. Try again in a moment.",
+  [AUTH_ERROR_CODE.INVALID_RESET_TOKEN]:
+    "This reset link is expired or invalid. Request a new one.",
+  [AUTH_ERROR_CODE.NAME_REQUIRED]:
+    "Full name is required.",
 } as const satisfies Record<AuthErrorCode, string>;
 
 export function authErrorMessage(code: AuthErrorCode): string {

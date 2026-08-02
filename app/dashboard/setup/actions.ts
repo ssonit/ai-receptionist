@@ -29,6 +29,7 @@ import {
 import { encryptSecret } from "@/lib/workspace-secrets";
 import { ANALYTICS_EVENT } from "@/lib/analytics-events";
 import { trackServer } from "@/lib/analytics-server";
+import { ROUTES, bookingRoute } from "@/lib/routes";
 
 export type SetupActionState = {
   error?: string;
@@ -221,7 +222,7 @@ export async function completeSetupAction(): Promise<SetupActionState> {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/setup");
-  revalidatePath(`/b/${slug}`);
+  revalidatePath(bookingRoute(slug));
   return { success: "Setup saved. You can open the dashboard anytime." };
 }
 

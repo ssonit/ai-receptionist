@@ -22,6 +22,7 @@ import type {
   WorkspaceRole,
 } from "@/lib/workspace-invites";
 import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
+import { ROUTES, inviteRoute } from "@/lib/routes";
 
 const initial: InviteActionState = {};
 
@@ -230,7 +231,7 @@ export function WorkspaceTeamCard({
                     {pendingInvites.map((inv) => {
                       const url = absoluteInviteUrl(
                         inviteOrigin,
-                        `/invite/${inv.token}`,
+                        inviteRoute(inv.token),
                       );
                       return (
                         <li

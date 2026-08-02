@@ -1,3 +1,4 @@
+import { ROUTES } from "@/lib/routes";
 import {
   WORKSPACE_ROLE,
   type WorkspaceRole,
@@ -6,23 +7,23 @@ import {
 export type { WorkspaceRole };
 export { WORKSPACE_ROLE };
 
-/** Canonical dashboard route paths. */
+/** Canonical dashboard route paths (derived from ROUTES). */
 export const DASHBOARD_PATH = {
-  root: "/dashboard",
-  analytics: "/dashboard/analytics",
-  bookings: "/dashboard/bookings",
-  meetingTypes: "/dashboard/meeting-types",
-  embed: "/dashboard/embed",
-  conversations: "/dashboard/conversations",
-  leads: "/dashboard/leads",
-  agent: "/dashboard/agent",
-  faq: "/dashboard/faq",
-  settings: "/dashboard/settings",
-  help: "/dashboard/help",
-  account: "/dashboard/account",
-  notifications: "/dashboard/notifications",
-  setup: "/dashboard/setup",
-  billing: "/dashboard/billing",
+  root: ROUTES.DASHBOARD,
+  analytics: ROUTES.DASHBOARD_ANALYTICS,
+  bookings: ROUTES.DASHBOARD_BOOKINGS,
+  meetingTypes: ROUTES.DASHBOARD_MEETING_TYPES,
+  embed: ROUTES.DASHBOARD_EMBED,
+  conversations: ROUTES.DASHBOARD_CONVERSATIONS,
+  leads: ROUTES.DASHBOARD_LEADS,
+  agent: ROUTES.DASHBOARD_AGENT,
+  faq: ROUTES.DASHBOARD_FAQ,
+  settings: ROUTES.DASHBOARD_SETTINGS,
+  help: ROUTES.DASHBOARD_HELP,
+  account: ROUTES.DASHBOARD_ACCOUNT,
+  notifications: ROUTES.DASHBOARD_NOTIFICATIONS,
+  setup: ROUTES.DASHBOARD_SETUP,
+  billing: ROUTES.DASHBOARD_BILLING,
 } as const;
 
 export type DashboardPath =

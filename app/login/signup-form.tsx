@@ -8,6 +8,7 @@ import { RainbowButton } from "@/components/ui/rainbow-button";
 import { cn } from "@/lib/utils";
 import { ANALYTICS_EVENT } from "@/lib/analytics-events";
 import { track } from "@/lib/analytics-client";
+import { ROUTES, inviteRoute } from "@/lib/routes";
 
 const initial: AuthState = {};
 
@@ -146,7 +147,7 @@ export function SignupForm({
           className="text-white underline-offset-4 hover:underline"
           href={
             joining
-              ? `/login?next=${encodeURIComponent(`/invite/${inviteToken!.trim()}`)}`
+              ? `/login?next=${encodeURIComponent(inviteRoute(inviteToken!.trim()))}`
               : "/login"
           }
         >

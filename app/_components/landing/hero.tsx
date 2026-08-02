@@ -9,6 +9,7 @@ import {
   PrimaryButton,
 } from "./primitives";
 import { ProductStage } from "./product-stage";
+import { ROUTES } from "@/lib/routes";
 
 export function LandingHero() {
   const t = useTranslations("landing.hero");
@@ -37,7 +38,7 @@ export function LandingHero() {
 
           <BlurFade delay={0.22} inView>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <PrimaryButton href="/signup">
+              <PrimaryButton href={ROUTES.SIGNUP}>
                 {t("ctaPrimary")}
                 <ArrowRightIcon className="size-4 transition group-hover:translate-x-0.5" />
               </PrimaryButton>

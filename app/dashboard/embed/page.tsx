@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isWorkspaceBookingLive } from "@/lib/workspace";
 
 import { EmbedPageClient } from "./embed-page-client";
+import { ROUTES } from "@/lib/routes";
 
 export default async function EmbedDashboardPage() {
   const dashboard = await assertOwnerPage(DASHBOARD_PATH.embed);

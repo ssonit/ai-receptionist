@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { EveLogo } from "@/components/eve-logo";
 import { LocaleToggle } from "@/components/locale-provider";
 import { Container, PrimaryButton } from "./primitives";
+import { ROUTES } from "@/lib/routes";
 
 export function LandingHeader() {
   const t = useTranslations("landing");
@@ -36,11 +37,11 @@ export function LandingHeader() {
           <LocaleToggle className="hidden sm:inline-flex" variant="dark" />
           <Link
             className="hidden text-sm text-zinc-300 transition hover:text-white sm:inline"
-            href="/login"
+            href={ROUTES.LOGIN}
           >
             {t("nav.logIn")}
           </Link>
-          <PrimaryButton className="h-9 px-4 text-xs" href="/signup">
+          <PrimaryButton className="h-9 px-4 text-xs" href={ROUTES.SIGNUP}>
             {t("nav.startFree")}
           </PrimaryButton>
         </div>
@@ -69,16 +70,16 @@ export function LandingFooter() {
           <Link className="hover:text-white" href="/chat">
             {t("try")}
           </Link>
-          <Link className="hover:text-white" href="/signup">
+          <Link className="hover:text-white" href={ROUTES.SIGNUP}>
             {t("signUp")}
           </Link>
-          <Link className="hover:text-white" href="/login">
+          <Link className="hover:text-white" href={ROUTES.LOGIN}>
             {t("logIn")}
           </Link>
           <Link className="hover:text-white" href="/dashboard">
             {t("dashboard")}
           </Link>
-          <Link className="hover:text-white" href="/terms">
+          <Link className="hover:text-white" href={ROUTES.TERMS}>
             {t("terms")}
           </Link>
           <Link className="hover:text-white" href="/privacy">

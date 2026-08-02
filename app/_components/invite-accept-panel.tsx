@@ -10,6 +10,7 @@ import { RainbowButton } from "@/components/ui/rainbow-button";
 import { inviteEmailMismatchMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import type { InvitePreview } from "@/lib/workspace-invites";
+import { ROUTES, inviteRoute } from "@/lib/routes";
 
 export function InviteAcceptPanel({
   token,
@@ -50,7 +51,7 @@ export function InviteAcceptPanel({
         </p>
         <Link
           className="mt-4 inline-flex h-11 items-center justify-center rounded-full border border-white/10 text-sm text-zinc-300 transition hover:border-white/20 hover:text-white"
-          href="/login"
+          href={ROUTES.LOGIN}
         >
           Sign in
         </Link>
@@ -59,7 +60,7 @@ export function InviteAcceptPanel({
   }
 
   const signupHref = `/signup?invite=${encodeURIComponent(token)}`;
-  const loginHref = `/login?next=${encodeURIComponent(`/invite/${token}`)}`;
+  const loginHref = `/login?next=${encodeURIComponent(inviteRoute(token))}`;
 
   function onAccept() {
     setError(null);
@@ -114,7 +115,7 @@ export function InviteAcceptPanel({
               <button
                 className="inline-flex h-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-sm text-zinc-300 transition hover:border-white/20 hover:text-white"
                 onClick={() => {
-                  void signOut(`/invite/${token}`);
+                  void signOut(inviteRoute(token));
                 }}
                 type="button"
               >

@@ -38,3 +38,5 @@ catch (e) {
 ```
 
 See: `lib/errors/auth-*.ts`, `app-codes.ts`, `app-messages.ts`, `format.ts`.
+
+The `as const` + string-value pattern used here (`APP_ERROR_CODE.SIGN_IN_REQUIRED = "sign_in_required"`) is also used for route constants in `lib/routes.ts` (`ROUTES.LOGIN = "/login"`).
