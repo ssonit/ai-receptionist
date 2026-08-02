@@ -658,6 +658,28 @@ export async function findChatSessionByEveSessionId(
 }
 
 /**
+ * Has this provider message id already been stored for the session?
+ *
+ * Channels retry a webhook when they do not get a timely 200. Without this
+ * check a retry is answered a second time and billed a second LLM turn.
+ */
+export async function chatMessageExists(
+  sessionId: string,
+  eveMessageId: string,
+): Promise<boolean> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("chat_messages")
+    .select("id")
+    .eq("session_id", sessionId)
+    .eq("eve_message_id", eveMessageId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return Boolean(data);
+}
+
+/**
  * Bump session metadata from a trusted (server-side) channel handler.
  * Does NOT run the visitor-ownership gate — channels are server-trusted.
  */

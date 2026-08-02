@@ -105,13 +105,13 @@
     "semantic_hash": ""
   },
   "app/dashboard/settings/actions.ts": {
-    "mtime": 1785582211.7201242,
-    "ast_hash": "76adb27118a3ef27d5bd9dc98b04f9e7",
+    "mtime": 1785668901.2128665,
+    "ast_hash": "9c9f1ea84774ce003bdc28524f4aec2d",
     "semantic_hash": ""
   },
   "app/dashboard/settings/page.tsx": {
-    "mtime": 1785661590.8021562,
-    "ast_hash": "bd3bca4850749c9eb0bd7990030ee4e4",
+    "mtime": 1785668923.333,
+    "ast_hash": "9402e92750254caee793e6d4c6f33f72",
     "semantic_hash": ""
   },
   "app/layout.tsx": {
@@ -520,8 +520,8 @@
     "semantic_hash": ""
   },
   "lib/workspace.ts": {
-    "mtime": 1785582077.0843866,
-    "ast_hash": "1b0d2a06fb5114649d558a430873f04a",
+    "mtime": 1785667987.0579917,
+    "ast_hash": "0f38b3c8410cfa42d347c1210d3fb705",
     "semantic_hash": ""
   },
   "next-env.d.ts": {
@@ -535,8 +535,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1785554777.5155175,
-    "ast_hash": "fbe17e3f9746ab4066d56e4b19612db6",
+    "mtime": 1785663295.6056435,
+    "ast_hash": "72fc2248bc28e883f36b4ac226d164bf",
     "semantic_hash": ""
   },
   "postcss.config.mjs": {
@@ -570,9 +570,9 @@
     "semantic_hash": ""
   },
   "tsconfig.json": {
-    "mtime": 1784692412.1823401,
-    "ast_hash": "284d11a5d12d0668c9ddf700bd0a928f",
-    "semantic_hash": "284d11a5d12d0668c9ddf700bd0a928f"
+    "mtime": 1785668099.627856,
+    "ast_hash": "71152d73c1c08674690c8073f7d29f34",
+    "semantic_hash": ""
   },
   ".agents/skills/brandkit/SKILL.md": {
     "mtime": 1784713818.180365,
@@ -755,8 +755,8 @@
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
-    "mtime": 1785659384.890825,
-    "ast_hash": "86dcda722f5d69cdf72f40cc04429d08",
+    "mtime": 1785663295.5941265,
+    "ast_hash": "d463f071bccff3ebf71fb826824d1f4c",
     "semantic_hash": ""
   },
   "public/landing-hero-chat.png": {
@@ -920,8 +920,8 @@
     "semantic_hash": ""
   },
   "lib/chat-sessions.ts": {
-    "mtime": 1785559441.106882,
-    "ast_hash": "7cbaca525162e417f09e9b2511e27e7f",
+    "mtime": 1785682554.6094398,
+    "ast_hash": "d216f939e5a8b08fcc222e8692e0b224",
     "semantic_hash": ""
   },
   "lib/conversations-dashboard.ts": {
@@ -1140,13 +1140,13 @@
     "semantic_hash": ""
   },
   "messages/en.json": {
-    "mtime": 1785661590.8071785,
-    "ast_hash": "0f3648b2fa96ecc014f5fc9d568c3c42",
+    "mtime": 1785668565.7075412,
+    "ast_hash": "ccc01148fbb526583617f6579f1e23fc",
     "semantic_hash": ""
   },
   "messages/vi.json": {
-    "mtime": 1785661590.8071785,
-    "ast_hash": "db7512dbcf787f86c15a0780d1209ed0",
+    "mtime": 1785668569.0581794,
+    "ast_hash": "e8eac64408bbdfe62a7918d93d0fcb6c",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000004_slugify_vietnamese.sql": {
@@ -1155,8 +1155,8 @@
     "semantic_hash": ""
   },
   "proxy.ts": {
-    "mtime": 1785582147.531306,
-    "ast_hash": "bf4c38ede50438c4bbea183d35dfb77d",
+    "mtime": 1785663295.606731,
+    "ast_hash": "195fff221eb2abb1d0ad3c04f20d73c4",
     "semantic_hash": ""
   },
   ".claude/rules/agent-tools.md": {
@@ -2075,13 +2075,13 @@
     "semantic_hash": ""
   },
   "lib/errors/app-codes.ts": {
-    "mtime": 1785661590.8051782,
-    "ast_hash": "ac786d5da6a4de49f02266623c8700bb",
+    "mtime": 1785668552.930057,
+    "ast_hash": "a33a8ee90d254f87f1d5f44766973459",
     "semantic_hash": ""
   },
   "lib/errors/app-messages.ts": {
-    "mtime": 1785661590.8051782,
-    "ast_hash": "4adea03329a577049fedb9d119a08f76",
+    "mtime": 1785668557.927411,
+    "ast_hash": "2c25237c3c9dbaf6db311eadb4a65fd2",
     "semantic_hash": ""
   },
   "lib/errors/format.ts": {
@@ -2805,13 +2805,13 @@
     "semantic_hash": ""
   },
   "tests/setup.ts": {
-    "mtime": 1785481253.8509436,
+    "mtime": 1785665416.3004615,
     "ast_hash": "df6f9a5c7c396a10ae97d27e5590f5c1",
     "semantic_hash": ""
   },
   "vitest.config.mts": {
-    "mtime": 1785556066.4750905,
-    "ast_hash": "1ce57ecc493345b2005cf6e493998ad9",
+    "mtime": 1785667936.6919324,
+    "ast_hash": "04754e0d148d108b9afeeaca21f8e49b",
     "semantic_hash": ""
   },
   "app/_components/cal-connection-card.tsx": {
@@ -2835,8 +2835,8 @@
     "semantic_hash": ""
   },
   "lib/cal-oauth-state.ts": {
-    "mtime": 1785556978.1937697,
-    "ast_hash": "90d82fe95577c50096b70d0e6acaa49a",
+    "mtime": 1785667362.635213,
+    "ast_hash": "3573eac0194ba999f107249b2cecab12",
     "semantic_hash": ""
   },
   "lib/cal-oauth.test.ts": {
@@ -2885,33 +2885,28 @@
     "semantic_hash": ""
   },
   "app/api/billing/checkout/route.ts": {
-    "mtime": 1785580031.779573,
-    "ast_hash": "23e52ddc80f6ca35babf7c55933eadd7",
-    "semantic_hash": ""
-  },
-  "app/api/stripe/webhook/route.ts": {
-    "mtime": 1785553696.3999853,
-    "ast_hash": "10faf5054f3d68a315271063deb2152d",
+    "mtime": 1785663295.5891302,
+    "ast_hash": "f098291ec90c377f2a93e244a5abda51",
     "semantic_hash": ""
   },
   "app/dashboard/billing/page.tsx": {
-    "mtime": 1785580055.4997573,
-    "ast_hash": "70939306aa32620c0e99bb3a96b89190",
+    "mtime": 1785663295.5921285,
+    "ast_hash": "c9c3fb1523f43b4298ab9dc9ff779ed8",
     "semantic_hash": ""
   },
   "components/billing-plan-card.tsx": {
-    "mtime": 1785661590.803178,
-    "ast_hash": "c16f65f9fedadfe12bb6986ba9bed898",
+    "mtime": 1785663295.5941265,
+    "ast_hash": "0240a84a43d819bbcefab0a762af44af",
     "semantic_hash": ""
   },
   "lib/billing.test.ts": {
-    "mtime": 1785491300.9041665,
-    "ast_hash": "4c62a9a58792f16cb4883886298a03d4",
+    "mtime": 1785663295.595633,
+    "ast_hash": "b05232f54be65f61c2309a236b5a997a",
     "semantic_hash": ""
   },
   "lib/billing.ts": {
-    "mtime": 1785580013.9432209,
-    "ast_hash": "825185404050836295e00b87276f7714",
+    "mtime": 1785663295.5966392,
+    "ast_hash": "9df54ff6fe2a6b6257b7613061607f12",
     "semantic_hash": ""
   },
   "supabase/migrations/20260731000001_billing.sql": {
@@ -2950,8 +2945,8 @@
     "semantic_hash": ""
   },
   "lib/messenger-oauth.ts": {
-    "mtime": 1785556907.1355214,
-    "ast_hash": "f2c59c257276a7910dc3713b8399729f",
+    "mtime": 1785665935.7453747,
+    "ast_hash": "51a120babcdf15e4d57cc3b180de5fc7",
     "semantic_hash": ""
   },
   "lib/messenger-webhook.ts": {
@@ -3060,8 +3055,8 @@
     "semantic_hash": ""
   },
   "app/auth/callback/route.ts": {
-    "mtime": 1785581021.3559117,
-    "ast_hash": "228f0bd0f7a3d5983268d506f7a1d622",
+    "mtime": 1785662315.8526595,
+    "ast_hash": "3c29585568610a1b442cac9931cf3108",
     "semantic_hash": ""
   },
   "app/check-email/page.tsx": {
@@ -3100,13 +3095,13 @@
     "semantic_hash": ""
   },
   "lib/plan-features.test.ts": {
-    "mtime": 1785661590.8051782,
-    "ast_hash": "bd96a15f70fc00389f94d61886deebc4",
+    "mtime": 1785668547.0805476,
+    "ast_hash": "57f4c21b857e6c1032539af968df1904",
     "semantic_hash": ""
   },
   "lib/plan-features.ts": {
-    "mtime": 1785661590.8061788,
-    "ast_hash": "01996776388b7d951155224741ea00f4",
+    "mtime": 1785668540.6034389,
+    "ast_hash": "0d5cc7eb42e298d148b6f4f28bd0ea5d",
     "semantic_hash": ""
   },
   "lib/routes.ts": {
@@ -3122,6 +3117,166 @@
   "docs/superpowers/specs/2026-08-02-plan-feature-gating-design.md": {
     "mtime": 1785661590.8041794,
     "ast_hash": "d72db388c0fb6a043acc02cd62459aa7",
+    "semantic_hash": ""
+  },
+  "app/_components/billing-pay-client.tsx": {
+    "mtime": 1785663295.5881267,
+    "ast_hash": "76b7120966976ddc4598ceaec4a68c73",
+    "semantic_hash": ""
+  },
+  "app/api/billing/payment-status/route.ts": {
+    "mtime": 1785663295.5891302,
+    "ast_hash": "1f1be5832e299ea1e218b7c549dd9cb4",
+    "semantic_hash": ""
+  },
+  "app/api/billing/portal/route.ts": {
+    "mtime": 1785663295.5901246,
+    "ast_hash": "6238a1a5d80df39e654c8fc6b76f4c00",
+    "semantic_hash": ""
+  },
+  "app/api/polar/webhook/route.ts": {
+    "mtime": 1785663295.5901246,
+    "ast_hash": "3592b1c7045b1b404806135a13ff3c3d",
+    "semantic_hash": ""
+  },
+  "app/api/sepay/webhook/route.ts": {
+    "mtime": 1785663295.591125,
+    "ast_hash": "298595c34752ad01818dbab03d8196e7",
+    "semantic_hash": ""
+  },
+  "app/dashboard/billing/pay/page.tsx": {
+    "mtime": 1785663295.5931277,
+    "ast_hash": "8a0046e5cc71909060eec930c88cd9fc",
+    "semantic_hash": ""
+  },
+  "lib/billing/apply-entitlement.ts": {
+    "mtime": 1785663295.5966392,
+    "ast_hash": "73f404385854e18342bcdb2541dc56e9",
+    "semantic_hash": ""
+  },
+  "lib/billing/mode.ts": {
+    "mtime": 1785663295.597646,
+    "ast_hash": "580efc9c8e28c2f652740a06705d3f3a",
+    "semantic_hash": ""
+  },
+  "lib/billing/polar.ts": {
+    "mtime": 1785663295.597646,
+    "ast_hash": "e23ccc1e078966e24ed653d44e0c601b",
+    "semantic_hash": ""
+  },
+  "lib/billing/sepay.ts": {
+    "mtime": 1785663295.597646,
+    "ast_hash": "1e840ce7ffd50b292eac314e4c58b607",
+    "semantic_hash": ""
+  },
+  "lib/billing/types.ts": {
+    "mtime": 1785663295.598644,
+    "ast_hash": "866e25f15b757b43a20f58b0d816a13e",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260802000001_polar_sepay_billing.sql": {
+    "mtime": 1785663295.606731,
+    "ast_hash": "0bcc7427af0e07aaf9f6c3c4e810c832",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-02-polar-sepay-billing.md": {
+    "mtime": 1785663295.595633,
+    "ast_hash": "411ca54424e5e97f2b1c62dbf5005288",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-02-polar-sepay-billing-design.md": {
+    "mtime": 1785663295.595633,
+    "ast_hash": "e2e4d7b0866994ba2f05a3a7ce37b035",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-02-zalo-oa-channel-design.md": {
+    "mtime": 1785664069.1548848,
+    "ast_hash": "857378f58e3a87837c3cdfc857130367",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-02-zalo-oa-channel.md": {
+    "mtime": 1785664716.7411609,
+    "ast_hash": "84662de564bdde940702a79f275c0f90",
+    "semantic_hash": ""
+  },
+  "lib/channel-connections.test.ts": {
+    "mtime": 1785665888.418791,
+    "ast_hash": "0977cc3b7c4abae4f93b6d4f6e4c5f2b",
+    "semantic_hash": ""
+  },
+  "lib/channel-connections.ts": {
+    "mtime": 1785665187.7083192,
+    "ast_hash": "15febbffe3035b754f56023b6ac14283",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260802000002_channel_connections.sql": {
+    "mtime": 1785665111.4475908,
+    "ast_hash": "cf0639e8f49f0abee51e575b038e7d65",
+    "semantic_hash": ""
+  },
+  "lib/zalo-webhook.test.ts": {
+    "mtime": 1785666597.4663396,
+    "ast_hash": "cb97c4bec0a4ad87850a9c2ac715f706",
+    "semantic_hash": ""
+  },
+  "lib/zalo-webhook.ts": {
+    "mtime": 1785666639.164482,
+    "ast_hash": "ee4d85bf8c06b4d3a2f933007a31e5dc",
+    "semantic_hash": ""
+  },
+  "lib/__fixtures__/zalo/send-ok.json": {
+    "mtime": 1785666915.4281774,
+    "ast_hash": "4c6f3b1ffee5b42ed1a60ecd5beebceb",
+    "semantic_hash": ""
+  },
+  "lib/zalo.test.ts": {
+    "mtime": 1785667100.5739796,
+    "ast_hash": "3826160d863053aad9304ea8cbcb129a",
+    "semantic_hash": ""
+  },
+  "lib/zalo.ts": {
+    "mtime": 1785669792.5360146,
+    "ast_hash": "b5233d504ddf7baba95016fe380700a6",
+    "semantic_hash": ""
+  },
+  "lib/zalo-oauth.test.ts": {
+    "mtime": 1785667332.315549,
+    "ast_hash": "60081ddc0d7c4d23102a8612d2e86261",
+    "semantic_hash": ""
+  },
+  "lib/zalo-oauth.ts": {
+    "mtime": 1785667981.8763306,
+    "ast_hash": "c871144162ed8f0776ddb0bf15b96e68",
+    "semantic_hash": ""
+  },
+  "lib/zalo-oauth-refresh.test.ts": {
+    "mtime": 1785667761.957751,
+    "ast_hash": "5726b3a04797bdd5a041bcea4278bce5",
+    "semantic_hash": ""
+  },
+  "app/api/zalo/oauth/callback/route.ts": {
+    "mtime": 1785668587.8997061,
+    "ast_hash": "72c805d9487de66fad3505afb0146e1a",
+    "semantic_hash": ""
+  },
+  "app/api/zalo/oauth/start/route.ts": {
+    "mtime": 1785669503.9888983,
+    "ast_hash": "7ab882905133f21d7b074535cc517b8b",
+    "semantic_hash": ""
+  },
+  "app/_components/zalo-connection-card.tsx": {
+    "mtime": 1785669507.0154307,
+    "ast_hash": "3c0cb93b4d761ab07345caf629657dec",
+    "semantic_hash": ""
+  },
+  "agent/channels/zalo.ts": {
+    "mtime": 1785683157.9081483,
+    "ast_hash": "9a91d5ba998750f925d1a2b2565db909",
+    "semantic_hash": ""
+  },
+  "agent/zalo-channel.test.ts": {
+    "mtime": 1785683398.4109967,
+    "ast_hash": "b1b53caf7535741f91e3a09c7257455f",
     "semantic_hash": ""
   }
 }
