@@ -65,13 +65,14 @@ async function zaloFetch(
     clearTimeout(timeout);
   }
 
-  if (!res.ok) {
-    throw new Error(`Zalo request failed (${res.status})`);
-  }
-
   // An edge proxy can answer with HTML; an unguarded .json() would throw
   // SyntaxError and hide the real status.
   const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+
+  if (!res.ok) {
+    const message = typeof json.message === "string" ? json.message : null;
+    throw new Error(message ?? `Zalo request failed (${res.status})`);
+  }
 
   // Zalo reports application errors with HTTP 200 and a non-zero `error`.
   if (typeof json.error === "number" && json.error !== 0) {
