@@ -72,6 +72,7 @@ export default defineConfig({
             ".next/**",
             ".output/**",
             "lib/channel-connections.test.ts",
+            "lib/zalo-oauth-refresh.test.ts",
           ],
           setupFiles: ["./tests/setup.ts"],
           env: {
@@ -86,7 +87,10 @@ export default defineConfig({
           name: "db-integration",
           environment: "node",
           globals: false,
-          include: ["lib/channel-connections.test.ts"],
+          include: [
+            "lib/channel-connections.test.ts",
+            "lib/zalo-oauth-refresh.test.ts",
+          ],
           setupFiles: [],
           env: {
             ...sharedTestEnv,

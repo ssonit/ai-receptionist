@@ -665,6 +665,21 @@ export async function getMessengerCredentialsForWorkspace(
   return { pageId: conn.externalId, pageAccessToken: conn.accessToken };
 }
 
+/**
+ * Zalo credentials for a workspace. There is no env fallback and no Pilot
+ * special case: Zalo is per-tenant only.
+ */
+export async function getZaloCredentialsForWorkspace(
+  workspaceId: string,
+): Promise<{ oaId: string; accessToken: string }> {
+  const { getChannelConnection } = await import("@/lib/channel-connections");
+  const conn = await getChannelConnection(workspaceId, "zalo");
+  if (!conn) throw new Error("ZALO_NOT_CONFIGURED");
+
+  const { getZaloAccessToken } = await import("@/lib/zalo-oauth");
+  return { oaId: conn.externalId, accessToken: await getZaloAccessToken(workspaceId) };
+}
+
 export async function isWorkspaceSetupComplete(
   workspaceId: string,
 ): Promise<boolean> {
