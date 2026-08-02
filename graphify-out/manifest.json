@@ -535,8 +535,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1785663295.6056435,
-    "ast_hash": "72fc2248bc28e883f36b4ac226d164bf",
+    "mtime": 1785691109.2293282,
+    "ast_hash": "c56925b4ad5e90a37a947a26d55d153a",
     "semantic_hash": ""
   },
   "postcss.config.mjs": {
@@ -565,8 +565,8 @@
     "semantic_hash": ""
   },
   "supabase/seed.sql": {
-    "mtime": 1785386897.011409,
-    "ast_hash": "1cff57427c47b4630ca0ca688ccedfff",
+    "mtime": 1785691077.5187948,
+    "ast_hash": "19ba1f86fdd24d193bb39296603e4608",
     "semantic_hash": ""
   },
   "tsconfig.json": {
@@ -1215,8 +1215,8 @@
     "semantic_hash": ""
   },
   ".claude/skills/test-feature/SKILL.md": {
-    "mtime": 1784875824.0735161,
-    "ast_hash": "a7ac4ea625547e607136011c550f5c6d",
+    "mtime": 1785691115.8289912,
+    "ast_hash": "421fbe84ad959ecb94fd1af053599ade",
     "semantic_hash": ""
   },
   "docs/AGENT_RULES.md": {
@@ -3230,13 +3230,13 @@
     "semantic_hash": ""
   },
   "lib/zalo.test.ts": {
-    "mtime": 1785667100.5739796,
-    "ast_hash": "3826160d863053aad9304ea8cbcb129a",
+    "mtime": 1785690993.9531612,
+    "ast_hash": "637623136a62b139c31a3d575a85a912",
     "semantic_hash": ""
   },
   "lib/zalo.ts": {
-    "mtime": 1785669792.5360146,
-    "ast_hash": "b5233d504ddf7baba95016fe380700a6",
+    "mtime": 1785691036.2309682,
+    "ast_hash": "53028de43236ae855f305103fdb7be64",
     "semantic_hash": ""
   },
   "lib/zalo-oauth.test.ts": {
@@ -3277,6 +3277,11 @@
   "agent/zalo-channel.test.ts": {
     "mtime": 1785683398.4109967,
     "ast_hash": "b1b53caf7535741f91e3a09c7257455f",
+    "semantic_hash": ""
+  },
+  "scripts/zalo-sim.mjs": {
+    "mtime": 1785691104.3458254,
+    "ast_hash": "8c0c175c73d6b52af0430199c90556b1",
     "semantic_hash": ""
   }
 }
