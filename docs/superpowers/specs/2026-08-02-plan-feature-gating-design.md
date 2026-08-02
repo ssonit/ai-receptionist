@@ -176,9 +176,26 @@ path. A tenant who stops paying altogether is still stopped, exactly as today.
 
 ### 3. New error code
 
-`PLAN_UPGRADE_REQUIRED` added to `lib/errors/app-codes.ts`, with EN and VI copy in
+`PLAN_UPGRADE_REQUIRED` added to `lib/errors/app-codes.ts`, with copy in
 `lib/errors/app-messages.ts`, per `.claude/rules/errors.md` — no raw provider
 strings reach the user.
+
+`app-messages.ts` is typed `Record<AppErrorCode, string>` and holds English only;
+it is not a bilingual catalogue. The new code follows that existing shape rather
+than introducing a parallel VI map, which would be a separate refactor affecting
+all 80+ codes.
+
+Localisation boundary, which differs by file and must not be homogenised in this
+change:
+
+- `components/billing-plan-card.tsx` already uses `useTranslations()`, so its
+  feature labels and plan names become keys under `dashboard.billing.*`.
+- `app/_components/messenger-connection-card.tsx` and
+  `app/dashboard/settings/page.tsx` hardcode English throughout today. The new
+  upgrade CTA there is written as plain English to match its file. Wiring those
+  two files into next-intl is a worthwhile but separate change; doing it here
+  would balloon the diff against `.claude/rules/code-structure.md` ("small
+  diffs", no drive-by refactors).
 
 ### 4. UI
 
