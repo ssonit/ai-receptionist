@@ -55,8 +55,10 @@ export default async function SettingsPage() {
         subscriptionStatus:
           (workspaceRow?.subscription_status as SubscriptionStatus | null) ??
           null,
-        stripeCustomerId: null,
-        stripeSubscriptionId: null,
+        billingProvider: null,
+        billingCustomerId: null,
+        billingSubscriptionId: null,
+        periodEndsAt: null,
         trialEndsAt: (workspaceRow?.trial_ends_at as string | null) ?? null,
       },
       PLAN_FEATURE.MESSENGER,

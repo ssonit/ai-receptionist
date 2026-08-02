@@ -3,15 +3,22 @@ import {
   getBillingMode,
   isSubActive,
   formatTrialDaysLeft,
+  daysUntilPeriodEnd,
 } from "@/lib/billing";
 import type { WorkspaceBilling } from "@/lib/billing";
+import {
+  extractSepayPaymentCode,
+  verifySepayWebhookAuth,
+} from "@/lib/billing/sepay";
 
 function ws(overrides: Partial<WorkspaceBilling> = {}): WorkspaceBilling {
   return {
     planTier: "free",
     subscriptionStatus: null,
-    stripeCustomerId: null,
-    stripeSubscriptionId: null,
+    billingProvider: null,
+    billingCustomerId: null,
+    billingSubscriptionId: null,
+    periodEndsAt: null,
     trialEndsAt: null,
     ...overrides,
   };
@@ -55,10 +62,44 @@ describe("isSubActive", () => {
     expect(isSubActive(ws())).toBe(true);
   });
 
-  it("true with active subscription in live mode", () => {
+  it("true with active polar subscription in live mode", () => {
     vi.stubEnv("BILLING_MODE", "live");
-    expect(isSubActive(ws({ subscriptionStatus: "active" }))).toBe(true);
+    expect(
+      isSubActive(
+        ws({ subscriptionStatus: "active", billingProvider: "polar" }),
+      ),
+    ).toBe(true);
     expect(isSubActive(ws({ subscriptionStatus: "trialing" }))).toBe(true);
+  });
+
+  it("true for sepay active within period", () => {
+    vi.stubEnv("BILLING_MODE", "live");
+    const future = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    expect(
+      isSubActive(
+        ws({
+          planTier: "starter",
+          subscriptionStatus: "active",
+          billingProvider: "sepay",
+          periodEndsAt: future,
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("false for sepay active with expired period", () => {
+    vi.stubEnv("BILLING_MODE", "live");
+    const past = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    expect(
+      isSubActive(
+        ws({
+          planTier: "starter",
+          subscriptionStatus: "active",
+          billingProvider: "sepay",
+          periodEndsAt: past,
+        }),
+      ),
+    ).toBe(false);
   });
 
   it("true for free plan within trial in live mode", () => {
@@ -102,5 +143,30 @@ describe("formatTrialDaysLeft", () => {
   it("returns 0 for past date", () => {
     const past = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     expect(formatTrialDaysLeft(past)).toBe(0);
+  });
+});
+
+describe("daysUntilPeriodEnd", () => {
+  it("returns days left", () => {
+    const future = new Date(Date.now() + 3.2 * 24 * 60 * 60 * 1000).toISOString();
+    expect(daysUntilPeriodEnd(future)).toBe(4);
+  });
+});
+
+describe("sepay helpers", () => {
+  beforeEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("extracts EVE payment codes", () => {
+    expect(extractSepayPaymentCode("CK EVEAB12CD34 xyz")).toBe("EVEAB12CD34");
+    expect(extractSepayPaymentCode(null)).toBeNull();
+  });
+
+  it("verifies webhook api key", () => {
+    vi.stubEnv("SEPAY_WEBHOOK_API_KEY", "secret");
+    expect(verifySepayWebhookAuth("Apikey secret")).toBe(true);
+    expect(verifySepayWebhookAuth("secret")).toBe(true);
+    expect(verifySepayWebhookAuth("wrong")).toBe(false);
   });
 });

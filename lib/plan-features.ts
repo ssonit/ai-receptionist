@@ -48,6 +48,12 @@ export const PLAN_PRICE_USD: Record<Exclude<PlanTier, "free">, number> = {
   pro: 49,
 };
 
+/** Monthly VND list price for SePay VietQR (env can override at checkout). */
+export const PLAN_PRICE_VND: Record<Exclude<PlanTier, "free">, number> = {
+  starter: 499_000,
+  pro: 1_299_000,
+};
+
 /** Display order for the pricing UI. */
 const FEATURE_ORDER: readonly PlanFeature[] = [
   PLAN_FEATURE.WEB_EMBED,
@@ -136,8 +142,10 @@ export async function assertWorkspaceFeature(
       planTier: (ws.plan_tier as PlanTier) ?? "free",
       subscriptionStatus:
         (ws.subscription_status as SubscriptionStatus | null) ?? null,
-      stripeCustomerId: null,
-      stripeSubscriptionId: null,
+      billingProvider: null,
+      billingCustomerId: null,
+      billingSubscriptionId: null,
+      periodEndsAt: null,
       trialEndsAt: (ws.trial_ends_at as string | null) ?? null,
     },
     feature,

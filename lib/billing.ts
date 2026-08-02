@@ -1,92 +1,48 @@
-import Stripe from "stripe";
+import {
+  createPolarCheckoutSession,
+  createPolarPortalSession,
+} from "@/lib/billing/polar";
+import { createSepayCheckoutSession } from "@/lib/billing/sepay";
+import { getBillingMode, isBillingEnabled } from "@/lib/billing/mode";
+import type {
+  CreateBillingPortalParams,
+  CreateCheckoutParams,
+  WorkspaceBilling,
+} from "@/lib/billing/types";
 
-export type BillingMode = "none" | "test" | "live";
+export type {
+  BillingMode,
+  BillingProvider,
+  BillingRail,
+  CreateBillingPortalParams,
+  CreateCheckoutParams,
+  PlanTier,
+  SubscriptionStatus,
+  WorkspaceBilling,
+} from "@/lib/billing/types";
 
-export type PlanTier = "free" | "starter" | "pro";
-
-export type SubscriptionStatus =
-  | "active"
-  | "past_due"
-  | "canceled"
-  | "incomplete"
-  | "trialing";
-
-export type WorkspaceBilling = {
-  planTier: PlanTier;
-  subscriptionStatus: SubscriptionStatus | null;
-  stripeCustomerId: string | null;
-  stripeSubscriptionId: string | null;
-  trialEndsAt: string | null;
-};
-
-export type CreateCheckoutParams = {
-  workspaceId: string;
-  planTier: "starter" | "pro";
-  successUrl: string;
-  cancelUrl: string;
-  stripeCustomerId?: string | null;
-};
-
-export type CreateBillingPortalParams = {
-  stripeCustomerId: string;
-  returnUrl: string;
-};
-
-export function getBillingMode(): BillingMode {
-  const raw = process.env.BILLING_MODE?.trim().toLowerCase();
-  if (raw === "none") return "none";
-  if (raw === "live") return "live";
-  if (raw === "test") return "test";
-
-  // No explicit BILLING_MODE — infer from environment.
-  // In production, never silently default to test (fail-open paywall + dead Stripe).
-  if (process.env.NODE_ENV === "production") {
-    console.warn("[billing] BILLING_MODE not set — defaulting to live in production");
-    return "live";
-  }
-  return "test";
-}
-
-export function isBillingEnabled(): boolean {
-  return getBillingMode() !== "none";
-}
-
-let _stripe: Stripe | null | undefined;
-
-export function getStripe(): Stripe | null {
-  if (_stripe !== undefined) return _stripe;
-
-  if (getBillingMode() === "test") {
-    _stripe = null;
-    return null;
-  }
-
-  const key = (process.env.STRIPE_SECRET_KEY ?? "").trim();
-  if (!key) {
-    _stripe = null;
-    return null;
-  }
-
-  _stripe = new Stripe(key, { apiVersion: "2025-06-30.basil" as unknown as Stripe.LatestApiVersion });
-  return _stripe;
-}
+export { getBillingMode, isBillingEnabled };
 
 export function isSubActive(ws: WorkspaceBilling): boolean {
   const mode = getBillingMode();
   if (mode === "none" || mode === "test") return true;
 
   if (
-    ws.subscriptionStatus === "active" ||
-    ws.subscriptionStatus === "trialing"
+    ws.planTier === "free" &&
+    ws.trialEndsAt &&
+    new Date(ws.trialEndsAt) > new Date()
   ) {
     return true;
   }
 
   if (
-    ws.planTier === "free" &&
-    ws.trialEndsAt &&
-    new Date(ws.trialEndsAt) > new Date()
+    ws.subscriptionStatus === "active" ||
+    ws.subscriptionStatus === "trialing"
   ) {
+    if (ws.billingProvider === "sepay") {
+      if (!ws.periodEndsAt) return false;
+      return new Date(ws.periodEndsAt) > new Date();
+    }
     return true;
   }
 
@@ -99,48 +55,26 @@ export function formatTrialDaysLeft(trialEndsAt: string | null): number {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
+export function daysUntilPeriodEnd(periodEndsAt: string | null): number {
+  if (!periodEndsAt) return 0;
+  const diff = new Date(periodEndsAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+}
+
 export async function createCheckoutSession(
   params: CreateCheckoutParams,
-): Promise<string> {
+): Promise<{ url: string; rail: CreateCheckoutParams["rail"] }> {
   if (getBillingMode() === "none") {
     throw new Error("BILLING_DISABLED");
   }
 
-  const stripe = getStripe();
-  if (!stripe) {
-    if (getBillingMode() === "test") {
-      return `/dashboard/billing?test_checkout=ok&plan=${params.planTier}`;
-    }
-    throw new Error("STRIPE_NOT_CONFIGURED");
+  if (params.rail === "polar") {
+    const url = await createPolarCheckoutSession(params);
+    return { url, rail: "polar" };
   }
 
-  const priceId =
-    params.planTier === "pro"
-      ? process.env.STRIPE_PRO_PRICE_ID
-      : process.env.STRIPE_STARTER_PRICE_ID;
-
-  if (!priceId) {
-    throw new Error("STRIPE_PRICE_ID_MISSING");
-  }
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    ...(params.stripeCustomerId ? { customer: params.stripeCustomerId } : {}),
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: params.successUrl,
-    cancel_url: params.cancelUrl,
-    client_reference_id: params.workspaceId,
-    metadata: { workspace_id: params.workspaceId, plan_tier: params.planTier },
-    subscription_data: {
-      metadata: { workspace_id: params.workspaceId, plan_tier: params.planTier },
-    },
-  });
-
-  if (!session.url) {
-    throw new Error("STRIPE_CHECKOUT_URL_MISSING");
-  }
-
-  return session.url;
+  const sepay = await createSepayCheckoutSession(params);
+  return { url: sepay.url, rail: "sepay" };
 }
 
 export async function createBillingPortalSession(
@@ -149,19 +83,18 @@ export async function createBillingPortalSession(
   if (getBillingMode() === "none") {
     throw new Error("BILLING_DISABLED");
   }
+  return createPolarPortalSession(params);
+}
 
-  const stripe = getStripe();
-  if (!stripe) {
-    if (getBillingMode() === "test") {
-      return `/dashboard/billing?test_portal=ok`;
-    }
-    throw new Error("STRIPE_NOT_CONFIGURED");
-  }
-
-  const session = await stripe.billingPortal.sessions.create({
-    customer: params.stripeCustomerId,
-    return_url: params.returnUrl,
-  });
-
-  return session.url;
+/** Empty billing snapshot for UI / gates when no workspace row is loaded. */
+export function emptyWorkspaceBilling(): WorkspaceBilling {
+  return {
+    planTier: "free",
+    subscriptionStatus: null,
+    billingProvider: null,
+    billingCustomerId: null,
+    billingSubscriptionId: null,
+    periodEndsAt: null,
+    trialEndsAt: null,
+  };
 }

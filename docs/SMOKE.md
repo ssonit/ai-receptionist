@@ -201,7 +201,7 @@ Lựa chọn release: **(a) `@sentry/nextjs`** (2026-07-26).
 ## Ngoài phạm vi (không chặn release)
 
 - WhatsApp / Twilio, Retell voice
-- Stripe billing / gói cước / giới hạn theo gói
+- Polar / SePay billing / gói cước / giới hạn theo gói
 - UI huỷ / đổi lịch trên dashboard (hiện agent-first)
 - Multi-workspace cho một user, billing seats
 

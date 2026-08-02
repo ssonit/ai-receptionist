@@ -15,8 +15,10 @@ function ws(overrides: Partial<WorkspaceBilling> = {}): WorkspaceBilling {
   return {
     planTier: "free",
     subscriptionStatus: null,
-    stripeCustomerId: null,
-    stripeSubscriptionId: null,
+    billingProvider: null,
+    billingCustomerId: null,
+    billingSubscriptionId: null,
+    periodEndsAt: null,
     trialEndsAt: null,
     ...overrides,
   };

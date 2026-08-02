@@ -118,7 +118,7 @@ export async function proxy(request: NextRequest) {
   if (user && path.startsWith(DASHBOARD_PATH.root)) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("workspace_id, role, workspaces(setup_completed_at, cal_api_key_encrypted, cal_event_type_id, cal_auth_mode, plan_tier, subscription_status, trial_ends_at)")
+      .select("workspace_id, role, workspaces(setup_completed_at, cal_api_key_encrypted, cal_event_type_id, cal_auth_mode, plan_tier, subscription_status, trial_ends_at, billing_provider, period_ends_at)")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -168,13 +168,15 @@ export async function proxy(request: NextRequest) {
           !incomplete &&
           isOwner &&
           getBillingMode() !== "test" &&
-          path !== DASHBOARD_PATH.billing
+          !path.startsWith(DASHBOARD_PATH.billing)
         ) {
           const subActive = isSubActive({
             planTier: (ws?.plan_tier as "free" | "starter" | "pro") ?? "free",
             subscriptionStatus: (ws?.subscription_status as SubscriptionStatus | null) ?? null,
-            stripeCustomerId: null,
-            stripeSubscriptionId: null,
+            billingProvider: (ws?.billing_provider as "polar" | "sepay" | null) ?? null,
+            billingCustomerId: null,
+            billingSubscriptionId: null,
+            periodEndsAt: (ws?.period_ends_at as string | null) ?? null,
             trialEndsAt: (ws?.trial_ends_at as string | null) ?? null,
           });
           if (!subActive) {

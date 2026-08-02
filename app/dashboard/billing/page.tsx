@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createTranslator } from "@/lib/i18n";
 import { DASHBOARD_LOCALE_COOKIE } from "@/lib/locale";
 import {
+  daysUntilPeriodEnd,
+  emptyWorkspaceBilling,
   getBillingMode,
   isBillingEnabled,
   isSubActive,
@@ -20,20 +22,14 @@ export default async function BillingPage() {
 
   const billingMode = getBillingMode();
   const billingEnabled = isBillingEnabled();
-  let workspaceBilling: WorkspaceBilling = {
-    planTier: "free",
-    subscriptionStatus: null,
-    stripeCustomerId: null,
-    stripeSubscriptionId: null,
-    trialEndsAt: null,
-  };
+  let workspaceBilling: WorkspaceBilling = emptyWorkspaceBilling();
 
   if (dashboard.workspaceId) {
     const supabase = await createClient();
     const { data: ws } = await supabase
       .from("workspaces")
       .select(
-        "plan_tier, subscription_status, stripe_customer_id, stripe_subscription_id, trial_ends_at",
+        "plan_tier, subscription_status, billing_provider, billing_customer_id, billing_subscription_id, period_ends_at, trial_ends_at",
       )
       .eq("id", dashboard.workspaceId)
       .maybeSingle();
@@ -41,9 +37,15 @@ export default async function BillingPage() {
     if (ws) {
       workspaceBilling = {
         planTier: (ws.plan_tier as WorkspaceBilling["planTier"]) ?? "free",
-        subscriptionStatus: (ws.subscription_status as WorkspaceBilling["subscriptionStatus"]) ?? null,
-        stripeCustomerId: (ws.stripe_customer_id as string | null) ?? null,
-        stripeSubscriptionId: (ws.stripe_subscription_id as string | null) ?? null,
+        subscriptionStatus:
+          (ws.subscription_status as WorkspaceBilling["subscriptionStatus"]) ??
+          null,
+        billingProvider:
+          (ws.billing_provider as WorkspaceBilling["billingProvider"]) ?? null,
+        billingCustomerId: (ws.billing_customer_id as string | null) ?? null,
+        billingSubscriptionId:
+          (ws.billing_subscription_id as string | null) ?? null,
+        periodEndsAt: (ws.period_ends_at as string | null) ?? null,
         trialEndsAt: (ws.trial_ends_at as string | null) ?? null,
       };
     }
@@ -54,20 +56,26 @@ export default async function BillingPage() {
   const t = createTranslator(locale);
   const subActive = isSubActive(workspaceBilling);
   const trialDays = formatTrialDaysLeft(workspaceBilling.trialEndsAt);
+  const periodDays = daysUntilPeriodEnd(workspaceBilling.periodEndsAt);
+  const showRenew =
+    workspaceBilling.billingProvider === "sepay" &&
+    workspaceBilling.planTier !== "free" &&
+    periodDays > 0 &&
+    periodDays <= 7;
 
   return (
     <DashboardShell
-      title={t("billing.title")}
+      title={t("dashboard.billing.title")}
       user={dashboard.navUser}
       workspaceId={dashboard.workspaceId}
     >
       <div className="flex flex-col gap-6 p-4 md:p-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            {t("billing.title")}
+            {t("dashboard.billing.title")}
           </h1>
           <p className="text-muted-foreground">
-            {t("billing.subtitle")}
+            {t("dashboard.billing.subtitle")}
           </p>
         </div>
 
@@ -76,10 +84,10 @@ export default async function BillingPage() {
             <IconCreditCard className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
             <div>
               <p className="font-medium">
-                {t("billing.disabledTitle")}
+                {t("dashboard.billing.disabledTitle")}
               </p>
               <p className="text-muted-foreground">
-                {t("billing.disabledHint")}
+                {t("dashboard.billing.disabledHint")}
               </p>
             </div>
           </div>
@@ -89,13 +97,11 @@ export default async function BillingPage() {
               <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                 <IconAlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
                 <div>
-                  <p className="font-medium">{t("billing.testModeBanner")}</p>
+                  <p className="font-medium">
+                    {t("dashboard.billing.testModeBanner")}
+                  </p>
                   <p className="text-amber-700">
-                    Set{" "}
-                    <code className="text-xs bg-amber-100 px-1 rounded">
-                      BILLING_MODE=live
-                    </code>{" "}
-                    and configure Stripe keys to enable real checkout.
+                    {t("dashboard.billing.testModeHint")}
                   </p>
                 </div>
               </div>
@@ -106,8 +112,25 @@ export default async function BillingPage() {
                 <IconCreditCard className="mt-0.5 h-5 w-5 shrink-0" />
                 <div>
                   <p className="font-medium">
-                    {t("billing.trialRemaining")}: {trialDays}{" "}
+                    {t("dashboard.billing.trialRemaining")}: {trialDays}{" "}
                     {trialDays === 1 ? "day" : "days"}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {showRenew ? (
+              <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                <IconAlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-medium">
+                    {t("dashboard.billing.renewSoonTitle")}
+                  </p>
+                  <p className="text-amber-700">
+                    {(
+                      t("dashboard.billing.renewSoonHint") ||
+                      "Your VietQR period ends in {days} day(s). Pay again to extend."
+                    ).replace("{days}", String(periodDays))}
                   </p>
                 </div>
               </div>
@@ -118,10 +141,10 @@ export default async function BillingPage() {
                 <IconAlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
                 <div>
                   <p className="font-medium">
-                    {t("billing.subscriptionInactive")}
+                    {t("dashboard.billing.subscriptionInactive")}
                   </p>
                   <p className="text-red-700">
-                    {t("billing.subscriptionInactiveHint")}
+                    {t("dashboard.billing.subscriptionInactiveHint")}
                   </p>
                 </div>
               </div>

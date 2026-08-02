@@ -465,7 +465,7 @@ export async function assertWorkspaceSubscriptionActive(
   const supabase = createAdminClient();
   const { data: ws, error } = await supabase
     .from("workspaces")
-    .select("plan_tier, subscription_status, trial_ends_at")
+    .select("plan_tier, subscription_status, trial_ends_at, billing_provider, period_ends_at")
     .eq("id", workspaceId)
     .maybeSingle();
 
@@ -480,8 +480,10 @@ export async function assertWorkspaceSubscriptionActive(
   const active = isSubActive({
     planTier: (ws.plan_tier as "free" | "starter" | "pro") ?? "free",
     subscriptionStatus: (ws.subscription_status as SubscriptionStatus | null) ?? null,
-    stripeCustomerId: null,
-    stripeSubscriptionId: null,
+    billingProvider: (ws.billing_provider as "polar" | "sepay" | null) ?? null,
+    billingCustomerId: null,
+    billingSubscriptionId: null,
+    periodEndsAt: (ws.period_ends_at as string | null) ?? null,
     trialEndsAt: (ws.trial_ends_at as string | null) ?? null,
   });
 
