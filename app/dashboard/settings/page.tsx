@@ -16,6 +16,8 @@ import {
   listWorkspaceMembers,
 } from "@/lib/workspace-invites";
 import type { WorkspaceOpsValues } from "@/lib/workspace-settings-types";
+import { canUseFeature, PLAN_FEATURE } from "@/lib/plan-features";
+import type { PlanTier, SubscriptionStatus } from "@/lib/billing";
 
 export default async function SettingsPage() {
   const dashboard = await assertOwnerPage(DASHBOARD_PATH.settings);
@@ -29,6 +31,7 @@ export default async function SettingsPage() {
   let currentUserId: string | null = null;
   let members: Awaited<ReturnType<typeof listWorkspaceMembers>> = [];
   let pendingInvites: Awaited<ReturnType<typeof listPendingInvites>> = [];
+  let canConnectMessenger = false;
 
   if (dashboard.workspaceId) {
     const supabase = await createClient();
@@ -39,10 +42,25 @@ export default async function SettingsPage() {
     const { data } = await supabase
       .from("workspaces")
       .select(
-        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end, cal_auth_mode, cal_username, messenger_page_id, messenger_page_name, webhook_secret_encrypted",
+        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end, cal_auth_mode, cal_username, messenger_page_id, messenger_page_name, webhook_secret_encrypted, plan_tier, subscription_status, trial_ends_at",
       )
       .eq("id", dashboard.workspaceId)
       .maybeSingle();
+
+    const workspaceRow = data;
+
+    canConnectMessenger = canUseFeature(
+      {
+        planTier: (workspaceRow?.plan_tier as PlanTier) ?? "free",
+        subscriptionStatus:
+          (workspaceRow?.subscription_status as SubscriptionStatus | null) ??
+          null,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        trialEndsAt: (workspaceRow?.trial_ends_at as string | null) ?? null,
+      },
+      PLAN_FEATURE.MESSENGER,
+    );
 
     if (data) {
       workspace = {
@@ -163,6 +181,7 @@ export default async function SettingsPage() {
                     workspaceId={dashboard.workspaceId}
                     messengerPageId={messengerPageId}
                     messengerPageName={messengerPageName}
+                    canConnect={canConnectMessenger}
                   />
                 </div>
               </div>

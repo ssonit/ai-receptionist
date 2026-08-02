@@ -5,18 +5,21 @@ import { useState } from "react";
 import { ChatCircleIcon, CheckCircleIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { disconnectMessengerAction } from "@/app/dashboard/settings/actions";
+import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
 
 type Props = {
   workspaceId: string;
   messengerPageId: string | null;
   messengerPageName: string | null;
+  canConnect: boolean;
 };
 
 export function MessengerConnectionCard({
   workspaceId,
   messengerPageId,
   messengerPageName,
+  canConnect,
 }: Props) {
   const router = useRouter();
   const [disconnecting, setDisconnecting] = useState(false);
@@ -55,6 +58,11 @@ export function MessengerConnectionCard({
               <p className="mt-1 text-sm text-muted-foreground">
                 {messengerPageName ?? "Facebook Page"}
               </p>
+              {!canConnect ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Messenger is part of the Pro plan. This Page stays connected.
+                </p>
+              ) : null}
             </div>
           </div>
           <Button
@@ -83,14 +91,20 @@ export function MessengerConnectionCard({
               </p>
             </div>
           </div>
-          <Button asChild size="sm" type="button">
-            <a
-              href={`/api/messenger/oauth/start?returnTo=/dashboard/settings`}
-            >
-              <ChatCircleIcon className="size-4" weight="fill" />
-              <span className="ml-2">Connect Messenger</span>
-            </a>
-          </Button>
+          {canConnect ? (
+            <Button asChild size="sm" type="button">
+              <a href={`/api/messenger/oauth/start?returnTo=${ROUTES.DASHBOARD_SETTINGS}`}>
+                <ChatCircleIcon className="size-4" weight="fill" />
+                <span className="ml-2">Connect Messenger</span>
+              </a>
+            </Button>
+          ) : (
+            <Button asChild size="sm" type="button" variant="outline">
+              <a href={ROUTES.DASHBOARD_BILLING}>
+                <span>Upgrade to Pro to connect</span>
+              </a>
+            </Button>
+          )}
         </div>
       )}
     </div>
