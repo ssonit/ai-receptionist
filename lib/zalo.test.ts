@@ -199,3 +199,25 @@ describe("sendZaloText", () => {
     await expect(sendZaloText("at-1", "user_1", "hi", 20)).rejects.toThrow(/timed out/i);
   });
 });
+
+describe("ZALO_DRY_RUN", () => {
+  it("skips the network and returns a synthetic id when enabled", async () => {
+    vi.stubEnv("ZALO_DRY_RUN", "1");
+    vi.resetModules();
+    const fetchMock = stubFetch(sendOk);
+
+    const { sendZaloText: dryRunSend } = await import("./zalo");
+    const result = await dryRunSend("at-1", "user_1", "xin chÃ o");
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result.messageId).toMatch(/^dry-run:/);
+  });
+
+  it("refuses to load with dry run enabled in production", async () => {
+    vi.stubEnv("ZALO_DRY_RUN", "1");
+    vi.stubEnv("NODE_ENV", "production");
+    vi.resetModules();
+
+    await expect(import("./zalo")).rejects.toThrow(/ZALO_DRY_RUN/);
+  });
+});

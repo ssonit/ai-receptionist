@@ -81,3 +81,21 @@ Need at least: Supabase keys, one LLM provider key, `CALCOM_API_KEY` (for the
 Re-run the booking flow above at minimum — these two files are the most
 central to correctness (credential resolution + tenant resolution); a subtle
 bug here silently mixes tenants rather than throwing an obvious error.
+
+## Zalo OA (needs a live account)
+
+Everything else about the Zalo channel is covered by `npm test` and
+`npm run zalo:sim`. These seven steps are the part that cannot be simulated —
+run them the first time a real OA is connected, before trusting the channel.
+
+1. Connect the OA from Settings; confirm tokens persist and the card shows the
+   OA name.
+2. Message the OA from a second Zalo account; confirm the agent replies.
+3. Compare the first live webhook body against `lib/__fixtures__/zalo/` and
+   reconcile any difference.
+4. Send a reply longer than `ZALO_TEXT_LIMIT`; confirm chunking delivers all
+   of it, in order.
+5. Leave the conversation idle past one hour, then message again. This is the
+   only real test of token refresh.
+6. Confirm the booking landed in the correct workspace, not Pilot.
+7. Disconnect; confirm the agent stops answering.

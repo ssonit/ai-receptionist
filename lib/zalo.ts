@@ -23,6 +23,20 @@ export const ZALO_TEXT_LIMIT = 2000;
 
 const ZALO_FETCH_TIMEOUT_MS = 12_000;
 
+/**
+ * Local testing without a Zalo Official Account: log the outbound message
+ * instead of calling the API, so the whole inbound pipeline can be exercised
+ * end to end. See scripts/zalo-sim.mjs.
+ *
+ * Hard-guarded against production. A flag that silently stops delivering
+ * customer messages is a worse failure than the one it helps test.
+ */
+const ZALO_DRY_RUN = process.env.ZALO_DRY_RUN === "1";
+
+if (ZALO_DRY_RUN && process.env.NODE_ENV === "production") {
+  throw new Error("ZALO_DRY_RUN must never be enabled in production");
+}
+
 export type ZaloTokenSet = {
   accessToken: string;
   refreshToken: string;
@@ -224,6 +238,13 @@ export async function sendZaloText(
 ): Promise<{ messageId: string }> {
   const chunks = chunkZaloText(text);
   if (chunks.length === 0) return { messageId: "" };
+
+  if (ZALO_DRY_RUN) {
+    for (const chunk of chunks) {
+      console.log(`[zalo:dry-run] → ${userId}: ${chunk}`);
+    }
+    return { messageId: `dry-run:${Date.now()}` };
+  }
 
   let last = "";
   for (const chunk of chunks) {

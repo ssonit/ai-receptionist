@@ -99,6 +99,16 @@ on conflict (id) do update set
   setup_completed_at = coalesce(public.workspaces.setup_completed_at, excluded.setup_completed_at),
   updated_at = now();
 
+-- Fake Zalo connection so scripts/zalo-sim.mjs has a target immediately after
+-- `npx supabase db reset`. The tokens are not real and never leave the machine;
+-- outbound sends run under ZALO_DRY_RUN.
+insert into public.workspace_channel_connections
+  (workspace_id, provider, external_id, display_name, expires_at)
+values
+  ('00000000-0000-4000-8000-000000000001', 'zalo', 'oa_dev_local',
+   'Dev Local OA', now() + interval '10 years')
+on conflict (workspace_id, provider) do nothing;
+
 delete from public.workspace_faq_items
 where workspace_id = '00000000-0000-4000-8000-000000000001';
 
