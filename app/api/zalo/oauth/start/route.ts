@@ -12,7 +12,7 @@ import { assertWorkspaceFeature, PLAN_FEATURE } from "@/lib/plan-features";
 import { appErrorMessage, isAppError, APP_ERROR_CODE } from "@/lib/errors";
 import { ROUTES } from "@/lib/routes";
 
-async function startZaloOAuth(request: Request) {
+export async function GET(request: Request) {
   const auth = await requireOwnerWorkspace();
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: 401 });
@@ -63,13 +63,5 @@ async function startZaloOAuth(request: Request) {
   });
 
   return NextResponse.redirect(buildZaloOAuthUrl(token, challenge, redirectUri));
-}
-
-export async function POST(request: Request) {
-  return startZaloOAuth(request);
-}
-
-export async function GET() {
-  return NextResponse.json({ error: "method_not_allowed" }, { status: 405 });
 }
 

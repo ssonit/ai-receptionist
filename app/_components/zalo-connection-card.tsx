@@ -85,15 +85,12 @@ export function ZaloConnectionCard({
             </div>
           </div>
           {canConnect ? (
-            <form
-              action={`/api/zalo/oauth/start?returnTo=${ROUTES.DASHBOARD_SETTINGS}`}
-              method="POST"
-            >
-              <Button size="sm" type="submit">
+            <Button asChild size="sm" type="button">
+              <a href={`/api/zalo/oauth/start?returnTo=${ROUTES.DASHBOARD_SETTINGS}`}>
                 <ChatCircleIcon className="size-4" weight="fill" />
                 <span className="ml-2">Connect Zalo</span>
-              </Button>
-            </form>
+              </a>
+            </Button>
           ) : (
             <Button asChild size="sm" type="button" variant="outline">
               <a href={ROUTES.DASHBOARD_BILLING}>
