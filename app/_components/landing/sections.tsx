@@ -17,6 +17,8 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { BlurFade } from "@/components/ui/blur-fade";
 import { Marquee } from "@/components/magicui/marquee";
+import { featuresForTier, PLAN_PRICE_USD } from "@/lib/plan-features";
+import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import {
   Container,
@@ -360,39 +362,28 @@ export function FeatureMoments() {
   );
 }
 
-type PlanId = "basic" | "premium" | "enterprise";
+/**
+ * Starter and Pro mirror the real `PlanTier` values and derive their feature
+ * lists from `lib/plan-features.ts`, so landing copy cannot advertise something
+ * the backend does not grant.
+ *
+ * Enterprise is marketing-only: there is no `enterprise` PlanTier, no Stripe
+ * price, and no backend. Its feature list stays hand-written because there is
+ * nothing to derive it from. Do NOT "fix" this by adding it to
+ * PLAN_FEATURE_TIERS — that would create a tier the system cannot honour.
+ */
+const PAID_PLANS = [
+  { tier: "starter", popular: false },
+  { tier: "pro", popular: true },
+] as const;
 
-const PLANS: {
-  id: PlanId;
-  price: number;
-  popular: boolean;
-  featureKeys: string[];
-  soonKeys?: string[];
-}[] = [
-  {
-    id: "basic",
-    price: 39,
-    popular: false,
-    featureKeys: ["f1", "f2", "f3", "f4"],
-  },
-  {
-    id: "premium",
-    price: 89,
-    popular: true,
-    featureKeys: ["f1", "f2", "f3", "f4"],
-    soonKeys: ["f4"],
-  },
-  {
-    id: "enterprise",
-    price: 199,
-    popular: false,
-    featureKeys: ["f1", "f2", "f3", "f4", "f5"],
-    soonKeys: ["f5"],
-  },
-];
+const ENTERPRISE_PRICE = 199;
+const ENTERPRISE_FEATURE_KEYS = ["f1", "f2", "f3", "f4", "f5"] as const;
+const ENTERPRISE_SOON_KEYS = ["f5"] as const;
 
 export function Pricing() {
   const t = useTranslations("landing.pricing");
+  const tRoot = useTranslations();
   const [annual, setAnnual] = useState(true);
 
   return (
@@ -433,11 +424,13 @@ export function Pricing() {
         </BlurFade>
 
         <div className="grid gap-4 md:grid-cols-3">
-          {PLANS.map((plan, i) => {
-            const price = annual ? Math.round(plan.price * 10) : plan.price;
+          {PAID_PLANS.map((plan, i) => {
+            const monthly = PLAN_PRICE_USD[plan.tier];
+            const price = annual ? monthly * 10 : monthly;
             const period = annual ? t("perYear") : t("perMonth");
+            const features = featuresForTier(plan.tier);
             return (
-              <BlurFade delay={0.06 * i} inView key={plan.id}>
+              <BlurFade delay={0.06 * i} inView key={plan.tier}>
                 <article
                   className={cn(
                     "flex h-full flex-col rounded-[1.5rem] border p-6",
@@ -449,7 +442,7 @@ export function Pricing() {
                   <div className="mb-6">
                     <div className="flex items-center justify-between gap-2">
                       <h3 className="text-lg font-semibold">
-                        {t(`plans.${plan.id}.name`)}
+                        {tRoot(`dashboard.billing.planNames.${plan.tier}`)}
                       </h3>
                       {plan.popular ? (
                         <span className="rounded-full bg-black px-2 py-0.5 text-[10px] font-semibold text-white">
@@ -463,7 +456,7 @@ export function Pricing() {
                         plan.popular ? "text-zinc-600" : "text-zinc-400",
                       )}
                     >
-                      {t(`plans.${plan.id}.description`)}
+                      {t(`plans.${plan.tier}.description`)}
                     </p>
                     <p className="mt-5 text-4xl font-semibold tracking-tight">
                       ${price}
@@ -473,68 +466,88 @@ export function Pricing() {
                     </p>
                   </div>
                   <ul className="mb-8 flex flex-1 flex-col gap-2.5 text-sm">
-                    {plan.featureKeys.map((fk) => {
-                      const soon = plan.soonKeys?.includes(fk);
-                      return (
-                        <li className="flex items-start gap-2" key={fk}>
-                          <CheckIcon
-                            className={cn(
-                              "mt-0.5 size-4 shrink-0",
-                              plan.popular ? "text-black" : "text-zinc-300",
-                              soon && "opacity-40",
-                            )}
-                            weight="bold"
-                          />
-                          <span
-                            className={cn(
-                              plan.popular ? "text-zinc-700" : "text-zinc-300",
-                              soon && "opacity-60",
-                            )}
-                          >
-                            {t(`plans.${plan.id}.features.${fk}`)}
-                            {soon ? (
-                              <span
-                                className={cn(
-                                  "ml-1.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
-                                  plan.popular
-                                    ? "border-zinc-300 text-zinc-500"
-                                    : "border-white/15 text-zinc-500",
-                                )}
-                              >
-                                {t("comingSoon")}
-                              </span>
-                            ) : null}
-                          </span>
-                        </li>
-                      );
-                    })}
+                    {features.map((feature) => (
+                      <li className="flex items-start gap-2" key={feature}>
+                        <CheckIcon
+                          className={cn(
+                            "mt-0.5 size-4 shrink-0",
+                            plan.popular ? "text-black" : "text-zinc-300",
+                          )}
+                          weight="bold"
+                        />
+                        <span
+                          className={cn(
+                            plan.popular ? "text-zinc-700" : "text-zinc-300",
+                          )}
+                        >
+                          {tRoot(`dashboard.billing.features.${feature}`)}
+                        </span>
+                      </li>
+                    ))}
                   </ul>
-                  {plan.id === "enterprise" ? (
-                    <span
-                      className={cn(
-                        "inline-flex h-10 items-center justify-center rounded-full text-sm font-semibold",
-                        "border border-white/10 bg-white/5 text-zinc-500 opacity-60 cursor-default",
-                      )}
-                    >
-                      {t(`plans.${plan.id}.cta`)}
-                    </span>
-                  ) : (
-                    <Link
-                      className={cn(
-                        "inline-flex h-10 items-center justify-center rounded-full text-sm font-semibold transition",
-                        plan.popular
-                          ? "bg-black text-white hover:bg-zinc-800"
-                          : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
-                      )}
-                      href="/signup"
-                    >
-                      {t(`plans.${plan.id}.cta`)}
-                    </Link>
-                  )}
+                  <Link
+                    className={cn(
+                      "inline-flex h-10 items-center justify-center rounded-full text-sm font-semibold transition",
+                      plan.popular
+                        ? "bg-black text-white hover:bg-zinc-800"
+                        : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
+                    )}
+                    href={ROUTES.SIGNUP}
+                  >
+                    {t(`plans.${plan.tier}.cta`)}
+                  </Link>
                 </article>
               </BlurFade>
             );
           })}
+
+          <BlurFade delay={0.12} inView>
+            <article className="flex h-full flex-col rounded-[1.5rem] border border-white/10 bg-zinc-950 p-6 text-white">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold">
+                  {t("plans.enterprise.name")}
+                </h3>
+                <p className="mt-2 text-sm text-zinc-400">
+                  {t("plans.enterprise.description")}
+                </p>
+                <p className="mt-5 text-4xl font-semibold tracking-tight">
+                  ${annual ? ENTERPRISE_PRICE * 10 : ENTERPRISE_PRICE}
+                  <span className="text-base font-normal text-zinc-500">
+                    {annual ? t("perYear") : t("perMonth")}
+                  </span>
+                </p>
+              </div>
+              <ul className="mb-8 flex flex-1 flex-col gap-2.5 text-sm">
+                {ENTERPRISE_FEATURE_KEYS.map((fk) => {
+                  const soon = ENTERPRISE_SOON_KEYS.includes(
+                    fk as (typeof ENTERPRISE_SOON_KEYS)[number],
+                  );
+                  return (
+                    <li className="flex items-start gap-2" key={fk}>
+                      <CheckIcon
+                        className={cn(
+                          "mt-0.5 size-4 shrink-0 text-zinc-300",
+                          soon && "opacity-40",
+                        )}
+                        weight="bold"
+                      />
+                      <span className={cn("text-zinc-300", soon && "opacity-60")}>
+                        {t(`plans.enterprise.features.${fk}`)}
+                        {soon ? (
+                          <span className="ml-1.5 rounded-full border border-white/15 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500">
+                            {t("comingSoon")}
+                          </span>
+                        ) : null}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <span className="inline-flex h-10 cursor-default items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm font-semibold text-zinc-500 opacity-60">
+                {t("plans.enterprise.cta")}
+              </span>
+            </article>
+          </BlurFade>
         </div>
       </Container>
     </section>

@@ -281,34 +281,20 @@
       "popular": "Phổ biến",
       "comingSoon": "Sắp",
       "plans": {
-        "basic": {
-          "name": "Basic",
-          "description": "Web chat + Cal.com cho team mới bắt đầu.",
-          "cta": "Dùng thử miễn phí",
-          "features": {
-            "f1": "Web chat",
-            "f2": "Đặt lịch Cal.com",
-            "f3": "FAQ + intake",
-            "f4": "Dashboard cơ bản"
-          }
+        "starter": {
+          "description": "Chat trên website và đặt lịch trên lịch thật.",
+          "cta": "Dùng thử miễn phí"
         },
-        "premium": {
-          "name": "Premium",
-          "description": "Nhắc lịch và embed khi lead tăng.",
-          "cta": "Dùng thử miễn phí",
-          "features": {
-            "f1": "Mọi thứ trong Basic",
-            "f2": "Nhắc lịch outbound",
-            "f3": "Embed widget",
-            "f4": "WhatsApp"
-          }
+        "pro": {
+          "description": "Thêm Facebook Messenger để bắt khách ngay nơi họ đang nhắn.",
+          "cta": "Dùng thử miễn phí"
         },
         "enterprise": {
           "name": "Enterprise",
           "description": "Giới hạn cao hơn, brand riêng, hỗ trợ ưu tiên.",
           "cta": "Sắp ra mắt",
           "features": {
-            "f1": "Mọi thứ trong Premium",
+            "f1": "Mọi thứ trong Pro",
             "f2": "Giới hạn cao + FAQ tùy chỉnh",
             "f3": "Hỗ trợ 1:1 + SLA ưu tiên",
             "f4": "Agent theo brand",

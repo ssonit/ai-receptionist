@@ -278,34 +278,20 @@
       "popular": "Popular",
       "comingSoon": "Soon",
       "plans": {
-        "basic": {
-          "name": "Basic",
-          "description": "Web chat + calendar for teams just starting.",
-          "cta": "Start free trial",
-          "features": {
-            "f1": "Web chat",
-            "f2": "Calendar booking",
-            "f3": "FAQ + intake",
-            "f4": "Basic dashboard"
-          }
+        "starter": {
+          "description": "Website chat and real calendar booking.",
+          "cta": "Start free trial"
         },
-        "premium": {
-          "name": "Premium",
-          "description": "Reminders and embed for teams growing leads.",
-          "cta": "Start free trial",
-          "features": {
-            "f1": "Everything in Basic",
-            "f2": "Outbound reminders",
-            "f3": "Embed widget",
-            "f4": "WhatsApp"
-          }
+        "pro": {
+          "description": "Adds Facebook Messenger so you catch clients where they already are.",
+          "cta": "Start free trial"
         },
         "enterprise": {
           "name": "Enterprise",
           "description": "Higher limits, brand control, and priority support.",
           "cta": "Coming soon",
           "features": {
-            "f1": "Everything in Premium",
+            "f1": "Everything in Pro",
             "f2": "Higher limits + custom FAQ",
             "f3": "1:1 support + priority SLA",
             "f4": "Brand-customized agent",
