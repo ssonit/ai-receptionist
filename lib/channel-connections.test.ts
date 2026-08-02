@@ -141,4 +141,21 @@ describe.skipIf(!dbUp)("channel connections", () => {
     await releaseRefreshLock(WS_A, "zalo");
     expect((await claimRefreshLock(WS_A, "zalo")).claimed).toBe(true);
   });
+
+  it("serves messenger credentials from the connections table", async () => {
+    const { getMessengerCredentialsForWorkspace } = await import("@/lib/workspace");
+    await upsertChannelConnection({
+      workspaceId: WS_B,
+      provider: "messenger",
+      externalId: "page_123",
+      displayName: "Test Page",
+      accessToken: "page-token-abc",
+    });
+
+    const creds = await getMessengerCredentialsForWorkspace(WS_B);
+    expect(creds.pageId).toBe("page_123");
+    expect(creds.pageAccessToken).toBe("page-token-abc");
+
+    await deleteChannelConnection(WS_B, "messenger");
+  });
 });

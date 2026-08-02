@@ -11,6 +11,7 @@ import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
 import { createClient } from "@/lib/supabase/server";
 import { publicBookingPath } from "@/lib/workspace";
 import { WORKSPACE_AI_DEFAULTS } from "@/lib/workspace-ai-defaults";
+import { getChannelConnection } from "@/lib/channel-connections";
 import {
   listPendingInvites,
   listWorkspaceMembers,
@@ -42,7 +43,7 @@ export default async function SettingsPage() {
     const { data } = await supabase
       .from("workspaces")
       .select(
-        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end, cal_auth_mode, cal_username, messenger_page_id, messenger_page_name, webhook_secret_encrypted, plan_tier, subscription_status, trial_ends_at",
+        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end, cal_auth_mode, cal_username, webhook_secret_encrypted, plan_tier, subscription_status, trial_ends_at",
       )
       .eq("id", dashboard.workspaceId)
       .maybeSingle();
@@ -98,15 +99,18 @@ export default async function SettingsPage() {
         (data as Record<string, unknown>).cal_auth_mode as string | null;
       calUsernameForSettings =
         (data as Record<string, unknown>).cal_username as string | null;
-      messengerPageId =
-        (data as Record<string, unknown>).messenger_page_id as string | null;
-      messengerPageName =
-        (data as Record<string, unknown>).messenger_page_name as string | null;
       // Presence only — the ciphertext never leaves the server.
       hasOwnWebhookSecret = Boolean(
         (data as Record<string, unknown>).webhook_secret_encrypted,
       );
     }
+
+    const messengerConn = await getChannelConnection(
+      dashboard.workspaceId,
+      "messenger",
+    );
+    messengerPageId = messengerConn?.externalId ?? null;
+    messengerPageName = messengerConn?.displayName ?? null;
 
     try {
       members = await listWorkspaceMembers(dashboard.workspaceId);

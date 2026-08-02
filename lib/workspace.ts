@@ -658,22 +658,11 @@ export async function getMessengerCredentialsForWorkspace(
     throw new Error("MESSENGER_NOT_CONFIGURED");
   }
 
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("workspaces")
-    .select("messenger_page_id, messenger_page_access_token_encrypted")
-    .eq("id", workspaceId)
-    .maybeSingle();
+  const { getChannelConnection } = await import("@/lib/channel-connections");
+  const conn = await getChannelConnection(workspaceId, "messenger");
+  if (!conn?.accessToken) throw new Error("MESSENGER_NOT_CONFIGURED");
 
-  if (error) throw new Error(error.message);
-  if (!data?.messenger_page_access_token_encrypted) {
-    throw new Error("MESSENGER_NOT_CONFIGURED");
-  }
-
-  return {
-    pageId: (data.messenger_page_id as string) ?? "",
-    pageAccessToken: decryptSecret(data.messenger_page_access_token_encrypted as string),
-  };
+  return { pageId: conn.externalId, pageAccessToken: conn.accessToken };
 }
 
 export async function isWorkspaceSetupComplete(

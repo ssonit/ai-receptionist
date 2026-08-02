@@ -2,8 +2,10 @@
  * Messenger OAuth — clone of Cal.com OAuth pattern.
  * Signed state cookie, authorize URL build, token persistence.
  */
-import { createAdminClient } from "@/lib/supabase/admin";
-import { encryptSecret } from "@/lib/workspace-secrets";
+import {
+  deleteChannelConnection,
+  upsertChannelConnection,
+} from "@/lib/channel-connections";
 
 export function resolveMessengerRedirectUri(requestUrl: string): string {
   const envUri = process.env.META_REDIRECT_URI?.trim();
@@ -23,33 +25,17 @@ export async function persistMessengerTokens(input: {
   pageName: string;
   pageAccessToken: string;
 }): Promise<void> {
-  const admin = createAdminClient();
-  const update: Record<string, unknown> = {
-    messenger_page_id: input.pageId,
-    messenger_page_name: input.pageName,
-    messenger_page_access_token_encrypted: encryptSecret(input.pageAccessToken),
-  };
-
-  const { error } = await admin
-    .from("workspaces")
-    .update(update)
-    .eq("id", input.workspaceId);
-
-  if (error) throw new Error(error.message);
+  await upsertChannelConnection({
+    workspaceId: input.workspaceId,
+    provider: "messenger",
+    externalId: input.pageId,
+    displayName: input.pageName,
+    accessToken: input.pageAccessToken,
+  });
 }
 
 export async function clearMessengerTokens(workspaceId: string): Promise<void> {
-  const admin = createAdminClient();
-  const { error } = await admin
-    .from("workspaces")
-    .update({
-      messenger_page_id: null,
-      messenger_page_name: null,
-      messenger_page_access_token_encrypted: null,
-    })
-    .eq("id", workspaceId);
-
-  // Without this the settings action reports "disconnected" while the page
-  // token is still stored and the bot keeps answering.
-  if (error) throw new Error(error.message);
+  // Delete rather than null the fields: a row that reports "disconnected"
+  // while still holding a usable token keeps the bot answering.
+  await deleteChannelConnection(workspaceId, "messenger");
 }
