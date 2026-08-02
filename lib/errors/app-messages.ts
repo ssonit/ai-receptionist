@@ -131,6 +131,16 @@ export const APP_ERROR_MESSAGE = {
     "Could not connect Facebook Page. Try again from Settings.",
   [APP_ERROR_CODE.MESSENGER_DISCONNECT_FAILED]:
     "Could not disconnect Messenger. Try again.",
+  [APP_ERROR_CODE.ZALO_NOT_CONFIGURED]:
+    "Zalo is not connected. Connect an Official Account in Settings.",
+  [APP_ERROR_CODE.ZALO_SEND_FAILED]:
+    "Could not send message via Zalo. The Official Account connection may have expired.",
+  [APP_ERROR_CODE.ZALO_OAUTH_FAILED]:
+    "Could not connect the Zalo Official Account. Try again from Settings.",
+  [APP_ERROR_CODE.ZALO_DISCONNECT_FAILED]:
+    "Could not disconnect Zalo. Try again.",
+  [APP_ERROR_CODE.ZALO_OA_ALREADY_LINKED]:
+    "This Zalo Official Account is already connected to another workspace.",
   [APP_ERROR_CODE.SUBSCRIPTION_INACTIVE]:
     "Online booking is currently paused for this business. Please contact them directly.",
   [APP_ERROR_CODE.WEBHOOK_SECRET_FAILED]:

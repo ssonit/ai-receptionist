@@ -7,8 +7,8 @@
  * advertise what appears here — so copy cannot drift away from what the code
  * actually enforces, which it repeatedly did before this module existed.
  *
- * Only capabilities that exist in the codebase belong here. Zalo and WhatsApp are
- * deliberately absent: they are not built.
+ * Only capabilities that exist in the codebase belong here. WhatsApp is
+ * deliberately absent: it is not built.
  */
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getBillingMode, type PlanTier, type SubscriptionStatus, type WorkspaceBilling } from "@/lib/billing";
@@ -21,6 +21,7 @@ export const PLAN_FEATURE = {
   FAQ_INTAKE: "faq_intake",
   BILINGUAL_AGENT: "bilingual_agent",
   REMINDERS: "reminders",
+  ZALO: "zalo",
   MESSENGER: "messenger",
 } as const;
 
@@ -39,6 +40,10 @@ export const PLAN_FEATURE_TIERS: Record<PlanFeature, readonly PlanTier[]> = {
   faq_intake: ["starter", "pro"],
   bilingual_agent: ["starter", "pro"],
   reminders: ["starter", "pro"],
+  // Zalo is the default messaging channel in Vietnam, this product's primary
+  // market. Gating it behind Pro would leave Starter with no usable channel
+  // there. Messenger stays Pro on purpose.
+  zalo: ["starter", "pro"],
   messenger: ["pro"],
 };
 
@@ -61,6 +66,7 @@ const FEATURE_ORDER: readonly PlanFeature[] = [
   PLAN_FEATURE.FAQ_INTAKE,
   PLAN_FEATURE.BILINGUAL_AGENT,
   PLAN_FEATURE.REMINDERS,
+   PLAN_FEATURE.ZALO,
   PLAN_FEATURE.MESSENGER,
 ];
 

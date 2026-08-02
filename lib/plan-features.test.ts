@@ -4,6 +4,7 @@ import { supabaseMock } from "../tests/helpers/supabase-mock";
 import { APP_ERROR_CODE, isAppError } from "./errors";
 import {
   PLAN_FEATURE,
+  PLAN_FEATURE_TIERS,
   PLAN_PRICE_USD,
   assertWorkspaceFeature,
   canUseFeature,
@@ -198,5 +199,19 @@ describe("assertWorkspaceFeature", () => {
     await expect(
       assertWorkspaceFeature(TENANT_ID, PLAN_FEATURE.MESSENGER),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("zalo tier", () => {
+  it("is available on starter and pro", () => {
+    expect(PLAN_FEATURE_TIERS.zalo).toEqual(["starter", "pro"]);
+  });
+
+  it("is included in a starter workspace's feature list", () => {
+    expect(featuresForTier("starter")).toContain(PLAN_FEATURE.ZALO);
+  });
+
+  it("does not accidentally unlock messenger for starter", () => {
+    expect(featuresForTier("starter")).not.toContain(PLAN_FEATURE.MESSENGER);
   });
 });
