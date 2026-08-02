@@ -35,6 +35,10 @@ const sharedTestEnv = {
   WORKSPACE_SECRETS_KEY: "test-workspace-secrets-key-0123456789abcdef",
   BOOKING_SYNC_PAGE_LIMIT: "100",
   BOOKING_SYNC_MAX_PAGES: "10",
+  ZALO_APP_ID: "test-zalo-app-id",
+  ZALO_APP_SECRET: "test-zalo-app-secret",
+  ZALO_OA_SECRET_KEY: "test-zalo-oa-secret",
+  ZALO_REDIRECT_URI: "http://localhost:3000/api/zalo/oauth/callback",
 };
 
 const sharedInclude = [
