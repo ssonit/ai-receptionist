@@ -10,7 +10,10 @@
  * Only capabilities that exist in the codebase belong here. Zalo and WhatsApp are
  * deliberately absent: they are not built.
  */
-import type { PlanTier, WorkspaceBilling } from "@/lib/billing";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getBillingMode, type PlanTier, type SubscriptionStatus, type WorkspaceBilling } from "@/lib/billing";
+import { AppError, APP_ERROR_CODE } from "@/lib/errors";
+import { getDefaultWorkspaceId, PILOT_WORKSPACE_ID } from "@/lib/workspace";
 
 export const PLAN_FEATURE = {
   WEB_EMBED: "web_embed",
@@ -83,4 +86,64 @@ export function featuresForTier(tier: PlanTier): readonly PlanFeature[] {
   return FEATURE_ORDER.filter((feature) =>
     PLAN_FEATURE_TIERS[feature].includes(tier),
   );
+}
+
+/**
+ * Feature gate for paid capabilities. Pilot demo, `BILLING_MODE=none` and
+ * `BILLING_MODE=test` always pass, matching `assertWorkspaceSubscriptionActive`.
+ *
+ * Fails **closed**: a workspace row we cannot read is treated as not entitled.
+ *
+ * This gate belongs only on paths that CONNECT a channel. It must never be added
+ * to `agent/channels/messenger.ts`: a Page that is already connected keeps being
+ * answered even after the workspace drops to Starter. Cutting off a live channel
+ * would break the tenant's own customer conversations, which is not what a
+ * downgrade should do. A tenant who stops paying entirely is already stopped by
+ * `assertWorkspaceSubscriptionActive`.
+ *
+ * @throws AppError PLAN_UPGRADE_REQUIRED
+ */
+export async function assertWorkspaceFeature(
+  workspaceId: string,
+  feature: PlanFeature,
+): Promise<void> {
+  if (
+    workspaceId === getDefaultWorkspaceId() ||
+    workspaceId === PILOT_WORKSPACE_ID ||
+    getBillingMode() === "none" ||
+    getBillingMode() === "test"
+  ) {
+    return;
+  }
+
+  const supabase = createAdminClient();
+  const { data: ws, error } = await supabase
+    .from("workspaces")
+    .select("plan_tier, subscription_status, trial_ends_at")
+    .eq("id", workspaceId)
+    .maybeSingle();
+
+  if (error || !ws) {
+    console.error(
+      `[plan-features] could not read billing state for workspace ${workspaceId} — blocking ${feature}`,
+      error,
+    );
+    throw new AppError(APP_ERROR_CODE.PLAN_UPGRADE_REQUIRED);
+  }
+
+  const allowed = canUseFeature(
+    {
+      planTier: (ws.plan_tier as PlanTier) ?? "free",
+      subscriptionStatus:
+        (ws.subscription_status as SubscriptionStatus | null) ?? null,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      trialEndsAt: (ws.trial_ends_at as string | null) ?? null,
+    },
+    feature,
+  );
+
+  if (!allowed) {
+    throw new AppError(APP_ERROR_CODE.PLAN_UPGRADE_REQUIRED);
+  }
 }

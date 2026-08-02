@@ -1,8 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { WorkspaceBilling } from "@/lib/billing";
+import { supabaseMock } from "../tests/helpers/supabase-mock";
+import { APP_ERROR_CODE, isAppError } from "./errors";
 import {
   PLAN_FEATURE,
   PLAN_PRICE_USD,
+  assertWorkspaceFeature,
   canUseFeature,
   effectiveTier,
   featuresForTier,
@@ -93,5 +96,105 @@ describe("PLAN_PRICE_USD", () => {
   it("matches the advertised prices", () => {
     expect(PLAN_PRICE_USD.starter).toBe(19);
     expect(PLAN_PRICE_USD.pro).toBe(49);
+  });
+});
+
+const PILOT_ID = "00000000-0000-4000-8000-000000000001";
+const TENANT_ID = "11111111-1111-4111-8111-111111111111";
+
+describe("assertWorkspaceFeature", () => {
+  beforeEach(() => {
+    // No vi.resetModules(): a fresh module graph would mint a second AppError
+    // class and break the instanceof checks. BILLING_MODE is read per call.
+    vi.unstubAllEnvs();
+    vi.stubEnv("BILLING_MODE", "live");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("allows messenger for a pro workspace", async () => {
+    supabaseMock.seed("workspaces", [
+      {
+        id: TENANT_ID,
+        plan_tier: "pro",
+        subscription_status: "active",
+        trial_ends_at: pastIso(30),
+      },
+    ]);
+
+    await expect(
+      assertWorkspaceFeature(TENANT_ID, PLAN_FEATURE.MESSENGER),
+    ).resolves.toBeUndefined();
+  });
+
+  it("blocks messenger for a starter workspace", async () => {
+    supabaseMock.seed("workspaces", [
+      {
+        id: TENANT_ID,
+        plan_tier: "starter",
+        subscription_status: "active",
+        trial_ends_at: pastIso(30),
+      },
+    ]);
+
+    const rejection = await assertWorkspaceFeature(
+      TENANT_ID,
+      PLAN_FEATURE.MESSENGER,
+    ).catch((error: unknown) => error);
+    expect(isAppError(rejection, APP_ERROR_CODE.PLAN_UPGRADE_REQUIRED)).toBe(true);
+  });
+
+  it("allows messenger during an active trial", async () => {
+    supabaseMock.seed("workspaces", [
+      {
+        id: TENANT_ID,
+        plan_tier: "free",
+        subscription_status: null,
+        trial_ends_at: futureIso(4),
+      },
+    ]);
+
+    await expect(
+      assertWorkspaceFeature(TENANT_ID, PLAN_FEATURE.MESSENGER),
+    ).resolves.toBeUndefined();
+  });
+
+  it("fails closed when the workspace row cannot be read", async () => {
+    supabaseMock.seed("workspaces", []);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const rejection = await assertWorkspaceFeature(
+      TENANT_ID,
+      PLAN_FEATURE.MESSENGER,
+    ).catch((error: unknown) => error);
+    expect(isAppError(rejection, APP_ERROR_CODE.PLAN_UPGRADE_REQUIRED)).toBe(true);
+  });
+
+  it("never gates the Pilot demo workspace", async () => {
+    supabaseMock.seed("workspaces", []);
+
+    await expect(
+      assertWorkspaceFeature(PILOT_ID, PLAN_FEATURE.MESSENGER),
+    ).resolves.toBeUndefined();
+  });
+
+  it("never gates when BILLING_MODE=test", async () => {
+    vi.stubEnv("BILLING_MODE", "test");
+    supabaseMock.seed("workspaces", []);
+
+    await expect(
+      assertWorkspaceFeature(TENANT_ID, PLAN_FEATURE.MESSENGER),
+    ).resolves.toBeUndefined();
+  });
+
+  it("never gates when BILLING_MODE=none", async () => {
+    vi.stubEnv("BILLING_MODE", "none");
+    supabaseMock.seed("workspaces", []);
+
+    await expect(
+      assertWorkspaceFeature(TENANT_ID, PLAN_FEATURE.MESSENGER),
+    ).resolves.toBeUndefined();
   });
 });

@@ -8,11 +8,25 @@ import {
   STATE_TTL_MS,
 } from "@/lib/cal-oauth-state";
 import { requireOwnerWorkspace } from "@/lib/workspace-invites";
+import { assertWorkspaceFeature, PLAN_FEATURE } from "@/lib/plan-features";
+import { appErrorMessage, isAppError, APP_ERROR_CODE } from "@/lib/errors";
 
 export async function GET(request: Request) {
   const auth = await requireOwnerWorkspace();
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: 401 });
+  }
+
+  try {
+    await assertWorkspaceFeature(auth.workspaceId, PLAN_FEATURE.MESSENGER);
+  } catch (error) {
+    if (isAppError(error, APP_ERROR_CODE.PLAN_UPGRADE_REQUIRED)) {
+      return NextResponse.json(
+        { error: appErrorMessage(APP_ERROR_CODE.PLAN_UPGRADE_REQUIRED) },
+        { status: 403 },
+      );
+    }
+    throw error;
   }
 
   try {
