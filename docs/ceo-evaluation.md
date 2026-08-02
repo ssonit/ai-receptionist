@@ -47,7 +47,7 @@ PostHog, Sentry, dashboard analytics nội bộ (AI health, funnel conversion, t
 | # | Tính năng | Giá trị |
 |---|-----------|---------|
 | 1 | **Team/Staff accounts** — invite vào workspace hiện có | Solopreneur → SMB | ✅ Done — invite email + accept + role-scoped dashboard |
-| 2 | **WhatsApp/Zalo channel** — phần lớn booking ở VN đến từ đây | Mở rộng TAM 10x |
+| 2 | **WhatsApp/Zalo channel** — phần lớn booking ở VN đến từ đây | Mở rộng TAM 10x — Facebook Messenger đã xong và là ranh giới Starter/Pro; Zalo vẫn chưa có. |
 | 3 | **Multi-language agent** — FAQ auto-translate cho khách quốc tế | Tăng conversion |
 | 4 | **CRM export** — Google Sheets / Zapier webhook | Giảm churn, owner không cần login dashboard |
 | 5 | **Voice booking** — AI voice agent qua điện thoại | Premium tier upsell |
@@ -78,11 +78,16 @@ PostHog, Sentry, dashboard analytics nội bộ (AI health, funnel conversion, t
 
 ### Pricing model
 
-| Tier | Giá | Features |
-|------|-----|----------|
-| Starter | $19/tháng | 50 bookings/tháng, 1 user, web embed, EN/VI AI |
-| Pro | $49/tháng | 200 bookings/tháng, 3 users, Zalo/WhatsApp, email reminders |
-| Business | $99/tháng | Unlimited bookings, 10 users, voice booking, custom branding, priority support |
+| Tier | Giá | Ranh giới |
+|------|-----|-----------|
+| Starter | $19/tháng | Web chat widget, đặt lịch Cal.com, FAQ + intake, agent song ngữ, nhắc lịch |
+| Pro | $49/tháng | Toàn bộ Starter + Facebook Messenger (Zalo khi xây xong) |
+
+Không giới hạn số booking và không giới hạn số nhân viên — xem
+`docs/superpowers/specs/2026-08-02-plan-feature-gating-design.md`. Quota booking
+bị bỏ vì nó chặn doanh thu của chính khách hàng đúng lúc họ đông khách nhất,
+trong khi chi phí biên mỗi booking gần bằng 0. Ranh giới thật giữa hai gói là
+**kênh chat**, khai báo trong `lib/plan-features.ts`.
 
 ### Timeline
 
