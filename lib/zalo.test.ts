@@ -207,7 +207,7 @@ describe("ZALO_DRY_RUN", () => {
     const fetchMock = stubFetch(sendOk);
 
     const { sendZaloText: dryRunSend } = await import("./zalo");
-    const result = await dryRunSend("at-1", "user_1", "xin chÃ o");
+    const result = await dryRunSend("at-1", "user_1", "xin chào");
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(result.messageId).toMatch(/^dry-run:/);

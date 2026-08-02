@@ -103,10 +103,14 @@ on conflict (id) do update set
 -- `npx supabase db reset`. The tokens are not real and never leave the machine;
 -- outbound sends run under ZALO_DRY_RUN.
 insert into public.workspace_channel_connections
-  (workspace_id, provider, external_id, display_name, expires_at)
+  (workspace_id, provider, external_id, display_name, access_encrypted, expires_at)
 values
   ('00000000-0000-4000-8000-000000000001', 'zalo', 'oa_dev_local',
-   'Dev Local OA', now() + interval '10 years')
+   -- Encrypted via lib/workspace-secrets.ts (AES-256-GCM, base64url iv+tag+ciphertext)
+   -- using WORKSPACE_SECRETS_KEY = "test-workspace-secrets-key-0123456789abcdef"
+   -- so db-integration + lib tests can decrypt and hit ZALO_DRY_RUN.
+   'Dev Local OA', '2s8GCU4COVvkefll2n69DySsJLeeHTZiUbeAaL3Fzma9BdxjYjdwf0OTC0Uurx7s5w',
+   now() + interval '10 years')
 on conflict (workspace_id, provider) do nothing;
 
 delete from public.workspace_faq_items

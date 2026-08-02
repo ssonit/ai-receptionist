@@ -14,7 +14,12 @@ import {
 } from "@/lib/channel-connections";
 import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { createNotification } from "@/lib/notifications-write";
-import { exchangeZaloCode, getZaloOaProfile, refreshZaloToken } from "@/lib/zalo";
+import {
+  exchangeZaloCode,
+  getZaloOaProfile,
+  refreshZaloToken,
+  ZALO_FETCH_TIMEOUT_MS,
+} from "@/lib/zalo";
 
 export { CHANNEL_EXTERNAL_ID_TAKEN };
 
@@ -76,7 +81,7 @@ export async function disconnectZalo(workspaceId: string): Promise<void> {
 const REFRESH_SKEW_MS = 5 * 60 * 1000;
 
 /** How long to wait for the caller holding the lock, and how often to look. */
-const LOCK_WAIT_TOTAL_MS = 3_000;
+const LOCK_WAIT_TOTAL_MS = ZALO_FETCH_TIMEOUT_MS + 2_000;
 const LOCK_WAIT_STEP_MS = 200;
 
 /**

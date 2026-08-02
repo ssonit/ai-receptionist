@@ -21,7 +21,7 @@ const ZALO_OAUTH_PERMISSION_URL = "https://oauth.zaloapp.com/v4/oa/permission";
  */
 export const ZALO_TEXT_LIMIT = 2000;
 
-const ZALO_FETCH_TIMEOUT_MS = 12_000;
+export const ZALO_FETCH_TIMEOUT_MS = 12_000;
 
 /**
  * Local testing without a Zalo Official Account: log the outbound message

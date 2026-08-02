@@ -176,7 +176,7 @@ const channel = defineChannel({
 
       // Drive the agent in the background — Zalo retries on a slow response.
       // Sequential so two messages from one guest keep their order.
-      await args.waitUntil(
+      args.waitUntil(
         (async () => {
           for (const msg of events) {
             try {

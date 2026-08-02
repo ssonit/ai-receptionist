@@ -14,6 +14,7 @@ import { ROUTES, loginWithNext } from "@/lib/routes";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
+  const stateParam = searchParams.get("state");
   const oauthError = searchParams.get("error");
 
   const cookieStore = await cookies();
@@ -42,7 +43,9 @@ export async function GET(request: Request) {
   };
 
   if (oauthError || !code) return failure("denied");
-  if (!stateCookie) return failure("state_invalid");
+  if (!stateCookie || !stateParam || stateParam !== stateCookie) {
+    return failure("state_invalid");
+  }
 
   const state = parseOAuthState(stateCookie, auth.workspaceId);
   if (!state?.codeVerifier) return failure("state_invalid");

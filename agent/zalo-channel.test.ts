@@ -85,13 +85,17 @@ function request(raw: string, signature: string | null) {
 
 function args() {
   const sent: unknown[] = [];
+  let waitUntilPromise: Promise<unknown> | null = null;
   return {
     sent,
     send: vi.fn(async (payload: unknown) => {
       sent.push(payload);
       return { id: "eve-session-1" };
     }),
-    waitUntil: (p: Promise<unknown>) => p,
+    waitUntilPromise: () => waitUntilPromise ?? Promise.resolve(),
+    waitUntil: (p: Promise<unknown>) => {
+      waitUntilPromise = p;
+    },
     requestIp: "1.2.3.4",
   };
 }
@@ -180,8 +184,10 @@ describe("zalo webhook", () => {
     });
     const handler = await postHandler();
     const raw = body({ oa_id: "oa_b", recipient: { id: "oa_b" } });
+    const a = args();
 
-    await handler(request(raw, sign(raw)), args());
+    await handler(request(raw, sign(raw)), a);
+    await a.waitUntilPromise();
 
     expect(mocks.getOrCreateChannelSession).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: WS_B, channel: "zalo" }),
@@ -195,6 +201,7 @@ describe("zalo webhook", () => {
     const raw = body();
 
     const res = await handler(request(raw, sign(raw)), a);
+    await a.waitUntilPromise();
 
     expect(res.status).toBe(200);
     expect(a.send).not.toHaveBeenCalled();
@@ -207,6 +214,7 @@ describe("zalo webhook", () => {
     const raw = body();
 
     await handler(request(raw, sign(raw)), a);
+    await a.waitUntilPromise();
 
     expect(a.send).not.toHaveBeenCalled();
     expect(mocks.sendZaloText).toHaveBeenCalled();
@@ -219,6 +227,7 @@ describe("zalo webhook", () => {
     const raw = body();
 
     await handler(request(raw, sign(raw)), a);
+    await a.waitUntilPromise();
 
     expect(a.send).not.toHaveBeenCalled();
     expect(mocks.sendZaloText).not.toHaveBeenCalled();
@@ -230,6 +239,7 @@ describe("zalo webhook", () => {
     const raw = body();
 
     const res = await handler(request(raw, sign(raw)), a);
+    await a.waitUntilPromise();
 
     expect(res.status).toBe(200);
     expect(a.send).toHaveBeenCalledWith(
