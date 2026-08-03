@@ -198,9 +198,15 @@ export default defineChannel({
           {
             role: "assistant",
             content: data.message,
-            eve_message_id: `${data.turnId}:${data.sequence}`,
+            // A turn can emit more than one completed assistant message when
+            // the model replies before requesting a tool call (eve's own docs
+            // on MessageCompletedStreamEvent). sequence alone repeats across
+            // those steps, which silently dropped the final reply as a
+            // "duplicate" of the earlier one — stepIndex disambiguates them.
+            eve_message_id: `${data.turnId}:${data.stepIndex}:${data.sequence}`,
             raw: {
               turnId: data.turnId,
+              stepIndex: data.stepIndex,
               sequence: data.sequence,
               finishReason: data.finishReason,
             },

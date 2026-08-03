@@ -288,7 +288,7 @@ describe("message.completed", () => {
     const { onMessageCompleted } = await import("./channels/zalo");
 
     await onMessageCompleted(
-      { message: "mai 3h chiều nhé", turnId: "t1", sequence: 0, finishReason: "stop" },
+      { message: "mai 3h chiều nhé", turnId: "t1", stepIndex: 0, sequence: 0, finishReason: "stop" },
       null,
       { session: { id: "eve-session-1" } },
     );
@@ -312,11 +312,53 @@ describe("message.completed", () => {
 
     await expect(
       onMessageCompleted(
-        { message: "xin chào", turnId: "t1", sequence: 0, finishReason: "stop" },
+        { message: "xin chào", turnId: "t1", stepIndex: 0, sequence: 0, finishReason: "stop" },
         null,
         { session: { id: "eve-session-1" } },
       ),
     ).resolves.not.toThrow();
+  });
+
+  it("persists both messages when a turn completes in more than one step", async () => {
+    // eve emits a separate message.completed per assistant message within a
+    // turn — e.g. the model replies once before a tool call, then again with
+    // the final answer. Both can share turnId+sequence; only stepIndex tells
+    // them apart. Regression test for the bug where the second (real) reply
+    // was silently dropped as a duplicate of the first.
+    mocks.findChatSessionByEveSessionId.mockResolvedValue({
+      id: "session-1",
+      workspace_id: WS_A,
+      external_user_id: "user_1",
+    });
+    const { onMessageCompleted } = await import("./channels/zalo");
+
+    await onMessageCompleted(
+      { message: "Để mình kiểm tra lịch trống nhé.", turnId: "t1", stepIndex: 0, sequence: 0, finishReason: "tool-calls" },
+      null,
+      { session: { id: "eve-session-1" } },
+    );
+    await onMessageCompleted(
+      { message: "3h chiều mai vẫn còn trống, mình đặt giúp bạn nhé.", turnId: "t1", stepIndex: 1, sequence: 0, finishReason: "stop" },
+      null,
+      { session: { id: "eve-session-1" } },
+    );
+
+    const persistedIds = mocks.upsertChatMessages.mock.calls.map(
+      (call) => call[0].messages[0].eve_message_id,
+    );
+    expect(new Set(persistedIds).size).toBe(2);
+    expect(mocks.sendZaloText).toHaveBeenNthCalledWith(
+      1,
+      "at-1",
+      "user_1",
+      "Để mình kiểm tra lịch trống nhé.",
+    );
+    expect(mocks.sendZaloText).toHaveBeenNthCalledWith(
+      2,
+      "at-1",
+      "user_1",
+      "3h chiều mai vẫn còn trống, mình đặt giúp bạn nhé.",
+    );
   });
 });
 
