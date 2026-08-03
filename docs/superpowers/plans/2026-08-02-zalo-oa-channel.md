@@ -3411,5 +3411,10 @@ Run before calling the feature done. Step 5 is the one that answers "does this a
 ## Deferred (do not do in this plan)
 
 - Dropping `workspaces.messenger_page_id` / `messenger_page_name` / `messenger_page_access_token_encrypted` — a follow-up migration, after this ships and holds
-- Messenger's `?workspace_id=` webhook resolution — same payload-based fix Zalo uses, once Zalo proves it in production
 - WhatsApp, ZNS reminders, image and attachment handling — all out of scope per the spec's non-goals
+
+**Done outside this plan, after it shipped:** Messenger's `?workspace_id=` webhook
+resolution was replaced with the same payload-based lookup Zalo uses
+(`getChannelConnectionByExternalId("messenger", pageId)`), once Zalo's version had
+proven the pattern. See `agent/channels/messenger.ts` and its new
+`agent/messenger-channel.test.ts` (no channel-level test existed for Messenger before).
