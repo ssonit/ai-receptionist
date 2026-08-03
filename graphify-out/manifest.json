@@ -730,13 +730,13 @@
     "semantic_hash": "fcbb4f37d67a66a53013b484dcfc9f25"
   },
   "AGENTS.md": {
-    "mtime": 1785581734.2890832,
-    "ast_hash": "2e8596d8bf07b834523a4c425892f3d4",
+    "mtime": 1785747958.4582584,
+    "ast_hash": "1d6b3baee0546fe5c80aa73a39a95fe9",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1785479826.9120293,
-    "ast_hash": "92bd5f87f6eed7b9ce0666f316beb9a0",
+    "mtime": 1785747952.6612096,
+    "ast_hash": "916e5dfcaebb67da571fb640bd24e5e7",
     "semantic_hash": ""
   },
   "DESIGN.md": {
@@ -1170,8 +1170,8 @@
     "semantic_hash": ""
   },
   ".claude/rules/code-structure.md": {
-    "mtime": 1785582271.0606627,
-    "ast_hash": "b279219953e02903a139046afe3dae85",
+    "mtime": 1785747949.1073089,
+    "ast_hash": "37ca3dab75de8c61c3a55696cfbd59fb",
     "semantic_hash": ""
   },
   ".claude/rules/i18n.md": {
@@ -3347,6 +3347,11 @@
   "lib/chat-messages-after.test.ts": {
     "mtime": 1785746965.910747,
     "ast_hash": "edd5642c2d63e92a48fa5b6fdddff561",
+    "semantic_hash": ""
+  },
+  ".claude/rules/typescript-conventions.md": {
+    "mtime": 1785747949.7434492,
+    "ast_hash": "51ded8248833cdf8318ef2a687f38943",
     "semantic_hash": ""
   }
 }

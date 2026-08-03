@@ -413,6 +413,5 @@
   "411": "dashboard/layout.tsx",
   "412": "eve.ts",
   "413": "row",
-  "414": "subscription-gate.test.ts",
-  "415": "@ai-sdk/anthropic"
+  "414": "subscription-gate.test.ts"
 }
