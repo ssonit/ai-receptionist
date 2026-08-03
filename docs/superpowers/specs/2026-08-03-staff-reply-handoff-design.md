@@ -119,9 +119,30 @@ stops the turn. So silently dropping the agent server-side would show the guest 
   mode a guest send persists the message via the existing
   `POST /api/chat/sessions/[id]/messages` and starts **no agent turn** — no spinner, no
   watchdog.
-- **Server.** `agent/channels/eve.ts` re-checks `reply_mode` and, when it is `human`,
-  closes the stream cleanly instead of going quiet. This covers the real race where the
-  guest presses send in the ~10s before their widget learns about the takeover.
+- **Server.** `agent/channels/eve.ts` cannot cancel the turn. Its `onMessage` hook
+  returns `{ auth, context }` (`node_modules/eve/docs/channels/eve.mdx:105`) with no
+  cancel in that contract, and the web channel has no custom route to return early from
+  the way Messenger and Zalo do. Note this is a limit of the *hook*, not of eve: the
+  runtime does have a per-turn `turn.cancelled` event, documented as "always followed by
+  `session.waiting`" with the session then accepting the next message normally. Nothing
+  here is global, and nothing is switched off.
+
+  So the turn runs, held to one sentence by two independent guards:
+
+  1. **`context`** — `onMessage` injects a per-request directive, the framework's
+     documented hook for adding context "before the agent sees the user message". It
+     augments the prompt, so the agent still has the FAQ and its tools in reach.
+  2. **The auth stamp** — `replyModeHuman: "1"` on the auth attributes, mirroring
+     `agentRateLimited` at `agent/channels/eve.ts:83` / `lib/agent-booking-auth.ts:87`.
+     `agent/instructions.ts` reads it and returns the holding prompt *instead of*
+     assembling the normal one, so there is no FAQ and no reason to reach for a tool.
+
+  Guard 1 is cheap and idiomatic; guard 2 is what holds if the model ignores it.
+
+  This makes **client-side suppression the primary mechanism**, not a convenience. The
+  server side is the safety net for the ~10s race where the guest presses send before
+  their widget learns about the takeover: the cost is one cheap turn producing a
+  harmless "someone will reply shortly", instead of the agent talking over the human.
 
 Messenger (`agent/channels/messenger.ts`) and Zalo (`agent/channels/zalo.ts`) have no
 stream to close: after `upsertChatMessages()` stores the inbound message they return
@@ -140,8 +161,14 @@ New `lib/channel-outbound.ts`:
 sendTextToSession(session: ChatSessionRow, text: string): Promise<void>
 ```
 
-It switches on `session.channel`, loads credentials through
-`lib/channel-connections.ts`, and calls `sendMessengerText` / `sendZaloText`.
+It switches on `session.channel` and calls `sendMessengerText` / `sendZaloText` with
+credentials from `getMessengerCredentialsForWorkspace()` (`lib/workspace.ts:650`) and
+`getZaloCredentialsForWorkspace()` (`lib/workspace.ts:672`) — the same helpers the
+channel handlers already use. Not `getChannelConnection()` directly: the Zalo helper
+routes through `getZaloAccessToken()` to refresh an expired token, so bypassing it would
+send staff replies with a stale token. Both helpers already take `workspaceId`
+explicitly and throw `MESSENGER_NOT_CONFIGURED` / `ZALO_NOT_CONFIGURED`, which map onto
+the existing `APP_ERROR_CODE` entries of the same names.
 
 Web sessions have `channel = null` — `createChatSession()` (`lib/chat-sessions.ts:196`)
 inserts no channel, only `getOrCreateChannelSession()` (`lib/chat-sessions.ts:604`)
@@ -316,10 +343,11 @@ null with a typed error. They never fall back to a default.
 
 **T4 — outbound credentials derive from the session row.** `sendTextToSession` takes the
 `ChatSessionRow` and reads `session.workspace_id` itself; it does **not** accept a
-`workspaceId` argument from its caller. `getChannelConnection(workspaceId, channel)`
-(`lib/channel-connections.ts:72`) takes the workspace positionally, so a caller passing
-the wrong one would push tenant A's reply through tenant B's page token. Removing the
-parameter removes the mistake.
+`workspaceId` argument from its caller. The credential helpers all take the workspace as
+a plain positional argument (`getMessengerCredentialsForWorkspace(workspaceId)`,
+`getZaloCredentialsForWorkspace(workspaceId)`, and `getChannelConnection(workspaceId,
+provider)` beneath them), so a caller passing the wrong one would push tenant A's reply
+through tenant B's page token. Removing the parameter removes the mistake.
 
 **T5 — the take-over update carries `workspace_id` in its `WHERE`,** not just `id`. The
 conditional update in the state machine above already does; it is non-negotiable.
