@@ -152,7 +152,7 @@ export async function loadConversationDetail(
   const { data: session, error } = await supabase
     .from("chat_sessions")
     .select(
-      "id, title, status, eve_session_id, visitor_id, user_id, channel, external_user_id, last_message_at, created_at, updated_at, continuation_token",
+      "id, title, status, reply_mode, eve_session_id, visitor_id, user_id, channel, external_user_id, last_message_at, created_at, updated_at, continuation_token",
     )
     .eq("id", id)
     .eq("workspace_id", workspaceId)

@@ -10,6 +10,7 @@ import {
 } from "@/lib/chat-redact";
 
 export type ChatSessionStatus = "active" | "closed";
+export type ChatSessionReplyMode = "ai" | "human";
 
 export type ChatSessionRow = {
   id: string;
@@ -19,6 +20,9 @@ export type ChatSessionRow = {
   user_id: string | null;
   title: string;
   status: ChatSessionStatus;
+  reply_mode: ChatSessionReplyMode;
+  claimed_by: string | null;
+  claimed_at: string | null;
   continuation_token: string | null;
   stream_index: number;
   events: unknown;
@@ -50,6 +54,7 @@ export type ChatSessionListItem = Pick<
   | "id"
   | "title"
   | "status"
+  | "reply_mode"
   | "eve_session_id"
   | "visitor_id"
   | "user_id"
@@ -106,14 +111,14 @@ export function compareChatMessagesChronological(
 }
 
 const SESSION_LIST_SELECT =
-  "id, title, status, eve_session_id, visitor_id, user_id, channel, external_user_id, last_message_at, created_at, updated_at";
+  "id, title, status, reply_mode, eve_session_id, visitor_id, user_id, channel, external_user_id, last_message_at, created_at, updated_at";
 
 /** Ownership / mutate paths — skip heavy `events` blob. */
 const SESSION_AUTH_SELECT =
-  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, continuation_token, stream_index, channel, external_user_id, last_message_at, created_at, updated_at";
+  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, reply_mode, claimed_by, claimed_at, continuation_token, stream_index, channel, external_user_id, last_message_at, created_at, updated_at";
 
 const SESSION_FULL_SELECT =
-  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, continuation_token, stream_index, events, channel, external_user_id, last_message_at, created_at, updated_at";
+  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, reply_mode, claimed_by, claimed_at, continuation_token, stream_index, events, channel, external_user_id, last_message_at, created_at, updated_at";
 
 const MESSAGE_SELECT =
   "id, session_id, role, content, eve_message_id, eve_event_index, raw, created_at";
