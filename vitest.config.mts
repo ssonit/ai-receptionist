@@ -39,6 +39,8 @@ const sharedTestEnv = {
   ZALO_APP_SECRET: "test-zalo-app-secret",
   ZALO_OA_SECRET_KEY: "test-zalo-oa-secret",
   ZALO_REDIRECT_URI: "http://localhost:3000/api/zalo/oauth/callback",
+  META_APP_SECRET: "test-messenger-app-secret",
+  MESSENGER_VERIFY_TOKEN: "test-messenger-verify-token",
 };
 
 const sharedInclude = [

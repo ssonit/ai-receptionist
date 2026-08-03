@@ -6,6 +6,7 @@ import {
   type MessengerMessageEvent,
 } from "@/lib/messenger-webhook";
 import { sendMessengerText } from "@/lib/messenger";
+import { getChannelConnectionByExternalId } from "@/lib/channel-connections";
 import {
   assertWorkspaceSubscriptionActive,
   getMessengerCredentialsForWorkspace,
@@ -31,15 +32,6 @@ function getVerifyToken(): string {
   const t = process.env.MESSENGER_VERIFY_TOKEN?.trim();
   if (!t) throw new Error("MESSENGER_NOT_CONFIGURED");
   return t;
-}
-
-/** Extract workspace_id from the webhook URL query string. */
-function getWorkspaceIdFromUrl(req: Request): string | null {
-  try {
-    return new URL(req.url).searchParams.get("workspace_id")?.trim() || null;
-  } catch {
-    return null;
-  }
 }
 
 export default defineChannel({
@@ -74,18 +66,19 @@ export default defineChannel({
         return Response.json({ ok: true, skipped: true });
       }
 
-      // Resolve workspace. URL pattern: /eve/v1/messenger/webhook?workspace_id=<id>
-      const workspaceId = getWorkspaceIdFromUrl(req);
-      if (!workspaceId) {
-        return new Response("missing_workspace_id", { status: 400 });
-      }
-
-      let creds: { pageId: string; pageAccessToken: string };
-      try {
-        creds = await getMessengerCredentialsForWorkspace(workspaceId);
-      } catch {
+      // The webhook URL is registered once per app and shared by every Page,
+      // so the tenant comes from the payload's page id — never a URL query
+      // param a second workspace could equally supply. An unresolved page is
+      // a failure, never a fallback to another workspace.
+      const conn = await getChannelConnectionByExternalId(
+        "messenger",
+        events[0].pageId,
+      );
+      if (!conn?.accessToken) {
         return new Response("messenger_not_configured", { status: 404 });
       }
+      const workspaceId = conn.workspaceId;
+      const creds = { pageId: conn.externalId, pageAccessToken: conn.accessToken };
 
       // Same paywall as guest web chat — otherwise an unpaid workspace still
       // burns LLM turns through Messenger.
@@ -100,11 +93,8 @@ export default defineChannel({
       const ip = args.requestIp ?? "0.0.0.0";
 
       const handle = async (msg: MessengerMessageEvent) => {
-        // Double-check the page_id from the event matches the workspace.
-        if (msg.pageId && creds.pageId && msg.pageId !== creds.pageId) {
-          // Page mismatch — possibly a misconfigured webhook.
-          return;
-        }
+        // A batch could in principle mix pages; never cross the tenant boundary.
+        if (msg.pageId !== creds.pageId) return;
 
         const externalUserId = msg.psid;
         const visitorId = channelVisitorId("messenger", externalUserId);
