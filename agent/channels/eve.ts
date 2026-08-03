@@ -87,6 +87,32 @@ export default eveChannel({
       };
     }
 
+    // Going silent is not an option: the widget's idle watchdog
+    // (app/_components/agent-chat.tsx) would fire and show the guest a
+    // timeout error that is not real. So the turn runs, but held to one
+    // sentence by both the context below and the prompt in instructions.ts.
+    const chatSessionId = request.headers
+      .get(EVE_CHAT_SESSION_HEADER)
+      ?.trim();
+    if (base && chatSessionId) {
+      const { findChatSessionById } = await import("@/lib/chat-sessions");
+      const session = await findChatSessionById(chatSessionId);
+      if (session?.reply_mode === "human") {
+        return {
+          auth: {
+            ...base,
+            attributes: { ...base.attributes, replyModeHuman: "1" },
+          },
+          context: [
+            "A human teammate is handling this conversation right now.",
+            "Reply with exactly one short sentence telling the guest a team",
+            "member will respond shortly. Do not answer their question, do not",
+            "call any tool, and do not add anything else.",
+          ].join(" "),
+        };
+      }
+    }
+
     return { auth: base };
   },
 });

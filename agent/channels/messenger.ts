@@ -134,6 +134,27 @@ export default defineChannel({
           messages: [{ role: "user", content: msg.text }],
         });
 
+        // A staff member owns this conversation: store the guest's message and
+        // notify them, but never spend an LLM turn answering over the top.
+        if (session.reply_mode === "human") {
+          const { createNotificationDebounced } = await import(
+            "@/lib/notifications-write"
+          );
+          const { DASHBOARD_PATH } = await import("@/lib/dashboard-access");
+          await createNotificationDebounced({
+            type: "conversation_needs_reply",
+            title: "New message in a conversation you took over",
+            body: msg.text.slice(0, 140),
+            severity: "high",
+            workspaceId,
+            entityType: "chat_session",
+            entityId: session.id,
+            href: `${DASHBOARD_PATH.conversations}?session=${session.id}`,
+            windowMinutes: 5,
+          });
+          return;
+        }
+
         const run = await args.send(
           { message: msg.text },
           {

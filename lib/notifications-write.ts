@@ -22,6 +22,7 @@ export const NOTIFICATION_TYPES = [
   "booking_cancelled_by_guest",
   "booking_rescheduled_by_guest",
   "booking_change_requested",
+  "conversation_needs_reply",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
