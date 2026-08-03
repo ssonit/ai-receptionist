@@ -142,6 +142,8 @@ describe.skipIf(!dbUp)("channel connections", () => {
     expect((await claimRefreshLock(WS_A, "zalo")).claimed).toBe(true);
   });
 
+  // Dynamic import of workspace pulls billing/polar; under a busy full suite
+  // that cold load can exceed the default 5s timeout.
   it("serves messenger credentials from the connections table", async () => {
     const { getMessengerCredentialsForWorkspace } = await import("@/lib/workspace");
     await upsertChannelConnection({
@@ -157,5 +159,5 @@ describe.skipIf(!dbUp)("channel connections", () => {
     expect(creds.pageAccessToken).toBe("page-token-abc");
 
     await deleteChannelConnection(WS_B, "messenger");
-  });
+  }, 15_000);
 });
