@@ -1,6 +1,8 @@
 import {
+  getChatMessagesAfter,
   getChatMessagesPage,
   getChatSessionForActor,
+  messageCursorFromRow,
   titleFromFirstUserMessage,
   updateChatSessionState,
   upsertChatMessages,
@@ -32,15 +34,28 @@ export async function GET(request: Request, { params }: Params) {
 
     const url = new URL(request.url);
     const before = url.searchParams.get("before");
+    const after = url.searchParams.get("after");
     const limitRaw = url.searchParams.get("limit");
     const limit = limitRaw ? Number(limitRaw) : CHAT_MESSAGE_PAGE_LIMIT;
+    const messageLimit =
+      Number.isFinite(limit) && limit > 0 ? limit : CHAT_MESSAGE_PAGE_LIMIT;
+
+    if (after !== null) {
+      const messages = await getChatMessagesAfter(id, after, messageLimit);
+      const lastMessage = messages.at(-1);
+      return Response.json({
+        messages,
+        replyMode: session.reply_mode,
+        cursor: lastMessage ? messageCursorFromRow(lastMessage) : after,
+      });
+    }
 
     const page = await getChatMessagesPage(id, {
       before,
-      limit: Number.isFinite(limit) && limit > 0 ? limit : CHAT_MESSAGE_PAGE_LIMIT,
+      limit: messageLimit,
     });
 
-    return Response.json(page);
+    return Response.json({ ...page, replyMode: session.reply_mode });
   } catch (error) {
     return chatErrorResponse(error, "Failed to load messages");
   }

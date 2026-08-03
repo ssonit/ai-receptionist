@@ -80,7 +80,15 @@ type ThreadBootstrap = {
   nextCursor: string | null;
   hasMore: boolean;
   messageCount: number;
+  pollCursor: string | null;
 };
+
+function encodePollCursor(row: Pick<ChatMessageRow, "created_at" | "id">): string {
+  return btoa(`${row.created_at}\n${row.id}`)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
 
 export function AgentChat(props: {
   user?: ChatUser | null;
@@ -226,6 +234,9 @@ function AgentChatInner({
         nextCursor: data.nextCursor ?? null,
         hasMore: Boolean(data.hasMore),
         messageCount: data.messageCount ?? data.messages?.length ?? 0,
+        pollCursor: data.messages?.at(-1)
+          ? encodePollCursor(data.messages.at(-1)!)
+          : null,
       });
       return "ok";
     },
@@ -247,6 +258,7 @@ function AgentChatInner({
       nextCursor: null,
       hasMore: false,
       messageCount: 0,
+      pollCursor: null,
     });
   }, [refreshSessions, tenantQs]);
 
@@ -471,6 +483,7 @@ function AgentChatInner({
               initialHasMore={bootstrap.hasMore}
               initialMessageCount={bootstrap.messageCount}
               initialNextCursor={bootstrap.nextCursor}
+              initialPollCursor={bootstrap.pollCursor}
               initialEvents={bootstrap.initialEvents}
               initialSession={bootstrap.initialSession}
               onNewChat={() => void createAndOpen()}
@@ -494,6 +507,7 @@ function AgentChatThread({
   initialHasMore,
   initialMessageCount,
   initialNextCursor,
+  initialPollCursor,
   initialSession,
   initialEvents,
   onNewChat,
@@ -509,6 +523,7 @@ function AgentChatThread({
   initialHasMore: boolean;
   initialMessageCount: number;
   initialNextCursor: string | null;
+  initialPollCursor: string | null;
   initialSession?: SessionState;
   initialEvents?: readonly unknown[];
   onNewChat: () => void;
@@ -532,6 +547,8 @@ function AgentChatThread({
   const [messageCount, setMessageCount] = React.useState(initialMessageCount);
   const [nudgeDismissed, setNudgeDismissed] = React.useState(false);
   const [turnTimedOut, setTurnTimedOut] = React.useState(false);
+  const [replyMode, setReplyMode] = React.useState<"ai" | "human">("ai");
+  const pollCursorRef = React.useRef<string | null>(initialPollCursor);
 
   const tenantHeaders = React.useCallback((): Record<string, string> => {
     const headers: Record<string, string> = {
@@ -697,6 +714,60 @@ function AgentChatThread({
     [history, liveMessages],
   );
 
+  React.useEffect(() => {
+    const isBusy =
+      agent.status === "submitted" || agent.status === "streaming";
+    if (isBusy) return;
+
+    let cancelled = false;
+    const poll = async () => {
+      if (document.visibilityState !== "visible") return;
+
+      const qs = new URLSearchParams(
+        tenantQs.startsWith("?") ? tenantQs.slice(1) : "",
+      );
+      qs.set("after", pollCursorRef.current ?? "");
+
+      try {
+        const res = await fetch(
+          `/api/chat/sessions/${chatSessionId}/messages?${qs.toString()}`,
+          { cache: "no-store" },
+        );
+        if (!res.ok) throw new Error("Failed to poll messages");
+        const data = (await res.json()) as {
+          messages: ChatMessageRow[];
+          replyMode: "ai" | "human";
+          cursor: string | null;
+        };
+        if (cancelled) return;
+
+        setReplyMode(data.replyMode === "human" ? "human" : "ai");
+        pollCursorRef.current = data.cursor;
+        const incoming = chatMessageRowsToEveMessages(data.messages ?? []);
+        setHistory((prev) => {
+          const ids = new Set(prev.map((message) => message.id));
+          const unique = incoming.filter((message) => !ids.has(message.id));
+          return unique.length > 0 ? [...prev, ...unique] : prev;
+        });
+      } catch (error) {
+        console.warn("[eve chat] message poll failed", error);
+      }
+    };
+
+    void poll();
+    const interval = setInterval(() => void poll(), 10_000);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void poll();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [agent.status, chatSessionId, tenantQs]);
+
   const userTurnCount = React.useMemo(
     () => displayMessages.filter((m) => m.role === "user").length,
     [displayMessages],
@@ -756,6 +827,45 @@ function AgentChatThread({
     setTurnTimedOut(false);
 
     try {
+      if (replyMode === "human") {
+        const id = `human:${crypto.randomUUID()}`;
+        const parts: Array<EveMessage["parts"][number]> = [];
+        if (text.length > 0) {
+          parts.push({ text, type: "text" });
+        }
+        for (const file of message.files) {
+          parts.push({
+            filename: file.filename,
+            mediaType: file.mediaType,
+            type: "file",
+            url: file.url,
+          });
+        }
+
+        const res = await fetch(
+          `/api/chat/sessions/${chatSessionId}/messages${tenantQs}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+            body: JSON.stringify({
+              messages: [
+                {
+                  role: "user",
+                  content: text || "(attachment)",
+                  eve_message_id: id,
+                  raw: { id, parts, role: "user" },
+                },
+              ],
+            }),
+          },
+        );
+        if (!res.ok) throw new Error("Failed to send message to staff");
+        setHistory((prev) => [...prev, { id, parts, role: "user" } as EveMessage]);
+        onPersisted();
+        return;
+      }
+
       if (message.files.length === 0) {
         await agent.send({ message: text });
         track(ANALYTICS_EVENT.CHAT_MESSAGE_SENT, {
@@ -910,6 +1020,25 @@ function AgentChatThread({
           >
             {(index) => {
               const message = displayMessages[index]!;
+              const isHandoff =
+                (message as { role: string }).role === "system" &&
+                (message.metadata as { handoff?: unknown } | undefined)
+                  ?.handoff === true;
+              if (isHandoff) {
+                const text = message.parts
+                  .flatMap((part) =>
+                    part.type === "text" ? [part.text] : [],
+                  )
+                  .join("\n");
+                return (
+                  <p
+                    className="mx-auto max-w-3xl px-4 py-2 text-center text-xs text-zinc-500"
+                    key={message.id}
+                  >
+                    {text}
+                  </p>
+                );
+              }
               return (
                 <AgentMessage
                   canRespond={!isBusy}

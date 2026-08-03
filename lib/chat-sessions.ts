@@ -349,6 +349,35 @@ export async function getChatMessagesPage(
   };
 }
 
+export async function getChatMessagesAfter(
+  sessionId: string,
+  after: string | null,
+  limit = 50,
+): Promise<ChatMessageRow[]> {
+  const supabase = createAdminClient();
+  const cursor = after ? decodeMessageCursor(after) : null;
+
+  let query = supabase
+    .from("chat_messages")
+    .select(MESSAGE_SELECT)
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
+    .limit(Math.min(Math.max(limit, 1), 100));
+
+  if (cursor) {
+    query = query.or(
+      `created_at.gt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.gt.${cursor.id})`,
+    );
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as ChatMessageRow[])
+    .slice()
+    .sort(compareChatMessagesChronological);
+}
+
 /** @deprecated Prefer getChatMessagesPage — kept for callers that need a full dump. */
 export async function getChatMessages(
   sessionId: string,

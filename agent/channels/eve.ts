@@ -108,7 +108,7 @@ export default eveChannel({
             "Reply with exactly one short sentence telling the guest a team",
             "member will respond shortly. Do not answer their question, do not",
             "call any tool, and do not add anything else.",
-          ].join(" "),
+          ],
         };
       }
     }
