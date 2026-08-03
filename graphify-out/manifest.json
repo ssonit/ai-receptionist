@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "agent/channels/eve.ts": {
-    "mtime": 1785479656.3990936,
-    "ast_hash": "0e1c2f75cb81e32d347b292ca515c3b0",
+    "mtime": 1785747418.2201197,
+    "ast_hash": "a569166c24954742642212eda090f52c",
     "semantic_hash": ""
   },
   "agent/date-context.ts": {
@@ -15,8 +15,8 @@
     "semantic_hash": "1eac378aa1c8511c8e4118fefbcbb61e"
   },
   "agent/instructions.ts": {
-    "mtime": 1785492298.8669314,
-    "ast_hash": "baf8073ef3a506bc5d4631d75ad3ea4a",
+    "mtime": 1785746570.4680796,
+    "ast_hash": "f6e9cc1fbdf94a2f61e755fe4bf5ef56",
     "semantic_hash": ""
   },
   "agent/sandbox.ts": {
@@ -45,8 +45,8 @@
     "semantic_hash": ""
   },
   "app/_components/agent-chat.tsx": {
-    "mtime": 1785581967.8211026,
-    "ast_hash": "41f9f6674dff1cbcb01bef950f2fa991",
+    "mtime": 1785747262.3207963,
+    "ast_hash": "242e843bcc8e2b46093c914233ec6dfb",
     "semantic_hash": ""
   },
   "app/_components/agent-message.tsx": {
@@ -475,8 +475,8 @@
     "semantic_hash": ""
   },
   "lib/dashboard-user.ts": {
-    "mtime": 1785385709.7887127,
-    "ast_hash": "a1b761c853adf8dafba501076d60ace7",
+    "mtime": 1785746825.700316,
+    "ast_hash": "47b685722596cc6eebdad6ae23ab8f63",
     "semantic_hash": ""
   },
   "lib/models.ts": {
@@ -755,7 +755,7 @@
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
-    "mtime": 1785663295.5941265,
+    "mtime": 1785743304.2226543,
     "ast_hash": "d463f071bccff3ebf71fb826824d1f4c",
     "semantic_hash": ""
   },
@@ -885,8 +885,8 @@
     "semantic_hash": ""
   },
   "app/api/chat/sessions/[id]/messages/route.ts": {
-    "mtime": 1785555830.5834677,
-    "ast_hash": "6bb0b0d58204bb092b05cdf2c30b8ce1",
+    "mtime": 1785746961.4834814,
+    "ast_hash": "a18fed8bf985a7c6b2f71a7a034331cb",
     "semantic_hash": ""
   },
   "app/api/chat/sessions/[id]/route.ts": {
@@ -910,8 +910,8 @@
     "semantic_hash": ""
   },
   "components/conversations-table.tsx": {
-    "mtime": 1785308570.4563632,
-    "ast_hash": "fbd17d94f6f01f66fbbc4c7bb7a63029",
+    "mtime": 1785747584.9643092,
+    "ast_hash": "b4496036dd0cb4eb934ac675e2ce9df6",
     "semantic_hash": ""
   },
   "lib/chat-api.ts": {
@@ -920,13 +920,13 @@
     "semantic_hash": ""
   },
   "lib/chat-sessions.ts": {
-    "mtime": 1785722631.8220959,
-    "ast_hash": "1e718b3f1b07970c887b07543011b4bd",
+    "mtime": 1785746954.9478471,
+    "ast_hash": "cad48fc97048d9121646b02d65f0e1c6",
     "semantic_hash": ""
   },
   "lib/conversations-dashboard.ts": {
-    "mtime": 1785553735.8181338,
-    "ast_hash": "61f44d77c44f0ea58d0798a98afcb52b",
+    "mtime": 1785746852.7367976,
+    "ast_hash": "b94148dea26b3ffd0bab4230811792b4",
     "semantic_hash": ""
   },
   "lib/project-chat-messages.ts": {
@@ -1085,8 +1085,8 @@
     "semantic_hash": ""
   },
   "lib/notifications-write.ts": {
-    "mtime": 1785222904.6009364,
-    "ast_hash": "078d3b0b47ca592ff7759ee46c451d15",
+    "mtime": 1785746509.4899886,
+    "ast_hash": "0914c57e38c165c78674c42d388df9ad",
     "semantic_hash": ""
   },
   "lib/workspace-session.ts": {
@@ -1140,13 +1140,13 @@
     "semantic_hash": ""
   },
   "messages/en.json": {
-    "mtime": 1785722631.8316019,
-    "ast_hash": "ccc01148fbb526583617f6579f1e23fc",
+    "mtime": 1785746317.417752,
+    "ast_hash": "dcffec9030df99d8fa52773b0311ccad",
     "semantic_hash": ""
   },
   "messages/vi.json": {
-    "mtime": 1785722631.8326094,
-    "ast_hash": "e8eac64408bbdfe62a7918d93d0fcb6c",
+    "mtime": 1785746317.4187572,
+    "ast_hash": "a346d278bd1503bc586b4b444ea6d3ff",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000004_slugify_vietnamese.sql": {
@@ -2075,13 +2075,13 @@
     "semantic_hash": ""
   },
   "lib/errors/app-codes.ts": {
-    "mtime": 1785722631.8230982,
-    "ast_hash": "a33a8ee90d254f87f1d5f44766973459",
+    "mtime": 1785746306.274691,
+    "ast_hash": "703ffcc8cca2295c1be9f24266a0b73d",
     "semantic_hash": ""
   },
   "lib/errors/app-messages.ts": {
-    "mtime": 1785722631.8240967,
-    "ast_hash": "2c25237c3c9dbaf6db311eadb4a65fd2",
+    "mtime": 1785746306.274691,
+    "ast_hash": "7fe8245fd38f0cac128ef29710d2d625",
     "semantic_hash": ""
   },
   "lib/errors/format.ts": {
@@ -2110,8 +2110,8 @@
     "semantic_hash": ""
   },
   "lib/chat-message-display.ts": {
-    "mtime": 1784888005.4041984,
-    "ast_hash": "0e040bda3cab172eb38099770aa1246b",
+    "mtime": 1785746978.516124,
+    "ast_hash": "4d96f8092aebfaf29cc8270bac93fcf6",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000005_chat_messages_cursor.sql": {
@@ -2930,8 +2930,8 @@
     "semantic_hash": ""
   },
   "agent/channels/messenger.ts": {
-    "mtime": 1785730362.5107274,
-    "ast_hash": "587c82d1c44204d27fc0442b0425a14e",
+    "mtime": 1785746518.8531058,
+    "ast_hash": "c2db50793dc2ec2c031bb56dfe716708",
     "semantic_hash": ""
   },
   "app/api/messenger/oauth/callback/route.ts": {
@@ -3235,7 +3235,7 @@
     "semantic_hash": ""
   },
   "lib/zalo.ts": {
-    "mtime": 1785722631.8300972,
+    "mtime": 1785743304.2236571,
     "ast_hash": "3ffa80ab949660f879b4c53fc08d2bff",
     "semantic_hash": ""
   },
@@ -3270,13 +3270,13 @@
     "semantic_hash": ""
   },
   "agent/channels/zalo.ts": {
-    "mtime": 1785728762.9045193,
-    "ast_hash": "fdb556bca28f11025207f9014eb356b8",
+    "mtime": 1785746514.224332,
+    "ast_hash": "f3283b3829aa9a8617a197e466888f0b",
     "semantic_hash": ""
   },
   "agent/zalo-channel.test.ts": {
-    "mtime": 1785728826.040078,
-    "ast_hash": "0c0e2cc78488e06b0372ffa2fd0389e7",
+    "mtime": 1785746720.7738976,
+    "ast_hash": "63f4d76a107bd8253b45c303c037bbbf",
     "semantic_hash": ""
   },
   "scripts/zalo-sim.mjs": {
@@ -3290,13 +3290,63 @@
     "semantic_hash": ""
   },
   "agent/messenger-channel.test.ts": {
-    "mtime": 1785730475.6410422,
-    "ast_hash": "c5e46b2c5c58ec9cbadd0650e3806f06",
+    "mtime": 1785746644.602075,
+    "ast_hash": "ffd1faeef3d311a7f925bd82d6ec33d1",
     "semantic_hash": ""
   },
   "supabase/migrations/20260803000001_drop_workspace_messenger_columns.sql": {
     "mtime": 1785730650.3584886,
     "ast_hash": "e50068e9055a1cb9fd7d91d9fed3c32b",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-03-staff-reply-handoff-design.md": {
+    "mtime": 1785745343.8525338,
+    "ast_hash": "639d24362b6da45d6ab7b99824211e99",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-03-staff-reply-handoff.md": {
+    "mtime": 1785745357.715965,
+    "ast_hash": "2ef8e8fe0d962603034785b6a334e633",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260803000001_chat_session_reply_mode.sql": {
+    "mtime": 1785746022.004229,
+    "ast_hash": "dbb56f9945f4dda5863b2b21ca65a7bb",
+    "semantic_hash": ""
+  },
+  "lib/channel-outbound.test.ts": {
+    "mtime": 1785746299.4131289,
+    "ast_hash": "02d0f02f41dfdb0687c0717b40caf40c",
+    "semantic_hash": ""
+  },
+  "lib/channel-outbound.ts": {
+    "mtime": 1785746297.88584,
+    "ast_hash": "2fe0f783fb22ec77b6b3d07f5423f3d3",
+    "semantic_hash": ""
+  },
+  "lib/conversation-handoff.test.ts": {
+    "mtime": 1785746380.5805092,
+    "ast_hash": "8d673ffa4c6d20a7ddbf04826ba91a12",
+    "semantic_hash": ""
+  },
+  "lib/conversation-handoff.ts": {
+    "mtime": 1785746379.8672633,
+    "ast_hash": "1326e02be124dbd6e8816d2aec022ae7",
+    "semantic_hash": ""
+  },
+  "agent/handoff-context.test.ts": {
+    "mtime": 1785746647.1843202,
+    "ast_hash": "d75993416efa5aa0b36522a96c538074",
+    "semantic_hash": ""
+  },
+  "app/dashboard/conversations/actions.ts": {
+    "mtime": 1785747489.8673513,
+    "ast_hash": "72314518fd9e9ded37eebab06e29d3af",
+    "semantic_hash": ""
+  },
+  "lib/chat-messages-after.test.ts": {
+    "mtime": 1785746965.910747,
+    "ast_hash": "edd5642c2d63e92a48fa5b6fdddff561",
     "semantic_hash": ""
   }
 }
