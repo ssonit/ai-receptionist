@@ -105,12 +105,12 @@
     "semantic_hash": ""
   },
   "app/dashboard/settings/actions.ts": {
-    "mtime": 1785668901.2128665,
-    "ast_hash": "9c9f1ea84774ce003bdc28524f4aec2d",
+    "mtime": 1785722631.7845142,
+    "ast_hash": "cf5ce30303b89ca5be0cf654db195587",
     "semantic_hash": ""
   },
   "app/dashboard/settings/page.tsx": {
-    "mtime": 1785668923.333,
+    "mtime": 1785722631.7845142,
     "ast_hash": "9402e92750254caee793e6d4c6f33f72",
     "semantic_hash": ""
   },
@@ -520,7 +520,7 @@
     "semantic_hash": ""
   },
   "lib/workspace.ts": {
-    "mtime": 1785667987.0579917,
+    "mtime": 1785722631.8270996,
     "ast_hash": "0f38b3c8410cfa42d347c1210d3fb705",
     "semantic_hash": ""
   },
@@ -535,8 +535,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1785691109.2293282,
-    "ast_hash": "c56925b4ad5e90a37a947a26d55d153a",
+    "mtime": 1785724306.6297095,
+    "ast_hash": "678baa637a7581407b59313fee200da4",
     "semantic_hash": ""
   },
   "postcss.config.mjs": {
@@ -565,13 +565,13 @@
     "semantic_hash": ""
   },
   "supabase/seed.sql": {
-    "mtime": 1785692366.3685615,
-    "ast_hash": "7305be72003431aa7b2d80a693c244b1",
+    "mtime": 1785722631.8346162,
+    "ast_hash": "5acebcd71e1871628a36c2560f536074",
     "semantic_hash": ""
   },
   "tsconfig.json": {
-    "mtime": 1785668099.627856,
-    "ast_hash": "71152d73c1c08674690c8073f7d29f34",
+    "mtime": 1785722631.8356166,
+    "ast_hash": "0681462119cffa45fe724e132a5463d0",
     "semantic_hash": ""
   },
   ".agents/skills/brandkit/SKILL.md": {
@@ -920,8 +920,8 @@
     "semantic_hash": ""
   },
   "lib/chat-sessions.ts": {
-    "mtime": 1785682554.6094398,
-    "ast_hash": "d216f939e5a8b08fcc222e8692e0b224",
+    "mtime": 1785722631.8220959,
+    "ast_hash": "1e718b3f1b07970c887b07543011b4bd",
     "semantic_hash": ""
   },
   "lib/conversations-dashboard.ts": {
@@ -1140,12 +1140,12 @@
     "semantic_hash": ""
   },
   "messages/en.json": {
-    "mtime": 1785668565.7075412,
+    "mtime": 1785722631.8316019,
     "ast_hash": "ccc01148fbb526583617f6579f1e23fc",
     "semantic_hash": ""
   },
   "messages/vi.json": {
-    "mtime": 1785668569.0581794,
+    "mtime": 1785722631.8326094,
     "ast_hash": "e8eac64408bbdfe62a7918d93d0fcb6c",
     "semantic_hash": ""
   },
@@ -1215,8 +1215,8 @@
     "semantic_hash": ""
   },
   ".claude/skills/test-feature/SKILL.md": {
-    "mtime": 1785691115.8289912,
-    "ast_hash": "421fbe84ad959ecb94fd1af053599ade",
+    "mtime": 1785724157.7209804,
+    "ast_hash": "c4c247bc075525f490e104dae3886822",
     "semantic_hash": ""
   },
   "docs/AGENT_RULES.md": {
@@ -2075,12 +2075,12 @@
     "semantic_hash": ""
   },
   "lib/errors/app-codes.ts": {
-    "mtime": 1785668552.930057,
+    "mtime": 1785722631.8230982,
     "ast_hash": "a33a8ee90d254f87f1d5f44766973459",
     "semantic_hash": ""
   },
   "lib/errors/app-messages.ts": {
-    "mtime": 1785668557.927411,
+    "mtime": 1785722631.8240967,
     "ast_hash": "2c25237c3c9dbaf6db311eadb4a65fd2",
     "semantic_hash": ""
   },
@@ -2810,8 +2810,8 @@
     "semantic_hash": ""
   },
   "vitest.config.mts": {
-    "mtime": 1785667936.6919324,
-    "ast_hash": "04754e0d148d108b9afeeaca21f8e49b",
+    "mtime": 1785730443.3092015,
+    "ast_hash": "ec52d57e20ad2f467e1928fb9023047b",
     "semantic_hash": ""
   },
   "app/_components/cal-connection-card.tsx": {
@@ -2835,8 +2835,8 @@
     "semantic_hash": ""
   },
   "lib/cal-oauth-state.ts": {
-    "mtime": 1785667362.635213,
-    "ast_hash": "3573eac0194ba999f107249b2cecab12",
+    "mtime": 1785722631.8210697,
+    "ast_hash": "61df89613ffcac18a96fc50f1ebe2b89",
     "semantic_hash": ""
   },
   "lib/cal-oauth.test.ts": {
@@ -2930,8 +2930,8 @@
     "semantic_hash": ""
   },
   "agent/channels/messenger.ts": {
-    "mtime": 1785556955.0200007,
-    "ast_hash": "78a38e1e6d2471c55693657f1933d289",
+    "mtime": 1785730362.5107274,
+    "ast_hash": "587c82d1c44204d27fc0442b0425a14e",
     "semantic_hash": ""
   },
   "app/api/messenger/oauth/callback/route.ts": {
@@ -2945,8 +2945,8 @@
     "semantic_hash": ""
   },
   "lib/messenger-oauth.ts": {
-    "mtime": 1785692208.9512622,
-    "ast_hash": "681911f4513e91c8add14db9a2e1e3e9",
+    "mtime": 1785730650.8980105,
+    "ast_hash": "6ed8b6b55ddd45581d82199982eb95ac",
     "semantic_hash": ""
   },
   "lib/messenger-webhook.ts": {
@@ -3095,12 +3095,12 @@
     "semantic_hash": ""
   },
   "lib/plan-features.test.ts": {
-    "mtime": 1785668547.0805476,
+    "mtime": 1785722631.8250966,
     "ast_hash": "57f4c21b857e6c1032539af968df1904",
     "semantic_hash": ""
   },
   "lib/plan-features.ts": {
-    "mtime": 1785668540.6034389,
+    "mtime": 1785722631.8250966,
     "ast_hash": "0d5cc7eb42e298d148b6f4f28bd0ea5d",
     "semantic_hash": ""
   },
@@ -3195,93 +3195,108 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-08-02-zalo-oa-channel.md": {
-    "mtime": 1785664716.7411609,
-    "ast_hash": "84662de564bdde940702a79f275c0f90",
+    "mtime": 1785730702.7083237,
+    "ast_hash": "3366088115277055b84e2338ec3505da",
     "semantic_hash": ""
   },
   "lib/channel-connections.test.ts": {
-    "mtime": 1785665888.418791,
-    "ast_hash": "0977cc3b7c4abae4f93b6d4f6e4c5f2b",
+    "mtime": 1785723045.6583018,
+    "ast_hash": "78ee28f5ee509f47344615f022186e76",
     "semantic_hash": ""
   },
   "lib/channel-connections.ts": {
-    "mtime": 1785665187.7083192,
-    "ast_hash": "15febbffe3035b754f56023b6ac14283",
+    "mtime": 1785722631.8210697,
+    "ast_hash": "74236425ee62f965192f37a2c3ef786a",
     "semantic_hash": ""
   },
   "supabase/migrations/20260802000002_channel_connections.sql": {
-    "mtime": 1785692414.61714,
-    "ast_hash": "916ed4a2e145cc9507e379ce69721fde",
+    "mtime": 1785722631.8336158,
+    "ast_hash": "993da89a9af433216118128c9871b686",
     "semantic_hash": ""
   },
   "lib/zalo-webhook.test.ts": {
-    "mtime": 1785666597.4663396,
-    "ast_hash": "cb97c4bec0a4ad87850a9c2ac715f706",
+    "mtime": 1785722631.8290992,
+    "ast_hash": "989d48ddb00b5ca1c065d1055f3ebbae",
     "semantic_hash": ""
   },
   "lib/zalo-webhook.ts": {
-    "mtime": 1785666639.164482,
-    "ast_hash": "ee4d85bf8c06b4d3a2f933007a31e5dc",
+    "mtime": 1785722631.8290992,
+    "ast_hash": "384cf1b8fbf1e071a4d005171c274368",
     "semantic_hash": ""
   },
   "lib/__fixtures__/zalo/send-ok.json": {
-    "mtime": 1785666915.4281774,
-    "ast_hash": "4c6f3b1ffee5b42ed1a60ecd5beebceb",
+    "mtime": 1785722631.8200688,
+    "ast_hash": "a2a8b9cbffbe5c6c9f0f2d5bee2f9af0",
     "semantic_hash": ""
   },
   "lib/zalo.test.ts": {
-    "mtime": 1785692443.3291264,
-    "ast_hash": "8e9e8c930bd801e06382f7ce8edce885",
+    "mtime": 1785722631.8300972,
+    "ast_hash": "c210cfd1f2e0b1c9b3f650c62f7fbb43",
     "semantic_hash": ""
   },
   "lib/zalo.ts": {
-    "mtime": 1785692396.3292627,
+    "mtime": 1785722631.8300972,
     "ast_hash": "3ffa80ab949660f879b4c53fc08d2bff",
     "semantic_hash": ""
   },
   "lib/zalo-oauth.test.ts": {
-    "mtime": 1785667332.315549,
-    "ast_hash": "60081ddc0d7c4d23102a8612d2e86261",
+    "mtime": 1785722631.8280997,
+    "ast_hash": "b02d3ae79fecedae4285b82f6f825a36",
     "semantic_hash": ""
   },
   "lib/zalo-oauth.ts": {
-    "mtime": 1785692401.199325,
-    "ast_hash": "e08a34ad86068052aa0e572eab03a4bf",
+    "mtime": 1785722631.8280997,
+    "ast_hash": "71db06bec4955b3a785aa44a72b57358",
     "semantic_hash": ""
   },
   "lib/zalo-oauth-refresh.test.ts": {
-    "mtime": 1785667761.957751,
-    "ast_hash": "5726b3a04797bdd5a041bcea4278bce5",
+    "mtime": 1785722631.8270996,
+    "ast_hash": "8795580e45eb5b8b567119360fd8608d",
     "semantic_hash": ""
   },
   "app/api/zalo/oauth/callback/route.ts": {
-    "mtime": 1785692439.6057625,
-    "ast_hash": "6fac8fa2f4f06f560d659d980f1e0899",
+    "mtime": 1785722631.783514,
+    "ast_hash": "617b860c6b05008b312993366de63530",
     "semantic_hash": ""
   },
   "app/api/zalo/oauth/start/route.ts": {
-    "mtime": 1785669503.9888983,
-    "ast_hash": "7ab882905133f21d7b074535cc517b8b",
+    "mtime": 1785722631.783514,
+    "ast_hash": "d0596d31a26e76f0d3fb3839d47a17fe",
     "semantic_hash": ""
   },
   "app/_components/zalo-connection-card.tsx": {
-    "mtime": 1785669507.0154307,
-    "ast_hash": "3c0cb93b4d761ab07345caf629657dec",
+    "mtime": 1785722631.782514,
+    "ast_hash": "80dd4760fdfd9273fc4babf3ef3623e6",
     "semantic_hash": ""
   },
   "agent/channels/zalo.ts": {
-    "mtime": 1785692223.649745,
-    "ast_hash": "43d9f9430e497492326a3a0b55910f16",
+    "mtime": 1785728762.9045193,
+    "ast_hash": "fdb556bca28f11025207f9014eb356b8",
     "semantic_hash": ""
   },
   "agent/zalo-channel.test.ts": {
-    "mtime": 1785692239.4760568,
-    "ast_hash": "9587f81d770bbf6dad22702e726be097",
+    "mtime": 1785728826.040078,
+    "ast_hash": "0c0e2cc78488e06b0372ffa2fd0389e7",
     "semantic_hash": ""
   },
   "scripts/zalo-sim.mjs": {
-    "mtime": 1785691104.3458254,
-    "ast_hash": "8c0c175c73d6b52af0430199c90556b1",
+    "mtime": 1785723749.1498098,
+    "ast_hash": "40d22aff7841b3a917792f410408a12e",
+    "semantic_hash": ""
+  },
+  "scripts/zalo-seed-local-token.mjs": {
+    "mtime": 1785723345.8546667,
+    "ast_hash": "5143baf524c3b8d69cedb20d20a017f7",
+    "semantic_hash": ""
+  },
+  "agent/messenger-channel.test.ts": {
+    "mtime": 1785730475.6410422,
+    "ast_hash": "c5e46b2c5c58ec9cbadd0650e3806f06",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260803000001_drop_workspace_messenger_columns.sql": {
+    "mtime": 1785730650.3584886,
+    "ast_hash": "e50068e9055a1cb9fd7d91d9fed3c32b",
     "semantic_hash": ""
   }
 }
