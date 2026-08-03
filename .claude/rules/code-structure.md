@@ -21,8 +21,24 @@ Goal: clean boundaries so features are easy to extend without copy-paste.
 
 - Before adding a helper, grep `lib/` and existing tools — extend the canonical module.
 - Prefer pure functions in `lib/` over logic inside React components or route handlers.
-- Shared types live next to domain (`lib/*-types.ts`) or colocated exports — do not duplicate interfaces across files.
+- Shared types/constants: see `.claude/rules/typescript-conventions.md` — domain types in `lib/`, no duplicates.
 - Server actions (`app/**/actions.ts`) orchestrate; they call `lib/*`, they do not reimplement Cal/DB clients.
+
+## File size (soft limit)
+
+Prefer small, single-concern modules. Split by **responsibility**, not by arbitrary line cuts.
+
+| Signal | Action |
+|--------|--------|
+| Approaching **~300 lines** | Check whether UI, domain, types, and route glue belong in separate files |
+| Past **~400 lines** of hand-written logic | Split before adding more — do not grow god files |
+| File mixes 2+ layers (e.g. React + Cal/DB + tenant resolution) | Split even if still under the soft limit |
+
+**Split targets (typical):** thin `page.tsx` / route → `app/_components/*` or `components/*` → pure helpers in `lib/` → agent tools only call `lib/`.
+
+**Do not** invent modules just to stay under a number (e.g. `foo-part-2.ts`). Prefer clear names: `*-types.ts`, `*-helpers.ts`, feature folders.
+
+**Exempt / expected long files:** `messages/*.json`, `supabase/migrations/*`, generated output, large fixture/snapshot data, exhaustiveness maps that are one table. Soft limits still apply to hand-written app/lib/agent/component logic.
 
 ## Anti-patterns
 
@@ -37,7 +53,7 @@ async function BookButton() {
 await bookAppointmentForWorkspace({ workspaceId, ... });
 ```
 
-- No new "god files" (>400 lines) without splitting by concern.
+- No new god files — see **File size (soft limit)** above.
 - No parallel copies of slugify, locale parsing, or workspace resolution.
 
 ## Route constants
