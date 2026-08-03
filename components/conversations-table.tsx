@@ -25,6 +25,11 @@ import {
   type ChatMessageRow,
 } from "@/lib/chat-sessions";
 import { cn } from "@/lib/utils";
+import {
+  handBackAction,
+  sendStaffMessageAction,
+  takeOverAction,
+} from "@/app/dashboard/conversations/actions";
 
 const VIEWS = [
   { id: "all" as const, label: "All" },
@@ -93,30 +98,64 @@ function ConversationDetailSheet({
     { id: string; tool_name: string; error: string | null; created_at: string }[]
   >([]);
   const [eveSessionId, setEveSessionId] = React.useState<string | null>(null);
+  const [replyMode, setReplyMode] = React.useState<"ai" | "human">("ai");
+  const [claimedByName, setClaimedByName] = React.useState<string | null>(null);
+  const [draft, setDraft] = React.useState("");
+  const [sending, setSending] = React.useState(false);
+  const [actionError, setActionError] = React.useState<string | null>(null);
+
+  const applyDetail = React.useCallback((data: {
+    session?: {
+      title?: string;
+      eve_session_id?: string | null;
+      reply_mode?: string;
+      claimedByName?: string | null;
+    };
+    outcome?: ConversationOutcome;
+    messages?: ChatMessageRow[];
+    nextCursor?: string | null;
+    hasMore?: boolean;
+    leadId?: string | null;
+    bookingId?: string | null;
+    toolErrors?: {
+      id: string;
+      tool_name: string;
+      error: string | null;
+      created_at: string;
+    }[];
+  }) => {
+    setTitle(data.session?.title ?? "Conversation");
+    setOutcome(data.outcome ?? "empty");
+    setMessages(
+      ((data.messages ?? []) as ChatMessageRow[])
+        .slice()
+        .sort(compareChatMessagesChronological),
+    );
+    setNextCursor(data.nextCursor ?? null);
+    setHasMore(Boolean(data.hasMore));
+    setLeadId(data.leadId ?? null);
+    setBookingId(data.bookingId ?? null);
+    setToolErrors(data.toolErrors ?? []);
+    setEveSessionId(data.session?.eve_session_id ?? null);
+    setReplyMode(data.session?.reply_mode === "human" ? "human" : "ai");
+    setClaimedByName(data.session?.claimedByName ?? null);
+  }, []);
+
+  const reload = React.useCallback(async () => {
+    const res = await fetch(`/api/dashboard/conversations/${sessionId}`);
+    if (!res.ok) throw new Error("Failed to load conversation");
+    const data = await res.json();
+    applyDetail(data);
+  }, [applyDetail, sessionId]);
 
   React.useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setActionError(null);
     (async () => {
       try {
-        const res = await fetch(`/api/dashboard/conversations/${sessionId}`);
-        if (!res.ok) throw new Error("Failed to load conversation");
-        const data = await res.json();
-        if (cancelled) return;
-        setTitle(data.session?.title ?? "Conversation");
-        setOutcome(data.outcome ?? "empty");
-        setMessages(
-          ((data.messages ?? []) as ChatMessageRow[])
-            .slice()
-            .sort(compareChatMessagesChronological),
-        );
-        setNextCursor(data.nextCursor ?? null);
-        setHasMore(Boolean(data.hasMore));
-        setLeadId(data.leadId ?? null);
-        setBookingId(data.bookingId ?? null);
-        setToolErrors(data.toolErrors ?? []);
-        setEveSessionId(data.session?.eve_session_id ?? null);
+        await reload();
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : "Failed to load");
@@ -128,7 +167,7 @@ function ConversationDetailSheet({
     return () => {
       cancelled = true;
     };
-  }, [sessionId]);
+  }, [reload]);
 
   const loadOlder = React.useCallback(async () => {
     if (!nextCursor || loadingOlder || !hasMore) return;
@@ -161,6 +200,35 @@ function ConversationDetailSheet({
       <SheetDescription className="sr-only">
         Conversation transcript {sessionId}
       </SheetDescription>
+
+      <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+        <p className="text-sm text-muted-foreground">
+          {replyMode === "human"
+            ? claimedByName
+              ? `Handled by ${claimedByName}`
+              : "Handled by a team member"
+            : "The assistant is replying"}
+        </p>
+        <Button
+          size="sm"
+          variant={replyMode === "human" ? "outline" : "default"}
+          disabled={sending || loading}
+          onClick={async () => {
+            setSending(true);
+            setActionError(null);
+            try {
+              const run = replyMode === "human" ? handBackAction : takeOverAction;
+              const res = await run(sessionId);
+              if (res.error) setActionError(res.error);
+              else await reload();
+            } finally {
+              setSending(false);
+            }
+          }}
+        >
+          {replyMode === "human" ? "Hand back to AI" : "Take over"}
+        </Button>
+      </div>
 
       <div className="flex-1 overflow-y-auto px-6 pt-6 pb-8 pr-14">
         <Badge
@@ -213,22 +281,46 @@ function ConversationDetailSheet({
                 <p className="text-muted-foreground text-sm">No messages yet.</p>
               ) : (
                 <ul className="space-y-3">
-                  {messages.map((m) => (
-                    <li
-                      key={m.id}
-                      className={cn(
-                        "rounded-lg border px-3 py-2 text-sm [content-visibility:auto] [contain-intrinsic-size:auto_80px]",
-                        m.role === "user"
-                          ? "border-border bg-muted/40"
-                          : "border-border/60 bg-background",
-                      )}
-                    >
-                      <p className="text-muted-foreground mb-1 text-[10px] uppercase tracking-wide">
-                        {m.role}
-                      </p>
-                      <p className="whitespace-pre-wrap break-words">{m.content}</p>
-                    </li>
-                  ))}
+                  {messages.map((m) => {
+                    const raw = m.raw as {
+                      kind?: string;
+                      sentBy?: string;
+                      staffName?: string;
+                    } | null;
+                    if (raw?.kind === "handoff") {
+                      return (
+                        <li key={m.id}>
+                          <p className="py-2 text-center text-xs text-muted-foreground">
+                            {m.content}
+                          </p>
+                        </li>
+                      );
+                    }
+                    const senderLabel =
+                      m.role === "assistant" && raw?.sentBy === "staff"
+                        ? `Staff · ${raw.staffName ?? "Team"}`
+                        : m.role === "assistant"
+                          ? "Assistant"
+                          : m.role === "user"
+                            ? "Guest"
+                            : m.role;
+                    return (
+                      <li
+                        key={m.id}
+                        className={cn(
+                          "rounded-lg border px-3 py-2 text-sm [content-visibility:auto] [contain-intrinsic-size:auto_80px]",
+                          m.role === "user"
+                            ? "border-border bg-muted/40"
+                            : "border-border/60 bg-background",
+                        )}
+                      >
+                        <p className="text-muted-foreground mb-1 text-[10px] uppercase tracking-wide">
+                          {senderLabel}
+                        </p>
+                        <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
@@ -258,6 +350,48 @@ function ConversationDetailSheet({
           </>
         )}
       </div>
+
+      {replyMode === "human" && (
+        <form
+          className="flex items-end gap-2 border-t px-4 py-3"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const text = draft.trim();
+            if (!text || sending) return;
+            setSending(true);
+            setActionError(null);
+            try {
+              const res = await sendStaffMessageAction(sessionId, text);
+              if (res.error) {
+                setActionError(res.error);
+              } else {
+                setDraft("");
+                await reload();
+              }
+            } finally {
+              setSending(false);
+            }
+          }}
+        >
+          <label className="sr-only" htmlFor="staff-reply-draft">
+            Reply to the guest
+          </label>
+          <textarea
+            id="staff-reply-draft"
+            className="min-h-16 flex-1 resize-none rounded-md border bg-transparent px-3 py-2 text-sm"
+            placeholder="Reply to the guest…"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            disabled={sending}
+          />
+          <Button type="submit" size="sm" disabled={sending || !draft.trim()}>
+            Send
+          </Button>
+        </form>
+      )}
+      {actionError && (
+        <p className="px-4 pb-3 text-sm text-destructive">{actionError}</p>
+      )}
     </div>
   );
 }
