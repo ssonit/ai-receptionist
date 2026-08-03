@@ -34,7 +34,7 @@ function getOaSecretKey(): string {
   return key;
 }
 
-async function onMessageCompleted(
+export async function onMessageCompleted(
   data: {
     message: string | null;
     turnId: string;
@@ -198,10 +198,6 @@ const channel = defineChannel({
     "message.completed": onMessageCompleted,
   },
 });
-
-(channel as unknown as { events?: Record<string, unknown> }).events = {
-  "message.completed": onMessageCompleted,
-};
 
 export default channel;
 

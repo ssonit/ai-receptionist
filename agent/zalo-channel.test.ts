@@ -285,9 +285,9 @@ describe("message.completed", () => {
       workspace_id: WS_A,
       external_user_id: "user_1",
     });
-    const channel = (await import("./channels/zalo")).default;
+    const { onMessageCompleted } = await import("./channels/zalo");
 
-    await (channel as any).events["message.completed"](
+    await onMessageCompleted(
       { message: "mai 3h chiều nhé", turnId: "t1", sequence: 0, finishReason: "stop" },
       null,
       { session: { id: "eve-session-1" } },
@@ -308,10 +308,10 @@ describe("message.completed", () => {
       external_user_id: "user_1",
     });
     mocks.sendZaloText.mockRejectedValue(new Error("zalo down"));
-    const channel = (await import("./channels/zalo")).default;
+    const { onMessageCompleted } = await import("./channels/zalo");
 
     await expect(
-      (channel as any).events["message.completed"](
+      onMessageCompleted(
         { message: "xin chào", turnId: "t1", sequence: 0, finishReason: "stop" },
         null,
         { session: { id: "eve-session-1" } },
