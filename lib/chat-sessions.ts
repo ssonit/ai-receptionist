@@ -8,7 +8,6 @@ import {
   redactBookingSecrets,
   redactBookingSecretsDeep,
 } from "@/lib/chat-redact";
-import { getDefaultWorkspaceId } from "@/lib/workspace";
 
 export type ChatSessionStatus = "active" | "closed";
 
@@ -166,11 +165,11 @@ export function toClientSession(
 export async function listChatSessionsForActor(input: {
   visitorId: string;
   userId?: string | null;
-  workspaceId?: string;
+  workspaceId: string;
   limit?: number;
 }): Promise<ChatSessionListItem[]> {
   const supabase = createAdminClient();
-  const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
+  const workspaceId = input.workspaceId;
   const limit = input.limit ?? 50;
 
   let query = supabase
@@ -197,11 +196,11 @@ export async function createChatSession(input: {
   visitorId: string;
   userId?: string | null;
   title?: string;
-  workspaceId?: string;
+  workspaceId: string;
 }): Promise<ChatSessionRow> {
   const supabase = createAdminClient();
   const now = new Date().toISOString();
-  const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
+  const workspaceId = input.workspaceId;
 
   if (input.userId) {
     await claimVisitorSessions({
@@ -234,13 +233,13 @@ export async function createChatSession(input: {
 export async function claimVisitorSessions(input: {
   visitorId: string;
   userId: string;
-  workspaceId?: string;
+  workspaceId: string;
 }): Promise<void> {
   const supabase = createAdminClient();
   await supabase
     .from("chat_sessions")
     .update({ user_id: input.userId, updated_at: new Date().toISOString() })
-    .eq("workspace_id", input.workspaceId ?? getDefaultWorkspaceId())
+    .eq("workspace_id", input.workspaceId)
     .eq("visitor_id", input.visitorId)
     .is("user_id", null);
 }
@@ -249,13 +248,13 @@ export async function getChatSessionForActor(input: {
   id: string;
   visitorId: string;
   userId?: string | null;
-  workspaceId?: string;
+  workspaceId: string;
   /** When false, skip the `events` column (mutate / persist auth checks). */
   includeEvents?: boolean;
 }): Promise<ChatSessionRow | null> {
   const supabase = createAdminClient();
   const includeEvents = input.includeEvents !== false;
-  const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
+  const workspaceId = input.workspaceId;
 
   const result = includeEvents
     ? await supabase
@@ -377,7 +376,7 @@ export async function updateChatSessionState(input: {
   id: string;
   visitorId: string;
   userId?: string | null;
-  workspaceId?: string;
+  workspaceId: string;
   eveSessionId?: string | null;
   continuationToken?: string | null;
   streamIndex?: number;
@@ -537,7 +536,7 @@ export async function replaceChatMessages(input: {
 
 /** Staff dashboard: list recent sessions for workspace. */
 export async function listWorkspaceChatSessions(
-  workspaceId: string = getDefaultWorkspaceId(),
+  workspaceId: string,
   limit = 100,
 ): Promise<ChatSessionListItem[]> {
   const supabase = createAdminClient();
@@ -554,7 +553,7 @@ export async function listWorkspaceChatSessions(
 
 export async function getWorkspaceChatSession(
   id: string,
-  workspaceId: string = getDefaultWorkspaceId(),
+  workspaceId: string,
 ): Promise<ChatSessionRow | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
