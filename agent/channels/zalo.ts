@@ -75,9 +75,11 @@ async function onMessageCompleted(
 
 const channel = defineChannel({
   routes: [
-    GET("/webhook", async () => new Response("ok", { status: 200 })),
+    // Mount under /zalo/* — share /webhook with Messenger and eve will route
+    // every request to one channel only (Messenger wins alphabetically).
+    GET("/zalo/webhook", async () => new Response("ok", { status: 200 })),
 
-    POST("/webhook", async (req, args) => {
+    POST("/zalo/webhook", async (req, args) => {
       const rawBody = await req.text();
 
       const sig = req.headers.get("x-zevent-signature");

@@ -17,7 +17,7 @@ function arg(name, fallback) {
   return index > -1 && process.argv[index + 1] ? process.argv[index + 1] : fallback;
 }
 
-const target = arg("url", "http://127.0.0.1:2000/eve/v1/zalo/webhook");
+const target = arg("url", "http://127.0.0.1:2000/zalo/webhook");
 
 // This tool forges a signature. It must never be pointed at a deployed app.
 const host = new URL(target).hostname;

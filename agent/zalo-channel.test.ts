@@ -68,13 +68,14 @@ function sign(raw: string, secret = OA_SECRET): string {
 async function postHandler() {
   const channel = (await import("./channels/zalo")).default;
   const route = channel.routes.find(
-    (r: { method: string; path: string }) => r.method === "POST" && r.path === "/webhook",
+    (r: { method: string; path: string }) =>
+      r.method === "POST" && r.path === "/zalo/webhook",
   );
   return route!.handler as (req: Request, args: unknown) => Promise<Response>;
 }
 
 function request(raw: string, signature: string | null) {
-  return new Request("https://app.example.com/eve/v1/zalo/webhook", {
+  return new Request("https://app.example.com/zalo/webhook", {
     method: "POST",
     headers: signature
       ? { "X-ZEvent-Signature": signature, "Content-Type": "application/json" }

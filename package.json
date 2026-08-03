@@ -18,6 +18,7 @@
     "dev:eve": "eve dev",
     "dev:eve:pinned": "eve dev --no-ui --port 2000",
     "zalo:sim": "node ./scripts/zalo-sim.mjs",
+    "zalo:seed-token": "npx tsx ./scripts/zalo-seed-local-token.mjs",
     "start:eve": "eve start",
     "patch:eve": "node ./scripts/patch-eve-package-resolve.mjs",
     "sync:eve": "node ./scripts/sync-eve-compile.mjs",

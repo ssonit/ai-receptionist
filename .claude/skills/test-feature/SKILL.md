@@ -89,7 +89,8 @@ Everything else about the Zalo channel is covered by `npm test` and
 run them the first time a real OA is connected, before trusting the channel.
 
 1. Connect the OA from Settings; confirm tokens persist and the card shows the
-   OA name.
+   OA name. Webhook URL for Zalo is `https://<domain>/zalo/webhook` (not under
+   `/eve/v1/` — that path collides with Messenger's `/webhook`).
 2. Message the OA from a second Zalo account; confirm the agent replies.
 3. Compare the first live webhook body against `lib/__fixtures__/zalo/` and
    reconcile any difference.
