@@ -13,6 +13,7 @@ export type DashboardNavUser = {
 
 export async function getDashboardUser(): Promise<{
   navUser: DashboardNavUser;
+  userId: string;
   workspaceId: string | null;
   workspaceSlug: string | null;
   bookingPagePath: string | null;
@@ -49,6 +50,7 @@ export async function getDashboardUser(): Promise<{
       email: profile?.email || user.email || "",
       avatar: "",
     },
+    userId: user.id,
     workspaceId: profile?.workspace_id ?? null,
     workspaceSlug,
     bookingPagePath: workspaceSlug ? publicBookingPath(workspaceSlug) : null,

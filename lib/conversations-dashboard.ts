@@ -4,6 +4,7 @@ import {
   listWorkspaceChatSessions,
   type ChatMessageRow,
   type ChatSessionListItem,
+  type ChatSessionReplyMode,
 } from "@/lib/chat-sessions";
 import { CHAT_MESSAGE_INITIAL_LIMIT } from "@/lib/chat-limits";
 import {
@@ -32,6 +33,9 @@ export type ConversationDetail = {
   session: ChatSessionListItem & {
     eve_session_id: string | null;
     continuation_token?: string | null;
+    reply_mode: ChatSessionReplyMode;
+    claimed_by: string | null;
+    claimedByName: string | null;
   };
   messages: ChatMessageRow[];
   nextCursor: string | null;
@@ -152,13 +156,23 @@ export async function loadConversationDetail(
   const { data: session, error } = await supabase
     .from("chat_sessions")
     .select(
-      "id, title, status, reply_mode, eve_session_id, visitor_id, user_id, channel, external_user_id, last_message_at, created_at, updated_at, continuation_token",
+      "id, title, status, reply_mode, claimed_by, claimed_at, eve_session_id, visitor_id, user_id, channel, external_user_id, last_message_at, created_at, updated_at, continuation_token",
     )
     .eq("id", id)
     .eq("workspace_id", workspaceId)
     .maybeSingle();
 
   if (error || !session) return null;
+
+  let claimedByName: string | null = null;
+  if (session.claimed_by) {
+    const { data: claimer } = await supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", session.claimed_by)
+      .maybeSingle();
+    claimedByName = claimer?.full_name || claimer?.email || null;
+  }
 
   const page = await getChatMessagesPage(id, {
     before: options?.before,
@@ -205,7 +219,10 @@ export async function loadConversationDetail(
   const has_tool_error = (toolsRes.data ?? []).length > 0;
 
   return {
-    session,
+    session: {
+      ...session,
+      claimedByName,
+    },
     messages: page.messages.map((m) => ({
       ...m,
       content: redactBookingSecrets(m.content),
