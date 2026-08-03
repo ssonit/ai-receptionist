@@ -147,6 +147,12 @@ export const APP_ERROR_MESSAGE = {
     "Could not generate the webhook signing secret. Try again.",
   [APP_ERROR_CODE.PLAN_UPGRADE_REQUIRED]:
     "That channel is included in the Pro plan. Upgrade in Billing to connect it.",
+  [APP_ERROR_CODE.CONVERSATION_ALREADY_CLAIMED]:
+    "Someone else already took over this conversation.",
+  [APP_ERROR_CODE.CONVERSATION_NOT_HUMAN_MODE]:
+    "Take over the conversation before replying.",
+  [APP_ERROR_CODE.CONVERSATION_NO_WORKSPACE]:
+    "This conversation is no longer linked to a workspace.",
 } as const satisfies Record<AppErrorCode, string>;
 
 export function appErrorMessage(code: AppErrorCode): string {
