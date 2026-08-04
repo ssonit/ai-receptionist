@@ -11,6 +11,7 @@ import {
   sendTransactionalEmail,
 } from "@/lib/email";
 import { formatSlotForGuest } from "@/lib/guest-timezone";
+import { isPlaceholderGuestEmail } from "@/lib/guest-email-placeholder";
 import { createNotificationDebounced } from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canonicalizeTimezone } from "@/lib/timezones";
@@ -512,6 +513,15 @@ async function issueManageLink(input: {
   return token;
 }
 
+export function resolveReminderEmail(
+  destination: string | null,
+  guestEmail: string | null,
+): string | null {
+  const email = destination?.trim() || guestEmail?.trim() || "";
+  if (!email || isPlaceholderGuestEmail(email)) return null;
+  return email;
+}
+
 async function sendOneReminder(row: {
   id: string;
   workspace_id: string;
@@ -577,8 +587,7 @@ async function sendOneReminder(row: {
     return "skipped";
   }
 
-  const email =
-    row.destination?.trim() || booking.guest_email?.trim() || "";
+  const email = resolveReminderEmail(row.destination, booking.guest_email);
   if (!email) {
     await mark("skipped", "no_email");
     return "skipped";
