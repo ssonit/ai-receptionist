@@ -242,15 +242,21 @@ export async function cancelManualBookingAction(input: {
   const ctx = await requireStaff();
   if ("error" in ctx) return { ok: false, error: ctx.error };
 
-  const booking = await getWorkspaceBookingById(ctx.workspaceId, input.bookingId);
-  if (!booking || !booking.cal_booking_uid) {
-    return { ok: false, error: appErrorMessage(APP_ERROR_CODE.NOT_FOUND) };
-  }
-  if (booking.status === "cancelled") {
-    return {
-      ok: false,
-      error: appErrorMessage(APP_ERROR_CODE.BOOKING_ALREADY_CANCELLED),
-    };
+  let booking: Awaited<ReturnType<typeof getWorkspaceBookingById>>;
+  try {
+    booking = await getWorkspaceBookingById(ctx.workspaceId, input.bookingId);
+    if (!booking || !booking.cal_booking_uid) {
+      return { ok: false, error: appErrorMessage(APP_ERROR_CODE.NOT_FOUND) };
+    }
+    if (booking.status === "cancelled") {
+      return {
+        ok: false,
+        error: appErrorMessage(APP_ERROR_CODE.BOOKING_ALREADY_CANCELLED),
+      };
+    }
+  } catch (error) {
+    console.error("[bookings] cancelManualBookingAction lookup failed", error);
+    return { ok: false, error: appErrorMessage(APP_ERROR_CODE.BOOKING_CANCEL_FAILED) };
   }
 
   let apiKey: string;

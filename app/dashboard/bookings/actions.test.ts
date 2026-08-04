@@ -265,4 +265,37 @@ describe("cancelManualBookingAction", () => {
       expect(result.error).not.toContain("booking_not_found");
     }
   });
+
+  it("returns ok:false when the booking lookup fails (no throw)", async () => {
+    seedBooking();
+    const originalFrom = supabaseMock.client.from;
+    const spy = vi
+      .spyOn(supabaseMock.client, "from")
+      .mockImplementation((table: string) => {
+        if (table !== "bookings") return originalFrom(table);
+        return {
+          select: () => ({
+            eq: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: null,
+                  error: { message: "db down" },
+                }),
+              }),
+            }),
+          }),
+        } as any;
+      });
+
+    const { cancelManualBookingAction } = await import("./actions");
+    const result = await cancelManualBookingAction({ bookingId: "booking-1" });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe("Could not cancel the booking. Try again.");
+    }
+    expect(mocks.cancelWorkspaceBooking).not.toHaveBeenCalled();
+
+    spy.mockRestore();
+  });
 });
