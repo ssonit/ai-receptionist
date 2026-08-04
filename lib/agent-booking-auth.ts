@@ -53,6 +53,7 @@ export type WorkspaceGuestPolicy = {
   guestCancelEnabled: boolean;
   guestRescheduleEnabled: boolean;
   guestChangeCutoffMinutes: number;
+  guestEmailRequired: boolean;
   isPilot: boolean;
 };
 
@@ -416,7 +417,7 @@ export async function getWorkspaceGuestPolicy(
   const { data } = await supabase
     .from("workspaces")
     .select(
-      "guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes",
+      "guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes, guest_email_required",
     )
     .eq("id", workspaceId)
     .maybeSingle();
@@ -428,6 +429,7 @@ export async function getWorkspaceGuestPolicy(
       typeof data?.guest_change_cutoff_minutes === "number"
         ? data.guest_change_cutoff_minutes
         : 120,
+    guestEmailRequired: data?.guest_email_required !== false,
     // Compare against the canonical Pilot id (env-overridable), not a
     // user-editable slug — workspaces.slug can be renamed from Settings.
     isPilot: workspaceId === getPilotWorkspaceId(),

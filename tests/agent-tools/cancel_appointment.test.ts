@@ -91,6 +91,7 @@ describe("cancel_appointment tool", () => {
       guestCancelEnabled: true,
       guestRescheduleEnabled: true,
       guestChangeCutoffMinutes: 120,
+      guestEmailRequired: true,
       isPilot: false,
     });
     vi.mocked(authMod.assertBookingChangeAllowed).mockReturnValue({ ok: true });
@@ -186,6 +187,7 @@ describe("cancel_appointment tool", () => {
       guestCancelEnabled: true,
       guestRescheduleEnabled: true,
       guestChangeCutoffMinutes: 120,
+      guestEmailRequired: true,
       isPilot: false,
     });
     vi.mocked(authMod.assertBookingChangeAllowed).mockReturnValue({
@@ -244,6 +246,7 @@ describe("cancel_appointment tool", () => {
       guestCancelEnabled: true,
       guestRescheduleEnabled: true,
       guestChangeCutoffMinutes: 120,
+      guestEmailRequired: true,
       isPilot: false,
     });
     vi.mocked(authMod.assertBookingChangeAllowed).mockReturnValue({ ok: true });
