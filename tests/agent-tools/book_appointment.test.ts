@@ -488,7 +488,7 @@ describe("book_appointment tool", () => {
       uid: "should-not-be-called",
       start: SLOT,
       status: "confirmed",
-      meetingUrl: null,
+      meetingUrl: undefined,
       raw: {},
     });
 
