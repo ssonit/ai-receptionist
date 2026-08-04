@@ -9,6 +9,7 @@ import { readVisitorIdFromCookieHeader } from "@/lib/request-cookies";
 import {
   EVE_CHAT_SESSION_HEADER,
   EVE_WORKSPACE_HEADER,
+  resolveWorkspaceIdFromAgentContext,
 } from "@/lib/workspace";
 import { normalizeIanaTimeZone } from "@/lib/guest-timezone";
 
@@ -49,6 +50,33 @@ function withTenantAttributes(
   if (guestTimeZone) attributes.guestTimeZone = guestTimeZone;
 
   return { ...base, attributes };
+}
+
+/**
+ * Is a staff member holding this conversation right now?
+ *
+ * `chatSessionId` arrives on a client-supplied header, so the session is read
+ * through the resolved workspace (spec T6) — never a bare session-id lookup,
+ * which would be an unowned read path into another tenant's conversation.
+ *
+ * A resolution failure is not this handler's to report: fall through as "not
+ * human" and let the normal turn raise it where the guest gets a real error.
+ */
+async function isHumanReplyMode(
+  base: EveAuth,
+  chatSessionId: string,
+): Promise<boolean> {
+  try {
+    const workspaceId = await resolveWorkspaceIdFromAgentContext({
+      auth: base,
+    });
+    const { getWorkspaceChatSession } = await import("@/lib/chat-sessions");
+    const session = await getWorkspaceChatSession(chatSessionId, workspaceId);
+    return session?.reply_mode === "human";
+  } catch (error) {
+    console.error("[eve channel] reply mode check failed", error);
+    return false;
+  }
 }
 
 export default eveChannel({
@@ -94,23 +122,19 @@ export default eveChannel({
     const chatSessionId = request.headers
       .get(EVE_CHAT_SESSION_HEADER)
       ?.trim();
-    if (base && chatSessionId) {
-      const { findChatSessionById } = await import("@/lib/chat-sessions");
-      const session = await findChatSessionById(chatSessionId);
-      if (session?.reply_mode === "human") {
-        return {
-          auth: {
-            ...base,
-            attributes: { ...base.attributes, replyModeHuman: "1" },
-          },
-          context: [
-            "A human teammate is handling this conversation right now.",
-            "Reply with exactly one short sentence telling the guest a team",
-            "member will respond shortly. Do not answer their question, do not",
-            "call any tool, and do not add anything else.",
-          ],
-        };
-      }
+    if (base && chatSessionId && (await isHumanReplyMode(base, chatSessionId))) {
+      return {
+        auth: {
+          ...base,
+          attributes: { ...base.attributes, replyModeHuman: "1" },
+        },
+        context: [
+          "A human teammate is handling this conversation right now.",
+          "Reply with exactly one short sentence telling the guest a team",
+          "member will respond shortly. Do not answer their question, do not",
+          "call any tool, and do not add anything else.",
+        ],
+      };
     }
 
     return { auth: base };

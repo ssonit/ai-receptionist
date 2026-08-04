@@ -601,21 +601,6 @@ export async function getWorkspaceChatSession(
   return (data as ChatSessionRow) ?? null;
 }
 
-/** Reply mode by session id, for the web channel's pre-turn check. */
-export async function findChatSessionById(
-  id: string,
-): Promise<Pick<ChatSessionRow, "id" | "reply_mode"> | null> {
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("chat_sessions")
-    .select("id, reply_mode")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  return (data as Pick<ChatSessionRow, "id" | "reply_mode">) ?? null;
-}
-
 export function titleFromFirstUserMessage(content: string): string {
   const cleaned = content.replace(/\s+/g, " ").trim();
   if (!cleaned) return "New chat";
