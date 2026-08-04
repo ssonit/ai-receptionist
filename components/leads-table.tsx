@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { displayGuestEmail } from "@/lib/guest-email-placeholder";
 import {
   getLeadStatusLabel,
   LEAD_STATUSES,
@@ -170,7 +171,7 @@ function LeadDetailSheet({
           <h3 className="text-muted-foreground mb-1 text-sm">Details</h3>
           <dl>
             <DetailRow label="Phone" value={lead.phone} />
-            <DetailRow label="Email" value={lead.email} />
+            <DetailRow label="Email" value={displayGuestEmail(lead.email)} />
             <DetailRow label="Service" value={lead.service} />
             <DetailRow
               label="Urgency"
@@ -460,7 +461,7 @@ export function LeadsTable({ rows }: { rows: LeadRow[] }) {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onSelect={() => {
-                                const email = row.email?.trim();
+                                const email = displayGuestEmail(row.email);
                                 if (!email) {
                                   toast.error("No email");
                                   return;

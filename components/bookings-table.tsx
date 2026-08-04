@@ -17,6 +17,7 @@ import {
   type CalBookingListFilter,
   type CalBookingView,
 } from "@/lib/booking-status";
+import { displayGuestEmail } from "@/lib/guest-email-placeholder";
 import { cn } from "@/lib/utils";
 import { openAfterMenuClose } from "@/lib/open-after-menu-close";
 import {
@@ -183,7 +184,8 @@ function bookingTitle(row: BookingRow, hostName: string) {
 
 function participantsLine(row: BookingRow) {
   const parts = ["You", row.guest_name];
-  if (row.guest_email) parts.push(row.guest_email);
+  const email = displayGuestEmail(row.guest_email);
+  if (email) parts.push(email);
   return parts.join(" · ");
 }
 
@@ -396,7 +398,9 @@ export function BookingsTable({
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onSelect={() => {
-                                  const email = row.guest_email?.trim();
+                                  const email = displayGuestEmail(
+                                    row.guest_email,
+                                  );
                                   if (!email) {
                                     toast.error("No email");
                                     return;
@@ -569,6 +573,7 @@ function BookingDetailSheet({
   onRequestCancel: (target: CancelBookingTarget) => void;
 }) {
   const meetingUrl = extractMeetingUrl(booking);
+  const guestEmail = displayGuestEmail(booking.guest_email);
 
   return (
     <div className="flex h-full flex-col">
@@ -663,9 +668,9 @@ function BookingDetailSheet({
                 </div>
                 <div className="min-w-0 space-y-0.5 pt-0.5">
                   <p className="text-sm font-medium">{booking.guest_name}</p>
-                  {booking.guest_email ? (
+                  {guestEmail ? (
                     <p className="text-muted-foreground truncate text-sm">
-                      {booking.guest_email}
+                      {guestEmail}
                     </p>
                   ) : null}
                   {booking.guest_phone ? (
@@ -745,12 +750,11 @@ function BookingDetailSheet({
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               onSelect={() => {
-                const email = booking.guest_email?.trim();
-                if (!email) {
+                if (!guestEmail) {
                   toast.error("No email");
                   return;
                 }
-                void navigator.clipboard.writeText(email);
+                void navigator.clipboard.writeText(guestEmail);
                 toast.success("Email copied");
               }}
             >
