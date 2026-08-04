@@ -119,4 +119,62 @@ describe("createWorkspaceBooking", () => {
       expect(result.warning).toContain("mirror");
     }
   });
+
+  it("uses a placeholder email when the guest didn't provide one, and Cal.com/leads/bookings all see it", async () => {
+    const calcom = await import("@/lib/calcom");
+    vi.mocked(calcom.createBooking).mockResolvedValue({
+      uid: "cal_uid_no_email",
+      start: SLOT,
+      status: "confirmed",
+      meetingUrl: undefined,
+      raw: {},
+    });
+    const leadsMod = await import("@/lib/leads");
+
+    const { createWorkspaceBooking } = await import("./booking-create");
+    const { isPlaceholderGuestEmail } = await import(
+      "./guest-email-placeholder"
+    );
+    const result = await createWorkspaceBooking(
+      baseInput({ email: undefined }),
+    );
+
+    expect(result.ok).toBe(true);
+
+    expect(calcom.createBooking).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attendeeEmail: expect.stringMatching(/^guest-.+@no-email\.invalid$/),
+      }),
+    );
+
+    const inserts = supabaseMock.insertsFor("bookings");
+    expect(isPlaceholderGuestEmail(inserts[0]!.guest_email as string)).toBe(
+      true,
+    );
+    expect(leadsMod.upsertLeadAsBooked).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: expect.stringMatching(/^guest-.+@no-email\.invalid$/),
+      }),
+    );
+  });
+
+  it("uses the real email unchanged when the guest provided one", async () => {
+    const calcom = await import("@/lib/calcom");
+    vi.mocked(calcom.createBooking).mockResolvedValue({
+      uid: "cal_uid_real_email",
+      start: SLOT,
+      status: "confirmed",
+      meetingUrl: undefined,
+      raw: {},
+    });
+
+    const { createWorkspaceBooking } = await import("./booking-create");
+    await createWorkspaceBooking(baseInput({ email: "a@example.com" }));
+
+    expect(calcom.createBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ attendeeEmail: "a@example.com" }),
+    );
+    const inserts = supabaseMock.insertsFor("bookings");
+    expect(inserts[0]).toMatchObject({ guest_email: "a@example.com" });
+  });
 });

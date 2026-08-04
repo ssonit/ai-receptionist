@@ -14,6 +14,7 @@ import {
   hashBookingCode,
 } from "@/lib/booking-manage-code";
 import { normalizeCalApiStatus } from "@/lib/booking-status";
+import { generatePlaceholderGuestEmail } from "@/lib/guest-email-placeholder";
 import { formatSlotForGuest } from "@/lib/guest-timezone";
 import { upsertLeadAsBooked } from "@/lib/leads";
 import { createNotification } from "@/lib/notifications-write";
@@ -29,7 +30,8 @@ export type CreateWorkspaceBookingInput = {
   start: string;
   guestName: string;
   phone: string;
-  email: string;
+  /** Omitted or empty → generatePlaceholderGuestEmail() for Cal.com. */
+  email?: string | null;
   timeZone: string;
   locale?: string;
   notes?: string;
@@ -62,13 +64,14 @@ function buildBookingRow(
   input: CreateWorkspaceBookingInput,
   booking: CreateBookingResult,
   manageCodeHash: string,
+  email: string,
 ) {
   return {
     workspace_id: input.workspaceId,
     cal_booking_uid: booking.uid,
     guest_name: input.guestName,
     guest_phone: input.phone,
-    guest_email: input.email,
+    guest_email: email,
     service: input.service ?? input.eventTitle ?? null,
     start_time: booking.start,
     status: normalizeCalApiStatus(booking.status),
@@ -88,10 +91,12 @@ function buildBookingRow(
 export async function createWorkspaceBooking(
   input: CreateWorkspaceBookingInput,
 ): Promise<CreateWorkspaceBookingResult> {
+  const email = input.email?.trim() || generatePlaceholderGuestEmail();
+
   const booking = await createBooking({
     start: input.start,
     attendeeName: input.guestName,
-    attendeeEmail: input.email,
+    attendeeEmail: email,
     attendeePhone: input.phone,
     timeZone: input.timeZone,
     language: input.locale,
@@ -107,7 +112,7 @@ export async function createWorkspaceBooking(
     input.guestTimeZone ?? null,
     input.timeZone,
   );
-  const row = buildBookingRow(input, booking, manageCodeHash);
+  const row = buildBookingRow(input, booking, manageCodeHash, email);
 
   try {
     const supabase = createAdminClient();
@@ -119,7 +124,7 @@ export async function createWorkspaceBooking(
       workspaceId: input.workspaceId,
       fullName: input.guestName,
       phone: input.phone,
-      email: input.email,
+      email,
       service: input.service ?? input.eventTitle ?? null,
       notes: input.notes ?? null,
       sessionId: input.sessionId,
