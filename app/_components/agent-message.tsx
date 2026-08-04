@@ -24,6 +24,7 @@ import {
   ToolOutput,
 } from "@/components/ai-elements/tool";
 import { Button } from "@/components/ui/button";
+import { shouldShowAgentToolCalls } from "@/lib/agent-chat-debug";
 import { cn } from "@/lib/utils";
 
 export type AgentInputResponse = {
@@ -124,6 +125,9 @@ function AgentMessagePart({
     case "authorization":
       return <AuthorizationPrompt part={part} />;
     case "dynamic-tool":
+      if (!shouldShowAgentToolCalls()) {
+        return null;
+      }
       return (
         <Tool
           defaultOpen={part.state === "approval-requested" || part.state === "approval-responded"}
