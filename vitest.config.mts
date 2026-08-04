@@ -47,6 +47,7 @@ const sharedInclude = [
   "lib/**/*.test.ts",
   "agent/**/*.test.ts",
   "app/api/**/*.test.ts",
+  "app/dashboard/**/*.test.ts",
   "tests/**/*.test.ts",
 ];
 

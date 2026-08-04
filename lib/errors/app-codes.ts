@@ -91,6 +91,7 @@ export const APP_ERROR_CODE = {
   CONVERSATION_ALREADY_CLAIMED: "conversation_already_claimed",
   CONVERSATION_NOT_HUMAN_MODE: "conversation_not_human_mode",
   CONVERSATION_NO_WORKSPACE: "conversation_no_workspace",
+  BOOKING_CREATE_FAILED: "booking_create_failed",
 } as const;
 
 export type AppErrorCode = (typeof APP_ERROR_CODE)[keyof typeof APP_ERROR_CODE];

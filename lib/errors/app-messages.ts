@@ -153,6 +153,8 @@ export const APP_ERROR_MESSAGE = {
     "Take over the conversation before replying.",
   [APP_ERROR_CODE.CONVERSATION_NO_WORKSPACE]:
     "This conversation is no longer linked to a workspace.",
+  [APP_ERROR_CODE.BOOKING_CREATE_FAILED]:
+    "Could not create the booking. The slot may no longer be available — pick another time and try again.",
 } as const satisfies Record<AppErrorCode, string>;
 
 export function appErrorMessage(code: AppErrorCode): string {

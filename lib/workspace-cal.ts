@@ -170,3 +170,33 @@ export async function listWorkspaceEventTypes(
   if (error) throw new Error(error.message);
   return data ?? [];
 }
+
+/** A single meeting type, scoped to its workspace — never a bare-id read. */
+export async function getWorkspaceEventTypeById(
+  workspaceId: string,
+  id: string,
+): Promise<WorkspaceEventTypeRow | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("workspace_event_types")
+    .select(
+      "id, workspace_id, cal_event_type_id, slug, title, length_minutes, minimum_notice_minutes, is_ai_booking, synced_at, created_at, updated_at, raw",
+    )
+    .eq("workspace_id", workspaceId)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return (data as WorkspaceEventTypeRow) ?? null;
+}
+
+export function eventRefFromMeetingType(
+  row: Pick<WorkspaceEventTypeRow, "cal_event_type_id" | "slug">,
+  username: string,
+): { eventTypeId?: number; eventTypeSlug: string; username: string } {
+  return {
+    eventTypeId: row.cal_event_type_id || undefined,
+    eventTypeSlug: row.slug,
+    username,
+  };
+}
