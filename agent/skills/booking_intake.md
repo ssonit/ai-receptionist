@@ -7,13 +7,13 @@ Ask one question at a time:
 1. What service / purpose are they booking for?
 2. Do they have preferred times? (morning/afternoon, days of week)
 3. How urgent is it?
-4. Full name, phone, and email to confirm the appointment?
+4. Full name and phone always. Email too if they're willing — it lets them self-serve cancel/reschedule later from another device.
 
 After you have enough information:
 
 - Call `check_availability` for a suitable date range — **today or future only**.
 - Offer 2–3 real slots.
-- Collect full name, phone, and email before `book_appointment` (`guestName`).
+- Collect full name and phone before `book_appointment`; ask for email as well, but only insist on it if the tool returns an error saying this business requires it (`guestName`).
 - **Required:** call `log_lead` when you have name + (phone or email) and they have not booked / dropped off.
 
 - `urgency` should be one of: `low` | `normal` | `high` | `urgent`.
