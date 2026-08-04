@@ -64,6 +64,7 @@ export const APP_ERROR_CODE = {
   BOOKING_OTP_RATE_LIMITED: "booking_otp_rate_limited",
   BOOKING_OTP_EXPIRED: "booking_otp_expired",
   BOOKING_EMAIL_UNAVAILABLE: "booking_email_unavailable",
+  BOOKING_EMAIL_REQUIRED: "booking_email_required",
   BOOKING_NOT_CLAIMABLE: "booking_not_claimable",
   BOOKING_ALREADY_CANCELLED: "booking_already_cancelled",
   BOOKING_VERIFY_REQUIRED: "booking_verify_required",

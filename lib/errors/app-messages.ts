@@ -99,6 +99,8 @@ export const APP_ERROR_MESSAGE = {
     "That verification code expired. Request a new one.",
   [APP_ERROR_CODE.BOOKING_EMAIL_UNAVAILABLE]:
     "Could not send email right now. Ask the business to help instead.",
+  [APP_ERROR_CODE.BOOKING_EMAIL_REQUIRED]:
+    "This business requires an email to book. Ask the guest for one and try again.",
   [APP_ERROR_CODE.BOOKING_NOT_CLAIMABLE]:
     "No matching appointment is available for this chat yet. Try a manage code, email verification, or ask staff.",
   [APP_ERROR_CODE.BOOKING_ALREADY_CANCELLED]:
