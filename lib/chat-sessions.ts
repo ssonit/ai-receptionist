@@ -8,9 +8,9 @@ import {
   redactBookingSecrets,
   redactBookingSecretsDeep,
 } from "@/lib/chat-redact";
-import { getDefaultWorkspaceId } from "@/lib/workspace";
 
 export type ChatSessionStatus = "active" | "closed";
+export type ChatSessionReplyMode = "ai" | "human";
 
 export type ChatSessionRow = {
   id: string;
@@ -20,6 +20,9 @@ export type ChatSessionRow = {
   user_id: string | null;
   title: string;
   status: ChatSessionStatus;
+  reply_mode: ChatSessionReplyMode;
+  claimed_by: string | null;
+  claimed_at: string | null;
   continuation_token: string | null;
   stream_index: number;
   events: unknown;
@@ -51,6 +54,7 @@ export type ChatSessionListItem = Pick<
   | "id"
   | "title"
   | "status"
+  | "reply_mode"
   | "eve_session_id"
   | "visitor_id"
   | "user_id"
@@ -107,14 +111,14 @@ export function compareChatMessagesChronological(
 }
 
 const SESSION_LIST_SELECT =
-  "id, title, status, eve_session_id, visitor_id, user_id, channel, external_user_id, last_message_at, created_at, updated_at";
+  "id, title, status, reply_mode, eve_session_id, visitor_id, user_id, channel, external_user_id, last_message_at, created_at, updated_at";
 
 /** Ownership / mutate paths — skip heavy `events` blob. */
 const SESSION_AUTH_SELECT =
-  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, continuation_token, stream_index, channel, external_user_id, last_message_at, created_at, updated_at";
+  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, reply_mode, claimed_by, claimed_at, continuation_token, stream_index, channel, external_user_id, last_message_at, created_at, updated_at";
 
 const SESSION_FULL_SELECT =
-  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, continuation_token, stream_index, events, channel, external_user_id, last_message_at, created_at, updated_at";
+  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, reply_mode, claimed_by, claimed_at, continuation_token, stream_index, events, channel, external_user_id, last_message_at, created_at, updated_at";
 
 const MESSAGE_SELECT =
   "id, session_id, role, content, eve_message_id, eve_event_index, raw, created_at";
@@ -166,11 +170,11 @@ export function toClientSession(
 export async function listChatSessionsForActor(input: {
   visitorId: string;
   userId?: string | null;
-  workspaceId?: string;
+  workspaceId: string;
   limit?: number;
 }): Promise<ChatSessionListItem[]> {
   const supabase = createAdminClient();
-  const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
+  const workspaceId = input.workspaceId;
   const limit = input.limit ?? 50;
 
   let query = supabase
@@ -197,11 +201,11 @@ export async function createChatSession(input: {
   visitorId: string;
   userId?: string | null;
   title?: string;
-  workspaceId?: string;
+  workspaceId: string;
 }): Promise<ChatSessionRow> {
   const supabase = createAdminClient();
   const now = new Date().toISOString();
-  const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
+  const workspaceId = input.workspaceId;
 
   if (input.userId) {
     await claimVisitorSessions({
@@ -234,13 +238,13 @@ export async function createChatSession(input: {
 export async function claimVisitorSessions(input: {
   visitorId: string;
   userId: string;
-  workspaceId?: string;
+  workspaceId: string;
 }): Promise<void> {
   const supabase = createAdminClient();
   await supabase
     .from("chat_sessions")
     .update({ user_id: input.userId, updated_at: new Date().toISOString() })
-    .eq("workspace_id", input.workspaceId ?? getDefaultWorkspaceId())
+    .eq("workspace_id", input.workspaceId)
     .eq("visitor_id", input.visitorId)
     .is("user_id", null);
 }
@@ -249,13 +253,13 @@ export async function getChatSessionForActor(input: {
   id: string;
   visitorId: string;
   userId?: string | null;
-  workspaceId?: string;
+  workspaceId: string;
   /** When false, skip the `events` column (mutate / persist auth checks). */
   includeEvents?: boolean;
 }): Promise<ChatSessionRow | null> {
   const supabase = createAdminClient();
   const includeEvents = input.includeEvents !== false;
-  const workspaceId = input.workspaceId ?? getDefaultWorkspaceId();
+  const workspaceId = input.workspaceId;
 
   const result = includeEvents
     ? await supabase
@@ -345,6 +349,35 @@ export async function getChatMessagesPage(
   };
 }
 
+export async function getChatMessagesAfter(
+  sessionId: string,
+  after: string | null,
+  limit = 50,
+): Promise<ChatMessageRow[]> {
+  const supabase = createAdminClient();
+  const cursor = after ? decodeMessageCursor(after) : null;
+
+  let query = supabase
+    .from("chat_messages")
+    .select(MESSAGE_SELECT)
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
+    .limit(Math.min(Math.max(limit, 1), 100));
+
+  if (cursor) {
+    query = query.or(
+      `created_at.gt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.gt.${cursor.id})`,
+    );
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as ChatMessageRow[])
+    .slice()
+    .sort(compareChatMessagesChronological);
+}
+
 /** @deprecated Prefer getChatMessagesPage — kept for callers that need a full dump. */
 export async function getChatMessages(
   sessionId: string,
@@ -377,7 +410,7 @@ export async function updateChatSessionState(input: {
   id: string;
   visitorId: string;
   userId?: string | null;
-  workspaceId?: string;
+  workspaceId: string;
   eveSessionId?: string | null;
   continuationToken?: string | null;
   streamIndex?: number;
@@ -537,7 +570,7 @@ export async function replaceChatMessages(input: {
 
 /** Staff dashboard: list recent sessions for workspace. */
 export async function listWorkspaceChatSessions(
-  workspaceId: string = getDefaultWorkspaceId(),
+  workspaceId: string,
   limit = 100,
 ): Promise<ChatSessionListItem[]> {
   const supabase = createAdminClient();
@@ -554,7 +587,7 @@ export async function listWorkspaceChatSessions(
 
 export async function getWorkspaceChatSession(
   id: string,
-  workspaceId: string = getDefaultWorkspaceId(),
+  workspaceId: string,
 ): Promise<ChatSessionRow | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase

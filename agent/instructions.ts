@@ -20,10 +20,74 @@ import {
   getAiBookingEventType,
 } from "../lib/workspace-cal";
 import {
+  getChatMessages,
+  getWorkspaceChatSession,
+} from "../lib/chat-sessions";
+import {
   getWorkspaceById,
   resolveWorkspaceIdFromAgentContext,
 } from "../lib/workspace";
 import { nowHm, todayLabel, todayYmd } from "./date-context";
+
+const HANDOFF_MAX_MESSAGES = 10;
+const HANDOFF_MAX_CHARS = 2000;
+
+const HUMAN_MODE_HOLDING_PROMPT = [
+  "A human teammate is handling this conversation right now.",
+  "Reply with exactly one short sentence telling the guest a team member",
+  "will respond shortly. Do not answer their question, do not call any",
+  "tool, and do not add anything else.",
+].join(" ");
+
+/**
+ * What a staff member said while they owned this conversation.
+ *
+ * The eve runtime keeps its own thread keyed by continuationToken, so staff
+ * messages written straight into chat_messages never reach it. Without this
+ * the first turn after a hand back can contradict a promise staff just made.
+ */
+export async function buildHandoffContext(
+  sessionId: string,
+  workspaceId: string,
+): Promise<string> {
+  // chatSessionId comes from a client-supplied header — scope the read.
+  const session = await getWorkspaceChatSession(sessionId, workspaceId);
+  if (!session) return "";
+
+  const messages = await getChatMessages(sessionId);
+
+  let start = -1;
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const raw = messages[i]!.raw as { kind?: string; direction?: string } | null;
+    if (raw?.kind === "handoff" && raw.direction === "to_human") {
+      start = i;
+      break;
+    }
+  }
+  if (start === -1) return "";
+
+  const staffLines = messages
+    .slice(start + 1)
+    .filter((m) => {
+      const raw = m.raw as { sentBy?: string } | null;
+      return raw?.sentBy === "staff" && m.content.trim();
+    })
+    .slice(-HANDOFF_MAX_MESSAGES)
+    .map((m) => `- ${m.content.trim()}`);
+
+  if (staffLines.length === 0) return "";
+
+  let block = staffLines.join("\n");
+  if (block.length > HANDOFF_MAX_CHARS) {
+    block = block.slice(-HANDOFF_MAX_CHARS);
+  }
+
+  return [
+    "A human teammate replied to this guest directly. Here is what they said.",
+    "Treat it as authoritative and do not contradict it.",
+    block,
+  ].join("\n");
+}
 
 function firstAttr(
   attrs: Readonly<Record<string, string | readonly string[]>> | undefined,
@@ -202,6 +266,11 @@ async function instructionsForCtx(ctx: {
   console.error(`[diag] instructionsForCtx enter ${Date.now()}`);
   const auth =
     ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null;
+
+  if (firstAttr(auth?.attributes, "replyModeHuman") === "1") {
+    return defineInstructions({ markdown: HUMAN_MODE_HOLDING_PROMPT });
+  }
+
   const workspaceId = await resolveWorkspaceIdFromAgentContext({
     sessionId: ctx.session?.id ?? null,
     auth,
@@ -212,20 +281,31 @@ async function instructionsForCtx(ctx: {
     DEFAULT_LOCALE,
   );
   const chatSessionId = firstAttr(auth?.attributes, "chatSessionId") ?? null;
-  const [ws, guestTz] = await Promise.all([
+  const [ws, guestTz, staffHandoff] = await Promise.all([
     getWorkspaceById(workspaceId),
     resolveGuestTimeZone({ auth, chatSessionId }),
+    chatSessionId
+      ? buildHandoffContext(chatSessionId, workspaceId)
+      : Promise.resolve(""),
   ]);
   console.error(`[diag] instructionsForCtx after workspace+tz ${Date.now()}`);
 
-  const markdown = await buildMarkdown(workspaceId, locale, {
+  let markdown = await buildMarkdown(workspaceId, locale, {
     serviceMode: ws?.service_mode ?? "onsite",
     guestTimeZone: guestTz.guestTimeZone,
     guestTzSource: guestTz.source,
   });
+  if (staffHandoff) {
+    markdown = `${markdown}\n\n${staffHandoff}`;
+  }
   console.error(`[diag] instructionsForCtx after buildMarkdown ${Date.now()}`);
 
   return defineInstructions({ markdown });
+}
+
+/** Exported for tests — holding prompt when replyModeHuman is stamped. */
+export function humanModeHoldingPrompt(): string {
+  return HUMAN_MODE_HOLDING_PROMPT;
 }
 
 export default defineDynamic({

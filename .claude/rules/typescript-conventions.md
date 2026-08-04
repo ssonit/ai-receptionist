@@ -1,0 +1,54 @@
+---
+description: Constants (when/how) and TypeScript type/interface placement
+---
+
+# Constants & types
+
+## When to use a constant
+
+Extract a named constant (do **not** scatter string/number literals) when the value is:
+
+| Kind | Pattern / home |
+|------|----------------|
+| App routes | `ROUTES.*` + builders in `lib/routes.ts` — never `"/login"` etc. in app code |
+| Error codes | `APP_ERROR_CODE` / `AUTH_ERROR_CODE` in `lib/errors/*-codes.ts` |
+| Plan / feature flags (product enum) | `PLAN_FEATURE` (or similar) `as const` next to domain |
+| Cookie / header names | e.g. `GUEST_LOCALE_COOKIE`, `EVE_LOCALE_HEADER` in `lib/locale.ts` |
+| Stable IDs / magic numbers / limits reused across files | Named `SCREAMING_SNAKE` in the domain `lib/` module |
+| Status / mode / provider string unions used in >1 place | Prefer `as const` object **or** shared `type` union in domain types |
+
+**Keep inline** when the literal is local, single-use, and not a product contract (e.g. one-off test stub, trivial `0`/`1` in a loop).
+
+**Product UI copy** is not a TS constant — use `messages/en.json` + `messages/vi.json` (see i18n rule).
+
+## Constant shape
+
+```ts
+export const FOO = {
+  BAR: "bar",
+  BAZ: "baz",
+} as const;
+
+export type Foo = (typeof FOO)[keyof typeof FOO];
+```
+
+- Object maps: `UPPER_SNAKE` name, `as const`, derive the union with `typeof`.
+- Single values: `export const NAME = "…" as const` (or typed alias) in the owning `lib/` file.
+- Reuse the canonical module — do not redefine the same route/code/cookie elsewhere.
+
+## Types & interfaces
+
+| What | Prefer | Where |
+|------|--------|--------|
+| Domain shapes, params, DTOs, unions | `type` | `lib/<domain>/types.ts` or `lib/<domain>-types.ts`, or colocated export from the domain module |
+| Unions derived from const maps | `type X = (typeof X)[keyof typeof X]` | Next to the constant |
+| Component / hook props (UI-only) | `type FooProps = { … }` | Same file as the component; do not put in `lib/` |
+| Server action / API result shapes shared across layers | `type` | Domain `lib/`, not duplicated in the component |
+
+**`type` vs `interface`:** prefer **`type`** (repo default: object types, unions, intersections). Use **`interface`** only when you need declaration merging or must match a library that expects an interface.
+
+**Do not:**
+
+- Duplicate the same domain type in UI and `lib/` — import from the canonical module.
+- Export huge prop bags from `lib/` for one component.
+- Use `enum` for string unions — use `as const` + `type` (or a plain union) instead.

@@ -45,8 +45,8 @@ Do **not** assume the user wants you to start `localhost:3000` unless they ask.
 ## Coding standards (clean + reusable)
 
 0. **graphify before explore** — when `graphify-out/graph.json` exists, run `graphify query "<question>"` (or `path` / `explain`) **before** Read/Grep/Glob. Read/Grep only files and line ranges the graph surfaces. After code edits: `graphify update .`. Cursor enforces this via `.cursor/hooks.json`; Claude Code via `.claude/settings.json` (`graphify hook-guard`). Skipping graphify wastes tokens.
-1. **One concern per module** — if a file mixes UI + Cal.com + DB writes, split into `components/` + `lib/`.
-2. **Reuse before inventing** — search `lib/` and existing tools first; extend helpers instead of copy-paste.
+1. **One concern per module** — if a file mixes UI + Cal.com + DB writes, split into `components/` + `lib/`. Soft size: reassess ~300 lines, split hand-written logic past ~400 (see `.cursor/rules/code-structure.mdc` / `.claude/rules/code-structure.md`).
+2. **Reuse before inventing** — search `lib/` and existing tools first; extend helpers instead of copy-paste. **Constants & types** — routes/codes/cookies/headers/product enums → named `as const` in domain `lib/`; prefer `type` over `interface` (see `.cursor/rules/typescript-conventions.mdc` / `.claude/rules/typescript-conventions.md`).
 3. **Tenant always explicit** — resolve `workspaceId` via `resolveWorkspaceIdFromAgentContext` / `getDashboardUser`; never silent Pilot fallback when a tenant hint exists.
 4. **Secrets** — Cal API keys via `getCalApiKeyForWorkspace` + `withCalApiKey`; encrypt with `lib/workspace-secrets.ts`.
 5. **UI strings** — product chrome goes through `messages/*.json` + locale cookies (`eve_guest_locale` vs `eve_dashboard_locale`). Do not hardcode Vietnamese UI.

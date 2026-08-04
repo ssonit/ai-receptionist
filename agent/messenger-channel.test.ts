@@ -28,6 +28,7 @@ const mocks = vi.hoisted(() => ({
   touchChannelSession: vi.fn(),
   findChatSessionByEveSessionId: vi.fn(),
   checkAgentRateLimit: vi.fn(),
+  createNotificationDebounced: vi.fn(),
 }));
 
 vi.mock("@/lib/channel-connections", () => ({
@@ -48,6 +49,12 @@ vi.mock("@/lib/chat-sessions", () => ({
 }));
 vi.mock("@/lib/agent-rate-limit", () => ({
   checkAgentRateLimit: mocks.checkAgentRateLimit,
+}));
+vi.mock("@/lib/notifications-write", () => ({
+  createNotificationDebounced: mocks.createNotificationDebounced,
+}));
+vi.mock("@/lib/dashboard-access", () => ({
+  DASHBOARD_PATH: { conversations: "/dashboard/conversations" },
 }));
 
 function body(pageId: string, psid: string, text: string, mid = "mid_1") {
@@ -126,11 +133,16 @@ beforeEach(() => {
     pageId: "page_a",
     pageAccessToken: "page-token-a",
   });
-  mocks.getOrCreateChannelSession.mockResolvedValue({ id: "session-1", workspace_id: WS_A });
+  mocks.getOrCreateChannelSession.mockResolvedValue({
+    id: "session-1",
+    workspace_id: WS_A,
+    reply_mode: "ai",
+  });
   mocks.upsertChatMessages.mockResolvedValue(undefined);
   mocks.touchChannelSession.mockResolvedValue(undefined);
   mocks.checkAgentRateLimit.mockResolvedValue({ ok: true });
   mocks.sendMessengerText.mockResolvedValue({ messageId: "out-1" });
+  mocks.createNotificationDebounced.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -139,6 +151,50 @@ afterEach(() => {
 });
 
 describe("messenger webhook", () => {
+  it("stores the message but does not run the agent in human mode", async () => {
+    mocks.getOrCreateChannelSession.mockResolvedValue({
+      id: "sess-1",
+      workspace_id: WS_A,
+      channel: "messenger",
+      external_user_id: "psid-1",
+      reply_mode: "human",
+    });
+    const handler = await postHandler();
+    const a = args();
+    const raw = body("page_a", "user_1", "đặt lịch giúp mình");
+
+    await handler(request(raw, sign(raw)), a);
+    await a.waitUntilPromise();
+
+    expect(mocks.upsertChatMessages).toHaveBeenCalled();
+    expect(a.send).not.toHaveBeenCalled();
+    expect(mocks.sendMessengerText).not.toHaveBeenCalled();
+  });
+
+  it("notifies staff of an inbound message in human mode, scoped to the workspace (T7)", async () => {
+    mocks.getOrCreateChannelSession.mockResolvedValue({
+      id: "sess-1",
+      workspace_id: WS_A,
+      channel: "messenger",
+      external_user_id: "psid-1",
+      reply_mode: "human",
+    });
+    const handler = await postHandler();
+    const a = args();
+    const raw = body("page_a", "user_1", "cần hỗ trợ");
+
+    await handler(request(raw, sign(raw)), a);
+    await a.waitUntilPromise();
+
+    expect(mocks.createNotificationDebounced).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "conversation_needs_reply",
+        workspaceId: WS_A,
+        entityId: "sess-1",
+      }),
+    );
+  });
+
   it("rejects a bad signature and never invokes the agent", async () => {
     const handler = await postHandler();
     const a = args();

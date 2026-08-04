@@ -88,6 +88,9 @@ export const APP_ERROR_CODE = {
   SUBSCRIPTION_INACTIVE: "subscription_inactive",
   WEBHOOK_SECRET_FAILED: "webhook_secret_failed",
   PLAN_UPGRADE_REQUIRED: "plan_upgrade_required",
+  CONVERSATION_ALREADY_CLAIMED: "conversation_already_claimed",
+  CONVERSATION_NOT_HUMAN_MODE: "conversation_not_human_mode",
+  CONVERSATION_NO_WORKSPACE: "conversation_no_workspace",
 } as const;
 
 export type AppErrorCode = (typeof APP_ERROR_CODE)[keyof typeof APP_ERROR_CODE];

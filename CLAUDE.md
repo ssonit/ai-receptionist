@@ -11,6 +11,7 @@ Shared standards live in `AGENTS.md`. Claude-scoped detail:
 | `.claude/rules/graphify.md` | Always — run before Read/Grep/Glob/Bash exploration |
 | `.claude/rules/architecture.md` | Always useful for orientation |
 | `.claude/rules/code-structure.md` | Layering / DRY |
+| `.claude/rules/typescript-conventions.md` | Constants + `type` / `interface` |
 | `.claude/rules/tenant-isolation.md` | Any tenant data path |
 | `.claude/rules/agent-tools.md` | Editing `agent/**` |
 | `.claude/rules/supabase-migrations.md` | Editing `supabase/migrations/**` |
