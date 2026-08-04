@@ -16,6 +16,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cancelManualBookingAction } from "@/app/dashboard/bookings/actions";
+import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
 
 export type CancelBookingTarget = {
   id: string;
@@ -27,14 +28,19 @@ function CancelBookingAlertDialogContent({
   booking,
   timeZone,
   onOpenChange,
+  forceClose,
+  pending,
+  setPending,
 }: {
   booking: CancelBookingTarget;
   timeZone: string;
   onOpenChange: (open: boolean) => void;
+  forceClose: () => void;
+  pending: boolean;
+  setPending: (pending: boolean) => void;
 }) {
   const router = useRouter();
   const [reason, setReason] = React.useState("");
-  const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   async function handleConfirm() {
@@ -50,8 +56,10 @@ function CancelBookingAlertDialogContent({
         return;
       }
       toast.success("Booking cancelled");
-      onOpenChange(false);
+      forceClose();
       router.refresh();
+    } catch {
+      setError(appErrorMessage(APP_ERROR_CODE.BOOKING_CANCEL_FAILED));
     } finally {
       setPending(false);
     }
@@ -64,7 +72,11 @@ function CancelBookingAlertDialogContent({
   });
 
   return (
-    <AlertDialogContent>
+    <AlertDialogContent
+      onEscapeKeyDown={(e) => {
+        if (pending) e.preventDefault();
+      }}
+    >
       <AlertDialogHeader>
         <AlertDialogTitle>Cancel this booking?</AlertDialogTitle>
         <AlertDialogDescription>
@@ -113,14 +125,32 @@ export function CancelBookingAlertDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const [pending, setPendingState] = React.useState(false);
+  const pendingRef = React.useRef(false);
+  const setPending = React.useCallback((next: boolean) => {
+    pendingRef.current = next;
+    setPendingState(next);
+  }, []);
+
+  const guardedOnOpenChange = React.useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen && pendingRef.current) return;
+      onOpenChange(nextOpen);
+    },
+    [onOpenChange],
+  );
+
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog open={open} onOpenChange={guardedOnOpenChange}>
       {booking ? (
         <CancelBookingAlertDialogContent
           key={booking.id}
           booking={booking}
           timeZone={timeZone}
-          onOpenChange={onOpenChange}
+          onOpenChange={guardedOnOpenChange}
+          forceClose={() => onOpenChange(false)}
+          pending={pending}
+          setPending={setPending}
         />
       ) : null}
     </AlertDialog>
