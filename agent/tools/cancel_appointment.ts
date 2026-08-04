@@ -81,6 +81,7 @@ export default defineTool({
       }
       await withCalApiKey(apiKey, () =>
         cancelWorkspaceBooking({
+          workspaceId: booking.workspace_id,
           bookingId: booking.id,
           calBookingUid: booking.cal_booking_uid,
           reason,

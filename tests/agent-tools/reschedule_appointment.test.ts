@@ -46,6 +46,7 @@ const NEW_SLOT = "2026-08-06T14:00:00.000Z";
 
 const mockBooking = {
   id: "booking-2",
+  workspace_id: PILOT_ID,
   cal_booking_uid: "cal_uid_2",
   guest_name: "Nguyen Van B",
   guest_email: "b@example.com",

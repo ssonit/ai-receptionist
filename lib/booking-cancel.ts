@@ -11,6 +11,7 @@ import { cancelCalBooking } from "@/lib/calcom";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type CancelWorkspaceBookingInput = {
+  workspaceId: string;
   bookingId: string;
   calBookingUid: string;
   reason?: string;
@@ -41,6 +42,7 @@ export async function cancelWorkspaceBooking(
         raw: cancelled.raw,
         synced_at: new Date().toISOString(),
       })
+      .eq("workspace_id", input.workspaceId)
       .eq("id", input.bookingId);
     if (mirrorError) throw new Error(mirrorError.message);
   } catch (mirrorError) {

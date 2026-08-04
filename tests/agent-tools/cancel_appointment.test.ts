@@ -39,6 +39,7 @@ const PILOT_ID = "00000000-0000-4000-8000-000000000001";
 
 const mockBooking = {
   id: "booking-1",
+  workspace_id: PILOT_ID,
   cal_booking_uid: "cal_uid_1",
   guest_name: "Nguyen Van A",
   guest_email: "a@example.com",

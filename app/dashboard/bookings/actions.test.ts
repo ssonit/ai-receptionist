@@ -223,6 +223,7 @@ describe("cancelManualBookingAction", () => {
     expect(result.ok).toBe(true);
     expect(mocks.cancelWorkspaceBooking).toHaveBeenCalledWith(
       expect.objectContaining({
+        workspaceId: WS,
         bookingId: "booking-1",
         calBookingUid: "cal_uid_1",
         reason: "Guest asked to reschedule",

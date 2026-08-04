@@ -269,6 +269,7 @@ export async function cancelManualBookingAction(input: {
   try {
     await withCalApiKey(apiKey, () =>
       cancelWorkspaceBooking({
+        workspaceId: ctx.workspaceId,
         bookingId: booking.id,
         calBookingUid: booking.cal_booking_uid!,
         reason: input.reason,

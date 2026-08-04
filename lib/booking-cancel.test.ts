@@ -16,6 +16,7 @@ vi.mock("@/lib/calcom", async (importOriginal) => {
 
 const BOOKING_ID = "booking-1";
 const CAL_UID = "cal_uid_1";
+const WS_ID = "ws-1";
 
 beforeEach(() => {
   supabaseMock.clear();
@@ -23,7 +24,7 @@ beforeEach(() => {
   supabaseMock.seed("bookings", [
     {
       id: BOOKING_ID,
-      workspace_id: "ws-1",
+      workspace_id: WS_ID,
       cal_booking_uid: CAL_UID,
       status: "accepted",
       list_status: "upcoming",
@@ -43,6 +44,7 @@ describe("cancelWorkspaceBooking", () => {
 
     const { cancelWorkspaceBooking } = await import("./booking-cancel");
     const result = await cancelWorkspaceBooking({
+      workspaceId: WS_ID,
       bookingId: BOOKING_ID,
       calBookingUid: CAL_UID,
       reason: "Guest asked to reschedule",
@@ -70,6 +72,7 @@ describe("cancelWorkspaceBooking", () => {
     const { cancelWorkspaceBooking } = await import("./booking-cancel");
     await expect(
       cancelWorkspaceBooking({
+        workspaceId: WS_ID,
         bookingId: BOOKING_ID,
         calBookingUid: CAL_UID,
         cancelledBy: "owner",
@@ -96,6 +99,7 @@ describe("cancelWorkspaceBooking", () => {
 
     const { cancelWorkspaceBooking } = await import("./booking-cancel");
     const result = await cancelWorkspaceBooking({
+      workspaceId: WS_ID,
       bookingId: BOOKING_ID,
       calBookingUid: CAL_UID,
       cancelledBy: "guest",

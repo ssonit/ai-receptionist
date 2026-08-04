@@ -22,6 +22,7 @@ export type AgentAuthBag = {
 
 export type OwnedBookingRow = {
   id: string;
+  workspace_id: string;
   cal_booking_uid: string;
   guest_name: string;
   guest_email: string;
@@ -56,7 +57,7 @@ export type WorkspaceGuestPolicy = {
 };
 
 const BOOKING_SELECT =
-  "id, cal_booking_uid, guest_name, guest_email, guest_phone, service, start_time, status, list_status, visitor_id, chat_session_id, session_id, manage_code_hash, guest_timezone";
+  "id, workspace_id, cal_booking_uid, guest_name, guest_email, guest_phone, service, start_time, status, list_status, visitor_id, chat_session_id, session_id, manage_code_hash, guest_timezone";
 
 export { authAttr } from "@/lib/workspace";
 
