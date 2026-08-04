@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   upsertChatMessages: vi.fn(),
   updateChatSessionState: vi.fn(),
   createNotificationDebounced: vi.fn(),
+  checkAgentRateLimit: vi.fn(),
 }));
 
 vi.mock("@/lib/chat-sessions", () => ({
@@ -44,6 +45,10 @@ vi.mock("@/lib/dashboard-access", () => ({
 vi.mock("@/lib/notifications-write", () => ({
   createNotificationDebounced: mocks.createNotificationDebounced,
 }));
+vi.mock("@/lib/agent-rate-limit", () => ({
+  checkAgentRateLimit: mocks.checkAgentRateLimit,
+  clientIpFromRequest: () => "203.0.113.1",
+}));
 
 const { POST } = await import("./route");
 
@@ -56,12 +61,18 @@ function session(replyMode: "ai" | "human", workspaceId: string | null = WS_A) {
   };
 }
 
-function post(messages: { role: string; content: string }[]) {
+function post(
+  messages: { role: string; content: string }[],
+  mode?: "staff",
+) {
   return POST(
-    new Request(`http://localhost/api/chat/sessions/${SESSION_ID}/messages`, {
-      method: "POST",
-      body: JSON.stringify({ messages }),
-    }),
+    new Request(
+      `http://localhost/api/chat/sessions/${SESSION_ID}/messages?w=acme`,
+      {
+        method: "POST",
+        body: JSON.stringify(mode ? { mode, messages } : { messages }),
+      },
+    ),
     { params: Promise.resolve({ id: SESSION_ID }) },
   );
 }
@@ -71,6 +82,7 @@ describe("POST /api/chat/sessions/[id]/messages", () => {
     vi.clearAllMocks();
     mocks.updateChatSessionState.mockResolvedValue(null);
     mocks.createNotificationDebounced.mockResolvedValue("notification-1");
+    mocks.checkAgentRateLimit.mockResolvedValue({ ok: true });
   });
 
   it("notifies staff when a guest replies to a conversation they took over", async () => {
@@ -105,6 +117,52 @@ describe("POST /api/chat/sessions/[id]/messages", () => {
     await post([{ role: "assistant", content: "a teammate will reply" }]);
 
     expect(mocks.createNotificationDebounced).not.toHaveBeenCalled();
+  });
+
+  it("stores nothing when staff handed back before the post landed", async () => {
+    mocks.getChatSessionForActor.mockResolvedValue(session("ai"));
+
+    const res = await post([{ role: "user", content: "still there?" }], "staff");
+
+    // Storing here would strand the message: no agent turn ran for it, and the
+    // human-mode notification does not fire either.
+    expect(mocks.upsertChatMessages).not.toHaveBeenCalled();
+    await expect(res.json()).resolves.toMatchObject({
+      stored: false,
+      replyMode: "ai",
+    });
+  });
+
+  it("stores a staff-mode message while the conversation is still human-held", async () => {
+    mocks.getChatSessionForActor.mockResolvedValue(session("human"));
+
+    const res = await post([{ role: "user", content: "hi" }], "staff");
+
+    expect(res.status).toBe(200);
+    expect(mocks.upsertChatMessages).toHaveBeenCalledOnce();
+    expect(mocks.createNotificationDebounced).toHaveBeenCalledOnce();
+  });
+
+  it("rate limits staff-mode posts, which no agent turn gates", async () => {
+    mocks.getChatSessionForActor.mockResolvedValue(session("human"));
+    mocks.checkAgentRateLimit.mockResolvedValue({
+      ok: false,
+      errorCode: "agent_rate_limited",
+    });
+
+    const res = await post([{ role: "user", content: "spam" }], "staff");
+
+    expect(res.status).toBe(429);
+    expect(mocks.upsertChatMessages).not.toHaveBeenCalled();
+  });
+
+  it("leaves ordinary agent-turn persists unmetered", async () => {
+    mocks.getChatSessionForActor.mockResolvedValue(session("ai"));
+
+    await post([{ role: "assistant", content: "sure thing" }]);
+
+    expect(mocks.checkAgentRateLimit).not.toHaveBeenCalled();
+    expect(mocks.upsertChatMessages).toHaveBeenCalledOnce();
   });
 
   it("does not notify a session that lost its workspace", async () => {

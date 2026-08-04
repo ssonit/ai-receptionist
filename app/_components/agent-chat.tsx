@@ -547,7 +547,10 @@ function AgentChatThread({
   const [messageCount, setMessageCount] = React.useState(initialMessageCount);
   const [nudgeDismissed, setNudgeDismissed] = React.useState(false);
   const [turnTimedOut, setTurnTimedOut] = React.useState(false);
-  const [replyMode, setReplyMode] = React.useState<"ai" | "human">("ai");
+  // A staff-mode send skips the agent, so agent.error never fires for it —
+  // without this the guest would watch their message vanish in silence.
+  const [sendError, setSendError] = React.useState<"rateLimited" | null>(null);
+  const replyModeRef = React.useRef<"ai" | "human">("ai");
   const pollCursorRef = React.useRef<string | null>(initialPollCursor);
 
   const tenantHeaders = React.useCallback((): Record<string, string> => {
@@ -741,7 +744,7 @@ function AgentChatThread({
         };
         if (cancelled) return;
 
-        setReplyMode(data.replyMode === "human" ? "human" : "ai");
+        replyModeRef.current = data.replyMode === "human" ? "human" : "ai";
         pollCursorRef.current = data.cursor;
         const incoming = chatMessageRowsToEveMessages(data.messages ?? []);
         setHistory((prev) => {
@@ -825,9 +828,10 @@ function AgentChatThread({
     if ((text.length === 0 && message.files.length === 0) || isBusy) return;
 
     setTurnTimedOut(false);
+    setSendError(null);
 
     try {
-      if (replyMode === "human") {
+      if (replyModeRef.current === "human") {
         const id = `human:${crypto.randomUUID()}`;
         const parts: Array<EveMessage["parts"][number]> = [];
         if (text.length > 0) {
@@ -849,6 +853,7 @@ function AgentChatThread({
             headers: { "Content-Type": "application/json" },
             cache: "no-store",
             body: JSON.stringify({
+              mode: "staff",
               messages: [
                 {
                   role: "user",
@@ -860,10 +865,29 @@ function AgentChatThread({
             }),
           },
         );
+        if (res.status === 429) {
+          setSendError("rateLimited");
+          return;
+        }
         if (!res.ok) throw new Error("Failed to send message to staff");
-        setHistory((prev) => [...prev, { id, parts, role: "user" } as EveMessage]);
-        onPersisted();
-        return;
+        const data = (await res.json()) as {
+          stored?: boolean;
+          replyMode?: "ai" | "human";
+        };
+
+        if (data.stored !== false) {
+          setHistory((prev) => [
+            ...prev,
+            { id, parts, role: "user" } as EveMessage,
+          ]);
+          onPersisted();
+          return;
+        }
+
+        // Staff handed the conversation back somewhere between our last poll
+        // and this send, and the server stored nothing. Fall through to the
+        // agent so the guest is not left talking into an empty room.
+        replyModeRef.current = data.replyMode === "human" ? "human" : "ai";
       }
 
       if (message.files.length === 0) {
@@ -932,24 +956,24 @@ function AgentChatThread({
 
   const lastMessageId = displayMessages[displayMessages.length - 1]?.id ?? "";
 
+  const errorNotice = sendError
+    ? { title: t("chat.rateLimitedTitle"), body: t("chat.rateLimited") }
+    : turnTimedOut
+      ? { title: t("chat.timeoutTitle"), body: t("chat.timeoutBody") }
+      : agent.error
+        ? { title: t("chat.unavailableTitle"), body: t("chat.unavailableBody") }
+        : null;
+
   return (
     <>
-      {agent.error || turnTimedOut ? (
+      {errorNotice ? (
         <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pt-3 sm:px-6">
           <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm">
             <div className="flex min-w-0 flex-1 items-start gap-3">
               <AlertCircleIcon className="mt-0.5 size-4 shrink-0 text-zinc-400" />
               <div>
-                <p className="font-medium text-zinc-100">
-                  {turnTimedOut
-                    ? t("chat.timeoutTitle")
-                    : t("chat.unavailableTitle")}
-                </p>
-                <p className="mt-0.5 text-zinc-400">
-                  {turnTimedOut
-                    ? t("chat.timeoutBody")
-                    : t("chat.unavailableBody")}
-                </p>
+                <p className="font-medium text-zinc-100">{errorNotice.title}</p>
+                <p className="mt-0.5 text-zinc-400">{errorNotice.body}</p>
               </div>
             </div>
             {turnTimedOut ? (

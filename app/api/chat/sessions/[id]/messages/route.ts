@@ -15,6 +15,10 @@ import {
   getChatWorkspaceId,
   jsonError,
 } from "@/lib/chat-api";
+import {
+  checkAgentRateLimit,
+  clientIpFromRequest,
+} from "@/lib/agent-rate-limit";
 import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { createNotificationDebounced } from "@/lib/notifications-write";
 
@@ -92,7 +96,35 @@ export async function POST(request: Request, { params }: Params) {
       streamIndex?: number;
       events?: unknown;
       title?: string;
+      /** "staff" = a guest message the widget posted instead of running a turn. */
+      mode?: string;
     };
+
+    // A staff-mode post is the guest talking with the agent switched off, so
+    // this route is the only gate on it — everything else here persists a turn
+    // that agent/channels/eve.ts already metered. Same limiter, same buckets.
+    const staffMode = body.mode === "staff";
+    if (staffMode) {
+      const limited = await checkAgentRateLimit({
+        visitorId,
+        ip: clientIpFromRequest(request),
+        workspaceSlug: new URL(request.url).searchParams.get("w"),
+      });
+      if (!limited.ok) return jsonError("Too many messages", 429);
+    }
+
+    // Staff handed the conversation back between the widget's last poll and
+    // this post. Storing it would strand the message: no agent turn ran, and
+    // the human-mode notification below will not fire either. Store nothing
+    // and say so, so the client can re-send through the agent without the
+    // guest's message landing twice.
+    if (staffMode && session.reply_mode !== "human") {
+      return Response.json({
+        ok: true,
+        stored: false,
+        replyMode: session.reply_mode,
+      });
+    }
 
     const messages = Array.isArray(body.messages) ? body.messages : [];
     await upsertChatMessages({ sessionId: id, messages });
