@@ -45,8 +45,8 @@
     "semantic_hash": ""
   },
   "app/_components/agent-chat.tsx": {
-    "mtime": 1785747262.3207963,
-    "ast_hash": "242e843bcc8e2b46093c914233ec6dfb",
+    "mtime": 1785811136.013298,
+    "ast_hash": "2163ae0e0255adcff2ec8661c2e9062d",
     "semantic_hash": ""
   },
   "app/_components/agent-message.tsx": {
@@ -885,8 +885,8 @@
     "semantic_hash": ""
   },
   "app/api/chat/sessions/[id]/messages/route.ts": {
-    "mtime": 1785809820.4925466,
-    "ast_hash": "4c49f69ea8357b8672572d286e8558e3",
+    "mtime": 1785810701.2977338,
+    "ast_hash": "7249772c216bee8e743265dee73425ce",
     "semantic_hash": ""
   },
   "app/api/chat/sessions/[id]/route.ts": {
@@ -1140,13 +1140,13 @@
     "semantic_hash": ""
   },
   "messages/en.json": {
-    "mtime": 1785746317.417752,
-    "ast_hash": "dcffec9030df99d8fa52773b0311ccad",
+    "mtime": 1785811106.9635217,
+    "ast_hash": "263568850cf20a35ea99f35b6c42b60b",
     "semantic_hash": ""
   },
   "messages/vi.json": {
-    "mtime": 1785746317.4187572,
-    "ast_hash": "a346d278bd1503bc586b4b444ea6d3ff",
+    "mtime": 1785811112.8463209,
+    "ast_hash": "4682a665c67dd20f6c1ed8394b9b8f92",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000004_slugify_vietnamese.sql": {
@@ -2025,12 +2025,12 @@
     "semantic_hash": ""
   },
   ".claude/skills/react-doctor/SKILL.md": {
-    "mtime": 1784875790.3013859,
+    "mtime": 1785809510.827037,
     "ast_hash": "dfe423e1c26edfdf67a9d2f6af9cf15d",
     "semantic_hash": ""
   },
   ".claude/skills/react-doctor/references/explain.md": {
-    "mtime": 1784875790.2538564,
+    "mtime": 1785809510.8190372,
     "ast_hash": "ff147b3446a6d4462dd4b7a4186fe8d7",
     "semantic_hash": ""
   },
@@ -3355,13 +3355,13 @@
     "semantic_hash": ""
   },
   "app/api/chat/sessions/[id]/messages/route.test.ts": {
-    "mtime": 1785809884.220345,
-    "ast_hash": "57a30ebc00074fcb91df8adfc5a2212d",
+    "mtime": 1785810795.2289474,
+    "ast_hash": "638fbebf8cd346afe8dcff734fa677f7",
     "semantic_hash": ""
   },
   "components/conversation-detail-sheet.tsx": {
-    "mtime": 1785810123.9465165,
-    "ast_hash": "e47976e8fea59906f99a8b4a2ebac24c",
+    "mtime": 1785811158.3205738,
+    "ast_hash": "4a5cc0e87a1726cf2a36123355613845",
     "semantic_hash": ""
   },
   "components/conversation-display.ts": {
