@@ -31,6 +31,7 @@ type ExistingBooking = {
   manage_code_hash: string | null;
   cancelled_by: string | null;
   guest_timezone: string | null;
+  created_by_staff_id: string | null;
 };
 
 /** Raw Cal.com webhook payload — @see https://cal.com/docs/webhooks */
@@ -81,7 +82,7 @@ export async function upsertCalBookings(
       const { data: existing } = await supabase
         .from("bookings")
         .select(
-          "cal_booking_uid, status, start_time, guest_name, guest_email, session_id, visitor_id, chat_session_id, manage_code_hash, cancelled_by, guest_timezone",
+          "cal_booking_uid, status, start_time, guest_name, guest_email, session_id, visitor_id, chat_session_id, manage_code_hash, cancelled_by, guest_timezone, created_by_staff_id",
         )
         // Admin client bypasses RLS, so scope by hand. Without this, two
         // workspaces sharing a Cal.com account would carry each other's
@@ -119,6 +120,7 @@ export async function upsertCalBookings(
       chat_session_id: prev?.chat_session_id ?? null,
       manage_code_hash: prev?.manage_code_hash ?? null,
       guest_timezone: prev?.guest_timezone ?? null,
+      created_by_staff_id: prev?.created_by_staff_id ?? null,
       cancelled_by: nowCancelled
         ? prev?.cancelled_by ?? "cal"
         : null,

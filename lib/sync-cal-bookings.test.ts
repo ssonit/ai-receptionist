@@ -107,4 +107,29 @@ describe("upsertCalBookings — tenant scoping", () => {
     expect(upserted?.visitor_id).toBe("visitor-A");
     expect(upserted?.chat_session_id).toBe("session-A");
   });
+
+  it("preserves created_by_staff_id across a Cal.com sync", async () => {
+    supabaseMock.seed("bookings", [
+      {
+        id: "booking-manual",
+        workspace_id: WS_A,
+        cal_booking_uid: SHARED_UID,
+        status: "accepted",
+        list_status: "upcoming",
+        start_time: FUTURE,
+        guest_name: "Guest A",
+        guest_email: "a@example.com",
+        created_by_staff_id: "staff-1",
+        cancelled_by: null,
+      },
+    ]);
+
+    await upsertCalBookings([calItem({ attendeeName: "Guest A" })], WS_A);
+
+    const upserted = supabaseMock
+      .insertsFor("bookings")
+      .find((r) => r.workspace_id === WS_A);
+
+    expect(upserted?.created_by_staff_id).toBe("staff-1");
+  });
 });
