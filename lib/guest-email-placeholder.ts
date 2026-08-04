@@ -3,8 +3,6 @@
  * Pure — no server-only imports. Safe to use from "use client" components
  * (dashboard tables) as well as server code (lib/booking-create.ts).
  */
-import { randomUUID } from "node:crypto";
-
 export const NO_EMAIL_PLACEHOLDER_DOMAIN = "no-email.invalid";
 
 /**
@@ -13,7 +11,7 @@ export const NO_EMAIL_PLACEHOLDER_DOMAIN = "no-email.invalid";
  * so any confirmation email Cal.com sends there just bounces silently.
  */
 export function generatePlaceholderGuestEmail(): string {
-  return `guest-${randomUUID()}@${NO_EMAIL_PLACEHOLDER_DOMAIN}`;
+  return `guest-${crypto.randomUUID()}@${NO_EMAIL_PLACEHOLDER_DOMAIN}`;
 }
 
 export function isPlaceholderGuestEmail(
