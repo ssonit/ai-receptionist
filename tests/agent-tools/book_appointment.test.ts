@@ -480,6 +480,75 @@ describe("book_appointment tool", () => {
     expect(bookingInserts[0].guest_email).toMatch(/@no-email\.invalid$/);
   });
 
+  it("books successfully with empty email string when guestEmailRequired is false", async () => {
+    seedPilotWithAiEventType();
+
+    const calcom = await import("@/lib/calcom");
+    vi.mocked(calcom.getAvailableSlots).mockResolvedValue([{ start: SLOT }]);
+    vi.mocked(calcom.createBooking).mockResolvedValue({
+      uid: "cal_uid_empty_email",
+      start: SLOT,
+      status: "confirmed",
+      meetingUrl: "https://cal.com/meeting/cal_uid_empty_email",
+      raw: { id: 4 },
+    });
+
+    const authMod = await import("@/lib/agent-booking-auth");
+    vi.mocked(authMod.resolveGuestBookingActor).mockResolvedValue({
+      ok: true,
+      actor: {
+        workspaceId: PILOT_ID,
+        chatSessionId: "cs-empty-email",
+        visitorId: "vis-empty-email",
+        eveSessionId: null,
+        profileEmail: null,
+        rateLimited: false,
+      },
+    });
+    vi.mocked(authMod.getWorkspaceGuestPolicy).mockResolvedValue({
+      guestCancelEnabled: true,
+      guestRescheduleEnabled: true,
+      guestChangeCutoffMinutes: 120,
+      guestEmailRequired: false,
+      isPilot: false,
+    });
+
+    const tzMod = await import("@/lib/guest-timezone-resolve");
+    vi.mocked(tzMod.resolveGuestTimeZone).mockResolvedValue({
+      guestTimeZone: "Asia/Ho_Chi_Minh",
+      source: "session",
+    });
+
+    const tool = (await import("../../agent/tools/book_appointment")).default as unknown as {
+      execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
+    };
+
+    const result = await tool.execute(
+      {
+        guestName: "Empty Email Guest",
+        phone: "+84111222444",
+        email: "",
+        start: SLOT,
+      },
+      {
+        session: {
+          id: "test-session-empty-email",
+          auth: { current: null, initiator: null },
+        },
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.booking.uid).toBe("cal_uid_empty_email");
+      expect(result.manageCode).toBeDefined();
+    }
+
+    const bookingInserts = supabaseMock.insertsFor("bookings");
+    expect(bookingInserts.length).toBeGreaterThanOrEqual(1);
+    expect(bookingInserts[0].guest_email).toMatch(/@no-email\.invalid$/);
+  });
+
   it("returns {ok:false} when guestEmailRequired and email is missing", async () => {
     seedPilotWithAiEventType();
 

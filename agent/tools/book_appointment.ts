@@ -24,7 +24,7 @@ export default defineTool({
   inputSchema: z.object({
     guestName: z.string().min(1),
     phone: z.string().min(6),
-    email: z.string().email().optional(),
+    email: z.string().email().optional().or(z.literal("")),
     start: z.string().describe("ISO 8601 start time from check_availability"),
     service: z
       .string()
