@@ -1,6 +1,9 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { resolveGuestBookingActor } from "@/lib/agent-booking-auth";
+import {
+  getWorkspaceGuestPolicy,
+  resolveGuestBookingActor,
+} from "@/lib/agent-booking-auth";
 import { logAgentToolEvent } from "@/lib/agent-tool-log";
 import { createWorkspaceBooking } from "@/lib/booking-create";
 import { getAvailableSlots, withCalApiKey } from "@/lib/calcom";
@@ -17,11 +20,11 @@ import { getAiBookingEventType } from "@/lib/workspace-cal";
 
 export default defineTool({
   description:
-    "Create a real appointment booking in the calendar after the guest confirmed a specific available slot. Requires name, email, phone, and an ISO start time that came from check_availability.",
+    "Create a real appointment booking in the calendar after the guest confirmed a specific available slot. Requires name, phone, and an ISO start time that came from check_availability. Email is usually optional unless the workspace returns BOOKING_EMAIL_REQUIRED.",
   inputSchema: z.object({
     guestName: z.string().min(1),
     phone: z.string().min(6),
-    email: z.string().email(),
+    email: z.string().email().optional(),
     start: z.string().describe("ISO 8601 start time from check_availability"),
     service: z
       .string()
@@ -42,6 +45,18 @@ export default defineTool({
         auth: ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null,
       });
       workspaceIdForLog = workspaceId;
+      const policy = await getWorkspaceGuestPolicy(workspaceId);
+      if (policy.guestEmailRequired && !email?.trim()) {
+        const error = appErrorMessage(APP_ERROR_CODE.BOOKING_EMAIL_REQUIRED);
+        await logAgentToolEvent({
+          toolName: "book_appointment",
+          ok: false,
+          error,
+          sessionId: sid,
+          workspaceId,
+        });
+        return { ok: false as const, error };
+      }
       const aiEvent = await getAiBookingEventType(workspaceId);
       if (!aiEvent) {
         const error =

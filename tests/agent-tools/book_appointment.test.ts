@@ -24,6 +24,7 @@ vi.mock("@/lib/calcom", async (importOriginal) => {
 // agent-booking-auth mock — avoid cascading DB queries
 vi.mock("@/lib/agent-booking-auth", () => ({
   resolveGuestBookingActor: vi.fn(),
+  getWorkspaceGuestPolicy: vi.fn(),
 }));
 
 // guest-timezone-resolve mock
@@ -116,6 +117,13 @@ describe("book_appointment tool", () => {
         rateLimited: false,
       },
     });
+    vi.mocked(authMod.getWorkspaceGuestPolicy).mockResolvedValue({
+      guestCancelEnabled: true,
+      guestRescheduleEnabled: true,
+      guestChangeCutoffMinutes: 120,
+      guestEmailRequired: true,
+      isPilot: false,
+    });
 
     const tzMod = await import("@/lib/guest-timezone-resolve");
     vi.mocked(tzMod.resolveGuestTimeZone).mockResolvedValue({
@@ -182,6 +190,15 @@ describe("book_appointment tool", () => {
     ]);
     // No workspace_event_types row → getAiBookingEventType returns null for non-pilot
 
+    const authMod = await import("@/lib/agent-booking-auth");
+    vi.mocked(authMod.getWorkspaceGuestPolicy).mockResolvedValue({
+      guestCancelEnabled: true,
+      guestRescheduleEnabled: true,
+      guestChangeCutoffMinutes: 120,
+      guestEmailRequired: true,
+      isPilot: false,
+    });
+
     const tool = (await import("../../agent/tools/book_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
@@ -240,6 +257,15 @@ describe("book_appointment tool", () => {
       },
     ]);
 
+    const authMod = await import("@/lib/agent-booking-auth");
+    vi.mocked(authMod.getWorkspaceGuestPolicy).mockResolvedValue({
+      guestCancelEnabled: true,
+      guestRescheduleEnabled: true,
+      guestChangeCutoffMinutes: 120,
+      guestEmailRequired: true,
+      isPilot: false,
+    });
+
     const tool = (await import("../../agent/tools/book_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
     };
@@ -278,6 +304,15 @@ describe("book_appointment tool", () => {
       { start: "2026-08-05T11:00:00.000Z" },
       { start: "2026-08-05T12:00:00.000Z" },
     ]);
+
+    const authMod = await import("@/lib/agent-booking-auth");
+    vi.mocked(authMod.getWorkspaceGuestPolicy).mockResolvedValue({
+      guestCancelEnabled: true,
+      guestRescheduleEnabled: true,
+      guestChangeCutoffMinutes: 120,
+      guestEmailRequired: true,
+      isPilot: false,
+    });
 
     const tool = (await import("../../agent/tools/book_appointment")).default as unknown as {
       execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
@@ -331,6 +366,13 @@ describe("book_appointment tool", () => {
         rateLimited: false,
       },
     });
+    vi.mocked(authMod.getWorkspaceGuestPolicy).mockResolvedValue({
+      guestCancelEnabled: true,
+      guestRescheduleEnabled: true,
+      guestChangeCutoffMinutes: 120,
+      guestEmailRequired: true,
+      isPilot: false,
+    });
 
     const tzMod = await import("@/lib/guest-timezone-resolve");
     vi.mocked(tzMod.resolveGuestTimeZone).mockResolvedValue({
@@ -368,5 +410,119 @@ describe("book_appointment tool", () => {
       expect(result.warning).toBeDefined();
       expect(result.warning).toContain("mirror");
     }
+  });
+
+  it("books successfully without email when guestEmailRequired is false", async () => {
+    seedPilotWithAiEventType();
+
+    const calcom = await import("@/lib/calcom");
+    vi.mocked(calcom.getAvailableSlots).mockResolvedValue([{ start: SLOT }]);
+    vi.mocked(calcom.createBooking).mockResolvedValue({
+      uid: "cal_uid_no_email",
+      start: SLOT,
+      status: "confirmed",
+      meetingUrl: "https://cal.com/meeting/cal_uid_no_email",
+      raw: { id: 3 },
+    });
+
+    const authMod = await import("@/lib/agent-booking-auth");
+    vi.mocked(authMod.resolveGuestBookingActor).mockResolvedValue({
+      ok: true,
+      actor: {
+        workspaceId: PILOT_ID,
+        chatSessionId: "cs-no-email",
+        visitorId: "vis-no-email",
+        eveSessionId: null,
+        profileEmail: null,
+        rateLimited: false,
+      },
+    });
+    vi.mocked(authMod.getWorkspaceGuestPolicy).mockResolvedValue({
+      guestCancelEnabled: true,
+      guestRescheduleEnabled: true,
+      guestChangeCutoffMinutes: 120,
+      guestEmailRequired: false,
+      isPilot: false,
+    });
+
+    const tzMod = await import("@/lib/guest-timezone-resolve");
+    vi.mocked(tzMod.resolveGuestTimeZone).mockResolvedValue({
+      guestTimeZone: "Asia/Ho_Chi_Minh",
+      source: "session",
+    });
+
+    const tool = (await import("../../agent/tools/book_appointment")).default as unknown as {
+      execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
+    };
+
+    const result = await tool.execute(
+      {
+        guestName: "No Email Guest",
+        phone: "+84111222333",
+        start: SLOT,
+      },
+      {
+        session: {
+          id: "test-session-no-email",
+          auth: { current: null, initiator: null },
+        },
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.booking.uid).toBe("cal_uid_no_email");
+      expect(result.manageCode).toBeDefined();
+    }
+
+    const bookingInserts = supabaseMock.insertsFor("bookings");
+    expect(bookingInserts.length).toBeGreaterThanOrEqual(1);
+    expect(bookingInserts[0].guest_email).toMatch(/@no-email\.invalid$/);
+  });
+
+  it("returns {ok:false} when guestEmailRequired and email is missing", async () => {
+    seedPilotWithAiEventType();
+
+    const calcom = await import("@/lib/calcom");
+    vi.mocked(calcom.createBooking).mockResolvedValue({
+      uid: "should-not-be-called",
+      start: SLOT,
+      status: "confirmed",
+      meetingUrl: null,
+      raw: {},
+    });
+
+    const authMod = await import("@/lib/agent-booking-auth");
+    vi.mocked(authMod.getWorkspaceGuestPolicy).mockResolvedValue({
+      guestCancelEnabled: true,
+      guestRescheduleEnabled: true,
+      guestChangeCutoffMinutes: 120,
+      guestEmailRequired: true,
+      isPilot: false,
+    });
+
+    const tool = (await import("../../agent/tools/book_appointment")).default as unknown as {
+      execute: (input: Record<string, unknown>, ctx: unknown) => Promise<ToolResult>;
+    };
+
+    const result = await tool.execute(
+      {
+        guestName: "Needs Email",
+        phone: "+84999888777",
+        start: SLOT,
+      },
+      {
+        session: {
+          id: "test-session-email-required",
+          auth: { current: null, initiator: null },
+        },
+      },
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("requires an email");
+    }
+    expect(calcom.createBooking).not.toHaveBeenCalled();
   });
 });
