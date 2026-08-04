@@ -10,10 +10,10 @@ import {
   toolError,
 } from "@/lib/agent-booking-auth";
 import { logAgentToolEvent } from "@/lib/agent-tool-log";
-import { cancelCalBooking, withCalApiKey } from "@/lib/calcom";
+import { cancelWorkspaceBooking } from "@/lib/booking-cancel";
+import { withCalApiKey } from "@/lib/calcom";
 import { APP_ERROR_CODE } from "@/lib/errors";
 import { createNotification } from "@/lib/notifications-write";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getCalApiKeyForWorkspace } from "@/lib/workspace";
 
 export default defineTool({
@@ -79,33 +79,14 @@ export default defineTool({
       } catch {
         return toolError(APP_ERROR_CODE.CAL_NOT_CONFIGURED_GUEST);
       }
-      const cancelled = await withCalApiKey(apiKey, () =>
-        cancelCalBooking({
-          bookingUid: booking.cal_booking_uid,
-          cancellationReason: reason,
+      await withCalApiKey(apiKey, () =>
+        cancelWorkspaceBooking({
+          bookingId: booking.id,
+          calBookingUid: booking.cal_booking_uid,
+          reason,
+          cancelledBy: "guest",
         }),
       );
-
-      const supabase = createAdminClient();
-      const { error: mirrorError } = await supabase
-        .from("bookings")
-        .update({
-          status: "cancelled",
-          list_status: "cancelled",
-          cancelled_by: "guest",
-          raw: cancelled.raw,
-          synced_at: new Date().toISOString(),
-        })
-        .eq("id", booking.id);
-
-      // Cal.com already cancelled — a silent mirror failure would leave the
-      // dashboard showing the slot as still booked until the next cron sync.
-      if (mirrorError) {
-        console.error(
-          `[cancel_appointment] mirror failed for ${booking.cal_booking_uid}`,
-          mirrorError,
-        );
-      }
 
       await logAgentToolEvent({
         toolName: "cancel_appointment",
