@@ -2,20 +2,11 @@ import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { resolveGuestBookingActor } from "@/lib/agent-booking-auth";
 import { logAgentToolEvent } from "@/lib/agent-tool-log";
-import {
-  generateManageCode,
-  hashBookingCode,
-} from "@/lib/booking-manage-code";
-import { createBooking, getAvailableSlots, withCalApiKey } from "@/lib/calcom";
+import { createWorkspaceBooking } from "@/lib/booking-create";
+import { getAvailableSlots, withCalApiKey } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
-import { normalizeCalApiStatus } from "@/lib/booking-status";
-import { calendarDayInTimeZone, formatSlotForGuest } from "@/lib/guest-timezone";
+import { calendarDayInTimeZone } from "@/lib/guest-timezone";
 import { resolveGuestTimeZone } from "@/lib/guest-timezone-resolve";
-import { upsertLeadAsBooked } from "@/lib/leads";
-import { createNotification } from "@/lib/notifications-write";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { ANALYTICS_EVENT } from "@/lib/analytics-events";
-import { trackServer } from "@/lib/analytics-server";
 import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
 import {
   getCalApiKeyForWorkspace,
@@ -125,19 +116,6 @@ export default defineTool({
         return { ok: false as const, error };
       }
 
-      const booking = await withCalApiKey(apiKey, () =>
-        createBooking({
-          start,
-          attendeeName: guestName,
-          attendeeEmail: email,
-          attendeePhone: phone,
-          timeZone,
-          language: locale,
-          notes: [service, notes].filter(Boolean).join(" | ") || undefined,
-          ...eventRef,
-        }),
-      );
-
       const guestActor = await resolveGuestBookingActor({
         sessionId: sid,
         auth,
@@ -152,155 +130,66 @@ export default defineTool({
       });
       const guestTimeZone =
         ws?.service_mode === "online" ? guestTzResolved.guestTimeZone : null;
-      const manageCode = generateManageCode();
-      const manageCodeHash = hashBookingCode(manageCode);
-      const startDisplay = formatSlotForGuest(
-        booking.start,
-        guestTimeZone,
-        timeZone,
-      );
 
-      try {
-        const supabase = createAdminClient();
-        await supabase.from("bookings").upsert(
-          {
-            workspace_id: workspaceId,
-            cal_booking_uid: booking.uid,
-            guest_name: guestName,
-            guest_phone: phone,
-            guest_email: email,
-            service: service ?? aiEvent.title ?? null,
-            start_time: booking.start,
-            status: normalizeCalApiStatus(booking.status),
-            list_status: "upcoming",
-            notes: notes ?? null,
-            session_id: sid,
-            visitor_id: visitorId,
-            chat_session_id: chatSessionId,
-            manage_code_hash: manageCodeHash,
-            guest_timezone: guestTimeZone,
-            raw: booking.raw,
-          },
-          { onConflict: "workspace_id,cal_booking_uid" },
-        );
-
-        await upsertLeadAsBooked({
+      const result = await withCalApiKey(apiKey, () =>
+        createWorkspaceBooking({
           workspaceId,
-          fullName: guestName,
+          eventRef,
+          eventTitle: aiEvent.title,
+          start,
+          guestName,
           phone,
           email,
-          service: service ?? aiEvent.title ?? null,
-          notes: notes ?? null,
+          timeZone,
+          locale,
+          notes,
+          service,
           sessionId: sid,
-        });
-
-        await logAgentToolEvent({
-          toolName: "book_appointment",
-          ok: true,
-          sessionId: sid,
-          workspaceId,
-          meta: { uid: booking.uid },
-        });
-
-        await createNotification({
-          type: "booking_created",
-          title: `New booking: ${guestName}`,
-          body: [service ?? aiEvent.title, booking.start, phone]
-            .filter(Boolean)
-            .join(" · "),
-          severity: "high",
-          href: "/dashboard/bookings",
-          entityType: "booking",
-          entityId: booking.uid,
-          workspaceId,
-        });
-        await trackServer(ANALYTICS_EVENT.BOOKING_CREATED, workspaceId, {
-          workspaceId,
-          service: service ?? aiEvent.title ?? null,
+          visitorId,
+          chatSessionId,
+          guestTimeZone,
           source: "chat",
-        });
-      } catch (dbError) {
-        const warning =
-          dbError instanceof Error
-            ? `Saved on Cal.com but failed to mirror to Supabase: ${dbError.message}`
-            : "Saved on Cal.com but failed to mirror to Supabase";
-        try {
-          const supabase = createAdminClient();
-          await supabase.from("bookings").upsert(
-            {
-              workspace_id: workspaceId,
-              cal_booking_uid: booking.uid,
-              guest_name: guestName,
-              guest_phone: phone,
-              guest_email: email,
-              service: service ?? aiEvent.title ?? null,
-              start_time: booking.start,
-              status: normalizeCalApiStatus(booking.status),
-              list_status: "upcoming",
-              notes: notes ?? null,
-              session_id: sid,
-              visitor_id: visitorId,
-              chat_session_id: chatSessionId,
-              manage_code_hash: manageCodeHash,
-              guest_timezone: guestTimeZone,
-              raw: booking.raw,
-            },
-            { onConflict: "workspace_id,cal_booking_uid" },
-          );
-        } catch {
-          // ignore second failure — still return manageCode below
-        }
+        }),
+      );
+
+      if (!result.ok) {
         await logAgentToolEvent({
           toolName: "book_appointment",
-          ok: true,
-          error: warning,
+          ok: false,
+          error: result.error,
           sessionId: sid,
           workspaceId,
-          meta: { uid: booking.uid, mirrorFailed: true },
         });
-        await createNotification({
-          type: "booking_mirror_failed",
-          title: `Cal.com booking saved but not mirrored to DB`,
-          body: `${guestName} · ${booking.start} · ${warning}`,
-          severity: "medium",
-          href: "/dashboard/bookings",
-          entityType: "booking",
-          entityId: booking.uid,
-          workspaceId,
-        });
-        return {
-          ok: true as const,
-          booking: {
-            uid: booking.uid,
-            start: booking.start,
-            status: booking.status,
-            meetingUrl: booking.meetingUrl,
-            eventTypeId: aiEvent.calEventTypeId || null,
-            eventTypeSlug: aiEvent.slug,
-            display: startDisplay.combined,
-            guestTimeZone,
-            businessTimeZone: timeZone,
-          },
-          warning,
-          manageCode,
-        };
+        return result;
       }
+
+      await logAgentToolEvent({
+        toolName: "book_appointment",
+        ok: true,
+        sessionId: sid,
+        workspaceId,
+        meta: {
+          uid: result.booking.uid,
+          ...(result.warning ? { mirrorFailed: true } : {}),
+        },
+      });
 
       return {
         ok: true as const,
         booking: {
-          uid: booking.uid,
-          start: booking.start,
-          status: booking.status,
-          meetingUrl: booking.meetingUrl,
+          uid: result.booking.uid,
+          start: result.booking.start,
+          status: result.booking.status,
+          meetingUrl: result.booking.meetingUrl,
           eventTypeId: aiEvent.calEventTypeId || null,
           eventTypeSlug: aiEvent.slug,
-          display: startDisplay.combined,
+          display: result.booking.display,
           guestTimeZone,
           businessTimeZone: timeZone,
         },
+        ...(result.warning ? { warning: result.warning } : {}),
         /** Tell the guest once — will be redacted when persisted. */
-        manageCode,
+        manageCode: result.manageCode,
       };
     } catch (error) {
       const message =
