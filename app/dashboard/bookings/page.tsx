@@ -2,11 +2,13 @@ import { redirect } from "next/navigation";
 import { BookingsSyncButton } from "@/components/bookings-sync-button";
 import { BookingsTable } from "@/components/bookings-table";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { NewBookingDialog } from "@/components/new-booking-dialog";
 import { bookingConfig } from "@/lib/booking-config";
 import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { getDashboardUser } from "@/lib/dashboard-user";
 import { createClient } from "@/lib/supabase/server";
 import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
+import { listWorkspaceMeetingTypes } from "@/lib/workspace-cal";
 
 export default async function BookingsPage() {
   const dashboard = await getDashboardUser();
@@ -24,21 +26,23 @@ export default async function BookingsPage() {
   }
 
   const supabase = await createClient();
-  const [{ data: bookings }, { data: workspace }] = await Promise.all([
-    supabase
-      .from("bookings")
-      .select(
-        "id, guest_name, guest_phone, guest_email, start_time, status, list_status, cancelled_by, guest_timezone, service, cal_booking_uid, session_id, synced_at, raw",
-      )
-      .eq("workspace_id", workspaceId)
-      .order("start_time", { ascending: false })
-      .limit(100),
-    supabase
-      .from("workspaces")
-      .select("name, timezone, service_mode")
-      .eq("id", workspaceId)
-      .maybeSingle(),
-  ]);
+  const [{ data: bookings }, { data: workspace }, meetingTypes] =
+    await Promise.all([
+      supabase
+        .from("bookings")
+        .select(
+          "id, guest_name, guest_phone, guest_email, start_time, status, list_status, cancelled_by, guest_timezone, service, cal_booking_uid, session_id, synced_at, raw, created_by_staff_id",
+        )
+        .eq("workspace_id", workspaceId)
+        .order("start_time", { ascending: false })
+        .limit(100),
+      supabase
+        .from("workspaces")
+        .select("name, timezone, service_mode")
+        .eq("id", workspaceId)
+        .maybeSingle(),
+      listWorkspaceMeetingTypes(workspaceId),
+    ]);
 
   const bookingIds = (bookings ?? []).map((b) => b.id);
   const reminderByBooking = new Map<
@@ -71,9 +75,30 @@ export default async function BookingsPage() {
     }
   }
 
+  const staffIds = [
+    ...new Set(
+      (bookings ?? [])
+        .map((b) => b.created_by_staff_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const staffNameById = new Map<string, string>();
+  if (staffIds.length > 0) {
+    const { data: staffProfiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("id", staffIds);
+    for (const p of staffProfiles ?? []) {
+      staffNameById.set(p.id, p.full_name || p.email || "Team");
+    }
+  }
+
   const rows = (bookings ?? []).map((b) => ({
     ...b,
     reminder_status: reminderByBooking.get(b.id) ?? null,
+    created_by_staff_name: b.created_by_staff_id
+      ? (staffNameById.get(b.created_by_staff_id) ?? null)
+      : null,
   }));
 
   const lastSyncedAt = rows.reduce<string | null>((latest, row) => {
@@ -98,7 +123,16 @@ export default async function BookingsPage() {
                 tracking.
               </p>
             </div>
-            <BookingsSyncButton />
+            <div className="flex items-center gap-2">
+              <NewBookingDialog
+                meetingTypes={meetingTypes.map((mt) => ({
+                  id: mt.id,
+                  title: mt.title,
+                  lengthMinutes: mt.length_minutes,
+                }))}
+              />
+              <BookingsSyncButton />
+            </div>
           </div>
           <BookingsTable
             hostName={workspace?.name ?? "Appointment"}
