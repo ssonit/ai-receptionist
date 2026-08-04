@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "agent/channels/eve.ts": {
-    "mtime": 1785747418.2201197,
-    "ast_hash": "a569166c24954742642212eda090f52c",
+    "mtime": 1785809800.0662742,
+    "ast_hash": "1eb7f46274776419684cc44bb92575a4",
     "semantic_hash": ""
   },
   "agent/date-context.ts": {
@@ -885,8 +885,8 @@
     "semantic_hash": ""
   },
   "app/api/chat/sessions/[id]/messages/route.ts": {
-    "mtime": 1785746961.4834814,
-    "ast_hash": "a18fed8bf985a7c6b2f71a7a034331cb",
+    "mtime": 1785809820.4925466,
+    "ast_hash": "4c49f69ea8357b8672572d286e8558e3",
     "semantic_hash": ""
   },
   "app/api/chat/sessions/[id]/route.ts": {
@@ -910,8 +910,8 @@
     "semantic_hash": ""
   },
   "components/conversations-table.tsx": {
-    "mtime": 1785747584.9643092,
-    "ast_hash": "b4496036dd0cb4eb934ac675e2ce9df6",
+    "mtime": 1785810147.9238083,
+    "ast_hash": "14c9d8038bec0723b00303ebefb75622",
     "semantic_hash": ""
   },
   "lib/chat-api.ts": {
@@ -920,8 +920,8 @@
     "semantic_hash": ""
   },
   "lib/chat-sessions.ts": {
-    "mtime": 1785746954.9478471,
-    "ast_hash": "cad48fc97048d9121646b02d65f0e1c6",
+    "mtime": 1785809808.6030655,
+    "ast_hash": "fdb8a7f0219ddeb1c86a4df15c302df6",
     "semantic_hash": ""
   },
   "lib/conversations-dashboard.ts": {
@@ -3352,6 +3352,21 @@
   ".claude/rules/typescript-conventions.md": {
     "mtime": 1785747949.7434492,
     "ast_hash": "51ded8248833cdf8318ef2a687f38943",
+    "semantic_hash": ""
+  },
+  "app/api/chat/sessions/[id]/messages/route.test.ts": {
+    "mtime": 1785809884.220345,
+    "ast_hash": "57a30ebc00074fcb91df8adfc5a2212d",
+    "semantic_hash": ""
+  },
+  "components/conversation-detail-sheet.tsx": {
+    "mtime": 1785810123.9465165,
+    "ast_hash": "e47976e8fea59906f99a8b4a2ebac24c",
+    "semantic_hash": ""
+  },
+  "components/conversation-display.ts": {
+    "mtime": 1785810079.8631053,
+    "ast_hash": "7a1634ab4bf1ae5c6f8a05d03b158ba0",
     "semantic_hash": ""
   }
 }
