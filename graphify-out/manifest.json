@@ -90,8 +90,8 @@
     "semantic_hash": "c29a649900c936293f61f6e30496de7d"
   },
   "app/dashboard/bookings/actions.ts": {
-    "mtime": 1785815634.6983378,
-    "ast_hash": "ae522033860df06b20d588f328741962",
+    "mtime": 1785819682.7916887,
+    "ast_hash": "fc67939d69e95b9c0c979ce3f12c8c3f",
     "semantic_hash": ""
   },
   "app/dashboard/bookings/page.tsx": {
@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "components/bookings-table.tsx": {
-    "mtime": 1785815948.772529,
-    "ast_hash": "31b47d4504f29b90f0d2fdcc2b28f77d",
+    "mtime": 1785820248.33303,
+    "ast_hash": "6f97d0df29ab8ef90031de0769a661dd",
     "semantic_hash": ""
   },
   "components/chart-area-interactive.tsx": {
@@ -2075,13 +2075,13 @@
     "semantic_hash": ""
   },
   "lib/errors/app-codes.ts": {
-    "mtime": 1785815599.78239,
-    "ast_hash": "9fb9c18f0cf762577023a7e186933105",
+    "mtime": 1785818973.8702936,
+    "ast_hash": "17c8d0592c721c0aa87465ab87522990",
     "semantic_hash": ""
   },
   "lib/errors/app-messages.ts": {
-    "mtime": 1785815626.12851,
-    "ast_hash": "38b258d6a3862a0647995da2c587d036",
+    "mtime": 1785818979.8365378,
+    "ast_hash": "9175b4ac31eede924426276e459d22d5",
     "semantic_hash": ""
   },
   "lib/errors/format.ts": {
@@ -2170,8 +2170,8 @@
     "semantic_hash": ""
   },
   "agent/tools/cancel_appointment.ts": {
-    "mtime": 1785560238.9114754,
-    "ast_hash": "77cceea2ef65bf942ce226feb79f9827",
+    "mtime": 1785818511.1326847,
+    "ast_hash": "14b9600a3890830a593b21da02b07876",
     "semantic_hash": ""
   },
   "agent/tools/reschedule_appointment.ts": {
@@ -3400,8 +3400,8 @@
     "semantic_hash": ""
   },
   "app/dashboard/bookings/actions.test.ts": {
-    "mtime": 1785815640.1763995,
-    "ast_hash": "9e9cb8f712643b1919b4f36ae7b9bbd5",
+    "mtime": 1785819738.8400886,
+    "ast_hash": "b60c855fcbb56f0766a60b47ef6c2b05",
     "semantic_hash": ""
   },
   "components/new-booking-dialog.tsx": {
@@ -3412,6 +3412,31 @@
   "docs/superpowers/specs/2026-08-04-manual-booking-cancel-design.md": {
     "mtime": 1785816868.6148233,
     "ast_hash": "1c3fb3e0dc87ad77d447f09c5abdaaba",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-04-manual-booking-cancel.md": {
+    "mtime": 1785817746.1599693,
+    "ast_hash": "5f5d5f6c34114904e31c2ce5b5fd3cc5",
+    "semantic_hash": ""
+  },
+  "lib/booking-cancel.test.ts": {
+    "mtime": 1785818080.7603889,
+    "ast_hash": "71c0a748080ff98e7303757708e7fd86",
+    "semantic_hash": ""
+  },
+  "lib/booking-cancel.ts": {
+    "mtime": 1785818114.5578842,
+    "ast_hash": "eb40d0ade92d06c85e7eb2f688551d86",
+    "semantic_hash": ""
+  },
+  "components/ui/alert-dialog.tsx": {
+    "mtime": 1785818739.3896575,
+    "ast_hash": "7fa9a1ca2e6d3b5ab3760bd9252c1829",
+    "semantic_hash": ""
+  },
+  "components/cancel-booking-alert-dialog.tsx": {
+    "mtime": 1785819992.8652089,
+    "ast_hash": "290a917679e8b2f454c07c98c8de66f2",
     "semantic_hash": ""
   }
 }
