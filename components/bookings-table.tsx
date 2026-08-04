@@ -19,6 +19,10 @@ import {
 } from "@/lib/booking-status";
 import { cn } from "@/lib/utils";
 import { openAfterMenuClose } from "@/lib/open-after-menu-close";
+import {
+  CancelBookingAlertDialog,
+  type CancelBookingTarget,
+} from "@/components/cancel-booking-alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -205,6 +209,9 @@ export function BookingsTable({
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [pageIndex, setPageIndex] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(10);
+  const [cancelTarget, setCancelTarget] = React.useState<CancelBookingTarget | null>(
+    null,
+  );
 
   const counts = React.useMemo(() => {
     const next: Record<CalBookingView, number> = {
@@ -426,6 +433,26 @@ export function BookingsTable({
                               >
                                 Copy Cal UID
                               </DropdownMenuItem>
+                              {rowView(row) !== "past" &&
+                              rowView(row) !== "cancelled" ? (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    variant="destructive"
+                                    onSelect={() => {
+                                      openAfterMenuClose(() =>
+                                        setCancelTarget({
+                                          id: row.id,
+                                          guest_name: row.guest_name,
+                                          start_time: row.start_time,
+                                        }),
+                                      );
+                                    }}
+                                  >
+                                    Cancel booking
+                                  </DropdownMenuItem>
+                                </>
+                              ) : null}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -508,12 +535,22 @@ export function BookingsTable({
             <BookingDetailSheet
               booking={active}
               hostName={hostName}
+              onRequestCancel={setCancelTarget}
               serviceMode={serviceMode}
               timeZone={timeZone}
             />
           ) : null}
         </SheetContent>
       </Sheet>
+
+      <CancelBookingAlertDialog
+        booking={cancelTarget}
+        onOpenChange={(open) => {
+          if (!open) setCancelTarget(null);
+        }}
+        open={Boolean(cancelTarget)}
+        timeZone={timeZone}
+      />
     </div>
   );
 }
@@ -523,11 +560,13 @@ function BookingDetailSheet({
   timeZone,
   hostName,
   serviceMode = "onsite",
+  onRequestCancel,
 }: {
   booking: BookingRow;
   timeZone: string;
   hostName: string;
   serviceMode?: "onsite" | "online";
+  onRequestCancel: (target: CancelBookingTarget) => void;
 }) {
   const meetingUrl = extractMeetingUrl(booking);
 
@@ -555,6 +594,10 @@ function BookingDetailSheet({
           ) : booking.cancelled_by === "cal" ? (
             <Badge variant="outline" className="text-xs">
               Cancelled on Cal.com
+            </Badge>
+          ) : booking.cancelled_by === "owner" ? (
+            <Badge variant="secondary" className="text-xs">
+              Cancelled by staff
             </Badge>
           ) : null}
           {booking.reminder_status === "sent" ? (
@@ -737,6 +780,25 @@ function BookingDetailSheet({
             >
               Copy Cal UID
             </DropdownMenuItem>
+            {rowView(booking) !== "past" && rowView(booking) !== "cancelled" ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => {
+                    openAfterMenuClose(() =>
+                      onRequestCancel({
+                        id: booking.id,
+                        guest_name: booking.guest_name,
+                        start_time: booking.start_time,
+                      }),
+                    );
+                  }}
+                >
+                  Cancel booking
+                </DropdownMenuItem>
+              </>
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
