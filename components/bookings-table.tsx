@@ -67,6 +67,7 @@ export type BookingRow = {
   session_id: string | null;
   synced_at: string | null;
   raw?: unknown;
+  created_by_staff_name?: string | null;
 };
 
 const TAB_VIEWS = CAL_BOOKING_VIEWS.filter(
@@ -344,6 +345,14 @@ export function BookingsTable({
                           <p className="truncate text-sm font-medium">
                             {bookingTitle(row, hostName)}
                           </p>
+                          {row.created_by_staff_name ? (
+                            <Badge
+                              variant="secondary"
+                              className="mt-1 rounded-sm text-[10px]"
+                            >
+                              Booked by {row.created_by_staff_name}
+                            </Badge>
+                          ) : null}
                           <p className="text-muted-foreground mt-1 truncate text-sm">
                             {participantsLine(row)}
                           </p>
