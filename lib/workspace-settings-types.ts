@@ -27,6 +27,7 @@ export type WorkspaceOpsValues = {
   guestCancelEnabled?: boolean;
   guestRescheduleEnabled?: boolean;
   guestChangeCutoffMinutes?: number;
+  guestEmailRequired?: boolean;
   serviceMode?: "onsite" | "online";
   bookingRemindersEnabled?: boolean;
   reminderLeadMinutes?: number[];

@@ -47,7 +47,7 @@ export default async function SettingsPage() {
     const { data } = await supabase
       .from("workspaces")
       .select(
-        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end, cal_auth_mode, cal_username, webhook_secret_encrypted, plan_tier, subscription_status, trial_ends_at",
+        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_email_required, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end, cal_auth_mode, cal_username, webhook_secret_encrypted, plan_tier, subscription_status, trial_ends_at",
       )
       .eq("id", dashboard.workspaceId)
       .maybeSingle();
@@ -96,6 +96,7 @@ export default async function SettingsPage() {
         tagline: data.tagline?.trim() || WORKSPACE_AI_DEFAULTS.tagline,
         guestCancelEnabled: data.guest_cancel_enabled !== false,
         guestRescheduleEnabled: data.guest_reschedule_enabled !== false,
+        guestEmailRequired: data.guest_email_required !== false,
         guestChangeCutoffMinutes:
           typeof data.guest_change_cutoff_minutes === "number"
             ? data.guest_change_cutoff_minutes

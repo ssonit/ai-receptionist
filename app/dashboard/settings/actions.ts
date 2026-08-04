@@ -107,6 +107,7 @@ export async function saveWorkspaceSettings(
       tagline: optionalText(formData, "tagline"),
       guest_cancel_enabled: formData.get("guestCancelEnabled") === "on",
       guest_reschedule_enabled: formData.get("guestRescheduleEnabled") === "on",
+      guest_email_required: formData.get("guestEmailRequired") === "on",
       guest_change_cutoff_minutes: guestChangeCutoffMinutes,
       service_mode:
         formData.get("serviceMode") === "online" ? "online" : "onsite",

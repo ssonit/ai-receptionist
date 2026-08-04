@@ -560,6 +560,14 @@ export function WorkspaceSettingsForm({
                     />
                     Allow guest reschedule
                   </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      defaultChecked={workspace?.guestEmailRequired !== false}
+                      name="guestEmailRequired"
+                      type="checkbox"
+                    />
+                    Require guest email
+                  </label>
                   <div className="max-w-xs space-y-2">
                     <Label htmlFor="guest-cutoff">
                       Cutoff (minutes before start)
