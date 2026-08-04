@@ -15,6 +15,8 @@ import {
   getChatWorkspaceId,
   jsonError,
 } from "@/lib/chat-api";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
+import { createNotificationDebounced } from "@/lib/notifications-write";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -96,6 +98,26 @@ export async function POST(request: Request, { params }: Params) {
     await upsertChatMessages({ sessionId: id, messages });
 
     const firstUser = messages.find((m) => m.role === "user" && m.content.trim());
+
+    // Staff hold this conversation, so the agent never ran for this message and
+    // nothing else would tell them a guest replied. Same notice the messenger
+    // and zalo handlers post (agent/channels/messenger.ts), debounced the same
+    // way; it swallows its own errors, so a failure here cannot lose the
+    // message the guest just sent.
+    if (session.reply_mode === "human" && session.workspace_id && firstUser) {
+      await createNotificationDebounced({
+        type: "conversation_needs_reply",
+        title: "New message in a conversation you took over",
+        body: firstUser.content.slice(0, 140),
+        severity: "high",
+        workspaceId: session.workspace_id,
+        entityType: "chat_session",
+        entityId: session.id,
+        href: `${DASHBOARD_PATH.conversations}?session=${session.id}`,
+        windowMinutes: 5,
+      });
+    }
+
     const nextTitle =
       body.title ??
       ((session.title === "New chat" || session.title === "Chat mới") &&
