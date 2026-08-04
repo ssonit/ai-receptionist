@@ -48,21 +48,174 @@ type DetailPayload = {
   toolErrors?: ToolErrorRow[];
 };
 
+type HeaderState = {
+  title: string;
+  outcome: ConversationOutcome;
+  leadId: string | null;
+  bookingId: string | null;
+  toolErrors: ToolErrorRow[];
+  eveSessionId: string | null;
+  replyMode: "ai" | "human";
+  claimedByName: string | null;
+};
+
+type HeaderAction = { type: "applyHeader"; payload: DetailPayload };
+
+function headerReducer(
+  state: HeaderState,
+  action: HeaderAction,
+): HeaderState {
+  switch (action.type) {
+    case "applyHeader": {
+      const data = action.payload;
+      return {
+        title: data.session?.title ?? "Conversation",
+        outcome: data.outcome ?? "empty",
+        leadId: data.leadId ?? null,
+        bookingId: data.bookingId ?? null,
+        toolErrors: data.toolErrors ?? [],
+        eveSessionId: data.session?.eve_session_id ?? null,
+        replyMode: data.session?.reply_mode === "human" ? "human" : "ai",
+        claimedByName: data.session?.claimedByName ?? null,
+      };
+    }
+    default:
+      return state;
+  }
+}
+
+function ConversationTranscript({
+  messages,
+  hasMore,
+  loadingOlder,
+  loadOlder,
+}: {
+  messages: ChatMessageRow[];
+  hasMore: boolean;
+  loadingOlder: boolean;
+  loadOlder: () => void;
+}) {
+  return (
+    <div className="mt-8 space-y-3">
+      <h3 className="text-sm font-medium">Transcript</h3>
+      {hasMore ? (
+        <Button
+          disabled={loadingOlder}
+          onClick={() => void loadOlder()}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          {loadingOlder ? "Loading…" : "Load earlier messages"}
+        </Button>
+      ) : null}
+      {messages.length === 0 ? (
+        <p className="text-muted-foreground text-sm">No messages yet.</p>
+      ) : (
+        <ul className="space-y-3">
+          {messages.map((m) => {
+            const raw = m.raw as {
+              kind?: string;
+              sentBy?: string;
+              staffName?: string;
+            } | null;
+            if (raw?.kind === "handoff") {
+              return (
+                <li key={m.id}>
+                  <p className="py-2 text-center text-xs text-muted-foreground">
+                    {m.content}
+                  </p>
+                </li>
+              );
+            }
+            const senderLabel =
+              m.role === "assistant" && raw?.sentBy === "staff"
+                ? `Staff · ${raw.staffName ?? "Team"}`
+                : m.role === "assistant"
+                  ? "Assistant"
+                  : m.role === "user"
+                    ? "Guest"
+                    : m.role;
+            return (
+              <li
+                key={m.id}
+                className={cn(
+                  "rounded-lg border px-3 py-2 text-sm [content-visibility:auto] [contain-intrinsic-size:auto_80px]",
+                  m.role === "user"
+                    ? "border-border bg-muted/40"
+                    : "border-border/60 bg-background",
+                )}
+              >
+                <p className="text-muted-foreground mb-1 text-[10px] uppercase tracking-wide">
+                  {senderLabel}
+                </p>
+                <p className="whitespace-pre-wrap break-words">{m.content}</p>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ConversationToolErrors({
+  toolErrors,
+}: {
+  toolErrors: ToolErrorRow[];
+}) {
+  if (toolErrors.length === 0) return null;
+  return (
+    <div className="mt-8 space-y-2">
+      <h3 className="text-sm font-medium">Tool errors</h3>
+      <ul className="divide-y rounded-lg border">
+        {toolErrors.map((row) => (
+          <li key={row.id} className="px-3 py-2 text-sm">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline" className="font-mono text-[10px]">
+                {row.tool_name}
+              </Badge>
+              <span className="text-muted-foreground text-xs">
+                {formatConversationWhen(row.created_at)}
+              </span>
+            </div>
+            <p className="text-destructive mt-1 break-words">
+              {row.error || "Unknown error"}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function ConversationDetailSheet({ sessionId }: { sessionId: string }) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [title, setTitle] = React.useState("Conversation");
-  const [outcome, setOutcome] = React.useState<ConversationOutcome>("empty");
+  const [header, dispatch] = React.useReducer(headerReducer, {
+    title: "Conversation",
+    outcome: "empty" as ConversationOutcome,
+    leadId: null,
+    bookingId: null,
+    toolErrors: [] as ToolErrorRow[],
+    eveSessionId: null,
+    replyMode: "ai" as "ai" | "human",
+    claimedByName: null,
+  });
+  const {
+    title,
+    outcome,
+    leadId,
+    bookingId,
+    toolErrors,
+    eveSessionId,
+    replyMode,
+    claimedByName,
+  } = header;
   const [messages, setMessages] = React.useState<ChatMessageRow[]>([]);
   const [nextCursor, setNextCursor] = React.useState<string | null>(null);
   const [hasMore, setHasMore] = React.useState(false);
   const [loadingOlder, setLoadingOlder] = React.useState(false);
-  const [leadId, setLeadId] = React.useState<string | null>(null);
-  const [bookingId, setBookingId] = React.useState<string | null>(null);
-  const [toolErrors, setToolErrors] = React.useState<ToolErrorRow[]>([]);
-  const [eveSessionId, setEveSessionId] = React.useState<string | null>(null);
-  const [replyMode, setReplyMode] = React.useState<"ai" | "human">("ai");
-  const [claimedByName, setClaimedByName] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState("");
   const [sending, setSending] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
@@ -77,14 +230,7 @@ export function ConversationDetailSheet({ sessionId }: { sessionId: string }) {
 
   /** Shared by the first load and every refresh — everything but the transcript. */
   const applyHeader = React.useCallback((data: DetailPayload) => {
-    setTitle(data.session?.title ?? "Conversation");
-    setOutcome(data.outcome ?? "empty");
-    setLeadId(data.leadId ?? null);
-    setBookingId(data.bookingId ?? null);
-    setToolErrors(data.toolErrors ?? []);
-    setEveSessionId(data.session?.eve_session_id ?? null);
-    setReplyMode(data.session?.reply_mode === "human" ? "human" : "ai");
-    setClaimedByName(data.session?.claimedByName ?? null);
+    dispatch({ type: "applyHeader", payload: data });
   }, []);
 
   const applyDetail = React.useCallback(
@@ -121,6 +267,25 @@ export function ConversationDetailSheet({ sessionId }: { sessionId: string }) {
     applyDetail(await fetchDetail());
   }, [applyDetail, fetchDetail]);
 
+  /**
+   * `action` rather than onSubmit + preventDefault: the server action is the
+   * submit handler, so the form still posts before hydration. The textarea
+   * stays controlled on purpose — React resets uncontrolled fields once the
+   * action settles, which would throw away the draft on a failed send.
+   */
+  const [replyState, replyAction, replyPending] = React.useActionState(
+    async (_prev: { error?: string } | null, formData: FormData) => {
+      const text = String(formData.get("text") ?? "").trim();
+      if (!text) return null;
+      const res = await sendStaffMessageAction(sessionId, text);
+      if (res.error) return res;
+      setDraft("");
+      await reload();
+      return null;
+    },
+    null,
+  );
+
   React.useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -146,8 +311,8 @@ export function ConversationDetailSheet({ sessionId }: { sessionId: string }) {
   // does not tear down and restart the interval.
   const busyRef = React.useRef(false);
   React.useEffect(() => {
-    busyRef.current = sending;
-  }, [sending]);
+    busyRef.current = sending || replyPending;
+  }, [sending, replyPending]);
 
   /**
    * Without this the sheet is a snapshot: staff reply, the guest answers, and
@@ -275,133 +440,42 @@ export function ConversationDetailSheet({ sessionId }: { sessionId: string }) {
           <p className="text-destructive mt-8 text-sm">{error}</p>
         ) : (
           <>
-            <div className="mt-8 space-y-3">
-              <h3 className="text-sm font-medium">Transcript</h3>
-              {hasMore ? (
-                <Button
-                  disabled={loadingOlder}
-                  onClick={() => void loadOlder()}
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                >
-                  {loadingOlder ? "Loading…" : "Load earlier messages"}
-                </Button>
-              ) : null}
-              {messages.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No messages yet.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {messages.map((m) => {
-                    const raw = m.raw as {
-                      kind?: string;
-                      sentBy?: string;
-                      staffName?: string;
-                    } | null;
-                    if (raw?.kind === "handoff") {
-                      return (
-                        <li key={m.id}>
-                          <p className="py-2 text-center text-xs text-muted-foreground">
-                            {m.content}
-                          </p>
-                        </li>
-                      );
-                    }
-                    const senderLabel =
-                      m.role === "assistant" && raw?.sentBy === "staff"
-                        ? `Staff · ${raw.staffName ?? "Team"}`
-                        : m.role === "assistant"
-                          ? "Assistant"
-                          : m.role === "user"
-                            ? "Guest"
-                            : m.role;
-                    return (
-                      <li
-                        key={m.id}
-                        className={cn(
-                          "rounded-lg border px-3 py-2 text-sm [content-visibility:auto] [contain-intrinsic-size:auto_80px]",
-                          m.role === "user"
-                            ? "border-border bg-muted/40"
-                            : "border-border/60 bg-background",
-                        )}
-                      >
-                        <p className="text-muted-foreground mb-1 text-[10px] uppercase tracking-wide">
-                          {senderLabel}
-                        </p>
-                        <p className="whitespace-pre-wrap break-words">{m.content}</p>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
+            <ConversationTranscript
+              messages={messages}
+              hasMore={hasMore}
+              loadingOlder={loadingOlder}
+              loadOlder={loadOlder}
+            />
 
-            {toolErrors.length > 0 ? (
-              <div className="mt-8 space-y-2">
-                <h3 className="text-sm font-medium">Tool errors</h3>
-                <ul className="divide-y rounded-lg border">
-                  {toolErrors.map((row) => (
-                    <li key={row.id} className="px-3 py-2 text-sm">
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline" className="font-mono text-[10px]">
-                          {row.tool_name}
-                        </Badge>
-                        <span className="text-muted-foreground text-xs">
-                          {formatConversationWhen(row.created_at)}
-                        </span>
-                      </div>
-                      <p className="text-destructive mt-1 break-words">
-                        {row.error || "Unknown error"}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
+            <ConversationToolErrors toolErrors={toolErrors} />
           </>
         )}
       </div>
 
       {replyMode === "human" && (
-        <form
-          className="flex items-end gap-2 border-t px-4 py-3"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const text = draft.trim();
-            if (!text || sending) return;
-            setSending(true);
-            setActionError(null);
-            try {
-              const res = await sendStaffMessageAction(sessionId, text);
-              if (res.error) {
-                setActionError(res.error);
-              } else {
-                setDraft("");
-                await reload();
-              }
-            } finally {
-              setSending(false);
-            }
-          }}
-        >
+        <form className="flex items-end gap-2 border-t px-4 py-3" action={replyAction}>
           <label className="sr-only" htmlFor="staff-reply-draft">
             Reply to the guest
           </label>
           <textarea
             id="staff-reply-draft"
+            name="text"
             className="min-h-16 flex-1 resize-none rounded-md border bg-transparent px-3 py-2 text-sm"
             placeholder="Reply to the guest…"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            disabled={sending}
+            disabled={replyPending}
+            required
           />
-          <Button type="submit" size="sm" disabled={sending || !draft.trim()}>
-            Send
+          <Button type="submit" size="sm" disabled={replyPending || !draft.trim()}>
+            {replyPending ? "Sending…" : "Send"}
           </Button>
         </form>
       )}
-      {actionError && (
-        <p className="px-4 pb-3 text-sm text-destructive">{actionError}</p>
+      {(actionError || replyState?.error) && (
+        <p className="px-4 pb-3 text-sm text-destructive">
+          {actionError || replyState?.error}
+        </p>
       )}
     </div>
   );
