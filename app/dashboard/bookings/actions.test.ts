@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   getDashboardUser: vi.fn(),
   getAvailableSlots: vi.fn(),
   createWorkspaceBooking: vi.fn(),
+  cancelWorkspaceBooking: vi.fn(),
 }));
 
 vi.mock("@/lib/dashboard-user", () => ({
@@ -25,6 +26,9 @@ vi.mock("@/lib/calcom", async (importOriginal) => ({
 }));
 vi.mock("@/lib/booking-create", () => ({
   createWorkspaceBooking: mocks.createWorkspaceBooking,
+}));
+vi.mock("@/lib/booking-cancel", () => ({
+  cancelWorkspaceBooking: mocks.cancelWorkspaceBooking,
 }));
 
 function seedMeetingType(overrides?: Record<string, unknown>) {
@@ -178,6 +182,87 @@ describe("createManualBookingAction", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).not.toContain("no_available_users_found_error");
+    }
+  });
+});
+
+function seedBooking(overrides?: Record<string, unknown>) {
+  supabaseMock.seed("bookings", [
+    {
+      id: "booking-1",
+      workspace_id: WS,
+      cal_booking_uid: "cal_uid_1",
+      status: "accepted",
+      ...overrides,
+    },
+  ]);
+  supabaseMock.seed("workspaces", [
+    {
+      id: WS,
+      name: "Acme",
+      slug: "acme",
+      timezone: "Asia/Ho_Chi_Minh",
+      cal_username: "acme-biz",
+      cal_api_key_encrypted: "encrypted-key",
+      service_mode: "onsite",
+    },
+  ]);
+}
+
+describe("cancelManualBookingAction", () => {
+  it("cancels with cancelledBy: owner", async () => {
+    seedBooking();
+    mocks.cancelWorkspaceBooking.mockResolvedValue({ status: "cancelled" });
+
+    const { cancelManualBookingAction } = await import("./actions");
+    const result = await cancelManualBookingAction({
+      bookingId: "booking-1",
+      reason: "Guest asked to reschedule",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(mocks.cancelWorkspaceBooking).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookingId: "booking-1",
+        calBookingUid: "cal_uid_1",
+        reason: "Guest asked to reschedule",
+        cancelledBy: "owner",
+      }),
+    );
+  });
+
+  it("rejects a booking id from another workspace without calling Cal.com", async () => {
+    seedBooking({ workspace_id: OTHER_WS });
+
+    const { cancelManualBookingAction } = await import("./actions");
+    const result = await cancelManualBookingAction({ bookingId: "booking-1" });
+
+    expect(result.ok).toBe(false);
+    expect(mocks.cancelWorkspaceBooking).not.toHaveBeenCalled();
+  });
+
+  it("rejects an already-cancelled booking without calling Cal.com", async () => {
+    seedBooking({ status: "cancelled" });
+
+    const { cancelManualBookingAction } = await import("./actions");
+    const result = await cancelManualBookingAction({ bookingId: "booking-1" });
+
+    expect(result.ok).toBe(false);
+    expect(mocks.cancelWorkspaceBooking).not.toHaveBeenCalled();
+  });
+
+  it("wraps a Cal.com failure in the generic error code, not the raw message", async () => {
+    seedBooking();
+    mocks.cancelWorkspaceBooking.mockRejectedValue(
+      new Error("Cal.com says: booking_not_found"),
+    );
+
+    const { cancelManualBookingAction } = await import("./actions");
+    const result = await cancelManualBookingAction({ bookingId: "booking-1" });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).not.toContain("booking_not_found");
     }
   });
 });

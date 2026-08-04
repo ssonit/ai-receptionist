@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { compareYmd, todayYmd } from "@/agent/date-context";
+import { cancelWorkspaceBooking } from "@/lib/booking-cancel";
 import { createWorkspaceBooking } from "@/lib/booking-create";
 import { getAvailableSlots, withCalApiKey } from "@/lib/calcom";
 import { getDashboardUser } from "@/lib/dashboard-user";
@@ -12,6 +13,7 @@ import {
 } from "@/lib/errors";
 import { formatSlotForGuest } from "@/lib/guest-timezone";
 import { syncCalBookingsToSupabase } from "@/lib/sync-cal-bookings";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getCalApiKeyForWorkspace, getWorkspaceById } from "@/lib/workspace";
 import {
@@ -113,6 +115,18 @@ async function resolveEventRef(workspaceId: string, meetingTypeId: string) {
     meetingType,
     eventRef: eventRefFromMeetingType(meetingType, username),
   };
+}
+
+async function getWorkspaceBookingById(workspaceId: string, bookingId: string) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("id, workspace_id, cal_booking_uid, status")
+    .eq("workspace_id", workspaceId)
+    .eq("id", bookingId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 export async function getAvailableSlotsAction(input: {
@@ -218,5 +232,46 @@ export async function createManualBookingAction(input: {
   } catch (error) {
     console.error("[bookings] createManualBookingAction failed", error);
     return { ok: false, error: appErrorMessage(APP_ERROR_CODE.BOOKING_CREATE_FAILED) };
+  }
+}
+
+export async function cancelManualBookingAction(input: {
+  bookingId: string;
+  reason?: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const ctx = await requireStaff();
+  if ("error" in ctx) return { ok: false, error: ctx.error };
+
+  const booking = await getWorkspaceBookingById(ctx.workspaceId, input.bookingId);
+  if (!booking || !booking.cal_booking_uid) {
+    return { ok: false, error: appErrorMessage(APP_ERROR_CODE.NOT_FOUND) };
+  }
+  if (booking.status === "cancelled") {
+    return {
+      ok: false,
+      error: appErrorMessage(APP_ERROR_CODE.BOOKING_ALREADY_CANCELLED),
+    };
+  }
+
+  let apiKey: string;
+  try {
+    apiKey = await getCalApiKeyForWorkspace(ctx.workspaceId);
+  } catch {
+    return { ok: false, error: appErrorMessage(APP_ERROR_CODE.CAL_NOT_CONFIGURED) };
+  }
+
+  try {
+    await withCalApiKey(apiKey, () =>
+      cancelWorkspaceBooking({
+        bookingId: booking.id,
+        calBookingUid: booking.cal_booking_uid!,
+        reason: input.reason,
+        cancelledBy: "owner",
+      }),
+    );
+    return { ok: true };
+  } catch (error) {
+    console.error("[bookings] cancelManualBookingAction failed", error);
+    return { ok: false, error: appErrorMessage(APP_ERROR_CODE.BOOKING_CANCEL_FAILED) };
   }
 }
