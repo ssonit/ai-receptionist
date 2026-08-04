@@ -570,8 +570,8 @@
     "semantic_hash": ""
   },
   "tsconfig.json": {
-    "mtime": 1785722631.8356166,
-    "ast_hash": "0681462119cffa45fe724e132a5463d0",
+    "mtime": 1785811680.1049855,
+    "ast_hash": "8bf1a8db28d108c815ec3d06d61b0a3c",
     "semantic_hash": ""
   },
   ".agents/skills/brandkit/SKILL.md": {
@@ -3309,11 +3309,6 @@
     "ast_hash": "2ef8e8fe0d962603034785b6a334e633",
     "semantic_hash": ""
   },
-  "supabase/migrations/20260803000001_chat_session_reply_mode.sql": {
-    "mtime": 1785746022.004229,
-    "ast_hash": "dbb56f9945f4dda5863b2b21ca65a7bb",
-    "semantic_hash": ""
-  },
   "lib/channel-outbound.test.ts": {
     "mtime": 1785746299.4131289,
     "ast_hash": "02d0f02f41dfdb0687c0717b40caf40c",
@@ -3367,6 +3362,16 @@
   "components/conversation-display.ts": {
     "mtime": 1785810079.8631053,
     "ast_hash": "7a1634ab4bf1ae5c6f8a05d03b158ba0",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260803000002_chat_session_reply_mode.sql": {
+    "mtime": 1785746022.004229,
+    "ast_hash": "dbb56f9945f4dda5863b2b21ca65a7bb",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260803000003_conversation_needs_reply_type.sql": {
+    "mtime": 1785812104.7614877,
+    "ast_hash": "163d7e848fadd180bc9c9d64b5e25acc",
     "semantic_hash": ""
   }
 }
