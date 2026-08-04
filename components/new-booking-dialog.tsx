@@ -64,17 +64,23 @@ export function NewBookingDialog({
       setSlotsLoading(true);
       setSlotsError(null);
       setSelectedStart(null);
-      const result = await getAvailableSlotsAction({
-        meetingTypeId: nextMeetingTypeId,
-        date: nextDate,
-      });
-      setSlotsLoading(false);
-      if (!result.ok) {
+      try {
+        const result = await getAvailableSlotsAction({
+          meetingTypeId: nextMeetingTypeId,
+          date: nextDate,
+        });
+        if (!result.ok) {
+          setSlots([]);
+          setSlotsError(result.error);
+          return;
+        }
+        setSlots(result.slots);
+      } catch {
         setSlots([]);
-        setSlotsError(result.error);
-        return;
+        setSlotsError("Could not load open slots. Try again.");
+      } finally {
+        setSlotsLoading(false);
       }
-      setSlots(result.slots);
     },
     [],
   );

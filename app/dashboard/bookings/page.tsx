@@ -10,6 +10,13 @@ import { createClient } from "@/lib/supabase/server";
 import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
 import { listWorkspaceMeetingTypes } from "@/lib/workspace-cal";
 
+const REMINDER_STATUS_RANK: Record<string, number> = {
+  failed: 4,
+  pending: 3,
+  sent: 2,
+  skipped: 1,
+};
+
 export default async function BookingsPage() {
   const dashboard = await getDashboardUser();
   if (!dashboard) {
@@ -55,12 +62,7 @@ export default async function BookingsPage() {
       .select("booking_id, status")
       .eq("workspace_id", workspaceId)
       .in("booking_id", bookingIds);
-    const rank: Record<string, number> = {
-      failed: 4,
-      pending: 3,
-      sent: 2,
-      skipped: 1,
-    };
+    const rank = REMINDER_STATUS_RANK;
     for (const row of reminders ?? []) {
       const id = row.booking_id as string;
       const status = row.status as
