@@ -95,8 +95,8 @@
     "semantic_hash": ""
   },
   "app/dashboard/bookings/page.tsx": {
-    "mtime": 1785815945.5074763,
-    "ast_hash": "9e171e839549a807dfa32561c5083f09",
+    "mtime": 1785816289.2533002,
+    "ast_hash": "0fe249d932664117ae94217c881cb5fa",
     "semantic_hash": ""
   },
   "app/dashboard/page.tsx": {
@@ -3405,8 +3405,13 @@
     "semantic_hash": ""
   },
   "components/new-booking-dialog.tsx": {
-    "mtime": 1785815893.7386985,
-    "ast_hash": "f2be7a6c0956cf1a3b6b544a0474edd4",
+    "mtime": 1785816293.761034,
+    "ast_hash": "71cb08fdc58f9ea4b32ee581667ded75",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-04-manual-booking-cancel-design.md": {
+    "mtime": 1785816868.6148233,
+    "ast_hash": "1c3fb3e0dc87ad77d447f09c5abdaaba",
     "semantic_hash": ""
   }
 }
