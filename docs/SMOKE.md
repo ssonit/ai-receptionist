@@ -69,7 +69,7 @@ Wizard có **4 bước**: `1 Profile` → `2 Try agent` → `3 Cal.com` → `4 M
 8. [ ] Settings → copy link công khai → mở `/b/{your-slug}` (**không** dùng `/chat`)
 9. [ ] Trên `/b/{slug}`: hỏi giờ/dịch vụ → agent giữ đúng phạm vi, không bịa
 10. [ ] Hỏi lịch trống → gọi `check_availability`; chỉ chào slot Cal.com thật
-11. [ ] Xác nhận tên + SĐT + email + slot → `book_appointment`
+11. [ ] Xác nhận tên + SĐT + slot (+ email nếu Settings → "Require guest email" đang bật, mặc định bật) → `book_appointment`. Tắt toggle → đặt chỉ tên + SĐT vẫn thành công; Cal.com nhận email placeholder nội bộ, không hiện cho khách/nhân viên (`/dashboard/bookings` không lộ chuỗi placeholder)
 12. [ ] Cal.com hiện event; `/dashboard/bookings` sync → row trong `bookings`; lead `booked` ở `/dashboard/leads`
 13. [ ] Chat khác chưa đặt xong (tên + SĐT, không book) → `log_lead` → lead `new`
 
