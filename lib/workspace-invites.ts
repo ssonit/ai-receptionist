@@ -153,3 +153,37 @@ export async function getInvitePreview(token: string): Promise<InvitePreview> {
     expiresAt: String(row.expiresAt ?? ""),
   };
 }
+
+export type MyPendingInvite = {
+  token: string;
+  workspaceName: string;
+  inviterName: string | null;
+  expiresAt: string;
+};
+
+export async function getMyPendingInvites(): Promise<MyPendingInvite[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("list_my_pending_invites");
+
+  if (error) {
+    console.error(
+      "[workspace-invites] list_my_pending_invites failed",
+      error.message,
+    );
+    return [];
+  }
+
+  const rows = (data ?? []) as Array<{
+    token: string;
+    workspace_name: string;
+    inviter_name: string | null;
+    expires_at: string;
+  }>;
+
+  return rows.map((row) => ({
+    token: row.token,
+    workspaceName: row.workspace_name,
+    inviterName: row.inviter_name,
+    expiresAt: row.expires_at,
+  }));
+}
