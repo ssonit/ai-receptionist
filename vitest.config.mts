@@ -76,6 +76,7 @@ export default defineConfig({
             ".output/**",
             "lib/channel-connections.test.ts",
             "lib/zalo-oauth-refresh.test.ts",
+            "tests/handle-new-user-oauth-invite.test.ts",
           ],
           setupFiles: ["./tests/setup.ts"],
           env: {
@@ -93,6 +94,7 @@ export default defineConfig({
           include: [
             "lib/channel-connections.test.ts",
             "lib/zalo-oauth-refresh.test.ts",
+            "tests/handle-new-user-oauth-invite.test.ts",
           ],
           setupFiles: [],
           env: {
