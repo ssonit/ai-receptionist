@@ -10,6 +10,11 @@ import {
 } from "@/lib/errors";
 import { ROUTES } from "@/lib/routes";
 import { isPublicSignupOpen } from "@/lib/signup-mode";
+import { cookies } from "next/headers";
+import {
+  createGoogleInviteState,
+  GOOGLE_INVITE_STATE_COOKIE,
+} from "@/lib/google-invite-state";
 import { createClient } from "@/lib/supabase/server";
 import { ANALYTICS_EVENT } from "@/lib/analytics-events";
 import { identifyUserServer, trackServer } from "@/lib/analytics-server";
@@ -156,4 +161,40 @@ export async function signOut(nextAfterLogin?: string) {
     redirect(`${ROUTES.LOGIN}?next=${encodeURIComponent(nextAfterLogin)}`);
   }
   redirect(ROUTES.LOGIN);
+}
+
+export async function signInWithGoogle(formData: FormData) {
+  const rawNext = String(formData.get("next") ?? ROUTES.DASHBOARD);
+  const safeNext =
+    rawNext.startsWith("/") && !rawNext.startsWith("//")
+      ? rawNext
+      : ROUTES.DASHBOARD;
+  const inviteToken = String(formData.get("inviteToken") ?? "").trim();
+
+  if (inviteToken) {
+    const { token } = createGoogleInviteState(inviteToken, safeNext);
+    const cookieStore = await cookies();
+    cookieStore.set(GOOGLE_INVITE_STATE_COOKIE, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 10 * 60,
+    });
+  }
+
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${origin}${ROUTES.AUTH_CALLBACK}?next=${encodeURIComponent(safeNext)}`,
+    },
+  });
+
+  if (error || !data?.url) {
+    redirect(`${ROUTES.LOGIN}?error=${AUTH_ERROR_CODE.OAUTH_FAILED}`);
+  }
+
+  redirect(data.url);
 }
