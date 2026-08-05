@@ -16,7 +16,7 @@ Today the only sign-in method is email + password (`app/auth/actions.ts` `signIn
 | Where the button appears | `login-form.tsx` and `signup-form.tsx` (covers `/login`, `/signup`, and the invite flow, since `invite-accept-panel.tsx` links into those two routes) — not `invite-accept-panel.tsx` itself |
 | New-user workspace creation | No change to `handle_new_user` — Google populates `raw_user_meta_data.full_name`/`email`, which the existing trigger already reads |
 | Staff invite carry-through | A signed, short-lived state cookie (same HMAC pattern as `lib/cal-oauth-state.ts`) carries `inviteToken` + `next` across the redirect to Google and back, since `signInWithOAuth` cannot attach custom `data` to the created user the way `signUp()` can |
-| Invite acceptance for a brand-new Google user | Call the existing `accept_workspace_invite(token)` RPC from the callback route after `exchangeCodeForSession`. It already self-heals: if `handle_new_user` created a throwaway owner workspace for the new Google user (no invite metadata was visible to the trigger), the RPC detects that workspace has no `setup_completed_at` and no bookings/leads, deletes it, and reassigns the profile to the invited workspace |
+| Invite acceptance for a brand-new Google user | **Correction from the first draft of this spec, made before implementation started (see "Design correction" below):** `handle_new_user` gains an email-based invite fallback for OAuth signups, so it joins the invited workspace directly — no throwaway workspace is ever created, and `accept_workspace_invite` (and its recent hardening) stays untouched |
 | Error surfacing | Extend `AUTH_ERROR_CODE`/`AUTH_ERROR_MESSAGE`; redirect failures to `/login?error=<code>` (same convention as `app/api/cal/oauth/callback/route.ts` and `app/api/messenger/oauth/callback/route.ts`) |
 | Known gap fixed as part of this work | `app/login/page.tsx` currently never reads `?error=` — Cal/Messenger OAuth callbacks already redirect there but the page silently drops it. Since this feature is the first *user-facing* auth flow to depend on that redirect working, wire it up (small, directly required for this feature to be usable) |
 | i18n | Hardcoded English strings, matching the existing (non-localized) `login-form.tsx`/`signup-form.tsx` — these files are outside `.claude/rules/i18n.md`'s scope (`app/dashboard/**`, guest chat), so no new i18n scaffolding introduced here |
@@ -31,7 +31,8 @@ Today the only sign-in method is email + password (`app/auth/actions.ts` `signIn
 - `lib/supabase/server.ts` / `lib/supabase/client.ts` — standard `@supabase/ssr` wrappers, no changes needed.
 - `proxy.ts` — redirects unauthenticated users off `/dashboard`, and authenticated users off `/login`/`/signup`; unaffected by this change (works the same regardless of which provider created the session).
 - `supabase/config.toml` — has `[auth.external.apple]` (disabled) as a template; no `[auth.external.google]` block yet.
-- `supabase/migrations/20260724000008_workspace_invites.sql` — `handle_new_user()` (owner path creates workspace + starter defaults; invite path reads `raw_user_meta_data->>'invite_token'`) and `accept_workspace_invite(p_token)` (idempotent join-or-reassign, deletes an empty/incomplete previous workspace — see "Invite carry-through" flow below).
+- `handle_new_user()` was rewritten three times after it was first added (`20260724000008_workspace_invites.sql` → `20260730000001_neutralize_workspace_starter_defaults.sql` → `20260730000003_signup_hardening.sql`, which is the **current** definition — starter-content seeding was extracted into `seed_workspace_starters()`, slug allocation is race-safe). It still branches only on `raw_user_meta_data->>'invite_token'`: present → join that workspace as staff, no new workspace created; absent → create an owner workspace. Google OAuth can never populate `invite_token` (Supabase fills `raw_user_meta_data` from Google's own claims), so today it would always take the owner-workspace path even when the user came from an invite link.
+- `accept_workspace_invite(p_token)` was also rewritten after its original version (`20260724000008_workspace_invites.sql` → **current**: `20260726000001_workspace_invites_hardening.sql`, "Signup hardening ... Bug 4: Never delete the caller's existing workspace"). The current version **refuses** to reassign a user who already has *any* `profiles.workspace_id` — including a just-created, empty, never-set-up one — returning `already_in_workspace`. It no longer deletes/replaces an orphan workspace the way the very first version did. Any design relying on that old self-healing behavior is wrong against the current schema.
 - `app/_components/invite-accept-panel.tsx` — links unauthenticated visitors to `/signup?invite=TOKEN` and `/login?next=/invite/TOKEN`; both routes render the forms this design touches, so the invite flow is covered without editing this file.
 - `lib/cal-oauth-state.ts` — canonical pattern in this codebase for a signed, HMAC-SHA256, short-lived (10 min), httpOnly state cookie surviving a third-party OAuth round trip (used today for Cal.com and Zalo connects). This design reuses the same approach for the Google invite carry-through rather than inventing a new unsigned-cookie mechanism.
 - `lib/errors/auth-codes.ts` / `lib/errors/auth-messages.ts` — `AUTH_ERROR_CODE` + `AUTH_ERROR_MESSAGE` const maps, `authErrorMessage()` accessor.
@@ -56,25 +57,39 @@ Owner/staff, no invite — /login or /signup
     email-signup redirect (DASHBOARD_SETUP) without signInWithGoogle needing to
     know that rule itself
 
-Staff invite — /invite/[token] → "Create account & join" → /signup?invite=TOKEN
+Staff invite, BRAND-NEW Google account — /invite/[token] → "Create account & join" → /signup?invite=TOKEN
   → click "Continue with Google" (inviteToken hidden field set)
   → signInWithGoogle server action: sign a state cookie { inviteToken, next, nonce, exp }
     via the same HMAC pattern as lib/cal-oauth-state.ts, write httpOnly cookie
   → supabase.auth.signInWithOAuth(...) → redirect(data.url) → Google → Supabase → /auth/callback
-  → exchangeCodeForSession(code)
-      - new Google user: handle_new_user() saw no invite_token (Google metadata can't carry it)
-        → owner path fires → creates a throwaway workspace + profile(role=owner)
-      - returning Google user (already had an account): session just resumes
-  → callback route reads + verifies the signed invite-state cookie
-  → if valid and not expired: supabase.rpc("accept_workspace_invite", { p_token: inviteToken })
-      - reassigns profile.workspace_id to the invited workspace, role = invite.role
-      - if a throwaway owner workspace was created above (empty, setup_completed_at null,
-        no bookings/leads) → RPC deletes it as part of the reassignment (existing behavior,
-        unchanged — see accept_workspace_invite() in 20260724000008_workspace_invites.sql)
-      - if RPC returns ok:false (expired/already-accepted/email-mismatch) → surface via
-        AUTH_ERROR_CODE, redirect to /login?error=<code>
+  → exchangeCodeForSession(code) → new auth.users row inserted → handle_new_user() fires:
+      - invite_token metadata is absent (Google can't carry it), but the signup is OAuth
+        (raw_app_meta_data->>'provider' <> 'email') → new email-based fallback looks up
+        workspace_invites where lower(email) = lower(new.email), unaccepted, unexpired
+      - found → takes the SAME invite path as an explicit token: profile is created with
+        workspace_id = inv.workspace_id, role = inv.role, invite marked accepted_at = now()
+      - NOT found (e.g. no such invite, or the cookie's inviteToken doesn't match this email)
+        → falls through to the normal owner path, unchanged
+  → callback route reads + verifies the signed invite-state cookie; if present, calls
+    supabase.rpc("accept_workspace_invite", { p_token: inviteToken }) as a confirmation pass
+      - already joined by the trigger above → RPC returns ok:false, error:"already_member"
+        → callback treats this as SUCCESS (not shown as an error — the user is exactly
+        where they should be), same RPC/behavior used by the manual /invite/[token] flow today
+      - RPC returns a real ok:false (expired/already-accepted/email-mismatch/not-found) →
+        surface via AUTH_ERROR_CODE, redirect to /login?error=<code>
   → clear the invite-state cookie (single-use, same as OAUTH_STATE_COOKIE)
   → redirect to next (the invite route or dashboard)
+
+Staff invite, EXISTING Google-linked account (or any existing account with no workspace,
+e.g. a removed staff member) — same entry points
+  → click "Continue with Google" → same signed cookie set
+  → exchangeCodeForSession(code) → no auth.users insert, handle_new_user() does not fire
+  → callback route reads the invite-state cookie → supabase.rpc("accept_workspace_invite", ...)
+      - profiles.workspace_id is null (or already inv.workspace_id) → RPC joins/no-ops per its
+        existing, unmodified rules — this design does not change accept_workspace_invite at all
+      - profiles.workspace_id points at a different, real workspace → RPC returns
+        ok:false, error:"already_in_workspace" (existing, unmodified behavior) → surfaced via
+        AUTH_ERROR_CODE, same as the manual /invite/[token] flow already does today
 
 Failure at any step (Google denies consent, code exchange fails, invite RPC fails)
   → redirect to /login?error=<code>
@@ -88,23 +103,30 @@ Failure at any step (Google denies consent, code exchange fails, invite RPC fail
 |------|--------|
 | `supabase/config.toml` | New `[auth.external.google]` block: `enabled = true`, `client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"`, `secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"` |
 | `.env.example` | New `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=` / `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=` with a comment linking to Google Cloud Console + the two redirect URIs to register |
+| `supabase/migrations/<new>.sql` | Redefine `handle_new_user()` (full `create or replace`, copied from the current `20260730000003_signup_hardening.sql` body): add an `elsif` branch — when `invite_token` metadata is absent **and** `coalesce(new.raw_app_meta_data->>'provider','') <> 'email'` (i.e. an OAuth signup) — look up `workspace_invites` by `lower(email) = lower(new.email)`, `accepted_at is null`, `expires_at > now()`; if found, take the same invite-join path as the explicit-token branch. Password signups are provider `"email"` and are completely unaffected — this only changes behavior for OAuth. `accept_workspace_invite()` itself is **not modified** |
 | `lib/google-invite-state.ts` (new) | Signed state cookie for the invite carry-through, mirroring `lib/cal-oauth-state.ts`: `createGoogleInviteState(inviteToken, next)`, `parseGoogleInviteState(token)`, `GOOGLE_INVITE_STATE_COOKIE` constant. Separate cookie name so a Cal/Zalo connect in another tab can't collide with it |
 | `app/auth/actions.ts` | New `signInWithGoogle(formData: FormData)` server action: reads `next`/`inviteToken` hidden fields, sets the signed cookie when `inviteToken` present, calls `supabase.auth.signInWithOAuth(...)`, `redirect(data.url)` |
-| `app/auth/callback/route.ts` | After `exchangeCodeForSession`: read + verify `GOOGLE_INVITE_STATE_COOKIE`; if present, call `supabase.rpc("accept_workspace_invite", { p_token })`; clear the cookie either way; map RPC/exchange failures to `AUTH_ERROR_CODE` and redirect `/login?error=<code>` instead of the current bare `/login` |
-| `lib/errors/auth-codes.ts` | New codes: `OAUTH_FAILED`, `OAUTH_INVITE_INVALID` (covers RPC's `expired`/`already_accepted`/`email_mismatch`/`not_found`) |
+| `app/auth/callback/route.ts` | After `exchangeCodeForSession`: read + verify `GOOGLE_INVITE_STATE_COOKIE`; if present, call `supabase.rpc("accept_workspace_invite", { p_token })` (existing RPC, unmodified) as a confirmation pass — `ok:false, error:"already_member"` is treated as success (the trigger already joined a brand-new user), any other `ok:false` is a real failure; clear the cookie either way; map failures to `AUTH_ERROR_CODE` and redirect `/login?error=<code>` instead of the current bare `/login` |
+| `lib/errors/auth-codes.ts` | New codes: `OAUTH_FAILED`, `OAUTH_INVITE_INVALID` (covers RPC's `expired`/`already_accepted`/`email_mismatch`/`not_found`/`already_in_workspace`) |
 | `lib/errors/auth-messages.ts` | Matching copy for the two new codes |
 | `components/auth/google-signin-button.tsx` (new) | Client component: `<form action={signInWithGoogle}>` wrapping hidden `next`/`inviteToken` inputs + a styled button (Google "G" inline SVG + "Continue with Google"), reusing the existing secondary-button classes from `login-form.tsx` |
 | `app/login/login-form.tsx` | Render `<GoogleSignInButton nextPath={nextPath} />` above the existing "or" divider |
 | `app/login/signup-form.tsx` | Render `<GoogleSignInButton nextPath={ROUTES.DASHBOARD} inviteToken={inviteToken} />` in the same position |
 | `app/login/page.tsx` | Read `searchParams.error`, map via `authErrorMessage()` (unknown codes → generic `SIGN_IN_FAILED`), pass down to `LoginForm` to render in the same alert box already used for `state.error` |
 
-No migration needed — `handle_new_user` and `accept_workspace_invite` are used as-is.
+One migration needed for the `handle_new_user` email-fallback branch above. `accept_workspace_invite` is used as-is, unmodified.
+
+## Design correction (made before implementation, during plan-writing)
+
+The first draft of this spec assumed `accept_workspace_invite` would delete an empty/throwaway workspace and reassign the profile — that was true of the RPC's *original* version (`20260724000008_workspace_invites.sql`) but was deliberately removed in `20260726000001_workspace_invites_hardening.sql` ("Bug 4: Never delete the caller's existing workspace"). Re-adding delete-on-reassign logic to the shared, general-purpose `accept_workspace_invite` — callable by any authenticated user with any token — would undo a considered safety fix.
+
+Instead of patching around the trigger's side effect after the fact, this design fixes the actual root cause: `handle_new_user` only ever created a throwaway workspace in the first place because it didn't know about the invite (Google can't carry `invite_token` in `raw_user_meta_data`). Teaching the trigger to look the invite up by `new.email` for OAuth signups means no throwaway workspace is ever created — so there's nothing to reassign or delete, and `accept_workspace_invite` doesn't need to change at all.
 
 ## UX
 
 **Login/Signup forms:** "Continue with Google" button placed above the existing divider (visually: primary email/password form first for muscle-memory parity with today, Google as the prominent secondary option — matches the current "or / Continue in public chat" secondary-link styling, not the `RainbowButton` primary style, so it doesn't compete with the primary CTA).
 
-**Invite flow:** unchanged entry points (`/invite/[token]` → "Create account & join" → `/signup?invite=TOKEN`, or "Already have an account? Sign in" → `/login?next=...`); both now also offer Google. A staff member who already has a Google-linked Eve account just signs in and gets auto-joined; a brand-new staff member gets a workspace-less-then-joined profile in one redirect round trip, transparently.
+**Invite flow:** unchanged entry points (`/invite/[token]` → "Create account & join" → `/signup?invite=TOKEN`, or "Already have an account? Sign in" → `/login?next=...`); both now also offer Google. A brand-new staff member is joined directly to the invited workspace by `handle_new_user` in the same request that creates their account — never a throwaway workspace in between. A staff member who already has a Google-linked Eve account (and no conflicting workspace) signs in and is joined via the existing `accept_workspace_invite` RPC, unchanged.
 
 **Errors:** any OAuth failure lands back on `/login` with a visible, non-raw error message in the same alert box style already used for password-flow errors — no silent failures.
 
@@ -113,6 +135,7 @@ No migration needed — `handle_new_user` and `accept_workspace_invite` are used
 - Invite-state cookie is HMAC-signed (same secret resolution order as `lib/cal-oauth-state.ts`: `WORKSPACE_SECRETS_KEY` → `SUPABASE_SERVICE_ROLE_KEY` → dev fallback), httpOnly, 10-minute TTL, single-use (cleared on read) — cannot be forged or replayed to join an arbitrary workspace.
 - `redirectTo` passed to `signInWithOAuth` is always `${NEXT_PUBLIC_SITE_URL}/auth/callback?next=...`, built server-side from an env var, never from user-controlled input — no open-redirect surface there. The `next` query value itself is still validated with the existing `startsWith("/")` + no-`//`-prefix guard already used by `signIn`/callback today.
 - `accept_workspace_invite` already enforces its own invariants (token validity, expiry, email match when the invite specifies one, "already in a real workspace" rejection) — the callback route only needs to call it and translate its `ok:false` reasons to `AUTH_ERROR_CODE`, no new authorization logic to write.
+- The new `handle_new_user` email-fallback branch reuses the exact same validation the explicit-token branch already has (token existence, `accepted_at is null`, `expires_at > now()`, email match — trivially true since the lookup is keyed by `new.email`) — no new invariant to invent, just a second way to reach the same code path. It is gated to non-`"email"`-provider signups, so the password signup flow's behavior is provably unchanged.
 - Google-linked accounts still go through the exact same `proxy.ts` session/role checks as password accounts post-login — provider is irrelevant downstream of `auth.getUser()`.
 - Known limitation, not solved here (see Out of scope): if an email/password account and a later Google sign-in share the same email, Supabase's own account-linking rules decide the outcome (link vs. reject) — this app adds no custom linking logic on top.
 
@@ -121,7 +144,7 @@ No migration needed — `handle_new_user` and `accept_workspace_invite` are used
 | Code | When |
 |------|------|
 | `OAUTH_FAILED` (new) | Google denies consent, `exchangeCodeForSession` errors, or `signInWithOAuth` itself errors before redirect |
-| `OAUTH_INVITE_INVALID` (new) | `accept_workspace_invite` RPC returns `ok:false` (expired / already accepted / email mismatch / not found) after a Google sign-in |
+| `OAUTH_INVITE_INVALID` (new) | `accept_workspace_invite` RPC returns a real `ok:false` (expired / already accepted / email mismatch / not found / already in a different workspace) after a Google sign-in. `error:"already_member"` is **not** an error here — it means `handle_new_user` already joined the user correctly, and the callback treats it as success |
 | Existing codes (`INVALID_CREDENTIALS`, etc.) | Unchanged — password flow untouched |
 
 ## Testing (acceptance)
@@ -129,9 +152,10 @@ No migration needed — `handle_new_user` and `accept_workspace_invite` are used
 1. Local: `[auth.external.google]` configured with real Client ID/Secret in `.env.local`, `npx supabase start` → `/login` and `/signup` both show "Continue with Google"; clicking it reaches Google's consent screen.
 2. Brand-new Google account, no invite, via `/signup` → lands on `/dashboard/setup` with a fresh workspace (owner role), same as today's email signup outcome.
 3. Existing Google-linked account → `/login` → "Continue with Google" → lands on `/dashboard` (or `next`) directly, no workspace/profile side effects.
-4. Fresh invite link (`/invite/TOKEN`) → "Create account & join" → `/signup?invite=TOKEN` → "Continue with Google" with a **brand-new** Google account → ends up in the invited workspace as staff, and the throwaway owner workspace `handle_new_user` initially created is gone (verify via dashboard: no orphan workspace row).
-5. Invite link → "Continue with Google" with an **existing** Google-linked account (different original workspace, that workspace still incomplete/empty) → reassigned into the invited workspace per `accept_workspace_invite`'s existing rules.
-6. Expired or already-accepted invite token + Google sign-in → redirected to `/login?error=oauth_invite_invalid`, visible message shown, user is still signed in (their Google session is valid even though the invite failed) — verify they land somewhere sane (dashboard of whatever workspace `handle_new_user` gave them, or existing workspace) rather than stuck.
+4. Fresh invite link (`/invite/TOKEN`) → "Create account & join" → `/signup?invite=TOKEN` → "Continue with Google" with a **brand-new** Google account (no prior Eve account) → `handle_new_user`'s email fallback joins the invited workspace directly as staff; verify via DB that exactly one workspace exists for this flow (the invited one) — no throwaway workspace was ever created.
+5. Invite link → "Continue with Google" with an **existing** Google-linked account that already has a different, real workspace (even if empty/not set up) → rejected with `already_in_workspace`, same as the manual `/invite/[token]` flow already does today for that case — this is `accept_workspace_invite`'s existing, unmodified rule, not a regression.
+5b. Same as above but the existing account currently has `profiles.workspace_id = null` (e.g. a removed staff member, via `remove_workspace_member`) → `accept_workspace_invite` joins them into the invited workspace normally.
+6. Expired or already-accepted invite token + **brand-new** Google account → `handle_new_user`'s fallback lookup finds nothing (or the row is already accepted/expired) → falls through to the normal owner path, account is created with its own workspace, no invite side effect; separately, expired/already-accepted invite + an **existing** account → `accept_workspace_invite` returns the matching error → redirected to `/login?error=oauth_invite_invalid`, visible message shown, user is still signed in.
 7. User cancels the Google consent screen → redirected back to `/login?error=oauth_failed`, visible message, no partial state left behind (no dangling invite-state cookie).
 8. Production: Google provider enabled in Supabase Dashboard with production redirect URI registered in Google Cloud Console → smoke-test the full flow against the deployed app.
 9. `npm run doctor` clean on all changed `.tsx` files; `graphify update .` after implementation.
@@ -148,7 +172,7 @@ No migration needed — `handle_new_user` and `accept_workspace_invite` are used
 
 | Path | Change |
 |------|--------|
-| `supabase/migrations/<new>.sql` | New RPC `list_my_pending_invites()` — `security definer`, returns `(token, workspace_name, inviter_name, expires_at)` for rows in `workspace_invites` where `lower(email) = lower(auth.jwt() ->> 'email')`, `accepted_at is null`, `expires_at > now()`. Mirrors `get_workspace_invite_preview`'s shape/style; scoped to the caller's own email only (no new RLS policy needed — a security-definer RPC is the existing pattern for cross-tenant-safe invite reads in this file) |
+| `supabase/migrations/<new>.sql` | New RPC `list_my_pending_invites()` — `security definer`, resolves the caller's email the same way `accept_workspace_invite` does (`auth.uid()` → `select email from auth.users where id = uid`, not a JWT claim), then returns `(token, workspace_name, inviter_name, expires_at)` for rows in `workspace_invites` where `lower(email) = lower(user_email)`, `accepted_at is null`, `expires_at > now()`. Mirrors `get_workspace_invite_preview`'s shape/style; scoped to the caller's own email only (no new RLS policy needed — a security-definer RPC is the existing pattern for cross-tenant-safe invite reads in this file) |
 | `lib/workspace-invites.ts` | New `getMyPendingInvites()` wrapper calling the RPC (same module that already has `getInvitePreview`, `requireOwnerWorkspace`) |
 | `components/pending-invite-banner.tsx` (new) | Client component: one invite per row, "Join `<workspace>` as staff" + Accept/Dismiss. Accept calls the existing `acceptWorkspaceInviteAction(token)` (`app/dashboard/settings/invite-actions.ts`) — same code path the `/invite/[token]` page already uses, so `already_in_workspace`/`expired`/etc. render with their existing messages. Dismiss is session-only (component state, no persistence column — low stakes, reappears next visit, matches the size of this feature) |
 | `app/dashboard/layout.tsx` | Call `getMyPendingInvites()` alongside `getDashboardUser()`, render `<PendingInviteBanner invites={...} />` above `{children}` |
@@ -178,14 +202,15 @@ This also closes the loop with the Google OAuth flow above: an existing user who
 
 1. Google Cloud Console: OAuth consent screen + Client ID/Secret (manual, produces the two secrets needed below).
 2. `supabase/config.toml` + `.env.example`/`.env.local` (local provider config); verify `/auth/v1/callback` reachable locally.
-3. `lib/google-invite-state.ts` (signed cookie helper, mirrors `lib/cal-oauth-state.ts`).
-4. `app/auth/actions.ts` `signInWithGoogle`.
-5. `app/auth/callback/route.ts`: invite-state read/verify, `accept_workspace_invite` RPC call, error-code redirects.
-6. `lib/errors/auth-codes.ts` + `auth-messages.ts` new codes.
-7. `app/login/page.tsx` reads `?error=`; `components/auth/google-signin-button.tsx`; wire into `login-form.tsx` + `signup-form.tsx`.
-8. Manual test pass against acceptance criteria above (steps 1–7 need a real Google account; step 8 needs a second Google account with an existing Eve login for the invite-reassignment case).
-9. Supabase Dashboard (production): enable Google provider, register production redirect URI in Google Cloud Console.
-10. `list_my_pending_invites()` RPC + `getMyPendingInvites()` + `PendingInviteBanner` + dashboard layout wiring — independent of 1–9, shares only the existing `accept_workspace_invite` RPC and error codes.
-11. `npm run doctor` on changed UI files; `graphify update .`.
+3. Migration: `handle_new_user` email-based invite fallback for OAuth signups.
+4. `lib/google-invite-state.ts` (signed cookie helper, mirrors `lib/cal-oauth-state.ts`).
+5. `app/auth/actions.ts` `signInWithGoogle`.
+6. `app/auth/callback/route.ts`: invite-state read/verify, `accept_workspace_invite` RPC call (treating `already_member` as success), error-code redirects.
+7. `lib/errors/auth-codes.ts` + `auth-messages.ts` new codes.
+8. `app/login/page.tsx` reads `?error=`; `components/auth/google-signin-button.tsx`; wire into `login-form.tsx` + `signup-form.tsx`.
+9. Manual test pass against acceptance criteria above (needs at least two real Google test accounts: one to stay brand-new for the invite test, one pre-existing).
+10. Supabase Dashboard (production): enable Google provider, register production redirect URI in Google Cloud Console.
+11. `list_my_pending_invites()` RPC + `getMyPendingInvites()` + `PendingInviteBanner` + dashboard layout wiring — independent of 1–10, shares only the existing `accept_workspace_invite` RPC and error codes.
+12. `npm run doctor` on changed UI files; `graphify update .`.
 
 Detailed task breakdown belongs in the implementation plan (writing-plans skill), after this spec is approved.
