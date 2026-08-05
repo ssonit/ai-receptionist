@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-05
 **Status:** Design approved in conversation — ready for implementation plan
-**Scope:** Add "Continue with Google" to `/login` and `/signup` (including the staff-invite path reached via `/invite/[token]` → `/signup?invite=TOKEN` / `/login?next=…`), using Supabase Auth's built-in Google provider. Configure both local (`supabase/config.toml`) and production (Supabase Dashboard) providers.
+**Scope:** Add "Continue with Google" to `/login` and `/signup` (including the staff-invite path reached via `/invite/[token]` → `/signup?invite=TOKEN` / `/login?next=…`), using Supabase Auth's built-in Google provider. Configure both local (`supabase/config.toml`) and production (Supabase Dashboard) providers. Also add an in-app pending-invite banner on the dashboard so an existing user with a matching-email invite doesn't need the emailed link to accept it.
 
 ## Goal
 
@@ -136,6 +136,36 @@ No migration needed — `handle_new_user` and `accept_workspace_invite` are used
 8. Production: Google provider enabled in Supabase Dashboard with production redirect URI registered in Google Cloud Console → smoke-test the full flow against the deployed app.
 9. `npm run doctor` clean on all changed `.tsx` files; `graphify update .` after implementation.
 
+## Pending-invite prompt for existing users (UX enhancement)
+
+**Ask:** if someone with an existing Eve account gets invited to a workspace, they shouldn't have to dig up the invite email/link and re-authenticate — they should see it in-app the moment they're back, the way GitHub/Linear surface org invites as an in-app prompt tied to the verified account email (not a copy-pasted link).
+
+**Why not extend the `notifications` table:** `notifications` (`lib/notifications-write.ts`, `lib/notifications.ts`) is strictly workspace-scoped — every write requires a `workspaceId`, every read filters `.eq("workspace_id", workspaceId)` for the *caller's own* workspace. An invitee who isn't yet a member of the target workspace has no RLS path to read a notification scoped to it. Adding user-scoped notifications would mean a second notification system — out of proportion to this ask.
+
+**Why not auto-join on invite:** `accept_workspace_invite()` already refuses to move a user out of a workspace that has `setup_completed_at` set or holds real bookings/leads (`already_in_workspace`, existing `APP_ERROR_CODE.INVITE_ALREADY_IN_WORKSPACE`). That's a deliberate guard against silently orphaning a business's data — this design keeps it untouched. "Instant join" only applies where the RPC already allows it: a brand-new/incomplete workspace being replaced by the invited one (same case the Google-invite carry-through above relies on).
+
+**Design:** compute pending invites live from `workspace_invites` by the logged-in user's own verified email, and show them as a dismissible banner on the dashboard — no new table, no notification-system changes.
+
+| Path | Change |
+|------|--------|
+| `supabase/migrations/<new>.sql` | New RPC `list_my_pending_invites()` — `security definer`, returns `(token, workspace_name, inviter_name, expires_at)` for rows in `workspace_invites` where `lower(email) = lower(auth.jwt() ->> 'email')`, `accepted_at is null`, `expires_at > now()`. Mirrors `get_workspace_invite_preview`'s shape/style; scoped to the caller's own email only (no new RLS policy needed — a security-definer RPC is the existing pattern for cross-tenant-safe invite reads in this file) |
+| `lib/workspace-invites.ts` | New `getMyPendingInvites()` wrapper calling the RPC (same module that already has `getInvitePreview`, `requireOwnerWorkspace`) |
+| `components/pending-invite-banner.tsx` (new) | Client component: one invite per row, "Join `<workspace>` as staff" + Accept/Dismiss. Accept calls the existing `acceptWorkspaceInviteAction(token)` (`app/dashboard/settings/invite-actions.ts`) — same code path the `/invite/[token]` page already uses, so `already_in_workspace`/`expired`/etc. render with their existing messages. Dismiss is session-only (component state, no persistence column — low stakes, reappears next visit, matches the size of this feature) |
+| `app/dashboard/layout.tsx` | Call `getMyPendingInvites()` alongside `getDashboardUser()`, render `<PendingInviteBanner invites={...} />` above `{children}` |
+
+This also closes the loop with the Google OAuth flow above: an existing user who signs in with Google and lands on `/dashboard` sees the same banner — no special-casing needed, since it's keyed off email/session, not login method.
+
+**Out of scope here too:** letting a user who already owns/staffs a real workspace join a second one (would need multi-workspace membership, a materially bigger data-model change than this request).
+
+**Testing (acceptance):**
+
+1. Owner invites `staff@example.com`; that email has no Eve account yet → no banner appears for anyone (nothing to show — email-only flow, unchanged).
+2. Owner invites `staff@example.com`; that email already has an Eve account with an incomplete/no workspace → that user's next `/dashboard` load shows the banner; Accept joins the invited workspace (existing `accept_workspace_invite` behavior), banner clears.
+3. Owner invites an email belonging to a user who already owns a fully set-up workspace → banner still shows (invite exists), but Accept surfaces `INVITE_ALREADY_IN_WORKSPACE`'s existing friendly message rather than silently failing or joining.
+4. Invite expires or is revoked before the invitee logs in → RPC's `expires_at > now()` / row-deleted filter means it silently stops appearing (no stale banner).
+5. User with two pending invites (rare but possible) sees both rows; accepting one leaves the other visible.
+6. Dismiss hides the banner for the session; a fresh page load (new server render) shows it again — acceptable per the "session-only, low stakes" decision above.
+
 ## Out of scope (v1)
 
 - Custom handling of email/password ↔ Google account linking when the same email is used for both — deferred to Supabase's default behavior; revisit only if it causes a real support issue.
@@ -155,6 +185,7 @@ No migration needed — `handle_new_user` and `accept_workspace_invite` are used
 7. `app/login/page.tsx` reads `?error=`; `components/auth/google-signin-button.tsx`; wire into `login-form.tsx` + `signup-form.tsx`.
 8. Manual test pass against acceptance criteria above (steps 1–7 need a real Google account; step 8 needs a second Google account with an existing Eve login for the invite-reassignment case).
 9. Supabase Dashboard (production): enable Google provider, register production redirect URI in Google Cloud Console.
-10. `npm run doctor` on changed UI files; `graphify update .`.
+10. `list_my_pending_invites()` RPC + `getMyPendingInvites()` + `PendingInviteBanner` + dashboard layout wiring — independent of 1–9, shares only the existing `accept_workspace_invite` RPC and error codes.
+11. `npm run doctor` on changed UI files; `graphify update .`.
 
 Detailed task breakdown belongs in the implementation plan (writing-plans skill), after this spec is approved.
