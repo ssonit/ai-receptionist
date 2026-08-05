@@ -6,6 +6,7 @@ import { signIn, type AuthState } from "@/app/auth/actions";
 import { Label } from "@/components/ui/label";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import { cn } from "@/lib/utils";
+import { GoogleSignInButton } from "@/components/auth/google-signin-button";
 import { ROUTES } from "@/lib/routes";
 
 const initial: AuthState = {};
@@ -24,7 +25,8 @@ export function LoginForm({
   const errorMessage = state.error ?? initialError;
 
   return (
-    <form action={action} className="flex w-full flex-col gap-5">
+    <div className="flex w-full flex-col gap-5">
+    <form action={action} className="flex flex-col gap-5">
       <input name="next" type="hidden" value={nextPath} />
 
       <div className="space-y-2">
@@ -78,6 +80,9 @@ export function LoginForm({
       >
         {pending ? "Signing in…" : "Sign in to dashboard"}
       </RainbowButton>
+    </form>
+
+      <GoogleSignInButton nextPath={nextPath} />
 
       <div className="relative py-1">
         <div className="absolute inset-0 flex items-center">
@@ -101,6 +106,6 @@ export function LoginForm({
           Create one
         </Link>
       </p>
-    </form>
+    </div>
   );
 }

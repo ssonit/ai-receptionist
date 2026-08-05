@@ -8,6 +8,7 @@ import { RainbowButton } from "@/components/ui/rainbow-button";
 import { cn } from "@/lib/utils";
 import { ANALYTICS_EVENT } from "@/lib/analytics-events";
 import { track } from "@/lib/analytics-client";
+import { GoogleSignInButton } from "@/components/auth/google-signin-button";
 import { ROUTES, inviteRoute } from "@/lib/routes";
 
 const initial: AuthState = {};
@@ -28,9 +29,10 @@ export function SignupForm({
   const joining = Boolean(inviteToken?.trim());
 
   return (
+    <div className="flex w-full flex-col gap-5">
     <form
       action={action}
-      className="flex w-full flex-col gap-5"
+      className="flex flex-col gap-5"
       onSubmit={() => track(ANALYTICS_EVENT.SIGNUP_STARTED)}
     >
       {joining ? (
@@ -136,6 +138,21 @@ export function SignupForm({
             ? "Create account & join"
             : "Create account"}
       </RainbowButton>
+    </form>
+
+      <div className="relative py-1">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-white/10" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-zinc-950 px-3 tracking-[0.14em] text-zinc-600">or</span>
+        </div>
+      </div>
+
+      <GoogleSignInButton
+        inviteToken={joining ? inviteToken!.trim() : undefined}
+        nextPath={ROUTES.DASHBOARD}
+      />
 
       <p className="text-center text-xs leading-relaxed text-zinc-600">
         By continuing you agree to use Eve for scheduling support.
@@ -154,6 +171,6 @@ export function SignupForm({
           Sign in
         </Link>
       </p>
-    </form>
+    </div>
   );
 }
