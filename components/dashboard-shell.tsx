@@ -2,9 +2,11 @@ import type { CSSProperties, ReactNode } from "react";
 import { BookingLiveBanner } from "@/components/booking-live-banner";
 import { DashboardCommandProvider } from "@/components/dashboard-command-context";
 import { DashboardShellChrome } from "@/components/dashboard-shell-chrome";
+import { PendingInviteBanner } from "@/components/pending-invite-banner";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { DashboardNavUser } from "@/lib/dashboard-user";
 import { isWorkspaceBookingLive } from "@/lib/workspace";
+import { getMyPendingInvites } from "@/lib/workspace-invites";
 
 export async function DashboardShell({
   user,
@@ -21,9 +23,10 @@ export async function DashboardShell({
   workspaceId?: string | null;
   children: ReactNode;
 }) {
-  const bookingLive = workspaceId
-    ? await isWorkspaceBookingLive(workspaceId)
-    : true;
+  const [bookingLive, pendingInvites] = await Promise.all([
+    workspaceId ? isWorkspaceBookingLive(workspaceId) : Promise.resolve(true),
+    getMyPendingInvites(),
+  ]);
 
   return (
     <DashboardCommandProvider>
@@ -41,6 +44,9 @@ export async function DashboardShell({
           user={user}
         >
           {!bookingLive ? <BookingLiveBanner /> : null}
+          {pendingInvites.length > 0 ? (
+            <PendingInviteBanner invites={pendingInvites} />
+          ) : null}
           {children}
         </DashboardShellChrome>
       </SidebarProvider>
