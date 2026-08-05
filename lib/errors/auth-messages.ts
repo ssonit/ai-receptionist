@@ -29,6 +29,10 @@ export const AUTH_ERROR_MESSAGE = {
     "This reset link is expired or invalid. Request a new one.",
   [AUTH_ERROR_CODE.NAME_REQUIRED]:
     "Full name is required.",
+  [AUTH_ERROR_CODE.OAUTH_FAILED]:
+    "Could not sign in with Google. Try again.",
+  [AUTH_ERROR_CODE.OAUTH_INVITE_INVALID]:
+    "That invite link is no longer valid, but you're signed in — check your dashboard or ask the workspace owner for a new invite.",
 } as const satisfies Record<AuthErrorCode, string>;
 
 export function authErrorMessage(code: AuthErrorCode): string {

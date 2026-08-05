@@ -14,6 +14,8 @@ export const AUTH_ERROR_CODE = {
   PASSWORD_RESET_FAILED: "password_reset_failed",
   INVALID_RESET_TOKEN: "invalid_reset_token",
   NAME_REQUIRED: "name_required",
+  OAUTH_FAILED: "oauth_failed",
+  OAUTH_INVITE_INVALID: "oauth_invite_invalid",
 } as const;
 
 export type AuthErrorCode =
