@@ -13,8 +13,15 @@ const initial: AuthState = {};
 const fieldClass =
   "h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 text-sm text-white outline-none transition placeholder:text-zinc-600 hover:border-white/20 focus:border-teal-400/40 focus:bg-white/[0.06] focus:ring-2 focus:ring-teal-400/15";
 
-export function LoginForm({ nextPath }: { readonly nextPath: string }) {
+export function LoginForm({
+  nextPath,
+  initialError,
+}: {
+  readonly nextPath: string;
+  readonly initialError?: string;
+}) {
   const [state, action, pending] = useActionState(signIn, initial);
+  const errorMessage = state.error ?? initialError;
 
   return (
     <form action={action} className="flex w-full flex-col gap-5">
@@ -54,12 +61,12 @@ export function LoginForm({ nextPath }: { readonly nextPath: string }) {
         />
       </div>
 
-      {state.error ? (
+      {errorMessage ? (
         <p
           className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm text-red-300"
           role="alert"
         >
-          {state.error}
+          {errorMessage}
         </p>
       ) : null}
 
