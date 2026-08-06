@@ -27,7 +27,7 @@ const LOCAL_DB_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
 let pool: Pool | null = null;
 
-function getPool(): Pool {
+export function getPool(): Pool {
   if (!pool) {
     pool = new Pool({ connectionString: LOCAL_DB_URL, max: 2 });
   }
