@@ -8,6 +8,7 @@ import {
   authErrorMessage,
   formatAuthError,
 } from "@/lib/errors";
+import { appOrigin } from "@/lib/app-origin";
 import { ROUTES } from "@/lib/routes";
 import { isPublicSignupOpen } from "@/lib/signup-mode";
 import { cookies } from "next/headers";
@@ -183,7 +184,7 @@ export async function signInWithGoogle(formData: FormData) {
     });
   }
 
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const origin = appOrigin();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
