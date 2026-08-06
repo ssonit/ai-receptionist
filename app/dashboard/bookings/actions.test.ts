@@ -4,11 +4,28 @@
  * mocked globally via tests/setup.ts.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
 import { supabaseMock } from "../../../tests/helpers/supabase-mock";
 
 const WS = "00000000-0000-4000-8000-000000000001";
 const OTHER_WS = "00000000-0000-4000-8000-000000000002";
 const SLOT = "2026-08-05T09:00:00.000Z";
+
+/**
+ * getAvailableSlotsAction rejects dates before today in the workspace
+ * timezone, and that guard runs before the meeting-type lookup. A hardcoded
+ * query date is therefore a time bomb: it works until the day it passes, then
+ * every test using it short-circuits on INVALID_INPUT — silently, since a
+ * test asserting `ok: false` still "passes".
+ *
+ * Two days ahead in UTC is always >= today in any timezone, so this can never
+ * land in the past.
+ */
+function futureYmd(): string {
+  return new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+}
 
 const mocks = vi.hoisted(() => ({
   getDashboardUser: vi.fn(),
@@ -81,7 +98,7 @@ describe("getAvailableSlotsAction", () => {
     const { getAvailableSlotsAction } = await import("./actions");
     const result = await getAvailableSlotsAction({
       meetingTypeId: "evt-1",
-      date: "2026-08-05",
+      date: futureYmd(),
     });
 
     expect(result.ok).toBe(true);
@@ -97,10 +114,18 @@ describe("getAvailableSlotsAction", () => {
     const { getAvailableSlotsAction } = await import("./actions");
     const result = await getAvailableSlotsAction({
       meetingTypeId: "evt-1",
-      date: "2026-08-05",
+      // Must be a future date, or the past-date guard short-circuits before
+      // the workspace check and this stops testing tenant isolation at all.
+      date: futureYmd(),
     });
 
     expect(result.ok).toBe(false);
+    if (!result.ok) {
+      // Specifically the workspace-scoped lookup failing, not the date guard.
+      expect(result.error).toBe(
+        appErrorMessage(APP_ERROR_CODE.MEETING_TYPE_NOT_FOUND),
+      );
+    }
     expect(mocks.getAvailableSlots).not.toHaveBeenCalled();
   });
 
