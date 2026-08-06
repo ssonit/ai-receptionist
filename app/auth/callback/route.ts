@@ -34,7 +34,8 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data: sessionData, error } =
+    await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return NextResponse.redirect(
       `${origin}${ROUTES.LOGIN}?error=${AUTH_ERROR_CODE.OAUTH_FAILED}`,
@@ -52,14 +53,26 @@ export async function GET(request: Request) {
         ? null
         : (data as { ok?: boolean; error?: string } | null);
       const rpcSucceeded = row?.ok === true;
-      // handle_new_user (Task 5) already joined a brand-new Google signup to
-      // the invited workspace — this RPC call is a confirmation pass for the
-      // returning-user case. "already_member" means the trigger did its job;
-      // that is success here, not an error to surface.
-      const alreadyJoinedByTrigger =
-        !rpcSucceeded && row?.error === "already_member";
+      // handle_new_user (Task 5) already joins a brand-new Google signup to the
+      // invited workspace and stamps `accepted_at`, so this confirmation pass
+      // gets "already_accepted" back, not ok — while a returning member of the
+      // same workspace gets "already_member". Neither is a failure. Since
+      // accept_workspace_invite is intentionally left untouched, membership is
+      // confirmed here from the caller's own profile row instead.
+      const maybeJoinedAlready =
+        !rpcSucceeded &&
+        (row?.error === "already_accepted" || row?.error === "already_member");
+      let alreadyJoined = false;
+      if (maybeJoinedAlready && sessionData?.user?.id) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("workspace_id")
+          .eq("id", sessionData.user.id)
+          .maybeSingle();
+        alreadyJoined = Boolean(profile?.workspace_id);
+      }
 
-      if (!rpcSucceeded && !alreadyJoinedByTrigger) {
+      if (!rpcSucceeded && !alreadyJoined) {
         return NextResponse.redirect(
           `${origin}${ROUTES.LOGIN}?error=${AUTH_ERROR_CODE.OAUTH_INVITE_INVALID}`,
         );
