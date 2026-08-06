@@ -60,6 +60,13 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   test: {
+    // Vitest's 5s default is too tight for this suite. Several files open with
+    // a dynamic `await import()` of a heavy module (agent instructions, the
+    // agent tools, workspace-oauth); alone each takes ~2s, but with 55 files
+    // running in parallel that first import regularly crossed 5s and failed
+    // eight files on timeout — never on an assertion, and never when the file
+    // was run on its own. Inherited by both projects via `extends: true`.
+    testTimeout: 20_000,
     coverage: {
       provider: "v8",
       include: ["lib/**", "agent/date-context.ts", "agent/tools/**"],
