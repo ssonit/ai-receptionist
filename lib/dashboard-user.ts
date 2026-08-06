@@ -1,9 +1,7 @@
+import { getActiveWorkspace } from "@/lib/active-workspace";
 import { createClient } from "@/lib/supabase/server";
 import { publicBookingPath } from "@/lib/workspace";
-import {
-  isWorkspaceRole,
-  type WorkspaceRole,
-} from "@/lib/workspace-roles";
+import type { WorkspaceRole } from "@/lib/workspace-roles";
 
 export type DashboardNavUser = {
   name: string;
@@ -26,23 +24,24 @@ export async function getDashboardUser(): Promise<{
 
   if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, email, workspace_id, role")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [{ data: profile }, active] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", user.id)
+      .maybeSingle(),
+    getActiveWorkspace(),
+  ]);
 
   let workspaceSlug: string | null = null;
-  if (profile?.workspace_id) {
+  if (active?.workspaceId) {
     const { data: ws } = await supabase
       .from("workspaces")
       .select("slug")
-      .eq("id", profile.workspace_id)
+      .eq("id", active.workspaceId)
       .maybeSingle();
     workspaceSlug = ws?.slug ?? null;
   }
-
-  const role = isWorkspaceRole(profile?.role) ? profile.role : null;
 
   return {
     navUser: {
@@ -51,9 +50,9 @@ export async function getDashboardUser(): Promise<{
       avatar: "",
     },
     userId: user.id,
-    workspaceId: profile?.workspace_id ?? null,
+    workspaceId: active?.workspaceId ?? null,
     workspaceSlug,
     bookingPagePath: workspaceSlug ? publicBookingPath(workspaceSlug) : null,
-    role,
+    role: active?.role ?? null,
   };
 }

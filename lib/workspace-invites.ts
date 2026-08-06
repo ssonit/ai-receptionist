@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { getActiveWorkspace } from "@/lib/active-workspace";
 import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 import { ROUTES, inviteRoute } from "@/lib/routes";
@@ -66,16 +67,14 @@ export async function requireOwnerWorkspace(): Promise<
     return { ok: false, error: "sign_in_required" };
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id, role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile?.workspace_id) {
+  // Role is per workspace now: a user may own one workspace and be staff in
+  // another, so the check must be against the ACTIVE workspace's membership,
+  // not the legacy profiles.role column.
+  const active = await getActiveWorkspace();
+  if (!active) {
     return { ok: false, error: "no_workspace" };
   }
-  if (profile.role !== WORKSPACE_ROLE.OWNER) {
+  if (active.role !== WORKSPACE_ROLE.OWNER) {
     return { ok: false, error: "owner_required" };
   }
 
@@ -83,7 +82,7 @@ export async function requireOwnerWorkspace(): Promise<
     ok: true,
     supabase,
     userId: user.id,
-    workspaceId: profile.workspace_id as string,
+    workspaceId: active.workspaceId,
   };
 }
 
