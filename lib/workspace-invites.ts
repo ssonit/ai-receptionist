@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ROUTES, inviteRoute } from "@/lib/routes";
 import {
   WORKSPACE_ROLE,
+  isWorkspaceRole,
   type WorkspaceRole,
 } from "@/lib/workspace-roles";
 
@@ -90,14 +91,35 @@ export async function listWorkspaceMembers(
   workspaceId: string,
 ): Promise<WorkspaceMemberRow[]> {
   const supabase = await createClient();
+  // Membership is authoritative — profiles.workspace_id is only last-used and
+  // will miss anyone who belongs here but currently has another workspace active.
   const { data, error } = await supabase
-    .from("profiles")
-    .select("id, email, full_name, role, created_at")
+    .from("workspace_members")
+    .select("role, created_at, profiles(id, email, full_name)")
     .eq("workspace_id", workspaceId)
     .order("created_at", { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as WorkspaceMemberRow[];
+
+  return (data ?? []).flatMap((row) => {
+    if (!isWorkspaceRole(row.role)) return [];
+    const rel = row.profiles as
+      | { id: string; email: string | null; full_name: string | null }
+      | { id: string; email: string | null; full_name: string | null }[]
+      | null
+      | undefined;
+    const profile = (Array.isArray(rel) ? rel[0] : rel) ?? null;
+    if (!profile?.id) return [];
+    return [
+      {
+        id: profile.id,
+        email: profile.email,
+        full_name: profile.full_name,
+        role: row.role as WorkspaceRole,
+        created_at: row.created_at as string,
+      },
+    ];
+  });
 }
 
 export async function listPendingInvites(

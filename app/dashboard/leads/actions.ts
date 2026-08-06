@@ -8,6 +8,7 @@ import {
 } from "@/lib/errors";
 import { isLeadStatus, type LeadStatus } from "@/lib/lead-status";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionWorkspaceId } from "@/lib/workspace-session";
 
 export type LeadActionState = {
   error?: string;
@@ -23,17 +24,14 @@ async function requireWorkspace() {
     return { error: appErrorMessage(APP_ERROR_CODE.SIGN_IN_REQUIRED) };
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile?.workspace_id) {
+  // Active workspace (cookie-validated), not legacy profiles.workspace_id —
+  // otherwise mutations can hit a different tenant than the page is showing.
+  const workspaceId = await getSessionWorkspaceId();
+  if (!workspaceId) {
     return { error: appErrorMessage(APP_ERROR_CODE.NO_WORKSPACE) };
   }
 
-  return { supabase, workspaceId: profile.workspace_id as string };
+  return { supabase, workspaceId };
 }
 
 export async function updateLeadStatusAction(
