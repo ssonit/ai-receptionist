@@ -23,17 +23,26 @@ Only use Read/Grep/Glob directly when:
 
 **Claude Code enforcement:** `.claude/settings.json` PreToolUse hooks call `graphify hook-guard` (soft reminder). Prefer running query before explore regardless.
 
-## Use the CLI, not the MCP tools
+## Local setup (verified 2026-08-06)
 
-Run graphify as a **shell command** (`graphify query "…"`). Do **not** reach for `mcp__graphify__*` tools — they fail on every call with `Graph.import: serialized node is missing its key`, and rebuilding does not help.
+Two unrelated tools share the name `graphify` and both claim `graphify-out/graph.json`:
 
-Two unrelated tools share the name and both claim `graphify-out/graph.json`:
-
-| | Writes/reads | Status |
+| | Format | Status |
 |---|---|---|
-| `graphify` CLI (Python, `~/.local/bin`, v0.9.23) | NetworkX node-link JSON — nodes carry `id`, edges live under `links` | **Working.** Builds the graph; every hook and `graphify update` uses it |
-| `@dreamtree-org/graphify` (npm, was registered in `.mcp.json` as an MCP server) | graphology JSON — expects `key` per node and an `edges` array | **Incompatible.** Cannot read the CLI's output at all |
+| **`graphifyy`** (Python, installed via `uv tool`, v0.9.23) — ships `graphify` **and** `graphify-mcp` | NetworkX node-link JSON: nodes carry `id`, edges under `links` | **This is ours.** It builds the graph; every hook and `graphify update` uses it |
+| `@dreamtree-org/graphify` (npm) | graphology JSON: needs `key` per node and an `edges` array | **Incompatible** — cannot read our graph at all |
 
-Verified 2026-08-06: all 3944 nodes in `graph.json` have `id` and none have `key`, so the MCP server throws before doing any work. The graph itself is healthy — the CLI queries it fine. The MCP entry has been removed from `.mcp.json` (which is gitignored, so this is per-machine: if `mcp__graphify__*` tools reappear in a session, that machine still has the npm server registered).
+The npm package was previously registered as the MCP server, so every `mcp__graphify__*` call failed with `Graph.import: serialized node is missing its key`. The graph was never corrupt (all 3944 nodes had `id`, none had `key`); rebuilding could not have helped. `.mcp.json` now points at the Python `graphify-mcp` instead.
 
-The Python CLI has no `--mcp` mode, so there is no MCP path to graphify here. AGENTS.md's auto-generated graphify block claims otherwise — that text ships with the tool and does not match v0.9.23.
+Its tool names differ from the npm server's: `query_graph`, `get_node`, `get_neighbors`, `get_community`, `god_nodes`, `graph_stats`, `shortest_path`. There is no `explain` / `affected` / `context` tool over MCP — use the CLI for those.
+
+### Two optional extras this project needs
+
+```bash
+uv tool install "graphifyy[sql]==0.9.23" --with "mcp<2" --force
+```
+
+- **`[sql]`** — without it, all 20+ files under `supabase/migrations/**` contribute **zero** nodes and the graph silently omits every RLS policy, trigger and RPC. The warning is easy to miss and queries just return nothing. With it: 122 SQL nodes, and `graphify explain "public.accept_workspace_invite"` resolves to the migration and line.
+- **`mcp<2`** — `graphify-mcp` targets the 1.x MCP SDK. Installing plain `[mcp]` pulls SDK 2.0, which moved `mcp.types` from a module to a package and dropped `AnyUrl`, so the server crashes on start with `ImportError: cannot import name 'AnyUrl'`.
+
+The CLI remains the primary interface and is what the rules above mandate; MCP is a convenience on top of the same graph.
