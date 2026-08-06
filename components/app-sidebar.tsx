@@ -25,6 +25,7 @@ import { useDashboardRole } from "@/components/dashboard-role-context";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
+import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -159,6 +160,9 @@ export function AppSidebar({
                 <EveLogo showLabel size="sm" />
               </Link>
             </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <WorkspaceSwitcher />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
