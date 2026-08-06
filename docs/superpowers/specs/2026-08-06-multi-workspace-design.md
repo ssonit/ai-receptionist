@@ -2,6 +2,7 @@
 
 **Date:** 2026-08-06
 **Status:** Design approved in conversation — ready for implementation plans (two, one per phase)
+**Phase 1 status:** implemented 2026-08-06 (migrations 20260806000001–20260806000003). Phase 2 not started.
 **Scope:** Replace the singular `profiles.workspace_id` tenancy model with a `workspace_members` join table, so one user can belong to several workspaces. Delivered in two phases: an invisible refactor (Phase 1) followed by the user-visible switch (Phase 2).
 
 ## Goal
