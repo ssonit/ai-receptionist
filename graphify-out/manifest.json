@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "app/auth/actions.ts": {
-    "mtime": 1785582100.527421,
-    "ast_hash": "8db7a5f943953797c8ad047a5f1cd8a9",
+    "mtime": 1785984627.0316896,
+    "ast_hash": "fce60283c1746e2bc3010730399bd474",
     "semantic_hash": ""
   },
   "app/chat/page.tsx": {
@@ -120,18 +120,18 @@
     "semantic_hash": ""
   },
   "app/login/login-form.tsx": {
-    "mtime": 1785581909.2827334,
-    "ast_hash": "6a5c35ce3379f4b5b241242e02a57caa",
+    "mtime": 1785984627.0346906,
+    "ast_hash": "211685a98ac2b1afd9ab1407d3543c52",
     "semantic_hash": ""
   },
   "app/login/page.tsx": {
-    "mtime": 1785581734.3015783,
-    "ast_hash": "fe6a1f7975653358fc019b3a99e6ebf0",
+    "mtime": 1785984627.0356908,
+    "ast_hash": "9cd8657523a43ada3057126786854a0a",
     "semantic_hash": ""
   },
   "app/login/signup-form.tsx": {
-    "mtime": 1785582235.008583,
-    "ast_hash": "01c994ec835555396d82b1ccdf8c8acc",
+    "mtime": 1785984627.0366907,
+    "ast_hash": "78d4bc1bc49d9f00237f714b5c410c7a",
     "semantic_hash": ""
   },
   "app/page.tsx": {
@@ -215,8 +215,8 @@
     "semantic_hash": "7fb08b065cb520461e58bd734ea4ca44"
   },
   "components/dashboard-shell.tsx": {
-    "mtime": 1784970607.2069182,
-    "ast_hash": "d8ec9eb2c267fe240020ca7f1c26e60e",
+    "mtime": 1785984627.0386915,
+    "ast_hash": "2fb7ca9127b7a35862fde9579311288e",
     "semantic_hash": ""
   },
   "components/data-table.tsx": {
@@ -485,18 +485,18 @@
     "semantic_hash": ""
   },
   "lib/supabase/admin.ts": {
-    "mtime": 1784696056.2129653,
-    "ast_hash": "0dcd9c7a490e61a13e1023e2fb8983d6",
-    "semantic_hash": "0dcd9c7a490e61a13e1023e2fb8983d6"
+    "mtime": 1785987331.6309679,
+    "ast_hash": "7a9fba32f4a1e01cb540318542f413b6",
+    "semantic_hash": ""
   },
   "lib/supabase/client.ts": {
-    "mtime": 1784696056.2154663,
-    "ast_hash": "beecaae4576f33809b05788330828208",
-    "semantic_hash": "beecaae4576f33809b05788330828208"
+    "mtime": 1785987328.411184,
+    "ast_hash": "4fcd76921c814a690ae192f1bd19c4a7",
+    "semantic_hash": ""
   },
   "lib/supabase/server.ts": {
-    "mtime": 1784865383.5374854,
-    "ast_hash": "cd4317226617bd323ff5d922d5abb923",
+    "mtime": 1785987330.5956788,
+    "ast_hash": "04e005bd3e2a05714dc5f4f62231c33b",
     "semantic_hash": ""
   },
   "lib/sync-cal-bookings.ts": {
@@ -535,8 +535,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1785724306.6297095,
-    "ast_hash": "678baa637a7581407b59313fee200da4",
+    "mtime": 1785986831.2661705,
+    "ast_hash": "a34881d6929a1a596e63e87bb8e75d1a",
     "semantic_hash": ""
   },
   "postcss.config.mjs": {
@@ -560,8 +560,8 @@
     "semantic_hash": "46817890e788b2320d05e6c9d8974366"
   },
   "skills-lock.json": {
-    "mtime": 1785213172.8630588,
-    "ast_hash": "5b91a0097e9a6724485a13da7b0797e1",
+    "mtime": 1785986323.799574,
+    "ast_hash": "1b3d81d8f2b704a338642fefaf217c4d",
     "semantic_hash": ""
   },
   "supabase/seed.sql": {
@@ -755,8 +755,8 @@
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
-    "mtime": 1785812387.6529787,
-    "ast_hash": "d463f071bccff3ebf71fb826824d1f4c",
+    "mtime": 1785985559.7690294,
+    "ast_hash": "2febf9afb953bc029a4a44fa0459b8b9",
     "semantic_hash": ""
   },
   "public/landing-hero-chat.png": {
@@ -1045,8 +1045,8 @@
     "semantic_hash": ""
   },
   "lib/workspace-secrets.ts": {
-    "mtime": 1784797486.2184644,
-    "ast_hash": "ddcca3d586a8dd939cee5f8e179c3acd",
+    "mtime": 1785987362.6828818,
+    "ast_hash": "8a0756957d95f6999217b0597d64d187",
     "semantic_hash": ""
   },
   "docs/MIGRATIONS.md": {
@@ -1155,8 +1155,8 @@
     "semantic_hash": ""
   },
   "proxy.ts": {
-    "mtime": 1785663295.606731,
-    "ast_hash": "195fff221eb2abb1d0ad3c04f20d73c4",
+    "mtime": 1785987360.8850236,
+    "ast_hash": "39790259305e5a1a3a513879f225a764",
     "semantic_hash": ""
   },
   ".claude/rules/agent-tools.md": {
@@ -2050,13 +2050,13 @@
     "semantic_hash": ""
   },
   "lib/errors/auth-codes.ts": {
-    "mtime": 1785582130.613654,
-    "ast_hash": "f11371eb030f50a0375a5486124d7abd",
+    "mtime": 1785984627.0401988,
+    "ast_hash": "e75923650c12344aa0ee808abcbc9160",
     "semantic_hash": ""
   },
   "lib/errors/auth-messages.ts": {
-    "mtime": 1785582141.2443128,
-    "ast_hash": "21b741a49a8e581bc2012e5ca093a57a",
+    "mtime": 1785984627.0412066,
+    "ast_hash": "c1df5a1761c256a138754befcee62250",
     "semantic_hash": ""
   },
   "lib/errors/auth.ts": {
@@ -2205,8 +2205,8 @@
     "semantic_hash": ""
   },
   "lib/workspace-invites.ts": {
-    "mtime": 1785582148.509866,
-    "ast_hash": "28dfe6b11d50496f2366be6aac0b82ea",
+    "mtime": 1785984627.0447125,
+    "ast_hash": "c388dc978b15db0a51ae7b15d26cc745",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000008_workspace_invites.sql": {
@@ -2810,8 +2810,8 @@
     "semantic_hash": ""
   },
   "vitest.config.mts": {
-    "mtime": 1785815757.797534,
-    "ast_hash": "14a8adeb2f9b8f71613fff122f924d00",
+    "mtime": 1785987407.6847456,
+    "ast_hash": "ba46d291f5e8d9158b901b81dbdd9e78",
     "semantic_hash": ""
   },
   "app/_components/cal-connection-card.tsx": {
@@ -2835,8 +2835,8 @@
     "semantic_hash": ""
   },
   "lib/cal-oauth-state.ts": {
-    "mtime": 1785722631.8210697,
-    "ast_hash": "61df89613ffcac18a96fc50f1ebe2b89",
+    "mtime": 1785987370.8403926,
+    "ast_hash": "235e991c7f16b60775e86ac14b09996e",
     "semantic_hash": ""
   },
   "lib/cal-oauth.test.ts": {
@@ -3049,14 +3049,9 @@
     "ast_hash": "2f6079de5ab939eeffbbeccb06c633cf",
     "semantic_hash": ""
   },
-  ".mcp.json": {
-    "mtime": 1785581489.5951025,
-    "ast_hash": "30a97eaaa8b2bdc83169db0e55b1006f",
-    "semantic_hash": ""
-  },
   "app/auth/callback/route.ts": {
-    "mtime": 1785662315.8526595,
-    "ast_hash": "3c29585568610a1b442cac9931cf3108",
+    "mtime": 1785984627.0326905,
+    "ast_hash": "31a5e572b8fe209c7c68f7b91289a18d",
     "semantic_hash": ""
   },
   "app/check-email/page.tsx": {
@@ -3235,7 +3230,7 @@
     "semantic_hash": ""
   },
   "lib/zalo.ts": {
-    "mtime": 1785812387.6559796,
+    "mtime": 1785985559.7690294,
     "ast_hash": "3ffa80ab949660f879b4c53fc08d2bff",
     "semantic_hash": ""
   },
@@ -3477,6 +3472,76 @@
   "lib/agent-chat-debug.ts": {
     "mtime": 1785839761.0298362,
     "ast_hash": "1c49352e317bd02ecf2d41bc727854ee",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/guest-chat-flow.md": {
+    "mtime": 1785840270.3581498,
+    "ast_hash": "bc71d78e028da3a45dbe5c0d52241415",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-05-google-oauth-login-design.md": {
+    "mtime": 1785917202.2364633,
+    "ast_hash": "27c688ad1bc729928aa7edad29812cec",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-05-google-oauth-login.md": {
+    "mtime": 1785988185.2187817,
+    "ast_hash": "1454def2d9c4da6bc0943ebb8f22326f",
+    "semantic_hash": ""
+  },
+  "components/auth/google-signin-button.tsx": {
+    "mtime": 1785984627.0376928,
+    "ast_hash": "3771de63fe93c0171a4c8c143920355f",
+    "semantic_hash": ""
+  },
+  "components/pending-invite-banner.tsx": {
+    "mtime": 1785984627.039692,
+    "ast_hash": "fe6893ff213c857ca1ac24aaf03c5318",
+    "semantic_hash": ""
+  },
+  "lib/google-invite-state.test.ts": {
+    "mtime": 1785984627.0422063,
+    "ast_hash": "167f1917a486bfd7ae7a971759b397c5",
+    "semantic_hash": ""
+  },
+  "lib/google-invite-state.ts": {
+    "mtime": 1785987389.2135675,
+    "ast_hash": "a63b51d081bcae4b2096530fdf6ce609",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260805000001_handle_new_user_oauth_invite.sql": {
+    "mtime": 1785984627.0528233,
+    "ast_hash": "bf268d4243bf7b4872866f4fc051ee3d",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260805000002_list_my_pending_invites.sql": {
+    "mtime": 1785984627.0538237,
+    "ast_hash": "47dac1719bb01bced2d6e34ad64fad5a",
+    "semantic_hash": ""
+  },
+  "tests/handle-new-user-oauth-invite.test.ts": {
+    "mtime": 1785984627.0548224,
+    "ast_hash": "fc6a2c753f706d15b96761ded2ff5798",
+    "semantic_hash": ""
+  },
+  "tests/helpers/raw-pg.ts": {
+    "mtime": 1785984627.0548224,
+    "ast_hash": "4df062d82e00f2d5078746e979085cd9",
+    "semantic_hash": ""
+  },
+  "lib/env.ts": {
+    "mtime": 1785987400.240411,
+    "ast_hash": "e68cc3fac1c0307115d50af71608faa6",
+    "semantic_hash": ""
+  },
+  "agent/skills/supabase-server/SKILL.md": {
+    "mtime": 1785986323.7955751,
+    "ast_hash": "09bbcafa8ee1cc86d1058dfcdabdaf8d",
+    "semantic_hash": ""
+  },
+  "lib/supabase/keys.ts": {
+    "mtime": 1785987325.4426122,
+    "ast_hash": "64337275f5fad0f3b3f44d8a8d6e40f6",
     "semantic_hash": ""
   }
 }
