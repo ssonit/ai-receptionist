@@ -200,7 +200,18 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if ((path === ROUTES.LOGIN || path === ROUTES.SIGNUP) && user) {
+  // /auth/callback sends OAuth failures to /login?error=… while the Google
+  // session already exists (e.g. invalid invite). Bouncing that to the dashboard
+  // would swallow the alert, so let an authenticated user render /login here.
+  const showsLoginError =
+    path === ROUTES.LOGIN &&
+    Boolean(request.nextUrl.searchParams.get("error")?.trim());
+
+  if (
+    (path === ROUTES.LOGIN || path === ROUTES.SIGNUP) &&
+    user &&
+    !showsLoginError
+  ) {
     const next = request.nextUrl.searchParams.get("next");
     const invite = request.nextUrl.searchParams.get("invite");
     const redirectUrl = request.nextUrl.clone();
