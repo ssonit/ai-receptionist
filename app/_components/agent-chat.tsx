@@ -68,6 +68,8 @@ type AgentStatus = ReturnType<typeof useEveAgent>["status"];
 
 type ThreadBootstrap = {
   chatSessionId: string;
+  /** Soft-restart watermark — included in React key so the thread remounts. */
+  guestVisibleAfter: string | null;
   initialSession?: SessionState;
   initialEvents?: readonly unknown[];
   historyMessages: EveMessage[];
@@ -97,7 +99,7 @@ export function AgentChat(props: {
   demoMode?: boolean;
   /**
    * Chrome-less chat for third-party iframes (`/embed/[slug]`).
-   * Keeps session sidebar; hides home/login links and auth chrome.
+   * Hides home/login links and auth chrome.
    */
   embedMode?: boolean;
   initialLocale?: "en" | "vi";
@@ -221,6 +223,7 @@ function AgentChatInner({
       setActiveId(id);
       setBootstrap({
         chatSessionId: id,
+        guestVisibleAfter: session.guest_visible_after ?? null,
         initialSession,
         initialEvents: events,
         historyMessages: chatMessageRowsToEveMessages(data.messages ?? []),
@@ -246,6 +249,7 @@ function AgentChatInner({
     setActiveId(data.session.id);
     setBootstrap({
       chatSessionId: data.session.id,
+      guestVisibleAfter: data.session.guest_visible_after ?? null,
       historyMessages: [],
       nextCursor: null,
       hasMore: false,
@@ -288,6 +292,7 @@ function AgentChatInner({
       const session = data.session;
       setBootstrap({
         chatSessionId: session.id,
+        guestVisibleAfter: session.guest_visible_after ?? null,
         historyMessages: chatMessageRowsToEveMessages(data.messages ?? []),
         nextCursor: data.nextCursor ?? null,
         hasMore: Boolean(data.hasMore),
@@ -455,7 +460,7 @@ function AgentChatInner({
         ) : (
           <div className="flex min-h-0 flex-1 flex-col">
             <AgentChatThread
-              key={bootstrap.chatSessionId}
+              key={`${bootstrap.chatSessionId}:${bootstrap.guestVisibleAfter ?? "0"}`}
               branding={branding}
               chatSessionId={bootstrap.chatSessionId}
               historyMessages={bootstrap.historyMessages}

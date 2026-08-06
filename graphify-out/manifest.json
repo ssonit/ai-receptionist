@@ -45,8 +45,8 @@
     "semantic_hash": ""
   },
   "app/_components/agent-chat.tsx": {
-    "mtime": 1786008241.4046116,
-    "ast_hash": "9c7ea4651da92860951759f5e5a1d3b0",
+    "mtime": 1786013327.102049,
+    "ast_hash": "f40d7ee33168fb3dca5c79590a3d6f85",
     "semantic_hash": ""
   },
   "app/_components/agent-message.tsx": {
@@ -1135,13 +1135,13 @@
     "semantic_hash": ""
   },
   "messages/en.json": {
-    "mtime": 1786008279.7659714,
-    "ast_hash": "3988749b6fe89decf4d4c75dca8d0050",
+    "mtime": 1786013326.182861,
+    "ast_hash": "54a1284d3c28ffc62dc10127028d8a8a",
     "semantic_hash": ""
   },
   "messages/vi.json": {
-    "mtime": 1786008285.2179093,
-    "ast_hash": "cee4b70ce2c5c9fbacd63b23b5043102",
+    "mtime": 1786013366.4073584,
+    "ast_hash": "5dbd3504193af65f199b1879b7fed6e7",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000004_slugify_vietnamese.sql": {
