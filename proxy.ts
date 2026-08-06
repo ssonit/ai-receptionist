@@ -9,8 +9,17 @@ import {
   getSupabaseUrl,
 } from "@/lib/supabase/keys";
 import { ensureVisitorIdOnResponse } from "@/lib/visitor";
+import {
+  ACTIVE_WORKSPACE_COOKIE,
+  pickActiveWorkspace,
+  type WorkspaceMembership,
+} from "@/lib/active-workspace";
 import { isPilotBookingLive } from "@/lib/workspace";
-import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
+import {
+  WORKSPACE_ROLE,
+  isWorkspaceRole,
+  type WorkspaceRole,
+} from "@/lib/workspace-roles";
 
 /**
  * Server Actions + RSC soft navigations expect a Flight payload.
@@ -120,17 +129,47 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && path.startsWith(DASHBOARD_PATH.root)) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("workspace_id, role, workspaces(setup_completed_at, cal_api_key_encrypted, cal_event_type_id, cal_auth_mode, plan_tier, subscription_status, trial_ends_at, billing_provider, period_ends_at)")
-      .eq("id", user.id)
-      .maybeSingle();
+    // Two queries instead of the previous one: memberships (with each
+    // workspace's gating columns embedded) and the last-used fallback. Both
+    // inputs are required so this resolves to the SAME workspace as
+    // getActiveWorkspace() does in the app — a mismatch would redirect users
+    // into the setup wizard for a workspace they are not viewing.
+    const [membersResult, profileResult] = await Promise.all([
+      supabase
+        .from("workspace_members")
+        .select(
+          "workspace_id, role, workspaces(setup_completed_at, cal_api_key_encrypted, cal_event_type_id, cal_auth_mode, plan_tier, subscription_status, trial_ends_at, billing_provider, period_ends_at)",
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("profiles")
+        .select("workspace_id")
+        .eq("id", user.id)
+        .maybeSingle(),
+    ]);
 
-    if (profile?.workspace_id) {
-      // PostgREST returns a single object for a many-to-one embed
-      // (profiles.workspace_id → workspaces.id), but an array when the
-      // relationship is inferred as to-many. Accept both.
-      const wsRel = profile.workspaces as
+    const rows = membersResult.data ?? [];
+    const memberships: WorkspaceMembership[] = rows
+      .filter((row) => isWorkspaceRole(row.role))
+      .map((row) => ({
+        workspaceId: row.workspace_id as string,
+        role: row.role as WorkspaceRole,
+      }));
+
+    const active = pickActiveWorkspace(
+      request.cookies.get(ACTIVE_WORKSPACE_COOKIE)?.value ?? null,
+      (profileResult.data?.workspace_id as string | null) ?? null,
+      memberships,
+    );
+
+    if (active) {
+      const activeRow = rows.find(
+        (row) => (row.workspace_id as string) === active.workspaceId,
+      );
+      // PostgREST returns a single object for a many-to-one embed but an array
+      // when the relationship is inferred as to-many. Accept both.
+      const wsRel = activeRow?.workspaces as
         | Record<string, unknown>
         | Record<string, unknown>[]
         | null
@@ -139,19 +178,14 @@ export async function proxy(request: NextRequest) {
 
       const incomplete = !ws?.setup_completed_at;
       const onSetup = path === DASHBOARD_PATH.setup;
-      const isOwner = profile.role === WORKSPACE_ROLE.OWNER;
-      // Booking chỉ live khi có Cal key + meeting type AI. Giữ wizard mở
-      // cho tới lúc đó, nếu không banner "Connect Cal.com" sẽ tự đá chính nó.
+      const isOwner = active.role === WORKSPACE_ROLE.OWNER;
       const bookingLive = isPilotBookingLive({
-        workspaceId: profile.workspace_id,
+        workspaceId: active.workspaceId,
         hasEncryptedCalKey: Boolean(ws?.cal_api_key_encrypted),
         calEventTypeId: ws?.cal_event_type_id as number | null,
         calAuthMode: ws?.cal_auth_mode as string | null,
       });
 
-      // Document navigations only — never redirect Flight/Action requests.
-      // Setup wizard is owner-only; staff must not be forced into /dashboard/setup
-      // (would bounce with assertOwnerPage → redirect loop).
       if (!isNextFlightRequest(request)) {
         if (incomplete && !onSetup && isOwner) {
           const redirectUrl = request.nextUrl.clone();
@@ -166,8 +200,6 @@ export async function proxy(request: NextRequest) {
           return NextResponse.redirect(redirectUrl);
         }
 
-        // Subscription guard — redirect to billing if trial expired + no active sub.
-        // Skip for billing page itself and setup wizard. Owner-only; staff always pass.
         if (
           !incomplete &&
           isOwner &&
