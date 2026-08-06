@@ -22,3 +22,18 @@ Only use Read/Grep/Glob directly when:
 - After modifying code files, run `graphify update .` to keep the graph current (AST-only, no API cost)
 
 **Claude Code enforcement:** `.claude/settings.json` PreToolUse hooks call `graphify hook-guard` (soft reminder). Prefer running query before explore regardless.
+
+## Use the CLI, not the MCP tools
+
+Run graphify as a **shell command** (`graphify query "…"`). Do **not** reach for `mcp__graphify__*` tools — they fail on every call with `Graph.import: serialized node is missing its key`, and rebuilding does not help.
+
+Two unrelated tools share the name and both claim `graphify-out/graph.json`:
+
+| | Writes/reads | Status |
+|---|---|---|
+| `graphify` CLI (Python, `~/.local/bin`, v0.9.23) | NetworkX node-link JSON — nodes carry `id`, edges live under `links` | **Working.** Builds the graph; every hook and `graphify update` uses it |
+| `@dreamtree-org/graphify` (npm, was registered in `.mcp.json` as an MCP server) | graphology JSON — expects `key` per node and an `edges` array | **Incompatible.** Cannot read the CLI's output at all |
+
+Verified 2026-08-06: all 3944 nodes in `graph.json` have `id` and none have `key`, so the MCP server throws before doing any work. The graph itself is healthy — the CLI queries it fine. The MCP entry has been removed from `.mcp.json` (which is gitignored, so this is per-machine: if `mcp__graphify__*` tools reappear in a session, that machine still has the npm server registered).
+
+The Python CLI has no `--mcp` mode, so there is no MCP path to graphify here. AGENTS.md's auto-generated graphify block claims otherwise — that text ships with the tool and does not match v0.9.23.
