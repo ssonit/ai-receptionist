@@ -11,6 +11,7 @@ const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 function getStateSecret(): string {
   return (
     process.env.WORKSPACE_SECRETS_KEY?.trim() ||
+    process.env.SUPABASE_SECRET_KEY?.trim() ||
     process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
     "dev-only-eve-workspace-secrets"
   );

@@ -8,6 +8,7 @@ import {
 function getSecretsKey(): Buffer {
   const secret =
     process.env.WORKSPACE_SECRETS_KEY?.trim() ||
+    process.env.SUPABASE_SECRET_KEY?.trim() ||
     process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
     "dev-only-eve-workspace-secrets";
   return scryptSync(secret, "eve-workspace-cal-v1", 32);

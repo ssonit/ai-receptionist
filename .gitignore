@@ -33,9 +33,12 @@ CLAUDE.local.md
 AGENTS.override.md
 .claude/settings.local.json
 .claude/settings.local.json.bak
-.cursor/mcp.json
 .cursor/plans/
 .cursor/.graphify-session
+
+# MCP configs — may contain cloud project URLs / access tokens (local only)
+.mcp.json
+.cursor/mcp.json
 
 # Accidental multi-agent skill dumps from `npx react-doctor install --yes`
 # Keep only: .agents/ .claude/ .codex/ (+ .cursor/rules)
@@ -78,6 +81,3 @@ graphify-out/.graphify_uncached.txt
 graphify-out/.graphify_semantic_new.json
 # dated backups created by graphify rebuilds (e.g. 2026-07-22/)
 graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
-
-.vercel
-.env*

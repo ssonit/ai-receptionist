@@ -1,27 +1,31 @@
 import { execSync } from "node:child_process";
 import { defineConfig } from "vitest/config";
 
-/** Read the current local service-role key from a running Supabase stack. */
-function getLocalServiceRoleKey(): string {
+/** Read a local secret key from a running Supabase stack (JWT or sb_secret). */
+function getLocalSecretKey(): string {
   try {
     const out = execSync("npx supabase status -o env", {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
     });
-    const match = out.match(/^SERVICE_ROLE_KEY=(.+)$/m);
-    if (!match) return "";
-    return match[1].replace(/^"|"$/g, "");
+    const secret = out.match(/^SECRET_KEY=(.+)$/m);
+    if (secret) return secret[1].replace(/^"|"$/g, "");
+    const service = out.match(/^SERVICE_ROLE_KEY=(.+)$/m);
+    if (service) return service[1].replace(/^"|"$/g, "");
+    return "";
   } catch {
     return "";
   }
 }
 
-const localServiceRoleKey = getLocalServiceRoleKey();
+const localSecretKey = getLocalSecretKey();
 
 const sharedTestEnv = {
   NODE_ENV: "test",
   BILLING_MODE: "test",
   NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "test-publishable-key",
+  SUPABASE_SECRET_KEY: "test-secret-key",
   CALCOM_API_KEY: "test-cal-api-key",
   CALCOM_API_BASE_URL: "https://api.cal.com/v2",
   CALCOM_EVENT_TYPE_ID: "1",
@@ -81,7 +85,7 @@ export default defineConfig({
           setupFiles: ["./tests/setup.ts"],
           env: {
             ...sharedTestEnv,
-            SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
+            SUPABASE_SECRET_KEY: "test-secret-key",
           },
         },
       },
@@ -99,7 +103,7 @@ export default defineConfig({
           setupFiles: [],
           env: {
             ...sharedTestEnv,
-            SUPABASE_SERVICE_ROLE_KEY: localServiceRoleKey || "test-service-role-key",
+            SUPABASE_SECRET_KEY: localSecretKey || "test-secret-key",
           },
         },
       },

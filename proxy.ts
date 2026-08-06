@@ -1,10 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { ROUTES, inviteRoute } from "@/lib/routes";
-import { DASHBOARD_PATH } from "@/lib/dashboard-access";
-import { isPublicSignupOpen } from "@/lib/signup-mode";
-import { ensureVisitorIdOnResponse } from "@/lib/visitor";
 import { getBillingMode, isSubActive, type SubscriptionStatus } from "@/lib/billing";
+import { DASHBOARD_PATH } from "@/lib/dashboard-access";
+import { ROUTES, inviteRoute } from "@/lib/routes";
+import { isPublicSignupOpen } from "@/lib/signup-mode";
+import {
+  getSupabasePublishableKey,
+  getSupabaseUrl,
+} from "@/lib/supabase/keys";
+import { ensureVisitorIdOnResponse } from "@/lib/visitor";
 import { isPilotBookingLive } from "@/lib/workspace";
 import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
 
@@ -64,8 +68,8 @@ export async function proxy(request: NextRequest) {
     });
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = getSupabaseUrl();
+  const key = getSupabasePublishableKey();
   if (!url || !key) {
     return supabaseResponse;
   }
