@@ -37,6 +37,7 @@ function session(overrides: Partial<ChatSessionRow> = {}): ChatSessionRow {
     events: [],
     channel: null,
     external_user_id: null,
+    guest_visible_after: null,
     last_message_at: null,
     created_at: "2026-08-03T00:00:00.000Z",
     updated_at: "2026-08-03T00:00:00.000Z",

@@ -45,11 +45,14 @@ export async function GET(request: Request, { params }: Params) {
           : before
             ? undefined
             : CHAT_MESSAGE_INITIAL_LIMIT,
+      visibleAfter: session.guest_visible_after,
     });
 
     const messageCount = before
       ? undefined
-      : await countChatMessages(id).catch(() => page.messages.length);
+      : await countChatMessages(id, {
+          visibleAfter: session.guest_visible_after,
+        }).catch(() => page.messages.length);
 
     return Response.json({
       session: toClientSession(session, { includeEventTail: true }),

@@ -15,6 +15,8 @@ const SESSION_ID = "session-1";
 
 const mocks = vi.hoisted(() => ({
   getChatSessionForActor: vi.fn(),
+  getChatMessagesAfter: vi.fn(),
+  getChatMessagesPage: vi.fn(),
   upsertChatMessages: vi.fn(),
   updateChatSessionState: vi.fn(),
   createNotificationDebounced: vi.fn(),
@@ -23,8 +25,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/chat-sessions", () => ({
   CHAT_MESSAGE_PAGE_LIMIT: 30,
-  getChatMessagesAfter: vi.fn(),
-  getChatMessagesPage: vi.fn(),
+  getChatMessagesAfter: mocks.getChatMessagesAfter,
+  getChatMessagesPage: mocks.getChatMessagesPage,
   getChatSessionForActor: mocks.getChatSessionForActor,
   messageCursorFromRow: vi.fn(),
   titleFromFirstUserMessage: (content: string) => content.slice(0, 40),
@@ -50,7 +52,7 @@ vi.mock("@/lib/agent-rate-limit", () => ({
   clientIpFromRequest: () => "203.0.113.1",
 }));
 
-const { POST } = await import("./route");
+const { GET, POST } = await import("./route");
 
 function session(replyMode: "ai" | "human", workspaceId: string | null = WS_A) {
   return {
@@ -58,6 +60,7 @@ function session(replyMode: "ai" | "human", workspaceId: string | null = WS_A) {
     workspace_id: workspaceId,
     title: "New chat",
     reply_mode: replyMode,
+    guest_visible_after: "2026-08-06T09:00:00.000Z",
   };
 }
 
@@ -83,6 +86,51 @@ describe("POST /api/chat/sessions/[id]/messages", () => {
     mocks.updateChatSessionState.mockResolvedValue(null);
     mocks.createNotificationDebounced.mockResolvedValue("notification-1");
     mocks.checkAgentRateLimit.mockResolvedValue({ ok: true });
+    mocks.getChatMessagesAfter.mockResolvedValue([]);
+    mocks.getChatMessagesPage.mockResolvedValue({
+      messages: [],
+      nextCursor: null,
+      hasMore: false,
+    });
+  });
+
+  it("passes guest visibility watermark when loading paged messages", async () => {
+    mocks.getChatSessionForActor.mockResolvedValue(session("ai"));
+
+    const res = await GET(
+      new Request(
+        `http://localhost/api/chat/sessions/${SESSION_ID}/messages?before=cursor-1`,
+      ),
+      { params: Promise.resolve({ id: SESSION_ID }) },
+    );
+
+    expect(res.status).toBe(200);
+    expect(mocks.getChatMessagesPage).toHaveBeenCalledWith(
+      SESSION_ID,
+      expect.objectContaining({
+        before: "cursor-1",
+        visibleAfter: "2026-08-06T09:00:00.000Z",
+      }),
+    );
+  });
+
+  it("passes guest visibility watermark when polling after cursor", async () => {
+    mocks.getChatSessionForActor.mockResolvedValue(session("ai"));
+
+    const res = await GET(
+      new Request(
+        `http://localhost/api/chat/sessions/${SESSION_ID}/messages?after=cursor-2`,
+      ),
+      { params: Promise.resolve({ id: SESSION_ID }) },
+    );
+
+    expect(res.status).toBe(200);
+    expect(mocks.getChatMessagesAfter).toHaveBeenCalledWith(
+      SESSION_ID,
+      "cursor-2",
+      30,
+      { visibleAfter: "2026-08-06T09:00:00.000Z" },
+    );
   });
 
   it("notifies staff when a guest replies to a conversation they took over", async () => {

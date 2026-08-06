@@ -26,7 +26,6 @@ import { VirtualConversation } from "@/components/ai-elements/virtual-conversati
 import { EveLogo } from "@/components/eve-logo";
 import type {
   ChatMessageRow,
-  ChatSessionListItem,
   ChatSessionClientRow,
 } from "@/lib/chat-sessions";
 import {
@@ -51,11 +50,6 @@ import { track } from "@/lib/analytics-client";
 import { AgentMessage } from "./agent-message";
 import { ChatUserMenu, type ChatUser } from "./chat-user-menu";
 import { ROUTES } from "@/lib/routes";
-import {
-  ChatSessionDrawer,
-  ChatSessionSidebar,
-  ChatSessionsToggle,
-} from "./chat-session-sidebar";
 
 const AGENT_NAME = "Eve";
 
@@ -177,12 +171,10 @@ function AgentChatInner({
     };
   }, [chatBranding, t, workspaceTagline]);
 
-  const [sessions, setSessions] = React.useState<ChatSessionListItem[]>([]);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [bootstrap, setBootstrap] = React.useState<ThreadBootstrap | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [bootError, setBootError] = React.useState<string | null>(null);
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [busyAction, setBusyAction] = React.useState(false);
   const [agentStatus, setAgentStatus] = React.useState<AgentStatus>("ready");
 
@@ -190,13 +182,14 @@ function AgentChatInner({
     ? `?w=${encodeURIComponent(workspaceSlug)}`
     : "";
 
-  const refreshSessions = React.useCallback(async () => {
+  const listSessions = React.useCallback(async () => {
     const res = await fetch(`/api/chat/sessions${tenantQs}`, {
       cache: "no-store",
     });
     if (!res.ok) throw new Error("Failed to list sessions");
-    const data = (await res.json()) as { sessions: ChatSessionListItem[] };
-    setSessions(data.sessions);
+    const data = (await res.json()) as {
+      sessions: Array<{ id: string }>;
+    };
     return data.sessions;
   }, [tenantQs]);
 
@@ -250,7 +243,6 @@ function AgentChatInner({
     });
     if (!res.ok) throw new Error("Failed to create session");
     const data = (await res.json()) as { session: ChatSessionClientRow };
-    await refreshSessions();
     setActiveId(data.session.id);
     setBootstrap({
       chatSessionId: data.session.id,
@@ -260,37 +252,61 @@ function AgentChatInner({
       messageCount: 0,
       pollCursor: null,
     });
-  }, [refreshSessions, tenantQs]);
+  }, [tenantQs]);
 
   /** Prefer an existing session; skip 404 orphans and fall back to a new chat. */
   const openFirstAvailable = React.useCallback(
-    async (list: ChatSessionListItem[]) => {
+    async (list: Array<{ id: string }>) => {
       for (const item of list) {
         const result = await loadThread(item.id);
         if (result === "ok") return;
-        setSessions((prev) => prev.filter((s) => s.id !== item.id));
       }
       await openFreshSession();
     },
     [loadThread, openFreshSession],
   );
 
-  const createAndOpen = React.useCallback(async () => {
+  const restartActive = React.useCallback(async () => {
+    if (!activeId) return;
     setBusyAction(true);
     try {
-      await openFreshSession();
-      setDrawerOpen(false);
+      const res = await fetch(
+        `/api/chat/sessions/${activeId}/restart${tenantQs}`,
+        {
+          method: "POST",
+          cache: "no-store",
+        },
+      );
+      if (!res.ok) throw new Error("Failed to restart session");
+      const data = (await res.json()) as {
+        session: ChatSessionClientRow;
+        messages: ChatMessageRow[];
+        nextCursor: string | null;
+        hasMore: boolean;
+        messageCount?: number;
+      };
+      const session = data.session;
+      setBootstrap({
+        chatSessionId: session.id,
+        historyMessages: chatMessageRowsToEveMessages(data.messages ?? []),
+        nextCursor: data.nextCursor ?? null,
+        hasMore: Boolean(data.hasMore),
+        messageCount: data.messageCount ?? data.messages?.length ?? 0,
+        pollCursor: data.messages?.at(-1)
+          ? encodePollCursor(data.messages.at(-1)!)
+          : null,
+      });
     } finally {
       setBusyAction(false);
     }
-  }, [openFreshSession]);
+  }, [activeId, tenantQs]);
 
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         setBootError(null);
-        const list = await refreshSessions();
+        const list = await listSessions();
         if (cancelled) return;
 
         if (
@@ -300,9 +316,6 @@ function AgentChatInner({
           const result = await loadThread(preferChatSessionId);
           if (cancelled) return;
           if (result === "ok") return;
-          setSessions((prev) =>
-            prev.filter((s) => s.id !== preferChatSessionId),
-          );
           await openFirstAvailable(
             list.filter((s) => s.id !== preferChatSessionId),
           );
@@ -330,42 +343,6 @@ function AgentChatInner({
     // Re-bootstrap when tenant slug or preferred session changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantQs, preferChatSessionId]);
-
-  const onSelect = async (id: string) => {
-    if (id === activeId) {
-      setDrawerOpen(false);
-      return;
-    }
-    setBusyAction(true);
-    try {
-      const result = await loadThread(id);
-      if (result === "missing") {
-        setSessions((prev) => prev.filter((s) => s.id !== id));
-        await openFreshSession();
-      }
-      setDrawerOpen(false);
-    } catch (error) {
-      console.error("[eve chat] select failed", error);
-    } finally {
-      setBusyAction(false);
-    }
-  };
-
-  const onPersisted = React.useCallback(() => {
-    void refreshSessions().catch((error) => {
-      console.error("[eve chat] refresh failed", error);
-    });
-  }, [refreshSessions]);
-
-  const sidebar = (
-    <ChatSessionSidebar
-      activeId={activeId}
-      busy={busyAction || loading}
-      onNew={() => void createAndOpen()}
-      onSelect={(id) => void onSelect(id)}
-      sessions={sessions}
-    />
-  );
 
   const statusPill = (
     <div className="flex min-w-0 max-w-[min(100%,16rem)] items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 sm:max-w-xs">
@@ -396,17 +373,9 @@ function AgentChatInner({
       />
       <div className="pointer-events-none absolute left-1/2 top-24 size-[28rem] -translate-x-1/2 rounded-full bg-teal-500/8 blur-[110px]" />
 
-      <div className="relative z-10 hidden h-full min-h-0 w-64 shrink-0 flex-col overflow-hidden border-r border-white/10 md:flex">
-        {sidebar}
-      </div>
-      <ChatSessionDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        {sidebar}
-      </ChatSessionDrawer>
-
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-black/55 px-4 backdrop-blur-xl sm:px-6">
           <div className="flex items-center gap-2">
-            <ChatSessionsToggle onClick={() => setDrawerOpen(true)} />
             {embedMode ? (
               <EveLogo size="xs" />
             ) : (
@@ -418,6 +387,16 @@ function AgentChatInner({
 
           <div className="flex items-center gap-2">
             {!embedMode ? headerEnd : null}
+            <Button
+              className="h-8 rounded-full px-3 text-xs"
+              disabled={!activeId || busyAction || loading}
+              onClick={() => void restartActive()}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              {t("chat.restart")}
+            </Button>
             {embedMode ? (
               <span className="w-[4.5rem] shrink-0" aria-hidden />
             ) : user ? (
@@ -486,8 +465,7 @@ function AgentChatInner({
               initialPollCursor={bootstrap.pollCursor}
               initialEvents={bootstrap.initialEvents}
               initialSession={bootstrap.initialSession}
-              onNewChat={() => void createAndOpen()}
-              onPersisted={onPersisted}
+              onRestart={() => void restartActive()}
               onStatusChange={setAgentStatus}
               tenantQs={tenantQs}
               workspaceName={workspaceName}
@@ -510,8 +488,7 @@ function AgentChatThread({
   initialPollCursor,
   initialSession,
   initialEvents,
-  onNewChat,
-  onPersisted,
+  onRestart,
   onStatusChange,
   tenantQs,
   workspaceName,
@@ -526,8 +503,7 @@ function AgentChatThread({
   initialPollCursor: string | null;
   initialSession?: SessionState;
   initialEvents?: readonly unknown[];
-  onNewChat: () => void;
-  onPersisted: () => void;
+  onRestart: () => void;
   onStatusChange?: (status: AgentStatus) => void;
   tenantQs: string;
   workspaceName?: string;
@@ -611,12 +587,11 @@ function AgentChatThread({
           );
           return;
         }
-        onPersisted();
       } catch (error) {
         console.warn("[eve chat] persist failed", error);
       }
     },
-    [chatSessionId, onPersisted, tenantQs],
+    [chatSessionId, tenantQs],
   );
 
   const agent = useEveAgent({
@@ -880,7 +855,7 @@ function AgentChatThread({
             ...prev,
             { id, parts, role: "user" } as EveMessage,
           ]);
-          onPersisted();
+          setMessageCount((c) => c + 1);
           return;
         }
 
@@ -981,7 +956,7 @@ function AgentChatThread({
                 className="h-8 shrink-0 rounded-full px-3 text-xs"
                 onClick={() => {
                   setTurnTimedOut(false);
-                  onNewChat();
+                  onRestart();
                 }}
                 size="sm"
                 type="button"
@@ -1003,12 +978,12 @@ function AgentChatThread({
             <div className="flex shrink-0 items-center gap-2">
               <Button
                 className="h-8 rounded-full px-3 text-xs"
-                onClick={onNewChat}
+                onClick={onRestart}
                 size="sm"
                 type="button"
                 variant="secondary"
               >
-                {t("chat.newChat")}
+                {t("chat.restart")}
               </Button>
               <button
                 className="text-xs text-teal-100/70 underline-offset-2 hover:underline"

@@ -47,7 +47,9 @@ export async function GET(request: Request, { params }: Params) {
       Number.isFinite(limit) && limit > 0 ? limit : CHAT_MESSAGE_PAGE_LIMIT;
 
     if (after !== null) {
-      const messages = await getChatMessagesAfter(id, after, messageLimit);
+      const messages = await getChatMessagesAfter(id, after, messageLimit, {
+        visibleAfter: session.guest_visible_after,
+      });
       const lastMessage = messages.at(-1);
       return Response.json({
         messages,
@@ -59,6 +61,7 @@ export async function GET(request: Request, { params }: Params) {
     const page = await getChatMessagesPage(id, {
       before,
       limit: messageLimit,
+      visibleAfter: session.guest_visible_after,
     });
 
     return Response.json({ ...page, replyMode: session.reply_mode });

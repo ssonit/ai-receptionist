@@ -28,6 +28,7 @@ export type ChatSessionRow = {
   events: unknown;
   channel: string | null;
   external_user_id: string | null;
+  guest_visible_after: string | null;
   last_message_at: string | null;
   created_at: string;
   updated_at: string;
@@ -111,14 +112,14 @@ export function compareChatMessagesChronological(
 }
 
 const SESSION_LIST_SELECT =
-  "id, title, status, reply_mode, eve_session_id, visitor_id, user_id, channel, external_user_id, last_message_at, created_at, updated_at";
+  "id, title, status, reply_mode, eve_session_id, visitor_id, user_id, channel, external_user_id, guest_visible_after, last_message_at, created_at, updated_at";
 
 /** Ownership / mutate paths — skip heavy `events` blob. */
 const SESSION_AUTH_SELECT =
-  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, reply_mode, claimed_by, claimed_at, continuation_token, stream_index, channel, external_user_id, last_message_at, created_at, updated_at";
+  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, reply_mode, claimed_by, claimed_at, continuation_token, stream_index, channel, external_user_id, guest_visible_after, last_message_at, created_at, updated_at";
 
 const SESSION_FULL_SELECT =
-  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, reply_mode, claimed_by, claimed_at, continuation_token, stream_index, events, channel, external_user_id, last_message_at, created_at, updated_at";
+  "id, workspace_id, eve_session_id, visitor_id, user_id, title, status, reply_mode, claimed_by, claimed_at, continuation_token, stream_index, events, channel, external_user_id, guest_visible_after, last_message_at, created_at, updated_at";
 
 const MESSAGE_SELECT =
   "id, session_id, role, content, eve_message_id, eve_event_index, raw, created_at";
@@ -306,6 +307,7 @@ export async function getChatMessagesPage(
   options?: {
     limit?: number;
     before?: string | null;
+    visibleAfter?: string | null;
   },
 ): Promise<ChatMessagesPage> {
   const supabase = createAdminClient();
@@ -316,6 +318,7 @@ export async function getChatMessagesPage(
   const before = options?.before
     ? decodeMessageCursor(options.before)
     : null;
+  const visibleAfter = options?.visibleAfter?.trim() || null;
 
   let query = supabase
     .from("chat_messages")
@@ -325,6 +328,10 @@ export async function getChatMessagesPage(
     .order("eve_event_index", { ascending: false, nullsFirst: false })
     .order("id", { ascending: false })
     .limit(limit + 1);
+
+  if (visibleAfter) {
+    query = query.gte("created_at", visibleAfter);
+  }
 
   if (before) {
     // (created_at, id) < (before.createdAt, before.id)
@@ -353,9 +360,11 @@ export async function getChatMessagesAfter(
   sessionId: string,
   after: string | null,
   limit = 50,
+  options?: { visibleAfter?: string | null },
 ): Promise<ChatMessageRow[]> {
   const supabase = createAdminClient();
   const cursor = after ? decodeMessageCursor(after) : null;
+  const visibleAfter = options?.visibleAfter?.trim() || null;
 
   let query = supabase
     .from("chat_messages")
@@ -364,6 +373,10 @@ export async function getChatMessagesAfter(
     .order("created_at", { ascending: true })
     .order("id", { ascending: true })
     .limit(Math.min(Math.max(limit, 1), 100));
+
+  if (visibleAfter) {
+    query = query.gte("created_at", visibleAfter);
+  }
 
   if (cursor) {
     query = query.or(
@@ -396,14 +409,57 @@ export async function getChatMessages(
   );
 }
 
-export async function countChatMessages(sessionId: string): Promise<number> {
+export async function countChatMessages(
+  sessionId: string,
+  options?: { visibleAfter?: string | null },
+): Promise<number> {
   const supabase = createAdminClient();
-  const { count, error } = await supabase
+  const visibleAfter = options?.visibleAfter?.trim() || null;
+  let query = supabase
     .from("chat_messages")
     .select("id", { count: "exact", head: true })
     .eq("session_id", sessionId);
+  if (visibleAfter) {
+    query = query.gte("created_at", visibleAfter);
+  }
+  const { count, error } = await query;
   if (error) throw new Error(error.message);
   return count ?? 0;
+}
+
+export async function restartGuestChatSession(input: {
+  id: string;
+  visitorId: string;
+  userId?: string | null;
+  workspaceId: string;
+}): Promise<ChatSessionRow | null> {
+  const existing = await getChatSessionForActor({
+    id: input.id,
+    visitorId: input.visitorId,
+    userId: input.userId,
+    workspaceId: input.workspaceId,
+    includeEvents: false,
+  });
+  if (!existing) return null;
+
+  const now = new Date().toISOString();
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("chat_sessions")
+    .update({
+      guest_visible_after: now,
+      eve_session_id: null,
+      continuation_token: null,
+      stream_index: 0,
+      events: [],
+      updated_at: now,
+    })
+    .eq("id", input.id)
+    .select(SESSION_FULL_SELECT)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as ChatSessionRow;
 }
 
 export async function updateChatSessionState(input: {
