@@ -82,7 +82,7 @@ Copy the **Client ID** and **Client Secret** shown after creation — you'll nee
 **Interfaces:**
 - Produces: local GoTrue accepts `provider: "google"` for `signInWithOAuth`. Consumed by Task 10's manual test.
 
-- [ ] **Step 1: Add the provider block to `supabase/config.toml`**
+- [x] **Step 1: Add the provider block to `supabase/config.toml`**
 
 Insert immediately after line 335 (`email_optional = false`) and before the `# Allow Solana wallet holders...` comment:
 
@@ -102,7 +102,7 @@ url = ""
 skip_nonce_check = false
 ```
 
-- [ ] **Step 2: Add the env vars to `.env.example`**
+- [x] **Step 2: Add the env vars to `.env.example`**
 
 Add near the other OAuth blocks (after the Cal.com OAuth section, e.g. after line 31 `CALCOM_OAUTH_REDIRECT_URI=...`):
 
@@ -116,7 +116,7 @@ SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=
 SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=
 ```
 
-- [ ] **Step 3: Set real values in `.env.local` and restart Supabase**
+- [x] **Step 3: Set real values in `.env.local` and restart Supabase**
 
 Copy the two new keys into `.env.local` (not committed) with the values from Task 1.
 
@@ -126,7 +126,7 @@ npx supabase stop
 npx supabase start
 ```
 
-- [ ] **Step 4: Verify the provider is live locally**
+- [x] **Step 4: Verify the provider is live locally**
 
 Run:
 ```bash
@@ -134,7 +134,7 @@ npx supabase status -o env
 ```
 Expected: command succeeds (confirms Supabase is up; GoTrue reads `config.toml` on start, there's no separate "list providers" CLI output — Task 10's browser test is the real verification that Google is wired up).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/config.toml .env.example
@@ -157,7 +157,7 @@ git commit -m "feat(auth): configure local Google OAuth provider"
   - `GOOGLE_INVITE_STATE_COOKIE: string` (cookie name constant)
   - `type GoogleInviteStatePayload = { inviteToken: string; next: string; nonce: string; exp: number }`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `lib/google-invite-state.test.ts`:
 
@@ -258,12 +258,12 @@ describe("google-invite-state", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx vitest run lib/google-invite-state.test.ts`
 Expected: FAIL — `Cannot find module './google-invite-state'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `lib/google-invite-state.ts`:
 
@@ -364,12 +364,12 @@ export function parseGoogleInviteState(
 export const GOOGLE_INVITE_STATE_COOKIE = "eve_google_invite_state";
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx vitest run lib/google-invite-state.test.ts`
 Expected: PASS, 6/6 tests.
 
-- [ ] **Step 5: Typecheck and commit**
+- [x] **Step 5: Typecheck and commit**
 
 Run: `npm run typecheck`
 Expected: no errors.
@@ -390,7 +390,7 @@ git commit -m "feat(auth): add signed Google invite-state cookie helper"
 **Interfaces:**
 - Produces: `AUTH_ERROR_CODE.OAUTH_FAILED`, `AUTH_ERROR_CODE.OAUTH_INVITE_INVALID`. Consumed by Task 6, 7, 8.
 
-- [ ] **Step 1: Add the codes**
+- [x] **Step 1: Add the codes**
 
 Edit `lib/errors/auth-codes.ts` — add two entries to the `AUTH_ERROR_CODE` object (after `NAME_REQUIRED: "name_required",`):
 
@@ -399,7 +399,7 @@ Edit `lib/errors/auth-codes.ts` — add two entries to the `AUTH_ERROR_CODE` obj
   OAUTH_INVITE_INVALID: "oauth_invite_invalid",
 ```
 
-- [ ] **Step 2: Add the copy**
+- [x] **Step 2: Add the copy**
 
 Edit `lib/errors/auth-messages.ts` — add two entries to `AUTH_ERROR_MESSAGE` (after the `NAME_REQUIRED` entry):
 
@@ -412,7 +412,7 @@ Edit `lib/errors/auth-messages.ts` — add two entries to `AUTH_ERROR_MESSAGE` (
 
 `as const satisfies Record<AuthErrorCode, string>` on the object means TypeScript itself fails the build if either entry is missing — that's the verification.
 
-- [ ] **Step 3: Typecheck and commit**
+- [x] **Step 3: Typecheck and commit**
 
 Run: `npm run typecheck`
 Expected: no errors (would fail here if either message entry were missing).
@@ -437,7 +437,7 @@ git commit -m "feat(auth): add OAUTH_FAILED and OAUTH_INVITE_INVALID error codes
 
 This is a genuine TDD red/green cycle: the test is written and run against **today's** `handle_new_user` first (it fails, because the OAuth fallback doesn't exist yet), then the migration is written to make it pass.
 
-- [ ] **Step 1: Add the new test file to `vitest.config.mts`**
+- [x] **Step 1: Add the new test file to `vitest.config.mts`**
 
 Edit `vitest.config.mts`. In the `unit` project's `exclude` array (around line 76), add the new path:
 
@@ -465,7 +465,7 @@ In the `db-integration` project's `include` array (around line 93), add it too:
 
 (Without both edits the test would run twice — once under `unit` with a mocked, empty admin client where it would fail for the wrong reason, and once under `db-integration` for real.)
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `tests/handle-new-user-oauth-invite.test.ts`:
 
@@ -629,14 +629,14 @@ describe.skipIf(!dbUp)("handle_new_user OAuth invite fallback", () => {
 });
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [x] **Step 3: Run the test to verify it fails**
 
 Prereq: `npx supabase start` (if not already running).
 
 Run: `npx vitest run tests/handle-new-user-oauth-invite.test.ts`
 Expected: FAIL on the first test — `profile?.workspace_id` is a freshly-created throwaway workspace, not `invitedWorkspaceId` (today's `handle_new_user` has no email fallback, so the Google signup takes the owner path). The other two tests pass already (they describe today's behavior).
 
-- [ ] **Step 4: Write the migration**
+- [x] **Step 4: Write the migration**
 
 Create `supabase/migrations/20260805000001_handle_new_user_oauth_invite.sql`:
 
@@ -798,22 +798,22 @@ comment on function public.handle_new_user() is
   'Invite token (explicit, or matched by email for OAuth signups) → staff joins existing workspace; else create an owner workspace (race-safe slug) and call seed_workspace_starters().';
 ```
 
-- [ ] **Step 5: Apply the migration**
+- [x] **Step 5: Apply the migration**
 
 Run: `npx supabase db reset`
 Expected: succeeds (applies every migration + `seed.sql` from scratch — this is also the standard "did I break an earlier migration" check).
 
-- [ ] **Step 6: Run the test to verify it passes**
+- [x] **Step 6: Run the test to verify it passes**
 
 Run: `npx vitest run tests/handle-new-user-oauth-invite.test.ts`
 Expected: PASS, 3/3 tests.
 
-- [ ] **Step 7: Full test suite + typecheck (regression check)**
+- [x] **Step 7: Full test suite + typecheck (regression check)**
 
 Run: `npm run typecheck && npm test`
 Expected: no new failures. (`npm test` runs the full Vitest suite, `unit` project by default plus `db-integration` since Supabase is up.)
 
-- [ ] **Step 8: `graphify update .` and commit**
+- [x] **Step 8: `graphify update .` and commit**
 
 ```bash
 graphify update .
@@ -832,7 +832,7 @@ git commit -m "feat(auth): handle_new_user joins OAuth signups to a pending invi
 - Consumes: `createGoogleInviteState`, `GOOGLE_INVITE_STATE_COOKIE` (Task 3); `AUTH_ERROR_CODE.OAUTH_FAILED` (Task 4); `ROUTES.LOGIN`, `ROUTES.DASHBOARD`, `ROUTES.AUTH_CALLBACK` (existing `lib/routes.ts`).
 - Produces: `signInWithGoogle(formData: FormData): Promise<void>` — a server action usable as a `<form action={...}>` target. Consumed by Task 9's `GoogleSignInButton`.
 
-- [ ] **Step 1: Add imports and the action**
+- [x] **Step 1: Add imports and the action**
 
 Edit `app/auth/actions.ts`. Add to the top imports (after the existing `import { createClient } from "@/lib/supabase/server";` line):
 
@@ -884,12 +884,12 @@ export async function signInWithGoogle(formData: FormData) {
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npm run typecheck`
 Expected: no errors. (`AUTH_ERROR_CODE` is already imported at the top of this file.)
 
-- [ ] **Step 3: `graphify update .` and commit**
+- [x] **Step 3: `graphify update .` and commit**
 
 ```bash
 graphify update .
@@ -908,7 +908,7 @@ git commit -m "feat(auth): add signInWithGoogle server action"
 - Consumes: `GOOGLE_INVITE_STATE_COOKIE`, `parseGoogleInviteState` (Task 3); `AUTH_ERROR_CODE.OAUTH_FAILED` / `OAUTH_INVITE_INVALID` (Task 4); existing `accept_workspace_invite` RPC (unmodified).
 - Produces: same `GET` route, now also handling Google's redirect and staff-invite completion. Consumed by: Google (via the `redirectTo` set in Task 6), and the existing password-reset flow (`app/auth/actions.ts` `forgotPassword`, unaffected — see Step 1 note).
 
-- [ ] **Step 1: Rewrite the route**
+- [x] **Step 1: Rewrite the route**
 
 Replace the full contents of `app/auth/callback/route.ts`:
 
@@ -990,12 +990,12 @@ export async function GET(request: Request) {
 
 Note: the existing password-reset flow (`forgotPassword` in `app/auth/actions.ts`) also redirects through this same route with `?next=/reset-password` and no invite cookie — `inviteStateCookie` will be `undefined` for it, so it falls straight through to the final `return NextResponse.redirect(...)`, identical to today's behavior. Nothing about that flow changes.
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npm run typecheck`
 Expected: no errors.
 
-- [ ] **Step 3: `graphify update .` and commit**
+- [x] **Step 3: `graphify update .` and commit**
 
 ```bash
 graphify update .
@@ -1015,7 +1015,7 @@ git commit -m "feat(auth): handle Google invite-state and error redirects in /au
 - Consumes: `authErrorMessage`, `AUTH_ERROR_CODE` (existing, plus Task 4's new codes).
 - Produces: `LoginForm` gains an optional `initialError?: string` prop. No other task consumes this directly, but it closes the pre-existing gap where `app/api/cal/oauth/callback/route.ts` and `app/api/messenger/oauth/callback/route.ts` already redirect to `/login?error=...` and nothing ever displayed it.
 
-- [ ] **Step 1: `app/login/page.tsx` — read and map the error**
+- [x] **Step 1: `app/login/page.tsx` — read and map the error**
 
 Replace the full contents:
 
@@ -1069,7 +1069,7 @@ export default async function LoginPage({
 }
 ```
 
-- [ ] **Step 2: `app/login/login-form.tsx` — accept and show `initialError`**
+- [x] **Step 2: `app/login/login-form.tsx` — accept and show `initialError`**
 
 Change the component signature and the error render. Replace:
 
@@ -1118,12 +1118,12 @@ with:
       ) : null}
 ```
 
-- [ ] **Step 3: Typecheck**
+- [x] **Step 3: Typecheck**
 
 Run: `npm run typecheck`
 Expected: no errors.
 
-- [ ] **Step 4: Manual verification**
+- [x] **Step 4: Manual verification**
 
 Run the dev server (`npm run dev`), navigate to `http://localhost:3000/login?error=oauth_failed`.
 Expected: the red alert box shows "Could not sign in with Google. Try again." above the form fields.
@@ -1131,7 +1131,7 @@ Expected: the red alert box shows "Could not sign in with Google. Try again." ab
 Navigate to `http://localhost:3000/login?error=some_garbage_code`.
 Expected: falls back to the generic `SIGN_IN_FAILED` message ("Could not sign in. Check your email and password, then try again.") — never crashes, never shows a raw code.
 
-- [ ] **Step 5: `npm run doctor`, `graphify update .`, commit**
+- [x] **Step 5: `npm run doctor`, `graphify update .`, commit**
 
 ```bash
 npm run doctor
@@ -1153,7 +1153,7 @@ git commit -m "feat(auth): render OAuth error messages on /login"
 - Consumes: `signInWithGoogle` (Task 6).
 - Produces: `GoogleSignInButton({ nextPath, inviteToken }: { nextPath: string; inviteToken?: string | null })` — a Server Component (no client state needed; the `<form action={...}>` itself handles the request).
 
-- [ ] **Step 1: Create the button**
+- [x] **Step 1: Create the button**
 
 Create `components/auth/google-signin-button.tsx`:
 
@@ -1208,7 +1208,7 @@ export function GoogleSignInButton({
 }
 ```
 
-- [ ] **Step 2: Wire into `login-form.tsx`**
+- [x] **Step 2: Wire into `login-form.tsx`**
 
 Add the import (with the other `@/` imports):
 
@@ -1233,7 +1233,7 @@ Insert `<GoogleSignInButton nextPath={nextPath} />` right after the closing `</R
       <div className="relative py-1">
 ```
 
-- [ ] **Step 3: Wire into `signup-form.tsx`**
+- [x] **Step 3: Wire into `signup-form.tsx`**
 
 Add the same import. This form has no existing "or" divider — add one (copied from `login-form.tsx` for visual consistency between the two forms) plus the button, right after the closing `</RainbowButton>` and before the terms paragraph:
 
@@ -1275,16 +1275,16 @@ Add the same import. This form has no existing "or" divider — add one (copied 
 
 `ROUTES` is already imported in this file (`import { ROUTES, inviteRoute } from "@/lib/routes";`).
 
-- [ ] **Step 4: Typecheck**
+- [x] **Step 4: Typecheck**
 
 Run: `npm run typecheck`
 Expected: no errors.
 
-- [ ] **Step 5: Manual visual check**
+- [x] **Step 5: Manual visual check**
 
 `npm run dev` → open `/login` and `/signup` (and `/signup?invite=anything` to see the invite-joining copy path). Confirm the Google button renders with the icon, in the right position, and doesn't overlap/break layout at mobile width (resize browser or devtools to ~375px).
 
-- [ ] **Step 6: `npm run doctor`, `graphify update .`, commit**
+- [x] **Step 6: `npm run doctor`, `graphify update .`, commit**
 
 ```bash
 npm run doctor
@@ -1380,7 +1380,7 @@ After the next deploy, repeat Task 10 Step 2 and Step 3 against the production U
 - Consumes: `public.workspace_invites`, `public.workspaces`, `public.profiles`, `auth.users` (all existing).
 - Produces: RPC `list_my_pending_invites() returns table (token text, workspace_name text, inviter_name text, expires_at timestamptz)`. Consumed by Task 13.
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 Create `supabase/migrations/20260805000002_list_my_pending_invites.sql`:
 
@@ -1433,7 +1433,7 @@ $$;
 grant execute on function public.list_my_pending_invites() to authenticated;
 ```
 
-- [ ] **Step 2: Apply and verify with psql**
+- [x] **Step 2: Apply and verify with psql**
 
 Run: `npx supabase db reset`
 Expected: succeeds.
@@ -1445,7 +1445,7 @@ select public.list_my_pending_invites();
 ```
 Expected when called with no session (`auth.uid()` is null — e.g. via the `anon` role or a raw SQL editor session): empty result set, no error. Full behavior (real invite → real row) is exercised by Task 13's manual test, since it needs an authenticated session.
 
-- [ ] **Step 3: `graphify update .` and commit**
+- [x] **Step 3: `graphify update .` and commit**
 
 ```bash
 graphify update .
@@ -1464,7 +1464,7 @@ git commit -m "feat(dashboard): add list_my_pending_invites RPC"
 - Consumes: `list_my_pending_invites()` RPC (Task 12), `createClient()` (existing).
 - Produces: `type MyPendingInvite = { token: string; workspaceName: string; inviterName: string | null; expiresAt: string }` and `getMyPendingInvites(): Promise<MyPendingInvite[]>`. Consumed by Task 14.
 
-- [ ] **Step 1: Add the type and function**
+- [x] **Step 1: Add the type and function**
 
 Edit `lib/workspace-invites.ts`, add at the end of the file:
 
@@ -1506,12 +1506,12 @@ export async function getMyPendingInvites(): Promise<MyPendingInvite[]> {
 
 This fails open (empty array) on any RPC error, matching `getInvitePreview`'s tolerance in this same file and the "fire-and-forget safe" philosophy in `lib/notifications-write.ts` — a broken pending-invites lookup should never break the dashboard.
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npm run typecheck`
 Expected: no errors.
 
-- [ ] **Step 3: `graphify update .` and commit**
+- [x] **Step 3: `graphify update .` and commit**
 
 ```bash
 graphify update .
@@ -1531,7 +1531,7 @@ git commit -m "feat(dashboard): add getMyPendingInvites()"
 - Consumes: `MyPendingInvite`, `getMyPendingInvites()` (Task 13); `acceptWorkspaceInviteAction(token)` (existing, `app/dashboard/settings/invite-actions.ts`).
 - Produces: `PendingInviteBanner({ invites: MyPendingInvite[] })`, rendered from every dashboard page via `DashboardShell` (same integration point as the existing `BookingLiveBanner`).
 
-- [ ] **Step 1: Create the banner**
+- [x] **Step 1: Create the banner**
 
 Create `components/pending-invite-banner.tsx`:
 
@@ -1622,7 +1622,7 @@ export function PendingInviteBanner({
 
 `acceptWorkspaceInviteAction` redirects to `DASHBOARD_PATH.root` on success (throws `NEXT_REDIRECT`) — same call, same behavior already used by `app/_components/invite-accept-panel.tsx`'s `onAccept`.
 
-- [ ] **Step 2: Wire into `DashboardShell`**
+- [x] **Step 2: Wire into `DashboardShell`**
 
 Edit `components/dashboard-shell.tsx`. Add imports:
 
@@ -1679,12 +1679,12 @@ export async function DashboardShell({
 }
 ```
 
-- [ ] **Step 3: Typecheck**
+- [x] **Step 3: Typecheck**
 
 Run: `npm run typecheck`
 Expected: no errors.
 
-- [ ] **Step 4: `npm run doctor`, `graphify update .`, commit**
+- [x] **Step 4: `npm run doctor`, `graphify update .`, commit**
 
 ```bash
 npm run doctor
