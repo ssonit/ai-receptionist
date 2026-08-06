@@ -689,7 +689,7 @@ describe.skipIf(!dbUp)("membership dual-write", () => {
     expect(profileRole.get(ownerId)).toBe("staff");
   });
 
-  it("keeps profiles.role and workspace_members.role equal for every user", async () => {
+  it("keeps profiles.role and workspace_members.role equal for the user it creates", async () => {
     const admin = createAdminClient();
     const userId = await newUser(`${uniq("parity")}@example.com`);
     const { profile } = await readBoth(userId);
@@ -697,17 +697,25 @@ describe.skipIf(!dbUp)("membership dual-write", () => {
     // workspace found below would delete seed.sql's Eve Pilot in afterEach.
     createdWorkspaceIds.push(profile!.workspace_id as string);
 
+    // Scoped to this test's own user on purpose. A table-wide scan is flaky:
+    // vitest runs test files in parallel, and tests/db/rls-source-of-truth
+    // (Task 3) deliberately points a profile at one workspace and its
+    // membership at another to prove which table RLS reads. That divergence
+    // is intentional and outside the invariant this test asserts.
     const { data: rows } = await admin
       .from("profiles")
       .select("id, workspace_id, role")
+      .eq("id", userId)
       .not("workspace_id", "is", null);
     const { data: members } = await admin
       .from("workspace_members")
-      .select("user_id, workspace_id, role");
+      .select("user_id, workspace_id, role")
+      .eq("user_id", userId);
 
     const byKey = new Map(
       (members ?? []).map((m) => [`${m.user_id}:${m.workspace_id}`, m.role]),
     );
+    expect(rows ?? []).toHaveLength(1);
     for (const r of rows ?? []) {
       expect(byKey.get(`${r.id}:${r.workspace_id}`)).toBe(r.role);
     }
