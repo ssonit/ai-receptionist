@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "app/dashboard/settings/page.tsx": {
-    "mtime": 1785839709.0142798,
-    "ast_hash": "cc6b45dfefd4d3e80ffb2b1fa0e3efc4",
+    "mtime": 1786091669.866678,
+    "ast_hash": "1728cecbff772232edc8b710fbdc8f64",
     "semantic_hash": ""
   },
   "app/layout.tsx": {
@@ -500,8 +500,8 @@
     "semantic_hash": ""
   },
   "lib/sync-cal-bookings.ts": {
-    "mtime": 1785814748.5746703,
-    "ast_hash": "ba5cb5840e20e87baa1719b43bcb12d2",
+    "mtime": 1786091399.5449493,
+    "ast_hash": "704ebd49b6529cc75bb1ba90f0f229cf",
     "semantic_hash": ""
   },
   "lib/utils.ts": {
@@ -755,7 +755,7 @@
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
-    "mtime": 1786084586.9552093,
+    "mtime": 1786094778.2428465,
     "ast_hash": "2febf9afb953bc029a4a44fa0459b8b9",
     "semantic_hash": ""
   },
@@ -2330,8 +2330,8 @@
     "semantic_hash": ""
   },
   "app/api/cron/tick/route.ts": {
-    "mtime": 1785055485.123333,
-    "ast_hash": "52cccf7ffac82cfbee026193158da79c",
+    "mtime": 1786094891.4963772,
+    "ast_hash": "e87cfe9b0a43a4f63fa7abbf84933cf8",
     "semantic_hash": ""
   },
   "app/b/[slug]/unsubscribe/page.tsx": {
@@ -2360,8 +2360,8 @@
     "semantic_hash": ""
   },
   "vercel.json": {
-    "mtime": 1784970607.1853702,
-    "ast_hash": "c29bd145e433b5d9152cb1e4e112e1ef",
+    "mtime": 1786094902.0217288,
+    "ast_hash": "389669125810768b15bde79ebcea06dc",
     "semantic_hash": ""
   },
   "docs/superpowers/outbound-reminders.md": {
@@ -2910,8 +2910,8 @@
     "semantic_hash": ""
   },
   "app/api/cal/webhook/route.ts": {
-    "mtime": 1786090562.0063317,
-    "ast_hash": "e303315d2b059ca733c758b4956686b3",
+    "mtime": 1786091390.2339368,
+    "ast_hash": "cdfdd01f185e243bab6d8204cc6402bc",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-07-31-pricing-cta-static-design.md": {
@@ -2970,8 +2970,8 @@
     "semantic_hash": ""
   },
   "app/_components/webhook-secret-card.tsx": {
-    "mtime": 1785581734.2940617,
-    "ast_hash": "7b6b34393a900922da855b2f94e53bf9",
+    "mtime": 1786091673.7249224,
+    "ast_hash": "fbe93692371028562bb759c3a9489e21",
     "semantic_hash": ""
   },
   "lib/errors/app-error.ts": {
@@ -3035,8 +3035,8 @@
     "semantic_hash": ""
   },
   "lib/sync-cal-bookings.test.ts": {
-    "mtime": 1785814751.1496482,
-    "ast_hash": "949e5b73569bed43ad99de63878a04ec",
+    "mtime": 1786091501.0147507,
+    "ast_hash": "7b0f999fe2e4bae357eb43c316101a2e",
     "semantic_hash": ""
   },
   "supabase/migrations/20260801000003_bookings_workspace_scoped_uid.sql": {
@@ -3225,7 +3225,7 @@
     "semantic_hash": ""
   },
   "lib/zalo.ts": {
-    "mtime": 1786084586.9552093,
+    "mtime": 1786094778.2428465,
     "ast_hash": "3ffa80ab949660f879b4c53fc08d2bff",
     "semantic_hash": ""
   },
@@ -3660,8 +3660,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-08-07-booking-reminders-event-driven-design.md": {
-    "mtime": 1786088101.3095586,
-    "ast_hash": "cf5f2aa3e8b2f9fb38c4501aadb8ad50",
+    "mtime": 1786094504.5428307,
+    "ast_hash": "365d2b275c98def92db63456dd3bec0f",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-08-07-cal-webhook-auto-register-design.md": {
@@ -3687,6 +3687,21 @@
   "lib/cal-webhook-setup.ts": {
     "mtime": 1786090792.904813,
     "ast_hash": "a6282dffe884210cbf7d166d195edf0d",
+    "semantic_hash": ""
+  },
+  "app/api/cal/webhook/route.test.ts": {
+    "mtime": 1786091353.091048,
+    "ast_hash": "ddb4f37da509ab67e56e323834fdea68",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-07-drop-custom-reminders.md": {
+    "mtime": 1786094723.0687335,
+    "ast_hash": "5430e2ec5def0b88a4dd7241d7a01c02",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-07-drop-custom-reminders-design.md": {
+    "mtime": 1786094539.0126126,
+    "ast_hash": "58de6a3b14bc817e291ef488a45f9341",
     "semantic_hash": ""
   }
 }

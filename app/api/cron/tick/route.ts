@@ -1,4 +1,3 @@
-import { sendDueReminders } from "@/lib/booking-reminders";
 import { ensureDigestNotifications } from "@/lib/notification-digests";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncCalBookingsToSupabase } from "@/lib/sync-cal-bookings";
@@ -15,8 +14,7 @@ function authorize(request: Request): boolean {
 
 /**
  * Workspaces that need a background sync this tick:
- * any with a confirmed booking in the next 48h (keeps Cal mirror fresh),
- * plus reminder-enabled tenants (even if the window is empty this tick).
+ * any with a confirmed booking in the next 48h (keeps Cal mirror fresh).
  */
 async function workspaceIdsForTick(): Promise<string[]> {
   const supabase = createAdminClient();
@@ -24,27 +22,17 @@ async function workspaceIdsForTick(): Promise<string[]> {
   const horizon = new Date(now + 48 * 60 * 60 * 1000).toISOString();
   const nowIso = new Date(now).toISOString();
 
-  const [{ data: upcoming }, { data: reminderWs }] = await Promise.all([
-    supabase
-      .from("bookings")
-      .select("workspace_id")
-      .gte("start_time", nowIso)
-      .lte("start_time", horizon)
-      .not("status", "ilike", "%cancel%")
-      .limit(2000),
-    supabase
-      .from("workspaces")
-      .select("id")
-      .eq("booking_reminders_enabled", true)
-      .limit(500),
-  ]);
+  const { data: upcoming } = await supabase
+    .from("bookings")
+    .select("workspace_id")
+    .gte("start_time", nowIso)
+    .lte("start_time", horizon)
+    .not("status", "ilike", "%cancel%")
+    .limit(2000);
 
   const ids = new Set<string>();
   for (const row of upcoming ?? []) {
     if (row.workspace_id) ids.add(row.workspace_id as string);
-  }
-  for (const row of reminderWs ?? []) {
-    if (row.id) ids.add(row.id as string);
   }
   return [...ids];
 }
@@ -79,8 +67,8 @@ export async function GET(request: Request) {
     }
   }
 
-  // Digests also run inside sync; call again so reminder-only workspaces
-  // without a Cal key still get stale-lead / AI-config alerts.
+  // Digests also run inside sync; call again for workspaces that synced
+  // this tick so stale-lead / AI-config alerts still fire.
   for (const workspaceId of workspaceIds) {
     try {
       await ensureDigestNotifications(workspaceId);
@@ -95,24 +83,9 @@ export async function GET(request: Request) {
     console.error("[cron/tick] rate-limit prune failed", error);
   }
 
-  let reminders: Awaited<ReturnType<typeof sendDueReminders>> | null = null;
-  try {
-    reminders = await sendDueReminders({ workspaceIds });
-  } catch (error) {
-    console.error("[cron/tick] reminders failed", error);
-    reminders = {
-      scheduled: 0,
-      sent: 0,
-      failed: 0,
-      skipped: 0,
-      error: error instanceof Error ? error.message : "reminders failed",
-    };
-  }
-
   return Response.json({
     ok: true,
     workspaces: workspaceIds.length,
     sync: syncResults,
-    reminders,
   });
 }
