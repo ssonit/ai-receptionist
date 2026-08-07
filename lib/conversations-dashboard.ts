@@ -116,7 +116,9 @@ export async function loadConversationsDashboard(limit = 100): Promise<{
   ]);
 
   const bookingSet = new Set(
-    (bookingsRes.data ?? []).map((b) => b.chat_session_id).filter(Boolean),
+    (bookingsRes.data ?? []).flatMap((b) =>
+      b.chat_session_id ? [b.chat_session_id] : [],
+    ),
   );
   const leadSet = new Set(
     (leadsRes.data ?? []).map((l) => l.session_id).filter(Boolean),
