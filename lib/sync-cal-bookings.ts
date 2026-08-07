@@ -1,4 +1,5 @@
 import { type CalBookingListItem, fetchAllCalBookings, withCalApiKey } from "@/lib/calcom";
+import { ensureCalWebhookForWorkspace } from "@/lib/cal-webhook-setup";
 import { bookingConfig } from "@/lib/booking-config";
 import { isCancelledStatus, normalizeCalApiStatus } from "@/lib/booking-status";
 import { ensureDigestNotifications } from "@/lib/notification-digests";
@@ -228,6 +229,12 @@ export async function syncCalBookingsToSupabase(
       error: "Missing workspace — will not sync to another tenant.",
     };
   }
+
+  // Best-effort — never let a webhook-registration hiccup block the sync
+  // this call actually asked for.
+  await ensureCalWebhookForWorkspace(wsId).catch((error) => {
+    console.error("[sync-cal-bookings] ensureCalWebhookForWorkspace failed", wsId, error);
+  });
 
   let apiKey: string;
   try {

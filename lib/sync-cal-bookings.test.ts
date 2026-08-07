@@ -13,6 +13,31 @@ vi.mock("@/lib/notifications-write", async (importOriginal) => ({
   createNotification: vi.fn().mockResolvedValue(null),
 }));
 
+const webhookSetupMocks = vi.hoisted(() => ({
+  ensureCalWebhookForWorkspace: vi.fn().mockResolvedValue({ ok: true, skipped: true }),
+}));
+
+vi.mock("@/lib/cal-webhook-setup", () => ({
+  ensureCalWebhookForWorkspace: webhookSetupMocks.ensureCalWebhookForWorkspace,
+}));
+
+vi.mock("@/lib/calcom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/calcom")>();
+  return {
+    ...actual,
+    fetchAllCalBookings: vi.fn(),
+    withCalApiKey: vi.fn(async (_key: string, fn: () => unknown) => fn()),
+  };
+});
+
+vi.mock("@/lib/workspace", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/workspace")>();
+  return {
+    ...actual,
+    getCalApiKeyForWorkspace: vi.fn(),
+  };
+});
+
 const WS_A = "aaaaaaaa-0000-4000-8000-000000000001";
 const WS_B = "bbbbbbbb-0000-4000-8000-000000000002";
 const SHARED_UID = "shared-cal-uid";
@@ -131,5 +156,69 @@ describe("upsertCalBookings — tenant scoping", () => {
       .find((r) => r.workspace_id === WS_A);
 
     expect(upserted?.created_by_staff_id).toBe("staff-1");
+  });
+});
+
+describe("syncCalBookingsToSupabase — webhook registration hook", () => {
+  const EMPTY_FETCH = {
+    items: [] as CalBookingListItem[],
+    scope: {
+      pageLimit: 100,
+      maxPages: 1,
+      filters: [] as string[],
+      truncatedFilters: [] as string[],
+    },
+  };
+
+  beforeEach(async () => {
+    supabaseMock.clear();
+    vi.clearAllMocks();
+    webhookSetupMocks.ensureCalWebhookForWorkspace.mockResolvedValue({
+      ok: true,
+      skipped: true,
+    });
+
+    const calcom = await import("@/lib/calcom");
+    vi.mocked(calcom.fetchAllCalBookings).mockResolvedValue(EMPTY_FETCH);
+    vi.mocked(calcom.withCalApiKey).mockImplementation(async (_key, fn) => fn());
+
+    const workspace = await import("@/lib/workspace");
+    vi.mocked(workspace.getCalApiKeyForWorkspace).mockResolvedValue("cal-key");
+  });
+
+  it("calls ensureCalWebhookForWorkspace before fetching bookings", async () => {
+    const callOrder: string[] = [];
+    webhookSetupMocks.ensureCalWebhookForWorkspace.mockImplementation(async () => {
+      callOrder.push("ensureCalWebhookForWorkspace");
+      return { ok: true, skipped: true };
+    });
+
+    const calcom = await import("@/lib/calcom");
+    vi.mocked(calcom.fetchAllCalBookings).mockImplementation(async () => {
+      callOrder.push("fetchAllCalBookings");
+      return EMPTY_FETCH;
+    });
+
+    const { syncCalBookingsToSupabase } = await import("./sync-cal-bookings");
+    await syncCalBookingsToSupabase(WS_A);
+
+    expect(webhookSetupMocks.ensureCalWebhookForWorkspace).toHaveBeenCalledWith(WS_A);
+    expect(callOrder).toEqual([
+      "ensureCalWebhookForWorkspace",
+      "fetchAllCalBookings",
+    ]);
+  });
+
+  it("still syncs bookings even when webhook registration fails", async () => {
+    webhookSetupMocks.ensureCalWebhookForWorkspace.mockRejectedValue(
+      new Error("Cal.com rejected webhook create"),
+    );
+
+    const { syncCalBookingsToSupabase } = await import("./sync-cal-bookings");
+    const result = await syncCalBookingsToSupabase(WS_A);
+
+    expect(result.synced).toBe(0);
+    expect(result.error).toBeUndefined();
+    expect(webhookSetupMocks.ensureCalWebhookForWorkspace).toHaveBeenCalledWith(WS_A);
   });
 });
