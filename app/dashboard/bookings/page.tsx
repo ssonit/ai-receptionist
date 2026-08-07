@@ -10,13 +10,6 @@ import { createClient } from "@/lib/supabase/server";
 import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
 import { listWorkspaceMeetingTypes } from "@/lib/workspace-cal";
 
-const REMINDER_STATUS_RANK: Record<string, number> = {
-  failed: 4,
-  pending: 3,
-  sent: 2,
-  skipped: 1,
-};
-
 export default async function BookingsPage() {
   const dashboard = await getDashboardUser();
   if (!dashboard) {
@@ -51,32 +44,6 @@ export default async function BookingsPage() {
       listWorkspaceMeetingTypes(workspaceId),
     ]);
 
-  const bookingIds = (bookings ?? []).map((b) => b.id);
-  const reminderByBooking = new Map<
-    string,
-    "pending" | "sent" | "failed" | "skipped"
-  >();
-  if (bookingIds.length > 0) {
-    const { data: reminders } = await supabase
-      .from("booking_reminders")
-      .select("booking_id, status")
-      .eq("workspace_id", workspaceId)
-      .in("booking_id", bookingIds);
-    const rank = REMINDER_STATUS_RANK;
-    for (const row of reminders ?? []) {
-      const id = row.booking_id as string;
-      const status = row.status as
-        | "pending"
-        | "sent"
-        | "failed"
-        | "skipped";
-      const prev = reminderByBooking.get(id);
-      if (!prev || (rank[status] ?? 0) > (rank[prev] ?? 0)) {
-        reminderByBooking.set(id, status);
-      }
-    }
-  }
-
   const staffIds = [
     ...new Set(
       (bookings ?? [])
@@ -97,7 +64,6 @@ export default async function BookingsPage() {
 
   const rows = (bookings ?? []).map((b) => ({
     ...b,
-    reminder_status: reminderByBooking.get(b.id) ?? null,
     created_by_staff_name: b.created_by_staff_id
       ? (staffNameById.get(b.created_by_staff_id) ?? null)
       : null,

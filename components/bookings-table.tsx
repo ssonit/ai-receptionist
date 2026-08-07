@@ -65,8 +65,6 @@ export type BookingRow = {
   list_status: string | null;
   cancelled_by?: string | null;
   guest_timezone?: string | null;
-  /** Latest reminder status across kinds (for badge). */
-  reminder_status?: "pending" | "sent" | "failed" | "skipped" | null;
   service: string | null;
   cal_booking_uid: string | null;
   session_id: string | null;
@@ -603,19 +601,6 @@ function BookingDetailSheet({
           ) : booking.cancelled_by === "owner" ? (
             <Badge variant="secondary" className="text-xs">
               Cancelled by staff
-            </Badge>
-          ) : null}
-          {booking.reminder_status === "sent" ? (
-            <Badge variant="secondary" className="text-xs">
-              Reminder sent
-            </Badge>
-          ) : booking.reminder_status === "pending" ? (
-            <Badge variant="outline" className="text-xs">
-              Reminder pending
-            </Badge>
-          ) : booking.reminder_status === "failed" ? (
-            <Badge variant="destructive" className="text-xs">
-              Reminder failed
             </Badge>
           ) : null}
         </div>
