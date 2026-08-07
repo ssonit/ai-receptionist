@@ -6,6 +6,8 @@ export async function logAgentToolEvent(input: {
   ok: boolean;
   error?: string | null;
   sessionId?: string | null;
+  /** Stable chat_sessions.id — survives a guest "Restart". Prefer this for dashboard joins over sessionId (eve_session_id, reset on restart). */
+  chatSessionId?: string | null;
   meta?: Record<string, unknown> | null;
   /** Required — never fall back to another tenant's workspace. */
   workspaceId: string;
@@ -23,6 +25,7 @@ export async function logAgentToolEvent(input: {
       ok: input.ok,
       error: input.error?.trim() || null,
       session_id: input.sessionId ?? null,
+      chat_session_id: input.chatSessionId ?? null,
       meta: input.meta ?? null,
     });
 

@@ -90,6 +90,7 @@ export default defineTool({
         toolName: "set_guest_timezone",
         ok: true,
         sessionId: sid,
+        chatSessionId,
         workspaceId: gate.actor.workspaceId,
         meta: { timeZone: resolved },
       });

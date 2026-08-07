@@ -73,21 +73,16 @@ export async function loadConversationsDashboard(limit = 100): Promise<{
   const sessions = await listWorkspaceChatSessions(workspaceId, limit);
   const supabase = await createClient();
 
-  const eveIds = sessions
-    .map((s) => s.eve_session_id)
-    .filter((id): id is string => Boolean(id));
-
   const sessionIds = sessions.map((s) => s.id);
 
+  // All three joined on chat_session_id (stable — set once at write time,
+  // survives a guest "Restart") rather than eve_session_id (reset to null
+  // on restart). Using eve_session_id here made a completed booking / lead /
+  // tool error vanish from the dashboard the moment the guest restarted the
+  // chat: has_booking/has_lead/has_tool_error flipped to false and
+  // classifyOutcome() reported "abandoned"/"empty" instead of the real
+  // outcome, even though the row still existed.
   const [bookingsRes, leadsRes, toolsRes, countsRes] = await Promise.all([
-    // Joined on chat_session_id (stable — set once at booking time, survives
-    // a guest "Restart") rather than eve_session_id (reset to null on
-    // restart). Using eve_session_id here made a completed booking vanish
-    // from the dashboard the moment the guest restarted the chat: has_booking
-    // flipped to false and classifyOutcome() reported "abandoned"/"empty"
-    // instead of "booked". leads/agent_tool_events have no equivalent stable
-    // column yet, so they still key off eve_session_id — same class of bug,
-    // tracked separately.
     sessionIds.length
       ? supabase
           .from("bookings")
@@ -95,21 +90,21 @@ export async function loadConversationsDashboard(limit = 100): Promise<{
           .eq("workspace_id", workspaceId)
           .in("chat_session_id", sessionIds)
       : Promise.resolve({ data: [] as { id: string; chat_session_id: string }[] }),
-    eveIds.length
+    sessionIds.length
       ? supabase
           .from("leads")
-          .select("id, session_id")
+          .select("id, chat_session_id")
           .eq("workspace_id", workspaceId)
-          .in("session_id", eveIds)
-      : Promise.resolve({ data: [] as { id: string; session_id: string }[] }),
-    eveIds.length
+          .in("chat_session_id", sessionIds)
+      : Promise.resolve({ data: [] as { id: string; chat_session_id: string }[] }),
+    sessionIds.length
       ? supabase
           .from("agent_tool_events")
-          .select("id, session_id")
+          .select("id, chat_session_id")
           .eq("workspace_id", workspaceId)
           .eq("ok", false)
-          .in("session_id", eveIds)
-      : Promise.resolve({ data: [] as { id: string; session_id: string }[] }),
+          .in("chat_session_id", sessionIds)
+      : Promise.resolve({ data: [] as { id: string; chat_session_id: string }[] }),
     sessionIds.length
       ? supabase.from("chat_messages").select("session_id").in("session_id", sessionIds)
       : Promise.resolve({ data: [] as { session_id: string }[] }),
@@ -121,10 +116,14 @@ export async function loadConversationsDashboard(limit = 100): Promise<{
     ),
   );
   const leadSet = new Set(
-    (leadsRes.data ?? []).map((l) => l.session_id).filter(Boolean),
+    (leadsRes.data ?? []).flatMap((l) =>
+      l.chat_session_id ? [l.chat_session_id] : [],
+    ),
   );
   const errorSet = new Set(
-    (toolsRes.data ?? []).map((t) => t.session_id).filter(Boolean),
+    (toolsRes.data ?? []).flatMap((t) =>
+      t.chat_session_id ? [t.chat_session_id] : [],
+    ),
   );
   const messageCount = new Map<string, number>();
   for (const row of countsRes.data ?? []) {
@@ -132,10 +131,9 @@ export async function loadConversationsDashboard(limit = 100): Promise<{
   }
 
   const rows: ConversationListRow[] = sessions.map((s) => {
-    const eve = s.eve_session_id;
     const has_booking = bookingSet.has(s.id);
-    const has_lead = Boolean(eve && leadSet.has(eve));
-    const has_tool_error = Boolean(eve && errorSet.has(eve));
+    const has_lead = leadSet.has(s.id);
+    const has_tool_error = errorSet.has(s.id);
     const message_count = messageCount.get(s.id) ?? 0;
     return {
       ...s,
@@ -188,23 +186,26 @@ export async function loadConversationDetail(
     before: options?.before,
     limit: options?.limit ?? CHAT_MESSAGE_INITIAL_LIMIT,
   });
-  const messageCount = await countChatMessages(id).catch(
-    () => page.messages.length,
-  );
-  const eve = session.eve_session_id as string | null;
 
-  const [leadRes, bookingRes, toolsRes] = await Promise.all([
-    eve
-      ? supabase
-          .from("leads")
-          .select("id")
-          .eq("workspace_id", workspaceId)
-          .eq("session_id", eve)
-          .limit(1)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-    // chat_session_id (stable), not eve_session_id (reset on restart) — see
-    // the matching comment in loadConversationsDashboard above.
+  // None of these four depend on each other — countChatMessages only needs
+  // page.messages.length as a fallback if it rejects, not as an input, so it
+  // belongs alongside the other three independent reads, not awaited before
+  // them (react-doctor: server-sequential-independent-await).
+  //
+  // leads/bookings/agent_tool_events are all joined on chat_session_id
+  // (stable), not eve_session_id (reset to null on restart) — see the
+  // matching comment in loadConversationsDashboard above. `id` (this
+  // chat_sessions row) is always available, unlike the old
+  // eve_session_id-gated queries.
+  const [messageCount, leadRes, bookingRes, toolsRes] = await Promise.all([
+    countChatMessages(id).catch(() => page.messages.length),
+    supabase
+      .from("leads")
+      .select("id")
+      .eq("workspace_id", workspaceId)
+      .eq("chat_session_id", id)
+      .limit(1)
+      .maybeSingle(),
     supabase
       .from("bookings")
       .select("id")
@@ -212,16 +213,14 @@ export async function loadConversationDetail(
       .eq("chat_session_id", id)
       .limit(1)
       .maybeSingle(),
-    eve
-      ? supabase
-          .from("agent_tool_events")
-          .select("id, tool_name, error, created_at")
-          .eq("workspace_id", workspaceId)
-          .eq("session_id", eve)
-          .eq("ok", false)
-          .order("created_at", { ascending: false })
-          .limit(20)
-      : Promise.resolve({ data: [] }),
+    supabase
+      .from("agent_tool_events")
+      .select("id, tool_name, error, created_at")
+      .eq("workspace_id", workspaceId)
+      .eq("chat_session_id", id)
+      .eq("ok", false)
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
 
   const has_booking = Boolean(bookingRes.data?.id);

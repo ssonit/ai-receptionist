@@ -30,6 +30,7 @@ export default defineTool({
     const sessionId = ctx.session?.id ?? null;
     const auth =
       ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null;
+    const chatSessionId = authAttr(auth?.attributes, "chatSessionId");
     let workspaceIdForLog: string | null = null;
     try {
       const workspaceId = await resolveWorkspaceIdFromAgentContext({
@@ -46,6 +47,7 @@ export default defineTool({
           ok: false,
           error,
           sessionId,
+          chatSessionId,
           workspaceId,
         });
         return { ok: false as const, error };
@@ -57,7 +59,7 @@ export default defineTool({
 
       const guestResolved = await resolveGuestTimeZone({
         auth,
-        chatSessionId: authAttr(auth?.attributes, "chatSessionId"),
+        chatSessionId,
       });
       const guestTz =
         serviceMode === "online" ? guestResolved.guestTimeZone : null;
@@ -104,6 +106,7 @@ export default defineTool({
           ok: false,
           error,
           sessionId,
+          chatSessionId,
           workspaceId,
         });
         return { ok: false as const, error };
@@ -162,6 +165,7 @@ export default defineTool({
         toolName: "check_availability",
         ok: true,
         sessionId,
+        chatSessionId,
         workspaceId,
         meta: { count: slots.length, start, end, guestTz },
       });
@@ -198,6 +202,7 @@ export default defineTool({
           ok: false,
           error: message,
           sessionId,
+          chatSessionId,
           workspaceId: workspaceIdForLog,
         });
       }

@@ -39,6 +39,10 @@ export default defineTool({
   ) {
     const sid = sessionId ?? ctx.session?.id ?? null;
     let workspaceIdForLog: string | null = null;
+    // Set once resolveGuestBookingActor runs, below — earlier failure
+    // branches (policy/meeting-type/API-key checks) log with this still
+    // null, which correctly reflects that no chat session was resolved yet.
+    let chatSessionIdForLog: string | null = null;
     try {
       const workspaceId = await resolveWorkspaceIdFromAgentContext({
         sessionId: sid,
@@ -53,6 +57,7 @@ export default defineTool({
           ok: false,
           error,
           sessionId: sid,
+          chatSessionId: chatSessionIdForLog,
           workspaceId,
         });
         return { ok: false as const, error };
@@ -66,6 +71,7 @@ export default defineTool({
           ok: false,
           error,
           sessionId: sid,
+          chatSessionId: chatSessionIdForLog,
           workspaceId,
         });
         return { ok: false as const, error };
@@ -87,6 +93,7 @@ export default defineTool({
           ok: false,
           error,
           sessionId: sid,
+          chatSessionId: chatSessionIdForLog,
           workspaceId,
         });
         return { ok: false as const, error };
@@ -126,6 +133,7 @@ export default defineTool({
           ok: false,
           error,
           sessionId: sid,
+          chatSessionId: chatSessionIdForLog,
           workspaceId,
         });
         return { ok: false as const, error };
@@ -139,6 +147,7 @@ export default defineTool({
       const chatSessionId = guestActor.ok
         ? guestActor.actor.chatSessionId
         : null;
+      chatSessionIdForLog = chatSessionId;
       const guestTzResolved = await resolveGuestTimeZone({
         auth,
         chatSessionId,
@@ -173,6 +182,7 @@ export default defineTool({
           ok: false,
           error: result.error,
           sessionId: sid,
+          chatSessionId: chatSessionIdForLog,
           workspaceId,
         });
         return result;
@@ -182,6 +192,7 @@ export default defineTool({
         toolName: "book_appointment",
         ok: true,
         sessionId: sid,
+        chatSessionId: chatSessionIdForLog,
         workspaceId,
         meta: {
           uid: result.booking.uid,
@@ -215,6 +226,7 @@ export default defineTool({
           ok: false,
           error: message,
           sessionId: sid,
+          chatSessionId: chatSessionIdForLog,
           workspaceId: workspaceIdForLog,
         });
       }

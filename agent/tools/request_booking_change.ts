@@ -47,6 +47,7 @@ export default defineTool({
         toolName: "request_booking_change",
         ok: true,
         sessionId: sid,
+        chatSessionId: gate.actor.chatSessionId,
         workspaceId: gate.actor.workspaceId,
         meta: { requestedAction },
       });

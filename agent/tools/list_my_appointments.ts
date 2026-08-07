@@ -46,6 +46,7 @@ export default defineTool({
         toolName: "list_my_appointments",
         ok: true,
         sessionId: sid,
+        chatSessionId: gate.actor.chatSessionId,
         workspaceId: gate.actor.workspaceId,
         meta: {
           auto: auto.length,

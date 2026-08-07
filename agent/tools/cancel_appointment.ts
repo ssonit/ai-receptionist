@@ -30,12 +30,14 @@ export default defineTool({
     const auth =
       ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null;
     let workspaceIdForLog: string | null = null;
+    let chatSessionIdForLog: string | null = null;
 
     try {
       const gate = await resolveGuestBookingActor({ sessionId: sid, auth });
       if (!gate.ok) return toolError(gate.errorCode);
       const actor = gate.actor;
       workspaceIdForLog = actor.workspaceId;
+      chatSessionIdForLog = actor.chatSessionId;
       if (actor.rateLimited) return toolError(APP_ERROR_CODE.AGENT_RATE_LIMITED);
 
       const { auto, needsPhoneLast4 } = await findClaimableBookings(actor);
@@ -93,6 +95,7 @@ export default defineTool({
         toolName: "cancel_appointment",
         ok: true,
         sessionId: sid,
+        chatSessionId: chatSessionIdForLog,
         workspaceId: actor.workspaceId,
         meta: { uid: booking.cal_booking_uid },
       });
@@ -127,6 +130,7 @@ export default defineTool({
           ok: false,
           error: message,
           sessionId: sid,
+          chatSessionId: chatSessionIdForLog,
           workspaceId: workspaceIdForLog,
         });
       }

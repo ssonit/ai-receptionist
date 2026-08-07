@@ -185,6 +185,7 @@ export default defineTool({
             ok: false,
             error: APP_ERROR_CODE.BOOKING_CODE_INVALID,
             sessionId: sid,
+            chatSessionId: actor.chatSessionId,
             workspaceId: actor.workspaceId,
           });
           return toolError(APP_ERROR_CODE.BOOKING_CODE_INVALID);
@@ -202,6 +203,7 @@ export default defineTool({
           toolName: "verify_booking_code",
           ok: true,
           sessionId: sid,
+          chatSessionId: actor.chatSessionId,
           workspaceId: actor.workspaceId,
           meta: { channel, bookingId: matched.id },
         });
@@ -269,6 +271,7 @@ export default defineTool({
         toolName: "verify_booking_code",
         ok: true,
         sessionId: sid,
+        chatSessionId: actor.chatSessionId,
         workspaceId: actor.workspaceId,
         meta: { channel: "email_otp" },
       });

@@ -130,6 +130,7 @@ export default defineTool({
         toolName: "request_booking_otp",
         ok: true,
         sessionId: sid,
+        chatSessionId: actor.chatSessionId,
         workspaceId: actor.workspaceId,
         meta: { hadBooking: Boolean(booking) },
       });

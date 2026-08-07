@@ -128,6 +128,7 @@ export async function createWorkspaceBooking(
       service: input.service ?? input.eventTitle ?? null,
       notes: input.notes ?? null,
       sessionId: input.sessionId,
+      chatSessionId: input.chatSessionId,
     });
 
     await createNotification({

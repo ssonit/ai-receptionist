@@ -1,5 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
+import { authAttr } from "@/lib/agent-booking-auth";
 import { logAgentToolEvent } from "@/lib/agent-tool-log";
 import { normalizeLeadUrgency } from "@/lib/lead-status";
 import { findWorkspaceLead } from "@/lib/leads";
@@ -20,14 +21,32 @@ export default defineTool({
   }),
   async execute(input, ctx) {
     const sessionId = ctx.session?.id ?? null;
+    const auth =
+      ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null;
     let workspaceIdForLog: string | null = null;
+    // Resolved (not just read from the header) the same way
+    // resolveGuestBookingActor validates it — a raw client-supplied header
+    // could name a chat_sessions row that doesn't exist, and leads.chat_session_id
+    // has a real FK constraint, so an unvalidated value would fail the whole
+    // insert/update rather than just being missing.
+    let chatSessionId: string | null = null;
     try {
       const supabase = createAdminClient();
       const workspaceId = await resolveWorkspaceIdFromAgentContext({
         sessionId,
-        auth: ctx.session?.auth?.current ?? ctx.session?.auth?.initiator ?? null,
+        auth,
       });
       workspaceIdForLog = workspaceId;
+
+      const headerChatSessionId = authAttr(auth?.attributes, "chatSessionId");
+      if (headerChatSessionId) {
+        const { data: sessionRow } = await supabase
+          .from("chat_sessions")
+          .select("id")
+          .eq("id", headerChatSessionId)
+          .maybeSingle();
+        chatSessionId = sessionRow?.id ?? null;
+      }
 
       const phone = input.phone?.trim() || null;
       const email = input.email?.trim() || null;
@@ -41,11 +60,13 @@ export default defineTool({
         urgency,
         notes: input.notes?.trim() || null,
         session_id: sessionId,
+        chat_session_id: chatSessionId,
       };
 
       const existing = await findWorkspaceLead({
         workspaceId,
         sessionId,
+        chatSessionId,
         phone,
       });
 
@@ -61,6 +82,7 @@ export default defineTool({
             ok: false,
             error: error.message,
             sessionId,
+            chatSessionId,
             workspaceId,
           });
           return { ok: false as const, error: error.message };
@@ -70,6 +92,7 @@ export default defineTool({
           toolName: "log_lead",
           ok: true,
           sessionId,
+          chatSessionId,
           workspaceId,
           meta: { leadId: existing.id, updated: true },
         });
@@ -98,6 +121,7 @@ export default defineTool({
           ok: false,
           error: error.message,
           sessionId,
+          chatSessionId,
           workspaceId,
         });
         return { ok: false as const, error: error.message };
@@ -107,6 +131,7 @@ export default defineTool({
         toolName: "log_lead",
         ok: true,
         sessionId,
+        chatSessionId,
         workspaceId,
         meta: { leadId: data.id, updated: false },
       });
@@ -140,6 +165,7 @@ export default defineTool({
           ok: false,
           error: message,
           sessionId,
+          chatSessionId,
           workspaceId: workspaceIdForLog,
         });
       }
