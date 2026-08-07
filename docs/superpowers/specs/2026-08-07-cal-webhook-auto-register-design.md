@@ -3,7 +3,7 @@
 **Date:** 2026-08-07  
 **Status:** Design approved in conversation — chờ review file spec trước khi viết plan  
 **Scope:** Tự động tạo webhook Cal.com lúc workspace connect (API key hoặc OAuth), thay cho việc chủ tiệm tự dán URL+secret. Sửa 1 gap idempotency thật (analytics đếm trùng khi Cal.com gửi lại webhook).  
-**Phụ thuộc:** Độc lập với `2026-08-07-booking-reminders-event-driven-design.md` — không chặn nhau, ship theo thứ tự bất kỳ. Liên quan trực tiếp tới amendment 2026-08-07 trong `2026-07-29-cal-oauth-client-design.md` (giữ paste API key sống).
+**Phụ thuộc:** Độc lập với `2026-08-07-booking-reminders-event-driven-design.md` — không chặn nhau về mặt kỹ thuật. **Ưu tiên hiện tại (quyết định 2026-08-07): làm doc này trước, doc reminders + mọi thay đổi `/api/cron/tick` tạm gác lại.** Vì vậy webhook là đường sync duy nhất cho booking tạo/đổi trực tiếp trên Cal.com trong giai đoạn này — không có lưới an toàn dạng cron — nên thiết kế ở mục 3.4 (tự phục hồi không qua cron) là bắt buộc, không phải tùy chọn. Liên quan trực tiếp tới amendment 2026-08-07 trong `2026-07-29-cal-oauth-client-design.md` (giữ paste API key sống).
 
 ## 1. Hiện trạng
 
@@ -20,9 +20,10 @@
 | Tạo webhook | Best-effort, non-fatal — lỗi không chặn flow Connect/lưu API key |
 | Áp dụng cho | Cả 2 mode (api_key + oauth) qua `getCalAccessTokenForWorkspace` — không phân biệt code path |
 | Rủi ro scope OAuth | Chưa xác nhận `POST /v2/webhooks` có cần scope riêng khi gọi bằng OAuth token. Chấp nhận rủi ro, xác minh lúc code (mục 5) |
-| Chống tạo trùng | Gọi `GET /v2/webhooks` kiểm tra `subscriberUrl` đã tồn tại trước khi tạo — không lưu cờ "đã đăng ký" trong DB, tránh lệch nếu webhook bị xoá bên Cal.com |
-| Fallback thủ công | `webhook-secret-card.tsx` giữ nguyên, không ẩn |
-| Retry nếu đăng ký lỗi thoáng qua | Không xây cơ chế riêng — reconciliation hourly (doc reminders) đã chặn hậu quả (dữ liệu chậm tối đa 1h) |
+| Chống tạo trùng | Gọi `GET /v2/webhooks` kiểm tra `subscriberUrl` đã tồn tại trước khi tạo |
+| **Retry khi đăng ký lỗi (đổi so với bản đầu)** | **Không để người dùng tự cấu hình.** Vì tick/reconciliation định kỳ đang bị gác lại (yêu cầu người dùng 2026-08-07), webhook là đường sync duy nhất — cần tự phục hồi mà không cần cron. Xem mục 3.4. |
+| Cột mới | `workspaces.cal_webhook_synced_at timestamptz null` — set khi `ensureCalWebhookForWorkspace` thành công (tạo mới HOẶC đã tồn tại). Dùng làm cổng rẻ để không gọi lại `listWebhooks` mỗi lần nếu đã xong; NULL nghĩa là "còn cần thử lại". |
+| `webhook-secret-card.tsx` | Đổi từ "hướng dẫn tự dán" sang hiển thị trạng thái (Đã tự động đăng ký / Đang chờ thử lại) — không còn là con đường bắt buộc |
 | Idempotency analytics | Chuyển `trackServer` từ webhook route vào `upsertCalBookings`, dùng lại khối so sánh `prev`/`row` đã có — không thêm bảng `webhook_events` |
 
 ## 3. Kiến trúc
@@ -53,11 +54,22 @@ Theo đúng pattern các hàm khác trong file — nhận bearer qua `withCalApi
 
 Toàn bộ bọc try/catch, không throw ra ngoài caller.
 
-### 3.3 Gọi ở đâu
+### 3.3 Gọi ở đâu — qua `syncCalBookingsToSupabase`, không gọi trực tiếp 2 lần
 
-- `app/api/cal/oauth/callback/route.ts:82`, ngay sau khi update workspace thành công — theo đúng pattern best-effort đã có sẵn ở đó (`getCalMeProfileWithToken`, dòng 62-68, comment "Profile fetch is best-effort — tokens are already persisted").
-- `app/dashboard/setup/actions.ts:58` (`saveCalApiKeyAction`), sau khi lưu `cal_api_key_encrypted`.
-- Cần rà thêm `app/dashboard/settings/actions.ts` lúc code — nếu có đường lưu API key riêng ở Settings (ngoài setup wizard), hook thêm ở đó.
+`ensureCalWebhookForWorkspace` trở thành **bước đầu tiên bên trong** `syncCalBookingsToSupabase()` (`lib/sync-cal-bookings.ts`), trước đoạn `fetchAllCalBookings()` hiện có — best-effort, lỗi bị nuốt, không chặn phần sync bookings phía sau.
+
+Lợi ích: mọi nơi đã gọi `syncCalBookingsToSupabase` tự động được thêm khả năng tự đăng ký/thử lại webhook, không cần sửa từng call site:
+
+- `app/api/cal/oauth/callback/route.ts:82` — gọi `syncCalBookingsToSupabase(workspaceId)` một lần ngay sau khi update workspace thành công (vừa backfill booking cũ, vừa đăng ký/thử lại webhook). Theo đúng pattern best-effort đã có sẵn ở đó (`getCalMeProfileWithToken`, dòng 62-68).
+- `app/dashboard/setup/actions.ts:58` (`saveCalApiKeyAction`) — cùng lệnh gọi, sau khi lưu `cal_api_key_encrypted`.
+- `app/dashboard/bookings/actions.ts:37` (`syncBookingsAction`, nút "Resync" thủ công) — **không cần sửa gì** — tự động được thêm khả năng retry vì nó đã gọi `syncCalBookingsToSupabase`.
+- Cần rà thêm `app/dashboard/settings/actions.ts` lúc code — nếu có đường lưu API key riêng ở Settings, hook thêm ở đó.
+
+### 3.4 Tự phục hồi khi lần đầu thất bại
+
+Vì `ensureCalWebhookForWorkspace` chạy lại **mỗi lần** `syncCalBookingsToSupabase` được gọi (kể cả do bấm "Resync" thủ công — hành động chủ tiệm vốn đã làm để xem booking mới, không phải cấu hình kỹ thuật), một lần đăng ký lỗi thoáng qua tự phục hồi ở lần chạy kế tiếp mà không cần cron, không cần chủ tiệm biết webhook là gì. `cal_webhook_synced_at` chặn việc gọi lại `listWebhooks` một khi đã thành công, nên chi phí giữ nguyên rẻ về sau.
+
+Trường hợp lỗi **vĩnh viễn** (403 do thiếu scope OAuth, xem mục 5) sẽ không tự khỏi dù retry bao nhiêu lần — nếu xác nhận đúng vậy lúc code, cần báo qua `createNotification` (loại `ai_config`, đã có sẵn pattern trong `lib/notification-digests.ts`) để chủ tiệm biết "đồng bộ hai chiều với Cal.com chưa hoạt động", thay vì im lặng retry vô ích mãi.
 
 ## 4. Idempotency — analytics đếm trùng
 
@@ -83,13 +95,14 @@ Nếu xác nhận thiếu scope: cần thêm scope vào `CAL_OAUTH_SCOPES`, ch�
 | 2 | Connect lại / lưu lại key | `listWebhooks` thấy `subscriberUrl` trùng → không tạo lần 2 |
 | 3 | OAuth token thiếu scope tạo webhook | 403 bị bắt, log lại, flow Connect vẫn thành công |
 | 4 | Cal.com gửi lại cùng `BOOKING_CANCELLED` 2 lần | Chỉ 1 notification, chỉ 1 analytics event |
-| 5 | Webhook chưa đăng ký được (case 3) | Reconciliation hourly (doc reminders) vẫn đưa booking về trong ≤1h |
+| 5 | Webhook chưa đăng ký được (case 3), sau đó chủ tiệm bấm "Resync" | `syncCalBookingsToSupabase` thử lại `ensureCalWebhookForWorkspace` — nếu hết lỗi tạm thời, lần này đăng ký thành công, `cal_webhook_synced_at` được set |
+| 6 | `cal_webhook_synced_at` đã set, gọi `syncCalBookingsToSupabase` lần nữa | Không gọi lại `listWebhooks` — bỏ qua bước ensure, đi thẳng vào sync bookings |
 
 ## 7. Ngoài phạm vi
 
 - Ẩn/xoá paste API key khỏi UI — ngược lại, amendment đã quyết giữ.
 - Bảng `webhook_events` ledger đầy đủ (payload, event_id) — không cần, xem mục 4.
-- Retry tự động nếu đăng ký lỗi lúc connect — xem mục 2.
+- Thông báo chủ động qua `createNotification` khi lỗi vĩnh viễn (mục 3.4) — nêu hướng, nhưng chỉ code nếu mục 5 xác nhận đúng là lỗi scope thật; không code "phòng hờ" cho lỗi chưa xác nhận tồn tại.
 
 ---
 
