@@ -880,3 +880,92 @@ export async function createWebhook(input: CreateWebhookInput): Promise<CalWebho
   }
   return parsed;
 }
+
+export type CalScheduleAvailability = {
+  days: string[];
+  startTime: string;
+  endTime: string;
+};
+
+export type CalSchedule = {
+  id: number;
+  name: string;
+  timeZone: string;
+  isDefault: boolean;
+  availability: CalScheduleAvailability[];
+};
+
+export type UpsertScheduleInput = {
+  name: string;
+  timeZone: string;
+  isDefault: boolean;
+  availability: CalScheduleAvailability[];
+};
+
+// Xác nhận qua ví dụ docs, chưa test với response thật — verify Task 5.
+const SCHEDULES_API_VERSION = "2024-06-11";
+
+function parseCalSchedule(item: Record<string, unknown>): CalSchedule | null {
+  if (typeof item.id !== "number") return null;
+  if (typeof item.name !== "string") return null;
+  if (typeof item.timeZone !== "string") return null;
+  return {
+    id: item.id,
+    name: item.name,
+    timeZone: item.timeZone,
+    isDefault: Boolean(item.isDefault),
+    availability: Array.isArray(item.availability)
+      ? (item.availability as CalScheduleAvailability[])
+      : [],
+  };
+}
+
+/**
+ * GET /v2/schedules/default — null when the account has no default
+ * schedule yet (new Cal.com account) OR the response doesn't parse into a
+ * real schedule. A genuine network/auth failure still throws (calFetch's
+ * normal behavior) — only "call succeeded but nothing usable came back"
+ * turns into null. Verify in Task 5 which case Cal.com actually returns.
+ */
+export async function getDefaultSchedule(): Promise<CalSchedule | null> {
+  requireCalApiKey();
+  const body = await calFetch<{ data?: Record<string, unknown> } & Record<string, unknown>>(
+    "/schedules/default",
+    { method: "GET", apiVersion: SCHEDULES_API_VERSION },
+  );
+  const data = (body.data ?? body) as Record<string, unknown>;
+  return parseCalSchedule(data);
+}
+
+/** POST /v2/schedules */
+export async function createSchedule(input: UpsertScheduleInput): Promise<CalSchedule> {
+  requireCalApiKey();
+  const body = await calFetch<{ data?: Record<string, unknown> } & Record<string, unknown>>(
+    "/schedules",
+    { method: "POST", apiVersion: SCHEDULES_API_VERSION, body: JSON.stringify(input) },
+  );
+  const data = (body.data ?? body) as Record<string, unknown>;
+  const parsed = parseCalSchedule(data);
+  if (!parsed) {
+    throw new Error("Cal.com create schedule response missing id/name/timeZone");
+  }
+  return parsed;
+}
+
+/** PATCH /v2/schedules/{id} */
+export async function updateSchedule(
+  id: number,
+  input: UpsertScheduleInput,
+): Promise<CalSchedule> {
+  requireCalApiKey();
+  const body = await calFetch<{ data?: Record<string, unknown> } & Record<string, unknown>>(
+    `/schedules/${id}`,
+    { method: "PATCH", apiVersion: SCHEDULES_API_VERSION, body: JSON.stringify(input) },
+  );
+  const data = (body.data ?? body) as Record<string, unknown>;
+  const parsed = parseCalSchedule(data);
+  if (!parsed) {
+    throw new Error("Cal.com update schedule response missing id/name/timeZone");
+  }
+  return parsed;
+}

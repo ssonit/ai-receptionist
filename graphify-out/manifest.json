@@ -470,8 +470,8 @@
     "semantic_hash": ""
   },
   "lib/calcom.ts": {
-    "mtime": 1786090514.8018115,
-    "ast_hash": "e4e6c28b0a35dbbc1fab762ea5b6ba87",
+    "mtime": 1786096238.0920136,
+    "ast_hash": "42d277965c6d46f99d8f21b1d09ffa09",
     "semantic_hash": ""
   },
   "lib/dashboard-user.ts": {
@@ -2175,8 +2175,8 @@
     "semantic_hash": ""
   },
   "lib/agent-booking-auth.ts": {
-    "mtime": 1785839709.0182848,
-    "ast_hash": "9ddd7f0d9a293d8c47db2149a1d10742",
+    "mtime": 1786096252.0830505,
+    "ast_hash": "8cd2833076be58eb4f74f68a92f983bd",
     "semantic_hash": ""
   },
   "app/_components/invite-accept-panel.tsx": {
@@ -2225,8 +2225,8 @@
     "semantic_hash": ""
   },
   "agent/tools/verify_booking_code.ts": {
-    "mtime": 1786071194.7631671,
-    "ast_hash": "284c7923f541ff7f7ef0c9faae5cd1e0",
+    "mtime": 1786096280.0134692,
+    "ast_hash": "d6acb2ee0ea382a4fb7a8e697350b6de",
     "semantic_hash": ""
   },
   "app/api/chat/forget/route.ts": {
@@ -2345,8 +2345,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/outbound-reminders.md": {
-    "mtime": 1784970607.191885,
-    "ast_hash": "424efcb0b499b43995083aa1ae03e701",
+    "mtime": 1786095966.445535,
+    "ast_hash": "d8ae2d5c4379c3f850ba6da7808acd6c",
     "semantic_hash": ""
   },
   ".vscode/settings.json": {
@@ -3665,8 +3665,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-08-07-drop-custom-reminders-design.md": {
-    "mtime": 1786094539.0126126,
-    "ast_hash": "58de6a3b14bc817e291ef488a45f9341",
+    "mtime": 1786095958.8718796,
+    "ast_hash": "17465d21b641a70f78bc6c4d0bdb0339",
     "semantic_hash": ""
   },
   "supabase/migrations/20260807000001_drop_booking_reminders.sql": {
