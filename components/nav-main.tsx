@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react";
 
@@ -13,6 +14,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { isDashboardNavActive } from "@/lib/dashboard-access";
+import { ROUTES } from "@/lib/routes";
 
 export type NavMainItem = {
   title: string;
@@ -27,6 +30,7 @@ export type NavMainGroup = {
 
 export function NavMain({ groups }: { groups: NavMainGroup[] }) {
   const t = useTranslations();
+  const pathname = usePathname();
 
   return (
     <>
@@ -39,7 +43,7 @@ export function NavMain({ groups }: { groups: NavMainGroup[] }) {
                 className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
                 tooltip={t("dashboard.openChat")}
               >
-                <Link href="/chat">
+                <Link href={ROUTES.CHAT}>
                   <IconCirclePlusFilled />
                   <span>{t("dashboard.openChat")}</span>
                 </Link>
@@ -52,7 +56,7 @@ export function NavMain({ groups }: { groups: NavMainGroup[] }) {
               >
                 <Link
                   aria-label={t("dashboard.nav.leads")}
-                  href="/dashboard/leads"
+                  href={ROUTES.DASHBOARD_LEADS}
                 >
                   <IconMail />
                   <span className="sr-only">{t("dashboard.nav.leads")}</span>
@@ -70,7 +74,11 @@ export function NavMain({ groups }: { groups: NavMainGroup[] }) {
             <SidebarMenu>
               {group.items.map((item) => (
                 <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isDashboardNavActive(pathname, item.url)}
+                    tooltip={item.title}
+                  >
                     <Link href={item.url}>
                       {item.icon ? <item.icon /> : null}
                       <span>{item.title}</span>

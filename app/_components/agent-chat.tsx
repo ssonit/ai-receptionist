@@ -4,7 +4,7 @@ import type { UserContent } from "ai";
 import type { SessionState } from "eve/client";
 import { useEveAgent, type EveMessage } from "eve/react";
 import { useTranslations } from "next-intl";
-import { AlertCircleIcon, SparklesIcon } from "lucide-react";
+import { AlertCircleIcon, RotateCcwIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import {
@@ -22,6 +22,11 @@ import { BlurFade } from "@/components/ui/blur-fade";
 import { Particles } from "@/components/ui/particles";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { VirtualConversation } from "@/components/ai-elements/virtual-conversation";
 import { EveLogo } from "@/components/eve-logo";
 import type {
@@ -371,16 +376,25 @@ function AgentChatInner({
 
           <div className="flex items-center gap-2">
             {!embedMode ? headerEnd : null}
-            <Button
-              className="h-8 rounded-full px-3 text-xs"
-              disabled={!activeId || busyAction || loading}
-              onClick={() => void restartActive()}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              {t("chat.restart")}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  aria-label={t("chat.restart")}
+                  className="rounded-full"
+                  disabled={!activeId || busyAction || loading}
+                  onClick={() => void restartActive()}
+                  size="icon-sm"
+                  type="button"
+                  variant="outline"
+                >
+                  <RotateCcwIcon
+                    className={cn("size-3.5", busyAction && "animate-spin")}
+                  />
+                  <span className="sr-only">{t("chat.restart")}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t("chat.restart")}</TooltipContent>
+            </Tooltip>
             {embedMode ? (
               <span className="w-[4.5rem] shrink-0" aria-hidden />
             ) : user ? (

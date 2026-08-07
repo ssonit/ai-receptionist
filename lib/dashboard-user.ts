@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getActiveWorkspace } from "@/lib/active-workspace";
 import { createClient } from "@/lib/supabase/server";
 import { publicBookingPath } from "@/lib/workspace";
@@ -9,14 +10,14 @@ export type DashboardNavUser = {
   avatar: string;
 };
 
-export async function getDashboardUser(): Promise<{
+export const getDashboardUser = cache(async (): Promise<{
   navUser: DashboardNavUser;
   userId: string;
   workspaceId: string | null;
   workspaceSlug: string | null;
   bookingPagePath: string | null;
   role: WorkspaceRole | null;
-} | null> {
+} | null> => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -55,4 +56,4 @@ export async function getDashboardUser(): Promise<{
     bookingPagePath: workspaceSlug ? publicBookingPath(workspaceSlug) : null,
     role: active?.role ?? null,
   };
-}
+});

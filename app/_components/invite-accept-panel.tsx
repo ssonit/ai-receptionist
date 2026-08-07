@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { acceptWorkspaceInviteAction } from "@/app/dashboard/settings/invite-actions";
+import { acceptWorkspaceInviteAction } from "@/app/dashboard/(main)/settings/invite-actions";
 import { signOut } from "@/app/auth/actions";
 import { AuthShell } from "@/app/_components/auth-shell";
 import { RainbowButton } from "@/components/ui/rainbow-button";

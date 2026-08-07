@@ -21,7 +21,7 @@ import {
   type SetupActionState,
 } from "@/app/dashboard/setup/actions";
 import { trackSetupEventAction } from "@/app/dashboard/setup/track";
-import { checkWorkspaceSlugAvailable } from "@/app/dashboard/settings/actions";
+import { checkWorkspaceSlugAvailable } from "@/app/dashboard/(main)/settings/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

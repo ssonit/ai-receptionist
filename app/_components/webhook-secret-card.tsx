@@ -4,7 +4,7 @@ import { useState } from "react";
 import { KeyIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { revealWebhookSecretAction } from "@/app/dashboard/settings/actions";
+import { revealWebhookSecretAction } from "@/app/dashboard/(main)/settings/actions";
 
 type Props = {
   workspaceId: string;

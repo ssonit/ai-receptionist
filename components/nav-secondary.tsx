@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { type Icon } from "@tabler/icons-react";
 
 import { useDashboardCommand } from "@/components/dashboard-command-context";
@@ -12,6 +13,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import {
+  DASHBOARD_PATH,
+  isDashboardNavActive,
+} from "@/lib/dashboard-access";
 
 export type NavSecondaryItem = {
   title: string;
@@ -27,6 +32,7 @@ export function NavSecondary({
   items: NavSecondaryItem[];
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const { setOpen } = useDashboardCommand();
+  const pathname = usePathname();
 
   return (
     <SidebarGroup {...props}>
@@ -47,8 +53,15 @@ export function NavSecondary({
                   </span>
                 </SidebarMenuButton>
               ) : (
-                <SidebarMenuButton asChild tooltip={item.title}>
-                  <Link href={item.url || "/dashboard"}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isDashboardNavActive(
+                    pathname,
+                    item.url || DASHBOARD_PATH.root,
+                  )}
+                  tooltip={item.title}
+                >
+                  <Link href={item.url || DASHBOARD_PATH.root}>
                     <item.icon />
                     <span>{item.title}</span>
                   </Link>

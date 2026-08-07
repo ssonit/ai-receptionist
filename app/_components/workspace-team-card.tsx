@@ -11,7 +11,7 @@ import {
   transferWorkspaceOwnership,
   revokeWorkspaceInvite,
   type InviteActionState,
-} from "@/app/dashboard/settings/invite-actions";
+} from "@/app/dashboard/(main)/settings/invite-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

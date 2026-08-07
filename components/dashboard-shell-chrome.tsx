@@ -15,7 +15,7 @@ export function DashboardShellChrome({
   children,
 }: {
   user: DashboardNavUser;
-  title: string;
+  title?: string;
   bookingPagePath?: string | null;
   children: ReactNode;
 }) {

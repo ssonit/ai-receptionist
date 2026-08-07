@@ -1,7 +1,8 @@
 /**
  * Guest booking ownership for cancel / reschedule / list (no dashboard login).
  * Claim tiers: A1 same chat session, A2 same visitor (+ phone last4 verify),
- * A+ logged-in profile email, B manage code, C email OTP (via booking_verifications).
+ * A+ logged-in Auth email (confirmed only), B manage code, C email OTP
+ * (via booking_verifications).
  */
 import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
 import { isCancelledStatus } from "@/lib/booking-status";
@@ -44,7 +45,7 @@ export type GuestBookingActor = {
   chatSessionId: string | null;
   visitorId: string | null;
   eveSessionId: string | null;
-  /** Profile email when chat_sessions.user_id is set (A+). */
+  /** Confirmed Auth email when chat_sessions.user_id is set (A+). */
   profileEmail: string | null;
   rateLimited: boolean;
 };
@@ -64,6 +65,26 @@ export { authAttr } from "@/lib/workspace";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+/**
+ * A+ auto-claim only when the Auth user email is confirmed.
+ * Do not trust `profiles.email` alone — signup can create a session before
+ * the guest proves inbox control.
+ */
+export async function resolveClaimableProfileEmail(
+  userId: string,
+): Promise<string | null> {
+  try {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase.auth.admin.getUserById(userId);
+    if (error || !data.user?.email_confirmed_at || !data.user.email) {
+      return null;
+    }
+    return normalizeEmail(data.user.email);
+  } catch {
+    return null;
+  }
 }
 
 function activeBooking(row: {
@@ -178,17 +199,9 @@ export async function resolveGuestBookingActor(input: {
     workspaceId = sessionWorkspaceId;
   }
 
-  let profileEmail: string | null = null;
-  if (userId) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("id", userId)
-      .maybeSingle();
-    profileEmail = profile?.email
-      ? normalizeEmail(String(profile.email))
-      : null;
-  }
+  const profileEmail = userId
+    ? await resolveClaimableProfileEmail(userId)
+    : null;
 
   return {
     ok: true,
@@ -298,7 +311,7 @@ export async function findClaimableBookings(
     }
   }
 
-  // A+: profile email
+  // A+: confirmed Auth email (signup without inbox proof must not auto-claim)
   if (actor.profileEmail) {
     const { data } = await supabase
       .from("bookings")

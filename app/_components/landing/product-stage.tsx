@@ -34,10 +34,10 @@ function ChatPanel() {
       <aside className="hidden w-[38%] shrink-0 flex-col border-r border-white/8 bg-[#080808] sm:flex">
         <div className="flex items-center justify-between px-4 py-3">
           <p className="text-[10px] font-medium tracking-[0.16em] text-zinc-500 uppercase">
-            {chat("sessions")}
+            {t("sessions")}
           </p>
           <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-zinc-400">
-            + {chat("newChat")}
+            + {t("newChat")}
           </span>
         </div>
         <div className="flex flex-1 flex-col gap-1 px-2 pb-3">

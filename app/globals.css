@@ -173,6 +173,8 @@
 
 html {
   height: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: oklab(0.45 0 0 / 0.55) transparent;
 }
 
 body {
@@ -183,6 +185,31 @@ body {
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 24px;
+}
+
+/* Custom scrollbar — thin zinc thumb on dark chrome (landing + app) */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  background-color: oklab(0.45 0 0 / 0.55);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: oklab(0.62 0 0 / 0.75);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 button,

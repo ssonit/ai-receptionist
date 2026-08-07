@@ -20,7 +20,7 @@ import {
   handBackAction,
   sendStaffMessageAction,
   takeOverAction,
-} from "@/app/dashboard/conversations/actions";
+} from "@/app/dashboard/(main)/conversations/actions";
 
 /** Matches the guest widget's poll in app/_components/agent-chat.tsx. */
 const REFRESH_INTERVAL_MS = 10_000;

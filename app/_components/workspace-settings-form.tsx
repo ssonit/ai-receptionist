@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import {
   checkWorkspaceSlugAvailable,
   saveWorkspaceSettings,
-} from "@/app/dashboard/settings/actions";
+} from "@/app/dashboard/(main)/settings/actions";
 import { CopyBookingLink } from "@/components/copy-booking-link";
 import { LocaleToggle } from "@/components/locale-provider";
 import { TimezoneSelect } from "@/components/timezone-select";

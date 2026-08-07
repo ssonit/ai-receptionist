@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { cancelManualBookingAction } from "@/app/dashboard/bookings/actions";
+import { cancelManualBookingAction } from "@/app/dashboard/(main)/bookings/actions";
 import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
 
 export type CancelBookingTarget = {

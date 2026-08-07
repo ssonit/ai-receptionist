@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   createManualBookingAction,
   getAvailableSlotsAction,
-} from "@/app/dashboard/bookings/actions";
+} from "@/app/dashboard/(main)/bookings/actions";
 
 export type NewBookingMeetingType = {
   id: string;

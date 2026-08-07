@@ -16,7 +16,8 @@ export async function DashboardShell({
   children,
 }: {
   user: DashboardNavUser;
-  title: string;
+  /** Optional; SiteHeader resolves from pathname when omitted. */
+  title?: string;
   /** Optional override; defaults to layout context `/b/{slug}`. */
   bookingPagePath?: string | null;
   /** When set, show Cal.com connect banner if booking is not live. */

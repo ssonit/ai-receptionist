@@ -292,8 +292,21 @@ export class QueryBuilder {
   }
 }
 
+export interface MockAuthUser {
+  email: string;
+  email_confirmed_at: string | null;
+}
+
 export interface MockAdminClient {
   from(table: string): QueryBuilder;
+  auth: {
+    admin: {
+      getUserById(id: string): Promise<{
+        data: { user: { id: string; email: string; email_confirmed_at: string | null } | null };
+        error: { message: string } | null;
+      }>;
+    };
+  };
 }
 
 export class SupabaseMock {
@@ -301,10 +314,35 @@ export class SupabaseMock {
 
   private inserts: { table: string; row: Row }[] = [];
 
+  private authUsers = new Map<string, MockAuthUser>();
+
   client: MockAdminClient = {
     from: (table: string) => {
       const rows = this.tables.get(table) ?? [];
       return new QueryBuilder(rows, this.inserts, table);
+    },
+    auth: {
+      admin: {
+        getUserById: async (id: string) => {
+          const user = this.authUsers.get(id);
+          if (!user) {
+            return {
+              data: { user: null },
+              error: { message: "User not found" },
+            };
+          }
+          return {
+            data: {
+              user: {
+                id,
+                email: user.email,
+                email_confirmed_at: user.email_confirmed_at,
+              },
+            },
+            error: null,
+          };
+        },
+      },
     },
   };
 
@@ -312,9 +350,14 @@ export class SupabaseMock {
     this.tables.set(table, rows.map((r) => ({ ...r })));
   }
 
+  seedAuthUser(id: string, user: MockAuthUser): void {
+    this.authUsers.set(id, { ...user });
+  }
+
   clear(): void {
     this.tables.clear();
     this.inserts.length = 0;
+    this.authUsers.clear();
   }
 
   insertsFor(table: string): Row[] {

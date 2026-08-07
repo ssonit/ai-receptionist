@@ -32,8 +32,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
-import { saveWorkspaceAgent } from "@/app/dashboard/agent/actions";
-import { setAiBookingMeetingTypeAction } from "@/app/dashboard/meeting-types/actions";
+import { saveWorkspaceAgent } from "@/app/dashboard/(main)/agent/actions";
+import { setAiBookingMeetingTypeAction } from "@/app/dashboard/(main)/meeting-types/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

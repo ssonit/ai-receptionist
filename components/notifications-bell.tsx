@@ -7,7 +7,7 @@ import { IconBell } from "@tabler/icons-react";
 import {
   markAllNotificationsReadAction,
   markNotificationReadAction,
-} from "@/app/dashboard/notifications/actions";
+} from "@/app/dashboard/(main)/notifications/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

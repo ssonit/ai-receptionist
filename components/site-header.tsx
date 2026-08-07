@@ -17,6 +17,7 @@ const TITLE_BY_PATH: Record<string, string> = {
   [DASHBOARD_PATH.root]: "dashboard.nav.overview",
   [DASHBOARD_PATH.bookings]: "dashboard.nav.bookings",
   [DASHBOARD_PATH.meetingTypes]: "dashboard.nav.meetingTypes",
+  [DASHBOARD_PATH.embed]: "dashboard.nav.embed",
   [DASHBOARD_PATH.faq]: "dashboard.nav.faq",
   [DASHBOARD_PATH.agent]: "dashboard.nav.agent",
   [DASHBOARD_PATH.leads]: "dashboard.nav.leads",
@@ -26,7 +27,17 @@ const TITLE_BY_PATH: Record<string, string> = {
   [DASHBOARD_PATH.help]: "dashboard.getHelp",
   [DASHBOARD_PATH.account]: "dashboard.account",
   [DASHBOARD_PATH.notifications]: "dashboard.notifications",
+  [DASHBOARD_PATH.billing]: "dashboard.nav.billing",
 };
+
+const BILLING_PAY_PATH = `${DASHBOARD_PATH.billing}/pay`;
+
+function titleKeyForPath(pathname: string): string | undefined {
+  if (pathname === BILLING_PAY_PATH || pathname.startsWith(`${BILLING_PAY_PATH}/`)) {
+    return "dashboard.billing.payTitle";
+  }
+  return TITLE_BY_PATH[pathname];
+}
 
 export function SiteHeader({
   title,
@@ -37,7 +48,7 @@ export function SiteHeader({
 }) {
   const t = useTranslations();
   const pathname = usePathname();
-  const titleKey = TITLE_BY_PATH[pathname];
+  const titleKey = titleKeyForPath(pathname);
   const heading = titleKey ? t(titleKey) : (title ?? t("dashboard.nav.dashboard"));
 
   return (

@@ -20,27 +20,44 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
+const LOCKOUT_CODE_HASH = "lockout-tracker" as const;
+
+/** Survives new chat sessions; keyed off the visitor cookie. */
+function visitorLockDestination(visitorId: string): string {
+  return `visitor:${visitorId}`;
+}
+
 /**
  * Brute-force lockout for manage_code / phone_last4 (no pre-issued row to
- * attach attempts to, unlike email_otp). Tracks a booking_id-null row per
- * (chat_session_id, channel) within a rolling window.
+ * attach attempts to, unlike email_otp). Prefer visitor-scoped rows so a
+ * fresh chat cannot reset the attempt window; fall back to chat_session_id
+ * when no visitor cookie is bound.
  */
 async function checkAttemptLock(
   supabase: AdminClient,
   input: {
     workspaceId: string;
     chatSessionId: string;
+    visitorId: string | null;
     channel: "manage_code" | "phone_last4";
   },
 ): Promise<{ ok: true } | { ok: false }> {
   const nowIso = new Date().toISOString();
-  const { data: tracker } = await supabase
+  let query = supabase
     .from("booking_verifications")
     .select("attempts, expires_at")
     .eq("workspace_id", input.workspaceId)
-    .eq("chat_session_id", input.chatSessionId)
     .eq("channel", input.channel)
-    .is("booking_id", null)
+    .eq("code_hash", LOCKOUT_CODE_HASH)
+    .is("booking_id", null);
+
+  if (input.visitorId) {
+    query = query.eq("destination", visitorLockDestination(input.visitorId));
+  } else {
+    query = query.eq("chat_session_id", input.chatSessionId);
+  }
+
+  const { data: tracker } = await query
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -56,17 +73,30 @@ async function bumpAttemptLock(
   input: {
     workspaceId: string;
     chatSessionId: string;
+    visitorId: string | null;
     channel: "manage_code" | "phone_last4";
   },
 ): Promise<void> {
   const nowIso = new Date().toISOString();
-  const { data: tracker } = await supabase
+  const destination = input.visitorId
+    ? visitorLockDestination(input.visitorId)
+    : null;
+
+  let query = supabase
     .from("booking_verifications")
     .select("id, attempts, expires_at")
     .eq("workspace_id", input.workspaceId)
-    .eq("chat_session_id", input.chatSessionId)
     .eq("channel", input.channel)
-    .is("booking_id", null)
+    .eq("code_hash", LOCKOUT_CODE_HASH)
+    .is("booking_id", null);
+
+  if (destination) {
+    query = query.eq("destination", destination);
+  } else {
+    query = query.eq("chat_session_id", input.chatSessionId);
+  }
+
+  const { data: tracker } = await query
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -84,7 +114,8 @@ async function bumpAttemptLock(
     chat_session_id: input.chatSessionId,
     booking_id: null,
     channel: input.channel,
-    code_hash: "lockout-tracker",
+    destination,
+    code_hash: LOCKOUT_CODE_HASH,
     attempts: 1,
     expires_at: new Date(Date.now() + CODE_ATTEMPT_WINDOW_MS).toISOString(),
   });
@@ -122,6 +153,7 @@ export default defineTool({
         const lock = await checkAttemptLock(supabase, {
           workspaceId: actor.workspaceId,
           chatSessionId: actor.chatSessionId,
+          visitorId: actor.visitorId,
           channel,
         });
         if (!lock.ok) {
@@ -178,6 +210,7 @@ export default defineTool({
           await bumpAttemptLock(supabase, {
             workspaceId: actor.workspaceId,
             chatSessionId: actor.chatSessionId,
+            visitorId: actor.visitorId,
             channel,
           });
           await logAgentToolEvent({

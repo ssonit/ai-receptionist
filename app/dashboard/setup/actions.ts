@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { setAiBookingMeetingTypeAction } from "@/app/dashboard/meeting-types/actions";
+import { setAiBookingMeetingTypeAction } from "@/app/dashboard/(main)/meeting-types/actions";
 import {
   APP_ERROR_CODE,
   appErrorMessage,

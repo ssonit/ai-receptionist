@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { syncBookingsAction } from "@/app/dashboard/bookings/actions";
+import { syncBookingsAction } from "@/app/dashboard/(main)/bookings/actions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 

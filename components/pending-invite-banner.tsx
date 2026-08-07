@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { IconMailCheck, IconX } from "@tabler/icons-react";
-import { acceptWorkspaceInviteAction } from "@/app/dashboard/settings/invite-actions";
+import { acceptWorkspaceInviteAction } from "@/app/dashboard/(main)/settings/invite-actions";
 import type { MyPendingInvite } from "@/lib/workspace-invites";
 
 export function PendingInviteBanner({

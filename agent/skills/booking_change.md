@@ -2,9 +2,9 @@
 
 Use when the guest wants to list, cancel, or move an existing appointment.
 
-**No login.** Ownership is proven in this order:
+**No login required for most paths.** Ownership is proven in this order:
 
-1. `list_my_appointments` — appointments already claimable in this chat.
+1. `list_my_appointments` — appointments already claimable in this chat (same session / verified proof / **confirmed** Auth email).
 2. Manage code from booking confirmation → `verify_booking_code` (`manage_code`).
 3. Email OTP → `request_booking_otp` then `verify_booking_code` (`email_otp`). Never reveal whether the email has a booking. Only works for guests who gave a real email at booking time.
 4. Same browser, other chat (`needsPhoneLast4`) → last 4 digits of booking phone → `verify_booking_code` (`phone_last4`).

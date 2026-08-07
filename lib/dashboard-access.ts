@@ -54,3 +54,13 @@ export function canAccessDashboardPath(
   if (!isOwnerOnlyPath(pathname)) return true;
   return role === WORKSPACE_ROLE.OWNER;
 }
+
+/** Whether a sidebar nav href should show as active for the current pathname. */
+export function isDashboardNavActive(pathname: string, href: string): boolean {
+  const path = pathname.split("?")[0]?.replace(/\/$/, "") || pathname;
+  const target = href.split("?")[0]?.replace(/\/$/, "") || href;
+  if (target === DASHBOARD_PATH.root) {
+    return path === target;
+  }
+  return path === target || path.startsWith(`${target}/`);
+}

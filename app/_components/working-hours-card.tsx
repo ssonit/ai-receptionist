@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import {
   saveWorkingHoursAction,
   type WorkingHoursDayInput,
-} from "@/app/dashboard/settings/actions";
+} from "@/app/dashboard/(main)/settings/actions";
 
 const DAYS: { key: WorkingHoursDayInput["day"]; label: string }[] = [
   { key: "Monday", label: "Thứ 2" },

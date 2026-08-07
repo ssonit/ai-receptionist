@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import {
   generateFaqDraftAction,
   saveFaqSettings,
-} from "@/app/dashboard/faq/actions";
+} from "@/app/dashboard/(main)/faq/actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,

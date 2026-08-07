@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChatCircleIcon, CheckCircleIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { disconnectMessengerAction } from "@/app/dashboard/settings/actions";
+import { disconnectMessengerAction } from "@/app/dashboard/(main)/settings/actions";
 import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
 

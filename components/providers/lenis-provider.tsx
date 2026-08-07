@@ -1,15 +1,18 @@
 "use client";
 
 import Lenis from "lenis";
-import { useEffect, type ReactNode, useRef } from "react";
+import { useEffect, type ReactNode } from "react";
 
 type LenisProviderProps = {
   readonly children: ReactNode;
 };
 
+/**
+ * Smooth scroll for the landing page.
+ * Uses Lenis `autoRaf` — do NOT multiply rAF time by 1000 (that is only for
+ * GSAP's ticker, which reports seconds; native rAF already passes ms).
+ */
 export function LenisProvider({ children }: LenisProviderProps) {
-  const rafRef = useRef<number | null>(null);
-
   useEffect(() => {
     const prefersReduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -17,21 +20,13 @@ export function LenisProvider({ children }: LenisProviderProps) {
     if (prefersReduced) return;
 
     const lenis = new Lenis({
+      autoRaf: true,
       lerp: 0.1,
       smoothWheel: true,
       orientation: "vertical",
     });
 
-    const raf = (time: number) => {
-      lenis.raf(time * 1000);
-      rafRef.current = requestAnimationFrame(raf);
-    };
-    rafRef.current = requestAnimationFrame(raf);
-
     return () => {
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-      }
       lenis.destroy();
     };
   }, []);

@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { supabaseMock } from "../tests/helpers/supabase-mock";
-import { getWorkspaceGuestPolicy } from "./agent-booking-auth";
+import {
+  getWorkspaceGuestPolicy,
+  resolveClaimableProfileEmail,
+} from "./agent-booking-auth";
 
 const WS = "00000000-0000-4000-8000-000000000001";
+const USER = "00000000-0000-4000-8000-0000000000aa";
 
 beforeEach(() => {
   supabaseMock.clear();
@@ -25,5 +29,29 @@ describe("getWorkspaceGuestPolicy — guestEmailRequired", () => {
     supabaseMock.seed("workspaces", [{ id: WS, guest_email_required: true }]);
     const policy = await getWorkspaceGuestPolicy(WS);
     expect(policy.guestEmailRequired).toBe(true);
+  });
+});
+
+describe("resolveClaimableProfileEmail — A+ requires confirmed Auth email", () => {
+  it("returns null when the Auth user is missing", async () => {
+    await expect(resolveClaimableProfileEmail(USER)).resolves.toBeNull();
+  });
+
+  it("returns null when email is not confirmed", async () => {
+    supabaseMock.seedAuthUser(USER, {
+      email: "Guest@Example.com",
+      email_confirmed_at: null,
+    });
+    await expect(resolveClaimableProfileEmail(USER)).resolves.toBeNull();
+  });
+
+  it("returns normalized email when confirmed", async () => {
+    supabaseMock.seedAuthUser(USER, {
+      email: "Guest@Example.com",
+      email_confirmed_at: "2026-01-01T00:00:00.000Z",
+    });
+    await expect(resolveClaimableProfileEmail(USER)).resolves.toBe(
+      "guest@example.com",
+    );
   });
 });

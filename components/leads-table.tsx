@@ -12,7 +12,7 @@ import {
 import {
   updateLeadNotesAction,
   updateLeadStatusAction,
-} from "@/app/dashboard/leads/actions";
+} from "@/app/dashboard/(main)/leads/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
