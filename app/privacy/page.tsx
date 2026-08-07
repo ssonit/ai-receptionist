@@ -20,14 +20,14 @@ export default function PrivacyPage() {
       <h2>Why we collect it</h2>
       <ul>
         <li>To create, cancel and reschedule appointments on your behalf.</li>
-        <li>To send appointment reminders, if the business enables them.</li>
         <li>To let the business you contacted follow up with you.</li>
       </ul>
       <h2>Who can see it</h2>
       <p>
         Your data is visible to the business whose booking page you used, and to
-        our calendar provider (Cal.com) for the appointment itself. Reminder and
-        verification emails are delivered by Resend. We do not sell your data.
+        our calendar provider (Cal.com) for the appointment itself. Verification
+        emails are delivered by Resend. Appointment reminders, when enabled by
+        the business, are sent by Cal.com. We do not sell your data.
       </p>
       <h2>How long we keep it</h2>
       <p>
@@ -37,9 +37,7 @@ export default function PrivacyPage() {
       </p>
       <h2>Your choices</h2>
       <p>
-        Every reminder email includes an unsubscribe link that stops further
-        reminders for that booking. To request access to or deletion of your
-        data, contact us.
+        To request access to or deletion of your data, contact us.
       </p>
       <h2>Contact</h2>
       <p>support@motionsite.pro</p>

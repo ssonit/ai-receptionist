@@ -185,7 +185,6 @@
         "cal_booking": "Đặt lịch trên lịch thật",
         "faq_intake": "FAQ + thu thập thông tin khách",
         "bilingual_agent": "Trợ lý song ngữ Anh–Việt",
-        "reminders": "Nhắc lịch hẹn",
         "zalo": "Zalo Official Account",
         "messenger": "Facebook Messenger"
       }
@@ -279,10 +278,6 @@
         "tenant": {
           "title": "Workspace của bạn",
           "body": "Mỗi chi nhánh một trang đặt lịch riêng với brand của bạn."
-        },
-        "remind": {
-          "title": "Nhắc lịch",
-          "body": "Tự động nhắc lịch để giảm khách không đến."
         }
       }
     },

@@ -182,7 +182,6 @@
         "cal_booking": "Real calendar booking",
         "faq_intake": "FAQ + client intake",
         "bilingual_agent": "English & Vietnamese agent",
-        "reminders": "Appointment reminders",
         "zalo": "Zalo Official Account",
         "messenger": "Facebook Messenger"
       }
@@ -276,10 +275,6 @@
         "tenant": {
           "title": "Your workspace",
           "body": "Each location gets its own booking page with your branding."
-        },
-        "remind": {
-          "title": "Reminders",
-          "body": "Auto-reminders so fewer empty chairs."
         }
       }
     },

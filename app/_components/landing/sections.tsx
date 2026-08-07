@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BellIcon,
   BuildingsIcon,
   CalendarBlankIcon,
   ChatCircleIcon,
@@ -215,7 +214,6 @@ const MOMENT_KEYS = [
   "leads",
   "embed",
   "tenant",
-  "remind",
 ] as const;
 
 function MomentVisual({ kind }: { kind: (typeof MOMENT_KEYS)[number] }) {
@@ -307,18 +305,7 @@ function MomentVisual({ kind }: { kind: (typeof MOMENT_KEYS)[number] }) {
     );
   }
 
-  return (
-    <div className="flex w-full items-center gap-3">
-      <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-900">
-        <BellIcon className="size-4 text-zinc-300" weight="duotone" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-white">Reminder sent</p>
-        <p className="text-[10px] text-zinc-500">Tomorrow · 2:00 PM · SMS</p>
-      </div>
-      <CheckIcon className="size-3.5 shrink-0 text-emerald-400" weight="bold" />
-    </div>
-  );
+  return null;
 }
 
 export function FeatureMoments() {

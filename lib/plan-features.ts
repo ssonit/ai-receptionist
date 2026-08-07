@@ -20,7 +20,6 @@ export const PLAN_FEATURE = {
   CAL_BOOKING: "cal_booking",
   FAQ_INTAKE: "faq_intake",
   BILINGUAL_AGENT: "bilingual_agent",
-  REMINDERS: "reminders",
   ZALO: "zalo",
   MESSENGER: "messenger",
 } as const;
@@ -39,7 +38,6 @@ export const PLAN_FEATURE_TIERS: Record<PlanFeature, readonly PlanTier[]> = {
   cal_booking: ["starter", "pro"],
   faq_intake: ["starter", "pro"],
   bilingual_agent: ["starter", "pro"],
-  reminders: ["starter", "pro"],
   // Zalo is the default messaging channel in Vietnam, this product's primary
   // market. Gating it behind Pro would leave Starter with no usable channel
   // there. Messenger stays Pro on purpose.
@@ -65,8 +63,7 @@ const FEATURE_ORDER: readonly PlanFeature[] = [
   PLAN_FEATURE.CAL_BOOKING,
   PLAN_FEATURE.FAQ_INTAKE,
   PLAN_FEATURE.BILINGUAL_AGENT,
-  PLAN_FEATURE.REMINDERS,
-   PLAN_FEATURE.ZALO,
+  PLAN_FEATURE.ZALO,
   PLAN_FEATURE.MESSENGER,
 ];
 
