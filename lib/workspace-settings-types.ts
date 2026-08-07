@@ -29,10 +29,6 @@ export type WorkspaceOpsValues = {
   guestChangeCutoffMinutes?: number;
   guestEmailRequired?: boolean;
   serviceMode?: "onsite" | "online";
-  bookingRemindersEnabled?: boolean;
-  reminderLeadMinutes?: number[];
-  reminderQuietStart?: number;
-  reminderQuietEnd?: number;
 };
 
 /** AI personality + chat empty screen — `/dashboard/agent`. */

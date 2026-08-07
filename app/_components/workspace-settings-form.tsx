@@ -50,7 +50,6 @@ const NAV = [
   { id: "contact", label: "Contact" },
   { id: "language", label: "Language" },
   { id: "booking", label: "Booking" },
-  { id: "reminders", label: "Reminders" },
   { id: "public-link", label: "Public link" },
   { id: "team", label: "Team" },
 ] as const;
@@ -581,68 +580,6 @@ export function WorkspaceSettingsForm({
                     />
                   </div>
                 </div>
-              </div>
-            </SettingsSection>
-
-            <SettingsSection
-              description="Email guests before appointments. Needs a verified Resend domain — otherwise mail lands in spam."
-              id="reminders"
-              title="Reminders"
-            >
-              <div className="space-y-4">
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    defaultChecked={workspace?.bookingRemindersEnabled === true}
-                    name="bookingRemindersEnabled"
-                    type="checkbox"
-                  />
-                  Enable booking reminders
-                </label>
-                <div className="space-y-2">
-                  <Label htmlFor="reminder-leads">
-                    Long lead(s) in minutes (comma-separated)
-                  </Label>
-                  <Input
-                    defaultValue={(
-                      workspace?.reminderLeadMinutes ?? [1440]
-                    ).join(",")}
-                    id="reminder-leads"
-                    name="reminderLeadMinutes"
-                    placeholder="1440"
-                  />
-                  <p className="text-muted-foreground text-xs leading-relaxed">
-                    Example: 1440 = 24 hours before. A second reminder is always
-                    scheduled at cutoff + 30 minutes.
-                  </p>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="quiet-start">Quiet hours start (0–23)</Label>
-                    <Input
-                      defaultValue={workspace?.reminderQuietStart ?? 21}
-                      id="quiet-start"
-                      max={23}
-                      min={0}
-                      name="reminderQuietStart"
-                      type="number"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="quiet-end">Quiet hours end (0–23)</Label>
-                    <Input
-                      defaultValue={workspace?.reminderQuietEnd ?? 8}
-                      id="quiet-end"
-                      max={23}
-                      min={0}
-                      name="reminderQuietEnd"
-                      type="number"
-                    />
-                  </div>
-                </div>
-                <p className="text-muted-foreground text-xs leading-relaxed">
-                  Default 21→08. Set start = end to disable quiet hours. Long
-                  reminders in quiet hours defer to end; short ones are skipped.
-                </p>
               </div>
             </SettingsSection>
 

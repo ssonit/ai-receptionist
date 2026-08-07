@@ -6,12 +6,10 @@ import {
   appErrorMessage,
   formatDbError,
   formatUnknownError,
-  reminderLeadTooShortMessage,
   slugAvailableMessage,
   slugIsYoursMessage,
   slugTakenMessage,
 } from "@/lib/errors";
-import { minLongLeadMinutes } from "@/lib/booking-reminders";
 import { bookingRoute } from "@/lib/routes";
 import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { canonicalizeTimezone } from "@/lib/timezones";
@@ -69,31 +67,6 @@ export async function saveWorkspaceSettings(
     return Math.max(0, Math.floor(parsed));
   })();
 
-  const bookingRemindersEnabled =
-    formData.get("bookingRemindersEnabled") === "on";
-
-  const reminderLeadMinutesRaw = String(
-    formData.get("reminderLeadMinutes") ?? "",
-  ).trim();
-  const reminderLeadMinutesInRange = reminderLeadMinutesRaw
-    ? reminderLeadMinutesRaw
-        .split(/[,\s]+/)
-        .map((p) => Math.floor(Number(p)))
-        .filter((n) => Number.isFinite(n) && n >= 60 && n <= 10080)
-    : [];
-  const reminderLeadMinutes =
-    reminderLeadMinutesInRange.length > 0 ? reminderLeadMinutesInRange : [1440];
-
-  // A lead too close to the cancel/reschedule cutoff collapses into the
-  // short-lead slot and is silently dropped at send time — reject here
-  // instead, so the owner sees why their value "didn't stick".
-  if (bookingRemindersEnabled) {
-    const minLead = minLongLeadMinutes(guestChangeCutoffMinutes);
-    if (reminderLeadMinutes.some((n) => n <= minLead)) {
-      return { error: reminderLeadTooShortMessage(minLead) };
-    }
-  }
-
   const { error } = await auth.supabase
     .from("workspaces")
     .update({
@@ -111,18 +84,6 @@ export async function saveWorkspaceSettings(
       guest_change_cutoff_minutes: guestChangeCutoffMinutes,
       service_mode:
         formData.get("serviceMode") === "online" ? "online" : "onsite",
-      booking_reminders_enabled: bookingRemindersEnabled,
-      reminder_lead_minutes: reminderLeadMinutes,
-      reminder_quiet_start: (() => {
-        const parsed = Number(formData.get("reminderQuietStart"));
-        if (!Number.isFinite(parsed)) return 21;
-        return Math.min(23, Math.max(0, Math.floor(parsed)));
-      })(),
-      reminder_quiet_end: (() => {
-        const parsed = Number(formData.get("reminderQuietEnd"));
-        if (!Number.isFinite(parsed)) return 8;
-        return Math.min(23, Math.max(0, Math.floor(parsed)));
-      })(),
     })
     .eq("id", auth.workspaceId);
 
