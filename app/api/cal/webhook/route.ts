@@ -3,22 +3,14 @@ import type { NextRequest } from "next/server";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { upsertCalBookings, type CalWebhookPayload } from "@/lib/sync-cal-bookings";
 import { getCalBookingView, normalizeCalApiStatus } from "@/lib/booking-status";
-import type { CalBookingListItem } from "@/lib/calcom";
+import { CAL_WEBHOOK_TRIGGER_EVENTS, type CalBookingListItem } from "@/lib/calcom";
 import { getWebhookSecretForWorkspace } from "@/lib/workspace";
 import { ANALYTICS_EVENT } from "@/lib/analytics-events";
 import { trackServer } from "@/lib/analytics-server";
 
 export const dynamic = "force-dynamic";
 
-/** Cal.com sends these trigger events — @see https://cal.com/docs/webhooks */
-const RELEVANT_EVENTS = new Set([
-  "BOOKING_CREATED",
-  "BOOKING_RESCHEDULED",
-  "BOOKING_CANCELLED",
-  "BOOKING_REJECTED",
-  "BOOKING_REQUESTED",
-  "BOOKING_NO_SHOW",
-]);
+const RELEVANT_EVENTS = new Set<string>(CAL_WEBHOOK_TRIGGER_EVENTS);
 
 function verifySignature(rawBody: string, signature: string, secret: string): boolean {
   const hmac = createHmac("sha256", secret);

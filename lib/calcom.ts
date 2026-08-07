@@ -787,3 +787,96 @@ export async function fetchAllCalBookings(): Promise<{
     },
   };
 }
+
+export type CalWebhook = {
+  id: string;
+  subscriberUrl: string;
+  active: boolean;
+  triggers: string[];
+};
+
+export type CreateWebhookInput = {
+  subscriberUrl: string;
+  secret: string;
+  triggers: readonly string[];
+};
+
+/**
+ * Same trigger set app/api/cal/webhook/route.ts filters on — single source
+ * so registration and the receiving route can never drift apart.
+ */
+export const CAL_WEBHOOK_TRIGGER_EVENTS = [
+  "BOOKING_CREATED",
+  "BOOKING_RESCHEDULED",
+  "BOOKING_CANCELLED",
+  "BOOKING_REJECTED",
+  "BOOKING_REQUESTED",
+  "BOOKING_NO_SHOW",
+] as const;
+
+// Unconfirmed against a live Cal.com account as of this plan — verify in
+// Task 7 and correct here if Cal.com's response indicates a different
+// version is expected for /v2/webhooks specifically.
+const WEBHOOKS_API_VERSION = "2024-08-13";
+
+function parseCalWebhook(item: Record<string, unknown>): CalWebhook | null {
+  if (typeof item.id !== "string" && typeof item.id !== "number") return null;
+  if (typeof item.subscriberUrl !== "string") return null;
+  return {
+    id: String(item.id),
+    subscriberUrl: item.subscriberUrl,
+    active: Boolean(item.active),
+    triggers: Array.isArray(item.triggers) ? (item.triggers as string[]) : [],
+  };
+}
+
+/** GET /v2/webhooks — account-level, all event types. */
+export async function listWebhooks(): Promise<CalWebhook[]> {
+  requireCalApiKey();
+  const body = await calFetch<{ data?: unknown } | unknown[]>("/webhooks", {
+    method: "GET",
+    apiVersion: WEBHOOKS_API_VERSION,
+  });
+
+  const rawList = Array.isArray(body)
+    ? body
+    : Array.isArray((body as { data?: unknown }).data)
+      ? ((body as { data: unknown[] }).data)
+      : [];
+
+  const out: CalWebhook[] = [];
+  for (const item of rawList) {
+    if (item && typeof item === "object") {
+      const parsed = parseCalWebhook(item as Record<string, unknown>);
+      if (parsed) out.push(parsed);
+    }
+  }
+  return out;
+}
+
+/** POST /v2/webhooks — account-level, all event types. */
+export async function createWebhook(input: CreateWebhookInput): Promise<CalWebhook> {
+  requireCalApiKey();
+  const payload = {
+    subscriberUrl: input.subscriberUrl,
+    active: true,
+    triggers: input.triggers,
+    secret: input.secret,
+  };
+
+  const body = await calFetch<{ data?: Record<string, unknown> } & Record<string, unknown>>(
+    "/webhooks",
+    {
+      method: "POST",
+      apiVersion: WEBHOOKS_API_VERSION,
+      body: JSON.stringify(payload),
+    },
+  );
+
+  const data = (body.data ?? body) as Record<string, unknown>;
+  const parsed = parseCalWebhook(data);
+  if (!parsed) {
+    throw new Error("Cal.com create webhook response missing id/subscriberUrl");
+  }
+  return parsed;
+}
