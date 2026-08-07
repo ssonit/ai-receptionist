@@ -3,14 +3,24 @@ import { MessengerConnectionCard } from "@/app/_components/messenger-connection-
 import { ZaloConnectionCard } from "@/app/_components/zalo-connection-card";
 import { WorkspaceSettingsForm } from "@/app/_components/workspace-settings-form";
 import { WebhookSecretCard } from "@/app/_components/webhook-secret-card";
+import { WorkingHoursCard } from "@/app/_components/working-hours-card";
 import { WorkspaceTeamCard } from "@/app/_components/workspace-team-card";
+import type { WorkingHoursDayInput } from "@/app/dashboard/settings/actions";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { absoluteAppOrigin } from "@/lib/app-origin";
+import {
+  getDefaultSchedule,
+  withCalApiKey,
+  type CalScheduleAvailability,
+} from "@/lib/calcom";
 import { assertOwnerPage } from "@/lib/dashboard-access-server";
 import { DASHBOARD_PATH } from "@/lib/dashboard-access";
 import { WORKSPACE_ROLE } from "@/lib/workspace-roles";
 import { createClient } from "@/lib/supabase/server";
-import { publicBookingPath } from "@/lib/workspace";
+import {
+  getCalAccessTokenForWorkspace,
+  publicBookingPath,
+} from "@/lib/workspace";
 import { WORKSPACE_AI_DEFAULTS } from "@/lib/workspace-ai-defaults";
 import { getChannelConnection } from "@/lib/channel-connections";
 import {
@@ -20,6 +30,58 @@ import {
 import type { WorkspaceOpsValues } from "@/lib/workspace-settings-types";
 import { canUseFeature, PLAN_FEATURE } from "@/lib/plan-features";
 import type { PlanTier, SubscriptionStatus } from "@/lib/billing";
+
+const WORKING_HOURS_DAYS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+] as const;
+
+const DEFAULT_DAY_START = "09:00";
+const DEFAULT_DAY_END = "17:00";
+
+function defaultWorkingHoursDays(
+  enabled = false,
+): WorkingHoursDayInput[] {
+  return WORKING_HOURS_DAYS.map((day) => ({
+    day,
+    enabled,
+    startTime: DEFAULT_DAY_START,
+    endTime: DEFAULT_DAY_END,
+  }));
+}
+
+function mapAvailabilityToWorkingHoursDays(
+  availability: CalScheduleAvailability[],
+): WorkingHoursDayInput[] {
+  const byDay = new Map<string, { startTime: string; endTime: string }>();
+  for (const slot of availability) {
+    for (const day of slot.days) {
+      byDay.set(day, { startTime: slot.startTime, endTime: slot.endTime });
+    }
+  }
+  return WORKING_HOURS_DAYS.map((day) => {
+    const found = byDay.get(day);
+    if (!found) {
+      return {
+        day,
+        enabled: false,
+        startTime: DEFAULT_DAY_START,
+        endTime: DEFAULT_DAY_END,
+      };
+    }
+    return {
+      day,
+      enabled: true,
+      startTime: found.startTime,
+      endTime: found.endTime,
+    };
+  });
+}
 
 export default async function SettingsPage() {
   const dashboard = await assertOwnerPage(DASHBOARD_PATH.settings);
@@ -38,6 +100,7 @@ export default async function SettingsPage() {
   let pendingInvites: Awaited<ReturnType<typeof listPendingInvites>> = [];
   let canConnectMessenger = false;
   let canConnectZalo = false;
+  let workingHoursDays = defaultWorkingHoursDays(false);
 
   if (dashboard.workspaceId) {
     const supabase = await createClient();
@@ -136,6 +199,17 @@ export default async function SettingsPage() {
       members = [];
       pendingInvites = [];
     }
+
+    try {
+      const token = await getCalAccessTokenForWorkspace(dashboard.workspaceId);
+      const schedule = await withCalApiKey(token, () => getDefaultSchedule());
+      workingHoursDays = schedule
+        ? mapAvailabilityToWorkingHoursDays(schedule.availability)
+        : defaultWorkingHoursDays(false);
+    } catch {
+      // No Cal connect / 403 / network — keep all-disabled defaults; page still renders.
+      workingHoursDays = defaultWorkingHoursDays(false);
+    }
   }
 
   const origin = await absoluteAppOrigin();
@@ -224,6 +298,25 @@ export default async function SettingsPage() {
                     zaloOaId={zaloOaId}
                     zaloOaName={zaloOaName}
                     canConnect={canConnectZalo}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border/70 pt-8 lg:pt-10">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,13rem)_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+                <div className="space-y-1.5 lg:pt-0.5">
+                  <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                    Working hours
+                  </h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
+                    Edit your default Cal.com availability without leaving Settings.
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <WorkingHoursCard
+                    workspaceId={dashboard.workspaceId}
+                    initialDays={workingHoursDays}
                   />
                 </div>
               </div>

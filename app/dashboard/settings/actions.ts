@@ -2,6 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  createSchedule,
+  getDefaultSchedule,
+  updateSchedule,
+  withCalApiKey,
+  type CalScheduleAvailability,
+} from "@/lib/calcom";
+import {
   APP_ERROR_CODE,
   appErrorMessage,
   formatDbError,
@@ -12,15 +19,121 @@ import {
 } from "@/lib/errors";
 import { bookingRoute } from "@/lib/routes";
 import { DASHBOARD_PATH } from "@/lib/dashboard-access";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { canonicalizeTimezone } from "@/lib/timezones";
 import type { WorkspaceSettingsState } from "@/lib/workspace-settings-types";
-import { slugifyWorkspaceName } from "@/lib/workspace";
+import { formatScheduleAsBusinessHours } from "@/lib/workspace-schedule";
+import {
+  getCalAccessTokenForWorkspace,
+  slugifyWorkspaceName,
+} from "@/lib/workspace";
 import {
   ownerWorkspaceErrorMessage,
   requireOwnerWorkspace,
 } from "@/lib/workspace-invites";
 
 export type { WorkspaceSettingsState } from "@/lib/workspace-settings-types";
+
+export type WorkingHoursDayInput = {
+  day:
+    | "Monday"
+    | "Tuesday"
+    | "Wednesday"
+    | "Thursday"
+    | "Friday"
+    | "Saturday"
+    | "Sunday";
+  enabled: boolean;
+  startTime: string;
+  endTime: string;
+};
+
+function toAvailability(days: WorkingHoursDayInput[]): CalScheduleAvailability[] {
+  // Group consecutive enabled days sharing the same start/end into one
+  // entry — matches how Cal.com's own UI represents "Mon–Fri 9-5" as a
+  // single availability object rather than 5 separate ones.
+  const enabled = days.filter((d) => d.enabled);
+  const groups: CalScheduleAvailability[] = [];
+  for (const d of enabled) {
+    const last = groups[groups.length - 1];
+    if (last && last.startTime === d.startTime && last.endTime === d.endTime) {
+      last.days.push(d.day);
+    } else {
+      groups.push({ days: [d.day], startTime: d.startTime, endTime: d.endTime });
+    }
+  }
+  return groups;
+}
+
+export async function saveWorkingHoursAction(
+  workspaceId: string,
+  input: { days: WorkingHoursDayInput[] },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const auth = await requireOwnerWorkspace();
+  if (!auth.ok) {
+    return { ok: false, error: ownerWorkspaceErrorMessage(auth.error) };
+  }
+  if (auth.workspaceId !== workspaceId) {
+    return { ok: false, error: appErrorMessage(APP_ERROR_CODE.UNAUTHORIZED) };
+  }
+
+  try {
+    const token = await getCalAccessTokenForWorkspace(workspaceId);
+    const availability = toAvailability(input.days);
+
+    const schedule = await withCalApiKey(token, async () => {
+      const existing = await getDefaultSchedule();
+      if (existing) {
+        return updateSchedule(existing.id, {
+          name: existing.name,
+          timeZone: existing.timeZone,
+          isDefault: true,
+          availability,
+        });
+      }
+
+      // New Cal account: use the workspace timezone, never a hardcoded UTC.
+      const admin = createAdminClient();
+      const { data: ws } = await admin
+        .from("workspaces")
+        .select("timezone")
+        .eq("id", workspaceId)
+        .maybeSingle();
+      const timeZone =
+        typeof ws?.timezone === "string" && ws.timezone.trim()
+          ? ws.timezone.trim()
+          : null;
+      if (!timeZone) {
+        throw new Error("Workspace timezone is not set");
+      }
+
+      return createSchedule({
+        name: "Working Hours",
+        timeZone,
+        isDefault: true,
+        availability,
+      });
+    });
+
+    const businessHours = formatScheduleAsBusinessHours(
+      schedule.availability,
+      "vi",
+    );
+    const admin = createAdminClient();
+    await admin
+      .from("workspaces")
+      .update({ business_hours: businessHours })
+      .eq("id", workspaceId);
+
+    revalidatePath(DASHBOARD_PATH.settings);
+    revalidatePath(DASHBOARD_PATH.agent);
+    return { ok: true };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to save working hours";
+    return { ok: false, error: message };
+  }
+}
 
 function optionalText(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim() || null;
