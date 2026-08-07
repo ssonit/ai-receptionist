@@ -1,8 +1,8 @@
 # Booking reminders + Cal.com sync — bỏ mô hình poll (thay `/api/cron/tick`)
 
 **Date:** 2026-08-07  
-**Status:** Design approved in conversation — chờ review file spec trước khi viết plan  
-**Scope:** Thay cơ chế reminders/sync hiện tại (quét toàn bộ workspace mỗi 15 phút trong `/api/cron/tick`) bằng mô hình tính-lúc-tạo + giao qua QStash. Không đổi vai trò Cal.com làm booking/availability engine.  
+**Status:** ❌ **SUPERSEDED (2026-08-07)** — không triển khai. Quyết định mới: bỏ hẳn hệ thống reminder tự xây, dùng Cal.com Workflow thay thế. Xem [2026-08-07-drop-custom-reminders-design.md](2026-08-07-drop-custom-reminders-design.md). Giữ file này lại làm lịch sử quyết định (tại sao QStash/schedule-at-creation từng được cân nhắc, để không lặp lại phân tích nếu câu hỏi quay lại sau này) — **không dùng làm căn cứ triển khai.**  
+**Scope (đã huỷ):** Thay cơ chế reminders/sync hiện tại (quét toàn bộ workspace mỗi 15 phút trong `/api/cron/tick`) bằng mô hình tính-lúc-tạo + giao qua QStash. Không đổi vai trò Cal.com làm booking/availability engine.  
 **Phụ thuộc:** `docs/superpowers/outbound-reminders.md` (schema `booking_reminders` gốc — giữ nguyên, không đổi cột). Độc lập với `2026-08-07-cal-webhook-auto-register-design.md` — có thể ship theo thứ tự bất kỳ; reconciliation dự phòng trong doc này hoạt động dù webhook được đăng ký tự động hay thủ công.
 
 ## 1. Vấn đề hiện tại
