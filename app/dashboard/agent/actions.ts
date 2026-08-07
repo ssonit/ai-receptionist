@@ -92,7 +92,6 @@ export async function saveWorkspaceAgent(
     .from("workspaces")
     .update({
       about: optionalText(formData, "about"),
-      business_hours: optionalText(formData, "business_hours"),
       services_summary: optionalText(formData, "services_summary"),
       agent_instructions: optionalText(formData, "agent_instructions"),
       agent_display_name: optionalText(formData, "agent_display_name"),

@@ -467,5 +467,8 @@
   "465": "20260806000006_chat_session_guest_visible_after.sql",
   "466": "backfill-webhook-secrets/route.test.ts",
   "467": "@ai-sdk/anthropic",
-  "468": "reschedule_appointment.test.ts"
+  "468": "reschedule_appointment.test.ts",
+  "469": "messenger/oauth/start/route.ts",
+  "470": "messenger-channel.test.ts",
+  "471": "class-variance-authority"
 }

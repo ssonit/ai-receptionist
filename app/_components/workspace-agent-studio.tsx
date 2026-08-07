@@ -54,14 +54,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
   looksLikeBulletList,
-  parseBulletLines,
   parseServiceTags,
-  serializeBulletLines,
   serializeServiceTags,
 } from "@/lib/agent-profile-builders";
 import {
   AGENT_ABOUT_TEMPLATES,
-  AGENT_HOURS_PRESETS,
   AGENT_INSTRUCTIONS_STARTERS,
 } from "@/lib/agent-profile-templates";
 import {
@@ -166,20 +163,11 @@ export function WorkspaceAgentStudio({
     null,
   );
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [hoursRawMode, setHoursRawMode] = useState(
-    () => !looksLikeBulletList(workspace?.businessHours),
-  );
   const [servicesRawMode, setServicesRawMode] = useState(
     () => !looksLikeBulletList(workspace?.servicesSummary),
   );
 
   const [about, setAbout] = useState(workspace?.about ?? "");
-  const [businessHours, setBusinessHours] = useState(
-    workspace?.businessHours ?? "",
-  );
-  const [hourLines, setHourLines] = useState(() =>
-    parseBulletLines(workspace?.businessHours),
-  );
   const [servicesSummary, setServicesSummary] = useState(
     workspace?.servicesSummary ?? "",
   );
@@ -236,9 +224,6 @@ export function WorkspaceAgentStudio({
 
   useEffect(() => {
     setAbout(workspace?.about ?? "");
-    setBusinessHours(workspace?.businessHours ?? "");
-    setHourLines(parseBulletLines(workspace?.businessHours));
-    setHoursRawMode(!looksLikeBulletList(workspace?.businessHours));
     setServicesSummary(workspace?.servicesSummary ?? "");
     setServiceTags(parseServiceTags(workspace?.servicesSummary));
     setServicesRawMode(!looksLikeBulletList(workspace?.servicesSummary));
@@ -273,12 +258,6 @@ export function WorkspaceAgentStudio({
       toast.error(state.error);
     }
   }, [state, router]);
-
-  useEffect(() => {
-    if (!hoursRawMode) {
-      setBusinessHours(serializeBulletLines(hourLines));
-    }
-  }, [hourLines, hoursRawMode]);
 
   useEffect(() => {
     if (!servicesRawMode) {
@@ -350,7 +329,6 @@ export function WorkspaceAgentStudio({
     <div className="flex flex-col gap-4 px-4 pb-10 lg:px-6">
       <form action={action} className="contents" id={formId}>
         <input name="about" type="hidden" value={about} />
-        <input name="business_hours" type="hidden" value={businessHours} />
         <input name="services_summary" type="hidden" value={servicesSummary} />
         <input
           name="agent_instructions"
@@ -680,28 +658,6 @@ export function WorkspaceAgentStudio({
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Hours</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(hoursRawMode
-                      ? parseBulletLines(businessHours)
-                      : hourLines
-                    ).length > 0 ? (
-                      (hoursRawMode
-                        ? parseBulletLines(businessHours)
-                        : hourLines
-                      ).map((line) => (
-                        <Badge key={line} variant="secondary">
-                          {line}
-                        </Badge>
-                      ))
-                    ) : (
-                      <span className="text-muted-foreground text-xs">
-                        No hours yet
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2">
                   <p className="text-sm font-medium">Services</p>
                   <div className="flex flex-wrap gap-2">
                     {(servicesRawMode
@@ -831,97 +787,6 @@ export function WorkspaceAgentStudio({
                       rows={4}
                       value={about}
                     />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <Label>Business hours</Label>
-                      <Button
-                        onClick={() => {
-                          if (hoursRawMode) {
-                            setHourLines(parseBulletLines(businessHours));
-                            setHoursRawMode(false);
-                          } else {
-                            setBusinessHours(serializeBulletLines(hourLines));
-                            setHoursRawMode(true);
-                          }
-                        }}
-                        size="sm"
-                        type="button"
-                        variant="ghost"
-                      >
-                        {hoursRawMode ? "Use builder" : "Edit as text"}
-                      </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {AGENT_HOURS_PRESETS.map((preset) => (
-                        <Button
-                          key={preset.id}
-                          onClick={() => {
-                            setBusinessHours(preset.hours);
-                            setHourLines(parseBulletLines(preset.hours));
-                            setHoursRawMode(false);
-                          }}
-                          size="sm"
-                          type="button"
-                          variant="secondary"
-                        >
-                          {preset.label}
-                        </Button>
-                      ))}
-                    </div>
-                    {hoursRawMode ? (
-                      <Textarea
-                        onChange={(e) => setBusinessHours(e.target.value)}
-                        placeholder={
-                          "- Mon–Sat: 08:00–20:00\n- Sunday: 08:00–12:00"
-                        }
-                        rows={4}
-                        value={businessHours}
-                      />
-                    ) : (
-                      <div className="space-y-2">
-                        {hourLines.map((line, index) => (
-                          <div className="flex gap-2" key={`h-${index}`}>
-                            <Input
-                              onChange={(e) =>
-                                setHourLines((prev) =>
-                                  prev.map((l, i) =>
-                                    i === index ? e.target.value : l,
-                                  ),
-                                )
-                              }
-                              placeholder="Mon–Fri: 09:00–17:00"
-                              value={line}
-                            />
-                            <Button
-                              aria-label="Remove hours line"
-                              onClick={() =>
-                                setHourLines((prev) =>
-                                  prev.filter((_, i) => i !== index),
-                                )
-                              }
-                              size="icon"
-                              type="button"
-                              variant="ghost"
-                            >
-                              <Trash2Icon className="size-4" />
-                            </Button>
-                          </div>
-                        ))}
-                        <Button
-                          onClick={() =>
-                            setHourLines((prev) => [...prev, ""])
-                          }
-                          size="sm"
-                          type="button"
-                          variant="outline"
-                        >
-                          <PlusIcon className="size-4" />
-                          Add line
-                        </Button>
-                      </div>
-                    )}
                   </div>
 
                   <div className="space-y-2">
