@@ -4,7 +4,6 @@ import {
   generateManageCode,
   generateOtpDigits,
   hashBookingCode,
-  hashManageLinkToken,
   MANAGE_CODE_TTL_MS,
   MAX_CODE_ATTEMPTS,
   normalizeBookingCodeInput,
@@ -67,20 +66,6 @@ describe("booking-manage-code", () => {
 
     it("produces different hashes for different codes", () => {
       expect(hashBookingCode("AAAAAA")).not.toBe(hashBookingCode("BBBBBB"));
-    });
-  });
-
-  describe("hashManageLinkToken", () => {
-    it("is deterministic and case-sensitive for token", () => {
-      const a = hashManageLinkToken("token-abc");
-      const b = hashManageLinkToken("token-abc");
-      expect(a).toBe(b);
-    });
-
-    it("differs from hashBookingCode given same input", () => {
-      // manage-link hash uses "mt:" prefix in pepper, so same code → different hash
-      const code = "XYZ789";
-      expect(hashManageLinkToken(code)).not.toBe(hashBookingCode(code));
     });
   });
 

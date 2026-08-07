@@ -19,10 +19,6 @@ export const ANALYTICS_EVENT = {
   BOOKING_CANCELLED_BY_GUEST: "booking_cancelled_by_guest",
   BOOKING_RESCHEDULED_BY_GUEST: "booking_rescheduled_by_guest",
 
-  REMINDER_SENT: "reminder_sent",
-  REMINDER_LINK_OPENED: "reminder_link_opened",
-  REMINDER_OPTED_OUT: "reminder_opted_out",
-
   EMBED_LOADED: "embed_loaded",
   EMBED_OPENED: "embed_opened",
 } as const;

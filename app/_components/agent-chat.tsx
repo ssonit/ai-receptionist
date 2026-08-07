@@ -103,10 +103,6 @@ export function AgentChat(props: {
    */
   embedMode?: boolean;
   initialLocale?: "en" | "vi";
-  /** Open this chat session first (e.g. after consuming a manage link). */
-  preferChatSessionId?: string | null;
-  /** Banner after magic-link claim. */
-  manageLinkNotice?: string | null;
 }) {
   return (
     <LocaleProvider initialLocale={props.initialLocale} kind="guest">
@@ -124,8 +120,6 @@ function AgentChatInner({
   headerEnd,
   demoMode = false,
   embedMode = false,
-  preferChatSessionId = null,
-  manageLinkNotice = null,
 }: {
   user?: ChatUser | null;
   workspaceSlug?: string;
@@ -135,8 +129,6 @@ function AgentChatInner({
   headerEnd?: React.ReactNode;
   demoMode?: boolean;
   embedMode?: boolean;
-  preferChatSessionId?: string | null;
-  manageLinkNotice?: string | null;
 }) {
   const t = useTranslations();
 
@@ -314,19 +306,6 @@ function AgentChatInner({
         const list = await listSessions();
         if (cancelled) return;
 
-        if (
-          preferChatSessionId &&
-          list.some((s) => s.id === preferChatSessionId)
-        ) {
-          const result = await loadThread(preferChatSessionId);
-          if (cancelled) return;
-          if (result === "ok") return;
-          await openFirstAvailable(
-            list.filter((s) => s.id !== preferChatSessionId),
-          );
-          return;
-        }
-
         if (cancelled) return;
         if (list.length === 0) {
           await openFreshSession();
@@ -345,9 +324,9 @@ function AgentChatInner({
     return () => {
       cancelled = true;
     };
-    // Re-bootstrap when tenant slug or preferred session changes.
+    // Re-bootstrap when tenant slug changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tenantQs, preferChatSessionId]);
+  }, [tenantQs]);
 
   const statusPill = (
     <div className="flex min-w-0 max-w-[min(100%,16rem)] items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 sm:max-w-xs">
@@ -431,12 +410,6 @@ function AgentChatInner({
             >
               {t("chat.createWorkspace")}
             </Link>
-          </div>
-        ) : null}
-
-        {manageLinkNotice ? (
-          <div className="flex shrink-0 items-center justify-center border-b border-teal-500/20 bg-teal-500/10 px-4 py-2 text-center text-xs text-teal-100/90 sm:text-[13px]">
-            {manageLinkNotice}
           </div>
         ) : null}
 
