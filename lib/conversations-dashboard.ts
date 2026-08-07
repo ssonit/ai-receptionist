@@ -80,13 +80,21 @@ export async function loadConversationsDashboard(limit = 100): Promise<{
   const sessionIds = sessions.map((s) => s.id);
 
   const [bookingsRes, leadsRes, toolsRes, countsRes] = await Promise.all([
-    eveIds.length
+    // Joined on chat_session_id (stable — set once at booking time, survives
+    // a guest "Restart") rather than eve_session_id (reset to null on
+    // restart). Using eve_session_id here made a completed booking vanish
+    // from the dashboard the moment the guest restarted the chat: has_booking
+    // flipped to false and classifyOutcome() reported "abandoned"/"empty"
+    // instead of "booked". leads/agent_tool_events have no equivalent stable
+    // column yet, so they still key off eve_session_id — same class of bug,
+    // tracked separately.
+    sessionIds.length
       ? supabase
           .from("bookings")
-          .select("id, session_id")
+          .select("id, chat_session_id")
           .eq("workspace_id", workspaceId)
-          .in("session_id", eveIds)
-      : Promise.resolve({ data: [] as { id: string; session_id: string }[] }),
+          .in("chat_session_id", sessionIds)
+      : Promise.resolve({ data: [] as { id: string; chat_session_id: string }[] }),
     eveIds.length
       ? supabase
           .from("leads")
@@ -108,7 +116,7 @@ export async function loadConversationsDashboard(limit = 100): Promise<{
   ]);
 
   const bookingSet = new Set(
-    (bookingsRes.data ?? []).map((b) => b.session_id).filter(Boolean),
+    (bookingsRes.data ?? []).map((b) => b.chat_session_id).filter(Boolean),
   );
   const leadSet = new Set(
     (leadsRes.data ?? []).map((l) => l.session_id).filter(Boolean),
@@ -123,7 +131,7 @@ export async function loadConversationsDashboard(limit = 100): Promise<{
 
   const rows: ConversationListRow[] = sessions.map((s) => {
     const eve = s.eve_session_id;
-    const has_booking = Boolean(eve && bookingSet.has(eve));
+    const has_booking = bookingSet.has(s.id);
     const has_lead = Boolean(eve && leadSet.has(eve));
     const has_tool_error = Boolean(eve && errorSet.has(eve));
     const message_count = messageCount.get(s.id) ?? 0;
@@ -193,15 +201,15 @@ export async function loadConversationDetail(
           .limit(1)
           .maybeSingle()
       : Promise.resolve({ data: null }),
-    eve
-      ? supabase
-          .from("bookings")
-          .select("id")
-          .eq("workspace_id", workspaceId)
-          .eq("session_id", eve)
-          .limit(1)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
+    // chat_session_id (stable), not eve_session_id (reset on restart) — see
+    // the matching comment in loadConversationsDashboard above.
+    supabase
+      .from("bookings")
+      .select("id")
+      .eq("workspace_id", workspaceId)
+      .eq("chat_session_id", id)
+      .limit(1)
+      .maybeSingle(),
     eve
       ? supabase
           .from("agent_tool_events")
