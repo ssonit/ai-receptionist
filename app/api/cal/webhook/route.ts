@@ -5,8 +5,6 @@ import { upsertCalBookings, type CalWebhookPayload } from "@/lib/sync-cal-bookin
 import { getCalBookingView, normalizeCalApiStatus } from "@/lib/booking-status";
 import { CAL_WEBHOOK_TRIGGER_EVENTS, type CalBookingListItem } from "@/lib/calcom";
 import { getWebhookSecretForWorkspace } from "@/lib/workspace";
-import { ANALYTICS_EVENT } from "@/lib/analytics-events";
-import { trackServer } from "@/lib/analytics-server";
 
 export const dynamic = "force-dynamic";
 
@@ -61,21 +59,6 @@ async function processEvent(rawBody: string, workspaceId: string) {
   const item = webhookToBookingItem(event);
   if (!item) {
     return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
-  }
-
-  if (event.triggerEvent === "BOOKING_CANCELLED") {
-    await trackServer(
-      ANALYTICS_EVENT.BOOKING_CANCELLED_BY_GUEST,
-      workspaceId,
-      { bookingUid: event.payload.uid },
-    );
-  }
-  if (event.triggerEvent === "BOOKING_RESCHEDULED") {
-    await trackServer(
-      ANALYTICS_EVENT.BOOKING_RESCHEDULED_BY_GUEST,
-      workspaceId,
-      { bookingUid: event.payload.uid },
-    );
   }
 
   const result = await upsertCalBookings([item], workspaceId);

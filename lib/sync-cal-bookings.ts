@@ -1,3 +1,5 @@
+import { ANALYTICS_EVENT } from "@/lib/analytics-events";
+import { trackServer } from "@/lib/analytics-server";
 import { type CalBookingListItem, fetchAllCalBookings, withCalApiKey } from "@/lib/calcom";
 import { ensureCalWebhookForWorkspace } from "@/lib/cal-webhook-setup";
 import { bookingConfig } from "@/lib/booking-config";
@@ -159,6 +161,9 @@ export async function upsertCalBookings(
         workspaceId,
       });
       if (id) cancelledNotified += 1;
+      await trackServer(ANALYTICS_EVENT.BOOKING_CANCELLED_BY_GUEST, workspaceId, {
+        bookingUid: row.cal_booking_uid,
+      });
       continue;
     }
 
@@ -179,6 +184,9 @@ export async function upsertCalBookings(
         workspaceId,
       });
       if (id) rescheduledNotified += 1;
+      await trackServer(ANALYTICS_EVENT.BOOKING_RESCHEDULED_BY_GUEST, workspaceId, {
+        bookingUid: row.cal_booking_uid,
+      });
     }
   }
 

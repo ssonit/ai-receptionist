@@ -13,6 +13,10 @@ vi.mock("@/lib/notifications-write", async (importOriginal) => ({
   createNotification: vi.fn().mockResolvedValue(null),
 }));
 
+vi.mock("@/lib/analytics-server", () => ({
+  trackServer: vi.fn().mockResolvedValue(undefined),
+}));
+
 const webhookSetupMocks = vi.hoisted(() => ({
   ensureCalWebhookForWorkspace: vi.fn().mockResolvedValue({ ok: true, skipped: true }),
 }));
@@ -165,7 +169,7 @@ describe("syncCalBookingsToSupabase — webhook registration hook", () => {
     scope: {
       pageLimit: 100,
       maxPages: 1,
-      filters: [] as string[],
+      filters: [] as const,
       truncatedFilters: [] as string[],
     },
   };
