@@ -10,12 +10,14 @@ type Props = {
   workspaceId: string;
   webhookUrl: string;
   hasOwnSecret: boolean;
+  webhookSyncedAt: string | null;
 };
 
 export function WebhookSecretCard({
   workspaceId,
   webhookUrl,
   hasOwnSecret,
+  webhookSyncedAt,
 }: Props) {
   const [secret, setSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,8 +59,9 @@ export function WebhookSecretCard({
           <div className="min-w-0">
             <p className="font-medium text-foreground">Cal.com webhook</p>
             <p className="mt-1 text-sm text-muted-foreground text-pretty">
-              Add this URL and secret to your Cal.com webhook so bookings
-              changed on Cal.com stay in sync here.
+              {webhookSyncedAt
+                ? "Registered automatically — bookings changed on Cal.com sync here in real time."
+                : "Registering automatically. This can take a moment after you connect Cal.com."}
             </p>
           </div>
         </div>

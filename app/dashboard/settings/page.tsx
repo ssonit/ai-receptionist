@@ -32,6 +32,7 @@ export default async function SettingsPage() {
   let zaloOaId: string | null = null;
   let zaloOaName: string | null = null;
   let hasOwnWebhookSecret = false;
+  let webhookSyncedAt: string | null = null;
   let currentUserId: string | null = null;
   let members: Awaited<ReturnType<typeof listWorkspaceMembers>> = [];
   let pendingInvites: Awaited<ReturnType<typeof listPendingInvites>> = [];
@@ -47,7 +48,7 @@ export default async function SettingsPage() {
     const { data } = await supabase
       .from("workspaces")
       .select(
-        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_email_required, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end, cal_auth_mode, cal_username, webhook_secret_encrypted, plan_tier, subscription_status, trial_ends_at",
+        "name, slug, timezone, phone, address, email, website, tagline, guest_cancel_enabled, guest_reschedule_enabled, guest_email_required, guest_change_cutoff_minutes, service_mode, booking_reminders_enabled, reminder_lead_minutes, reminder_quiet_start, reminder_quiet_end, cal_auth_mode, cal_username, webhook_secret_encrypted, cal_webhook_synced_at, plan_tier, subscription_status, trial_ends_at",
       )
       .eq("id", dashboard.workspaceId)
       .maybeSingle();
@@ -123,6 +124,10 @@ export default async function SettingsPage() {
       hasOwnWebhookSecret = Boolean(
         (data as Record<string, unknown>).webhook_secret_encrypted,
       );
+      webhookSyncedAt =
+        ((data as Record<string, unknown>).cal_webhook_synced_at as
+          | string
+          | null) ?? null;
     }
 
     const [messengerConn, zaloConn] = await Promise.all([
@@ -251,6 +256,7 @@ export default async function SettingsPage() {
                     workspaceId={dashboard.workspaceId}
                     webhookUrl={`${origin}/api/cal/webhook?workspace_id=${dashboard.workspaceId}`}
                     hasOwnSecret={hasOwnWebhookSecret}
+                    webhookSyncedAt={webhookSyncedAt}
                   />
                 </div>
               </div>
