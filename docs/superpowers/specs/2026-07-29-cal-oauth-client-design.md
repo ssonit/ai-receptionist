@@ -1,7 +1,7 @@
 # Cal.com Developer OAuth (replace paste API key)
 
-**Date:** 2026-07-29  
-**Status:** Design approved in conversation — awaiting spec file review before implementation plan  
+**Date:** 2026-07-29 (amended 2026-08-07)  
+**Status:** Implemented — migration `20260731000000_cal_oauth.sql`, `lib/cal-oauth.ts`, `app/api/cal/oauth/*`, `components/setup-wizard.tsx`  
 **Scope:** Multi-tenant Cal.com auth for real workspaces via Developer OAuth; Eve Pilot unchanged
 
 ## Goal
@@ -15,13 +15,38 @@ Let workspace owners connect an existing Cal.com cloud account with “Connect C
 | OAuth model | Cal.com **Developer OAuth** (connect existing account) — not Platform / managed users |
 | Host | **cal.com cloud only** (`app.cal.com` / `api.cal.com`) |
 | Client | One Eve confidential OAuth client (env credentials) |
-| New tenants | OAuth only (hide paste) |
+| New tenants | OAuth is the default CTA; paste API key stays available as a permanent secondary path (see amendment below) — **not** hidden |
 | Legacy | Existing `cal_api_key_encrypted` keeps working until owner Connects via OAuth |
 | UI | Connect/Disconnect in **Setup** and **Settings** |
 | Credential shape | Separate OAuth columns + resolver (approach 1) |
 | On OAuth success | Clear `cal_api_key_encrypted` (single auth source) |
 | On refresh failure | Clear OAuth columns / mode → booking offline; owner must reconnect |
 | Pilot `/chat` | Still env `CALCOM_API_KEY` only |
+
+### Amendment 2026-08-07 — keep paste API key, don't hide it
+
+Original "New tenants | OAuth only (hide paste)" row is superseded. Reasons,
+confirmed against Cal.com's own docs while designing Cal webhook
+auto-registration ([2026-08-07-cal-webhook-auto-register-design.md](2026-08-07-cal-webhook-auto-register-design.md)):
+
+- **API keys grant broad, unscoped access to every endpoint the account can
+  reach; OAuth is deliberately scope-limited.** Every time Eve needs a new
+  Cal.com capability (e.g. webhook management — not in `CAL_OAUTH_SCOPES`
+  today), OAuth tenants need a scope bump, Cal.com re-approval of the OAuth
+  client, *and* every already-connected workspace to re-run Connect. API-key
+  tenants are unaffected by this cycle.
+- **OAuth access tokens expire every 30 minutes** and depend on a refresh
+  token that Cal.com can revoke (password change, manual app revoke, normal
+  OAuth2 expiry) — a failure class API keys don't have (see "On refresh
+  failure" row above: booking goes offline until the owner manually
+  reconnects). API keys don't silently expire.
+- Both auth modes are free on every Cal.com plan — pricing tier is not a
+  reason to prefer either one.
+- `components/setup-wizard.tsx` already shipped the safer behavior
+  independent of this doc: new-tenant step shows "Connect Cal.com" as the
+  primary CTA with a "Paste API key instead" `<details>` fallback, fully
+  functional. This amendment brings the doc in line with what's already
+  live, so a future reader doesn't "fix" the UI to match the stale intent.
 
 ## Current state
 
