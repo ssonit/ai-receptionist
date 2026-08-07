@@ -2115,13 +2115,13 @@
     "semantic_hash": ""
   },
   "app/_components/workspace-agent-studio.tsx": {
-    "mtime": 1785581734.2940617,
-    "ast_hash": "6e8347d170b3e9f065658a882ad0208d",
+    "mtime": 1786096472.2443752,
+    "ast_hash": "8e138bc8177fac07d5365f846e7fa8a9",
     "semantic_hash": ""
   },
   "app/dashboard/agent/actions.ts": {
-    "mtime": 1785582199.6911209,
-    "ast_hash": "cdac3efe2083539f4ed7c1338c948676",
+    "mtime": 1786096473.802359,
+    "ast_hash": "a8c5ec2ce9708b6d4d408106c3d38ddd",
     "semantic_hash": ""
   },
   "app/dashboard/agent/page.tsx": {
@@ -2175,8 +2175,8 @@
     "semantic_hash": ""
   },
   "lib/agent-booking-auth.ts": {
-    "mtime": 1786096252.0830505,
-    "ast_hash": "8cd2833076be58eb4f74f68a92f983bd",
+    "mtime": 1786096330.7727292,
+    "ast_hash": "20af68339cd3abb4fa406f93a336d588",
     "semantic_hash": ""
   },
   "app/_components/invite-accept-panel.tsx": {
@@ -2225,8 +2225,8 @@
     "semantic_hash": ""
   },
   "agent/tools/verify_booking_code.ts": {
-    "mtime": 1786096280.0134692,
-    "ast_hash": "d6acb2ee0ea382a4fb7a8e697350b6de",
+    "mtime": 1786096307.692645,
+    "ast_hash": "809a96ff2373cd2d36ec71b836bf5c9b",
     "semantic_hash": ""
   },
   "app/api/chat/forget/route.ts": {
@@ -2265,8 +2265,8 @@
     "semantic_hash": ""
   },
   "agent/skills/booking_change.md": {
-    "mtime": 1785839709.0121608,
-    "ast_hash": "1f647bcc7af735dad0f9be389dc4b7ec",
+    "mtime": 1786096332.1687846,
+    "ast_hash": "d3e9d0869691a2793fbad1a460a31ed0",
     "semantic_hash": ""
   },
   "docs/superpowers/guest-booking-change.md": {
@@ -2765,8 +2765,8 @@
     "semantic_hash": ""
   },
   "tests/helpers/supabase-mock.ts": {
-    "mtime": 1785564489.8013048,
-    "ast_hash": "fea2e5150fc99823642611a76a99d7a0",
+    "mtime": 1786096318.104176,
+    "ast_hash": "d686504c50f550b3706c71f5408ac72d",
     "semantic_hash": ""
   },
   "tests/setup.ts": {
@@ -3400,8 +3400,8 @@
     "semantic_hash": ""
   },
   "lib/agent-booking-auth.test.ts": {
-    "mtime": 1785839709.0172853,
-    "ast_hash": "20d2669091d0b4b844905c12f73db0a0",
+    "mtime": 1786096321.3696158,
+    "ast_hash": "0b1a1e2bd362b4a30993a52fb50f06f0",
     "semantic_hash": ""
   },
   "lib/guest-email-placeholder.test.ts": {
@@ -3682,6 +3682,16 @@
   "docs/superpowers/specs/2026-08-07-availability-schedule-sync-design.md": {
     "mtime": 1786095495.8859131,
     "ast_hash": "740fbc0573bdf49a6dce4aebdae676df",
+    "semantic_hash": ""
+  },
+  "lib/workspace-schedule.test.ts": {
+    "mtime": 1786096425.1417296,
+    "ast_hash": "ee69ab46bd8d99559030d3f99c29f0c2",
+    "semantic_hash": ""
+  },
+  "lib/workspace-schedule.ts": {
+    "mtime": 1786096472.3132186,
+    "ast_hash": "cdc3c1f298968d59df81040308de8c14",
     "semantic_hash": ""
   }
 }
