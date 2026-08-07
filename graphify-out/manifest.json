@@ -45,8 +45,8 @@
     "semantic_hash": ""
   },
   "app/_components/agent-chat.tsx": {
-    "mtime": 1786013327.102049,
-    "ast_hash": "f40d7ee33168fb3dca5c79590a3d6f85",
+    "mtime": 1786095080.1703975,
+    "ast_hash": "4b855a58233a73108bfae3c70f6e0997",
     "semantic_hash": ""
   },
   "app/_components/agent-message.tsx": {
@@ -95,8 +95,8 @@
     "semantic_hash": ""
   },
   "app/dashboard/bookings/page.tsx": {
-    "mtime": 1785816289.2533002,
-    "ast_hash": "0fe249d932664117ae94217c881cb5fa",
+    "mtime": 1786095368.8345525,
+    "ast_hash": "455455edca107865f7250a6f0a6b28ba",
     "semantic_hash": ""
   },
   "app/dashboard/page.tsx": {
@@ -105,13 +105,13 @@
     "semantic_hash": ""
   },
   "app/dashboard/settings/actions.ts": {
-    "mtime": 1785839709.0142798,
-    "ast_hash": "e9bd1178af7114200bac0a666100a458",
+    "mtime": 1786095203.8686752,
+    "ast_hash": "e7de744edb385145884c394317d02b3e",
     "semantic_hash": ""
   },
   "app/dashboard/settings/page.tsx": {
-    "mtime": 1786091669.866678,
-    "ast_hash": "1728cecbff772232edc8b710fbdc8f64",
+    "mtime": 1786095209.5473917,
+    "ast_hash": "3e0d71c7d4d3e89f6c35fdab2e7b8d7f",
     "semantic_hash": ""
   },
   "app/layout.tsx": {
@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "components/bookings-table.tsx": {
-    "mtime": 1785839709.0152838,
-    "ast_hash": "524fa0636f5a974a6b2642e76aedf766",
+    "mtime": 1786095336.7442613,
+    "ast_hash": "e91415d34dd1e9cb5ed490174da5742d",
     "semantic_hash": ""
   },
   "components/chart-area-interactive.tsx": {
@@ -775,8 +775,8 @@
     "semantic_hash": ""
   },
   "app/_components/workspace-settings-form.tsx": {
-    "mtime": 1785839709.0131624,
-    "ast_hash": "591ce68baaf64ae5371124c82d251030",
+    "mtime": 1786095310.126157,
+    "ast_hash": "04e4817fa3c25fd0dfbc7817d7f0417d",
     "semantic_hash": ""
   },
   "app/dashboard/event-types/page.tsx": {
@@ -820,8 +820,8 @@
     "semantic_hash": ""
   },
   "lib/workspace-settings-types.ts": {
-    "mtime": 1785839709.0212848,
-    "ast_hash": "9277e507306ab6a2232d448bc2f4060f",
+    "mtime": 1786095212.0134213,
+    "ast_hash": "74500446c2b4cccc80b530937f01271e",
     "semantic_hash": ""
   },
   "app/dashboard/leads/actions.ts": {
@@ -1055,13 +1055,13 @@
     "semantic_hash": ""
   },
   "app/_components/workspace-booking-page.tsx": {
-    "mtime": 1784970607.2124293,
-    "ast_hash": "78fc0e938edd5e629a702937999fc2bd",
+    "mtime": 1786095063.7325394,
+    "ast_hash": "af6b98905a19ddb93b3b45b079926686",
     "semantic_hash": ""
   },
   "app/b/[slug]/page.tsx": {
-    "mtime": 1785047511.5112362,
-    "ast_hash": "18ad13ffd744ab3e1f8504970766beca",
+    "mtime": 1786095061.4795628,
+    "ast_hash": "2736843db4fc9e7da77a79ba1871471c",
     "semantic_hash": ""
   },
   "components/copy-booking-link.tsx": {
@@ -1135,13 +1135,13 @@
     "semantic_hash": ""
   },
   "messages/en.json": {
-    "mtime": 1786013326.182861,
-    "ast_hash": "54a1284d3c28ffc62dc10127028d8a8a",
+    "mtime": 1786095392.2075944,
+    "ast_hash": "ac80a7d23093eafdc5728f950cbfec32",
     "semantic_hash": ""
   },
   "messages/vi.json": {
-    "mtime": 1786013366.4073584,
-    "ast_hash": "5dbd3504193af65f199b1879b7fed6e7",
+    "mtime": 1786095398.0519814,
+    "ast_hash": "455e242d6ee121eb3b7448ae1554d7cb",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000004_slugify_vietnamese.sql": {
@@ -2060,8 +2060,8 @@
     "semantic_hash": ""
   },
   "lib/errors/index.ts": {
-    "mtime": 1785555750.9436178,
-    "ast_hash": "a270c5fa132abc59d26a99057ade6460",
+    "mtime": 1786095214.4614441,
+    "ast_hash": "260b2d89383a7ace2a2e7d8545a56f0d",
     "semantic_hash": ""
   },
   ".claude/rules/errors.md": {
@@ -2075,8 +2075,8 @@
     "semantic_hash": ""
   },
   "lib/errors/app-messages.ts": {
-    "mtime": 1785839709.0202844,
-    "ast_hash": "b01c3b3c33c752d294ce00341958ce7e",
+    "mtime": 1786095214.5400252,
+    "ast_hash": "aacc925d9c48a5b0d8320d869cd013de",
     "semantic_hash": ""
   },
   "lib/errors/format.ts": {
@@ -2240,8 +2240,8 @@
     "semantic_hash": ""
   },
   "lib/booking-manage-code.ts": {
-    "mtime": 1784970607.208917,
-    "ast_hash": "4711c610de5b8ffac86e9d5b445e1ccf",
+    "mtime": 1786095595.4216578,
+    "ast_hash": "d856f3bf8620bfa664b37c39419ca4f3",
     "semantic_hash": ""
   },
   "lib/chat-redact.ts": {
@@ -2250,8 +2250,8 @@
     "semantic_hash": ""
   },
   "lib/email.ts": {
-    "mtime": 1785047774.9852593,
-    "ast_hash": "f3d56b8f0f55f30bef4e6bbec844d8dc",
+    "mtime": 1786095053.9750266,
+    "ast_hash": "f08facafc902c2fed710eaf1d3997c87",
     "semantic_hash": ""
   },
   "lib/request-cookies.ts": {
@@ -2334,26 +2334,6 @@
     "ast_hash": "e87cfe9b0a43a4f63fa7abbf84933cf8",
     "semantic_hash": ""
   },
-  "app/b/[slug]/unsubscribe/page.tsx": {
-    "mtime": 1784972217.5304787,
-    "ast_hash": "6870626382094a7e06fdf7f4323289c2",
-    "semantic_hash": ""
-  },
-  "components/strip-manage-link-param.tsx": {
-    "mtime": 1784970607.1883695,
-    "ast_hash": "d85038cb4076e22c899675be20c4494a",
-    "semantic_hash": ""
-  },
-  "lib/booking-reminders.ts": {
-    "mtime": 1785839709.0192847,
-    "ast_hash": "2667211b098c5999de1135b54b470f6f",
-    "semantic_hash": ""
-  },
-  "lib/manage-link.ts": {
-    "mtime": 1784970694.6050873,
-    "ast_hash": "f04e0f9de3b4a236d82c4c7dfcfe5a45",
-    "semantic_hash": ""
-  },
   "supabase/migrations/20260725000004_booking_reminders.sql": {
     "mtime": 1784970607.1883695,
     "ast_hash": "9fbd4d83ec2c6b4d4a4dc7eccf9bb36b",
@@ -2389,16 +2369,6 @@
     "ast_hash": "031dd3549994d26f18127660b692c4db",
     "semantic_hash": ""
   },
-  "app/b/[slug]/unsubscribe/actions.ts": {
-    "mtime": 1785578943.2488694,
-    "ast_hash": "5acb96369f1cf5fa84bbbd8bc0dd829e",
-    "semantic_hash": ""
-  },
-  "app/b/[slug]/unsubscribe/unsubscribe-confirm-form.tsx": {
-    "mtime": 1784972164.0611134,
-    "ast_hash": "2d953836d98c7c06ea6bcc08dbfc837b",
-    "semantic_hash": ""
-  },
   "app/dashboard/embed/embed-snippet.tsx": {
     "mtime": 1785297416.1158595,
     "ast_hash": "0dbe307cdea914fc94870c10427ee12d",
@@ -2430,8 +2400,8 @@
     "semantic_hash": ""
   },
   "lib/analytics-events.ts": {
-    "mtime": 1785578721.5447586,
-    "ast_hash": "9cccd3fe7dff8614927b9f82d08e773c",
+    "mtime": 1786095131.6020868,
+    "ast_hash": "db2e112d73a1a392d7880c52821e8f40",
     "semantic_hash": ""
   },
   "lib/analytics-server.ts": {
@@ -2545,8 +2515,8 @@
     "semantic_hash": ""
   },
   "app/privacy/page.tsx": {
-    "mtime": 1785054048.9515975,
-    "ast_hash": "46e220588df33aabe28316e6ecc122cb",
+    "mtime": 1786095400.5900755,
+    "ast_hash": "0cf65b9c5777cc6765fb834473ca9c2a",
     "semantic_hash": ""
   },
   "app/terms/page.tsx": {
@@ -2635,8 +2605,8 @@
     "semantic_hash": ""
   },
   "app/_components/landing/sections.tsx": {
-    "mtime": 1785661590.8011563,
-    "ast_hash": "2437befbb19a125eb99ec7b438468668",
+    "mtime": 1786095389.0044878,
+    "ast_hash": "dd1d936848d4a6aca57391b10f866b88",
     "semantic_hash": ""
   },
   ".claude/launch.json": {
@@ -2740,8 +2710,8 @@
     "semantic_hash": ""
   },
   "lib/booking-manage-code.test.ts": {
-    "mtime": 1785481327.7678375,
-    "ast_hash": "f6aca0626c8c24a5d68bd11cbc699c34",
+    "mtime": 1786095598.011141,
+    "ast_hash": "06a628f1e8b55d42ba07bcf08ccc39bf",
     "semantic_hash": ""
   },
   "lib/booking-status.test.ts": {
@@ -3090,8 +3060,8 @@
     "semantic_hash": ""
   },
   "lib/plan-features.ts": {
-    "mtime": 1785722631.8250966,
-    "ast_hash": "0d5cc7eb42e298d148b6f4f28bd0ea5d",
+    "mtime": 1786095325.7667096,
+    "ast_hash": "cdd230d39ec52ce2c4a66511756d0c4c",
     "semantic_hash": ""
   },
   "lib/routes.ts": {
@@ -3434,11 +3404,6 @@
     "ast_hash": "20d2669091d0b4b844905c12f73db0a0",
     "semantic_hash": ""
   },
-  "lib/booking-reminders.test.ts": {
-    "mtime": 1785839709.0192847,
-    "ast_hash": "a716622b4d3d1bf31703bb0147704d66",
-    "semantic_hash": ""
-  },
   "lib/guest-email-placeholder.test.ts": {
     "mtime": 1785839709.0212848,
     "ast_hash": "90f564c5900c1184c002b61c7af1202a",
@@ -3702,6 +3667,21 @@
   "docs/superpowers/specs/2026-08-07-drop-custom-reminders-design.md": {
     "mtime": 1786094539.0126126,
     "ast_hash": "58de6a3b14bc817e291ef488a45f9341",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260807000001_drop_booking_reminders.sql": {
+    "mtime": 1786095439.9034367,
+    "ast_hash": "b1b82b5d102ea6fcce4831b10c610295",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-07-availability-schedule-sync.md": {
+    "mtime": 1786095645.0256414,
+    "ast_hash": "7ee815c7f1e05c68ca784e5ee1539d55",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-07-availability-schedule-sync-design.md": {
+    "mtime": 1786095495.8859131,
+    "ast_hash": "740fbc0573bdf49a6dce4aebdae676df",
     "semantic_hash": ""
   }
 }
