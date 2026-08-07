@@ -2,6 +2,7 @@
 
 **Date:** 2026-08-07  
 **Status:** Design approved in conversation — chờ review file spec trước khi viết plan  
+**Implemented:** 2026-08-07 — xem commits trong plan `docs/superpowers/plans/2026-08-07-drop-custom-reminders.md`.  
 **Scope:** Gỡ toàn bộ `booking_reminders` (bảng, code tính lịch/gửi, UI cấu hình, magic link, unsubscribe). Cal.com Workflow đảm nhiệm việc gửi email nhắc lịch; luồng cancel/reschedule qua chat AI giữ nguyên, không cần magic link để kích hoạt.  
 **Phụ thuộc:** Thay thế hoàn toàn `2026-08-07-booking-reminders-event-driven-design.md` (đã đánh dấu superseded). Không liên quan `2026-08-07-cal-webhook-auto-register-design.md` (đã triển khai, không đổi gì ở đây).
 

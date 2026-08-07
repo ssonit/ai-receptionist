@@ -1,7 +1,9 @@
 # Nhắc lịch tự động (outbound reminders)
 
-> Trạng thái: **đã triển khai** (2026-07-25).
-> Phụ thuộc: `guest-booking-change.md` (mã quản lý, `booking_verifications`), `guest-timezone.md` (giờ khách).
+> **Superseded 2026-08-07.** Hệ thống reminder tự xây đã gỡ — xem `specs/2026-08-07-drop-custom-reminders-design.md`. Cal.com Workflow đảm nhiệm nhắc lịch.
+>
+> Trạng thái lịch sử: đã từng triển khai 2026-07-25; doc này giữ làm archival.
+> Phụ thuộc (lúc viết): `guest-booking-change.md` (mã quản lý, `booking_verifications`), `guest-timezone.md` (giờ khách).
 > Không phụ thuộc `setup-wizard-reorder.md` — hai việc song song được.
 
 ---
