@@ -2,6 +2,7 @@ import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { logAgentToolEvent } from "@/lib/agent-tool-log";
 import { authAttr } from "@/lib/agent-booking-auth";
+import { bookableUntil, opensOn } from "@/lib/booking-window";
 import { getAvailableSlots, withCalApiKey } from "@/lib/calcom";
 import { bookingConfig } from "@/lib/booking-config";
 import { APP_ERROR_CODE, appErrorMessage } from "@/lib/errors";
@@ -82,10 +83,45 @@ export default defineTool({
         );
         end = next;
       }
-      const maxEnd = addDaysYmd(start, 60, businessTz);
+      const maxEnd = bookableUntil(aiEvent.bookingWindow, today, businessTz);
+      if (compareYmd(start, maxEnd) > 0) {
+        await logAgentToolEvent({
+          toolName: "check_availability",
+          ok: true,
+          sessionId,
+          chatSessionId,
+          workspaceId,
+          meta: { outOfWindow: true, start, bookableUntil: maxEnd },
+        });
+        return {
+          ok: true as const,
+          outOfWindow: true as const,
+          requestedDate: start,
+          bookableUntil: maxEnd,
+          opensOn: opensOn(aiEvent.bookingWindow, start, businessTz),
+          timezone: businessTz,
+          businessTimeZone: businessTz,
+          guestTimeZone: guestTz,
+          serviceMode,
+          today,
+          eventType: {
+            id: aiEvent.calEventTypeId || null,
+            slug: aiEvent.slug,
+            title: aiEvent.title,
+            lengthMinutes: aiEvent.lengthMinutes,
+          },
+          startDate: start,
+          endDate: end,
+          count: 0,
+          daysWithSlots: [] as string[],
+          slotsByDay: {} as Record<string, never>,
+          slots: [] as never[],
+          truncated: false,
+        };
+      }
       if (compareYmd(end, maxEnd) > 0) {
         notes.push(
-          `Clamped endDate from ${end} to ${maxEnd} (max 60-day window).`,
+          `Clamped endDate from ${end} to ${maxEnd} (furthest date this calendar accepts).`,
         );
         end = maxEnd;
       }
@@ -157,6 +193,10 @@ export default defineTool({
         byDay[day].push(row);
         return row;
       });
+      const byDayAll: Record<string, true> = {};
+      for (const slot of inRange) {
+        byDayAll[calendarDayInTimeZone(slot.start, businessTz)] = true;
+      }
 
       const noticeHours =
         aiEvent.minimumNoticeMinutes != null
@@ -184,6 +224,8 @@ export default defineTool({
 
       return {
         ok: true as const,
+        outOfWindow: false as const,
+        bookableUntil: maxEnd,
         timezone: businessTz,
         businessTimeZone: businessTz,
         guestTimeZone: guestTz,
@@ -200,6 +242,7 @@ export default defineTool({
         endDate: end,
         notes: notes.length > 0 ? notes : undefined,
         count: inRange.length,
+        daysWithSlots: Object.keys(byDayAll).toSorted(),
         slotsByDay: byDay,
         earliestStart: inRange[0]?.start,
         slots: formattedSlots,
