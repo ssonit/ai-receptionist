@@ -1,31 +1,45 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { TimezoneSelect } from "@/components/timezone-select";
 import {
   saveWorkingHoursAction,
   type WorkingHoursDayInput,
 } from "@/app/dashboard/(main)/settings/actions";
+import { canonicalizeTimezone } from "@/lib/timezones";
 
-const DAYS: { key: WorkingHoursDayInput["day"]; label: string }[] = [
-  { key: "Monday", label: "Thứ 2" },
-  { key: "Tuesday", label: "Thứ 3" },
-  { key: "Wednesday", label: "Thứ 4" },
-  { key: "Thursday", label: "Thứ 5" },
-  { key: "Friday", label: "Thứ 6" },
-  { key: "Saturday", label: "Thứ 7" },
-  { key: "Sunday", label: "Chủ nhật" },
-];
+const DAY_KEYS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+] as const satisfies readonly WorkingHoursDayInput["day"][];
 
 type Props = {
   workspaceId: string;
   initialDays: WorkingHoursDayInput[];
+  /** Cal schedule timezone when present; otherwise workspace timezone. */
+  initialTimeZone: string;
 };
 
-export function WorkingHoursCard({ workspaceId, initialDays }: Props) {
+export function WorkingHoursCard({
+  workspaceId,
+  initialDays,
+  initialTimeZone,
+}: Props) {
+  const t = useTranslations("dashboard.workingHours");
   const [days, setDays] = useState(initialDays);
+  const [timeZone, setTimeZone] = useState(() =>
+    canonicalizeTimezone(initialTimeZone),
+  );
   const [pending, startTransition] = useTransition();
 
   const update = (
@@ -37,8 +51,11 @@ export function WorkingHoursCard({ workspaceId, initialDays }: Props) {
 
   const handleSave = () => {
     startTransition(async () => {
-      const result = await saveWorkingHoursAction(workspaceId, { days });
-      if (result.ok) toast.success("Đã lưu giờ làm việc.");
+      const result = await saveWorkingHoursAction(workspaceId, {
+        days,
+        timeZone,
+      });
+      if (result.ok) toast.success(t("saved"));
       else toast.error(result.error);
     });
   };
@@ -47,13 +64,24 @@ export function WorkingHoursCard({ workspaceId, initialDays }: Props) {
     <div className="rounded-2xl border border-border/80 bg-card/50 p-5 sm:p-6">
       <div className="space-y-4">
         <div>
-          <p className="font-medium text-foreground">Giờ làm việc</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Đồng bộ trực tiếp với lịch mặc định trên Cal.com — không cần vào
-            Cal.com để sửa.
+          <p className="font-medium text-foreground">{t("title")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("description")}</p>
+        </div>
+
+        <div className="max-w-md space-y-2">
+          <Label htmlFor="working-hours-timezone">{t("timezone")}</Label>
+          <TimezoneSelect
+            id="working-hours-timezone"
+            name="working_hours_timezone"
+            value={timeZone}
+            onValueChange={setTimeZone}
+          />
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            {t("timezoneHint")}
           </p>
         </div>
-        {DAYS.map(({ key, label }) => {
+
+        {DAY_KEYS.map((key) => {
           const day = days.find((d) => d.day === key)!;
           return (
             <div key={key} className="flex items-center gap-3">
@@ -63,7 +91,7 @@ export function WorkingHoursCard({ workspaceId, initialDays }: Props) {
                   type="checkbox"
                   onChange={(e) => update(key, { enabled: e.target.checked })}
                 />
-                {label}
+                {t(`days.${key}`)}
               </label>
               <Input
                 className="w-28"
@@ -84,7 +112,7 @@ export function WorkingHoursCard({ workspaceId, initialDays }: Props) {
           );
         })}
         <Button disabled={pending} onClick={handleSave}>
-          {pending ? "Đang lưu…" : "Lưu giờ làm việc"}
+          {pending ? t("saving") : t("save")}
         </Button>
       </div>
     </div>

@@ -67,7 +67,7 @@ function toAvailability(days: WorkingHoursDayInput[]): CalScheduleAvailability[]
 
 export async function saveWorkingHoursAction(
   workspaceId: string,
-  input: { days: WorkingHoursDayInput[] },
+  input: { days: WorkingHoursDayInput[]; timeZone: string },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const auth = await requireOwnerWorkspace();
   if (!auth.ok) {
@@ -76,6 +76,12 @@ export async function saveWorkingHoursAction(
   if (auth.workspaceId !== workspaceId) {
     return { ok: false, error: appErrorMessage(APP_ERROR_CODE.UNAUTHORIZED) };
   }
+
+  const rawTimeZone = input.timeZone?.trim() ?? "";
+  if (!rawTimeZone) {
+    return { ok: false, error: appErrorMessage(APP_ERROR_CODE.TIMEZONE_REQUIRED) };
+  }
+  const timeZone = canonicalizeTimezone(rawTimeZone);
 
   try {
     const token = await getCalAccessTokenForWorkspace(workspaceId);
@@ -86,25 +92,10 @@ export async function saveWorkingHoursAction(
       if (existing) {
         return updateSchedule(existing.id, {
           name: existing.name,
-          timeZone: existing.timeZone,
+          timeZone,
           isDefault: true,
           availability,
         });
-      }
-
-      // New Cal account: use the workspace timezone, never a hardcoded UTC.
-      const admin = createAdminClient();
-      const { data: ws } = await admin
-        .from("workspaces")
-        .select("timezone")
-        .eq("id", workspaceId)
-        .maybeSingle();
-      const timeZone =
-        typeof ws?.timezone === "string" && ws.timezone.trim()
-          ? ws.timezone.trim()
-          : null;
-      if (!timeZone) {
-        throw new Error("Workspace timezone is not set");
       }
 
       return createSchedule({
@@ -120,18 +111,21 @@ export async function saveWorkingHoursAction(
       "vi",
     );
     const admin = createAdminClient();
+    // Keep workspace.timezone aligned with the Cal schedule — hours without
+    // a matching zone are how guests get wrong local times.
     await admin
       .from("workspaces")
-      .update({ business_hours: businessHours })
+      .update({ business_hours: businessHours, timezone: timeZone })
       .eq("id", workspaceId);
 
     revalidatePath(DASHBOARD_PATH.settings);
     revalidatePath(DASHBOARD_PATH.agent);
     return { ok: true };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to save working hours";
-    return { ok: false, error: message };
+    return {
+      ok: false,
+      error: formatUnknownError(error, APP_ERROR_CODE.SAVE_FAILED),
+    };
   }
 }
 

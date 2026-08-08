@@ -90,6 +90,24 @@
       "legacyKeyLabel": "Connected (legacy key)",
       "upgradePrompt": "Connect securely so your calendar stays connected automatically."
     },
+    "workingHours": {
+      "title": "Working hours",
+      "description": "Synced with your default Cal.com schedule — hours are interpreted in the timezone below.",
+      "timezone": "Timezone",
+      "timezoneHint": "Times above are in this zone. Changing it also updates your workspace timezone.",
+      "save": "Save working hours",
+      "saving": "Saving…",
+      "saved": "Working hours saved.",
+      "days": {
+        "Monday": "Monday",
+        "Tuesday": "Tuesday",
+        "Wednesday": "Wednesday",
+        "Thursday": "Thursday",
+        "Friday": "Friday",
+        "Saturday": "Saturday",
+        "Sunday": "Sunday"
+      }
+    },
     "embedTitle": "Embed on your website",
     "embedBody": "Add a chat bubble to any page. Guests book without leaving your site.",
     "embedIntro": "Add a chat bubble to any page. Guests book without leaving your site.",

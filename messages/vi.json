@@ -90,6 +90,24 @@
       "legacyKeyLabel": "API key (cũ)",
       "upgradePrompt": "Kết nối qua OAuth để tự động làm mới token."
     },
+    "workingHours": {
+      "title": "Giờ làm việc",
+      "description": "Đồng bộ trực tiếp với lịch mặc định trên Cal.com — khung giờ theo múi giờ bên dưới.",
+      "timezone": "Múi giờ",
+      "timezoneHint": "Giờ ở trên theo múi giờ này. Đổi múi giờ cũng cập nhật timezone của workspace.",
+      "save": "Lưu giờ làm việc",
+      "saving": "Đang lưu…",
+      "saved": "Đã lưu giờ làm việc.",
+      "days": {
+        "Monday": "Thứ 2",
+        "Tuesday": "Thứ 3",
+        "Wednesday": "Thứ 4",
+        "Thursday": "Thứ 5",
+        "Friday": "Thứ 6",
+        "Saturday": "Thứ 7",
+        "Sunday": "Chủ nhật"
+      }
+    },
     "embedTitle": "Nhúng vào website của bạn",
     "embedBody": "Thêm bong bóng chat vào bất kỳ trang nào. Khách đặt lịch mà không rời site của bạn.",
     "embedIntro": "Thêm bong bóng chat vào bất kỳ trang nào. Khách đặt lịch mà không rời site của bạn.",

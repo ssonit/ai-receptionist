@@ -26,6 +26,7 @@ import {
   listPendingInvites,
   listWorkspaceMembers,
 } from "@/lib/workspace-invites";
+import { canonicalizeTimezone } from "@/lib/timezones";
 import type { WorkspaceOpsValues } from "@/lib/workspace-settings-types";
 import { canUseFeature, PLAN_FEATURE } from "@/lib/plan-features";
 import type { PlanTier, SubscriptionStatus } from "@/lib/billing";
@@ -100,6 +101,7 @@ export default async function SettingsPage() {
   let canConnectMessenger = false;
   let canConnectZalo = false;
   let workingHoursDays = defaultWorkingHoursDays(false);
+  let workingHoursTimeZone = canonicalizeTimezone(null);
 
   if (dashboard.workspaceId) {
     const supabase = await createClient();
@@ -199,12 +201,18 @@ export default async function SettingsPage() {
       pendingInvites = [];
     }
 
+    workingHoursTimeZone = canonicalizeTimezone(workspace?.timezone);
+
     try {
       const token = await getCalAccessTokenForWorkspace(dashboard.workspaceId);
       const schedule = await withCalApiKey(token, () => getDefaultSchedule());
       workingHoursDays = schedule
         ? mapAvailabilityToWorkingHoursDays(schedule.availability)
         : defaultWorkingHoursDays(false);
+      // Cal schedule timezone is the source of truth for availability hours.
+      if (schedule?.timeZone) {
+        workingHoursTimeZone = canonicalizeTimezone(schedule.timeZone);
+      }
     } catch {
       // No Cal connect / 403 / network — keep all-disabled defaults; page still renders.
       workingHoursDays = defaultWorkingHoursDays(false);
@@ -311,6 +319,7 @@ export default async function SettingsPage() {
                   <WorkingHoursCard
                     workspaceId={dashboard.workspaceId}
                     initialDays={workingHoursDays}
+                    initialTimeZone={workingHoursTimeZone}
                   />
                 </div>
               </div>
