@@ -131,6 +131,7 @@ async function buildMarkdown(
     serviceMode?: WorkspaceServiceMode;
     guestTimeZone?: string | null;
     guestTzSource?: string | null;
+    channel?: string | null;
   },
 ) {
   const [workspace, aiEvent] = await Promise.all([
@@ -147,10 +148,29 @@ async function buildMarkdown(
   const handoff = workspace?.agentHandoff?.trim();
   const serviceMode = opts?.serviceMode ?? "onsite";
   const guestTz = opts?.guestTimeZone ?? null;
+  const channel = opts?.channel?.trim().toLowerCase() ?? "";
+  const isTextOnlyChannel =
+    channel === "messenger" || channel === "zalo";
 
   const handoffBlock = handoff
     ? `\n# Human handoff\n\n${handoff}\n`
     : "";
+
+  const slotUiBlock = isTextOnlyChannel
+    ? `
+# Offering times (Messenger / Zalo)
+
+- After \`check_availability\`, **list 2–3 real slots** in text using tool \`display\` strings (no clickable UI on this channel).
+- When the guest picks a time, use the matching \`start\` ISO from the tool for \`book_appointment\` / \`reschedule_appointment\`.
+`
+    : `
+# Offering times (web chat)
+
+- The guest sees a **clickable time grid for one day** from \`check_availability\` results. Keep your prose **short** (which day + ask them to tap a time). Do **not** dump every slot as a bullet list.
+- If other days also have openings, mention them briefly in text (or ask which day they prefer) — the grid only shows one day.
+- If the guest message includes \`start=<ISO>\`, use that exact ISO for booking/reschedule (still confirm name/phone before \`book_appointment\`).
+- They may still type a time — then match it to a tool \`start\` or call \`check_availability\` again.
+`;
 
   let timezoneBlock = "";
   if (serviceMode === "online") {
@@ -196,7 +216,10 @@ ${workspace?.tagline?.trim() ? `\nWorkspace tagline: ${workspace.tagline.trim()}
 - **Minimum notice:** bookings must be at least **${noticeHours} hours** ahead (Cal.com schedule).
 - When the guest says "today / tomorrow / this week / next week", always map to calendar dates from today above.
 - **Never** call \`check_availability\` with \`startDate\`/\`endDate\` before \`${today}\`.
-- If the guest does not specify a date: default to checking from today through the next 7 days.
+- If the guest names a **specific date**, call \`check_availability\` for **that date** (at most ±1 day around it). Do **not** sweep 7 days — the web picker shows one day, and a wide sweep makes it show the wrong one.
+- If the guest does **not** specify a date: default to checking from today through the next 7 days.
+- If the guest asks about a **long span** ("this week", "next month"), use \`daysWithSlots\` to name the open days **in text**, ask which day they want, then call \`check_availability\` again for that single day.
+- If \`truncated\` is true, there are more times than the tool returned — say so. Never present the listed slots as the complete set.
 ${timezoneBlock}
 # Same-day / "this afternoon" near the notice window
 
@@ -206,6 +229,14 @@ ${timezoneBlock}
    - Offer **2–3 earliest open slots** from the tool (later today if any, otherwise tomorrow morning/afternoon).
 3. **Do not** invent other reasons; **do not** claim a slot is open if the tool did not return it.
 4. If the guest is urgent: only suggest tool-returned slots; you may suggest calling the workspace phone if available.
+
+# Dates beyond the booking window
+
+- \`check_availability\` may return \`outOfWindow: true\`. That means the calendar is **not open that far ahead** — it does **not** mean the day is fully booked. Never say "fully booked" or invent another reason.
+- Tell the guest the furthest date they can book right now: \`bookableUntil\`.
+- If \`opensOn\` is set, add that they can book their requested date from that day onward, and call \`log_lead\` so staff can follow up.
+- If \`opensOn\` is null (fixed date range), only state \`bookableUntil\`.
+- Do **not** offer nearby slots unprompted — someone asking about a date months away is not looking for tomorrow. Ask whether they want something sooner instead.
 ${handoffBlock}
 ${formatAiBookableMeetingTypeMarkdown(aiEvent)}
 # Workspace & FAQ (summary — source: Supabase)
@@ -224,6 +255,7 @@ ${buildBookingFaqSummary(workspace, aiEvent)}
 - You only support booking / appointment FAQ — no professional advice outside booking scope.
 - When describing what guests can book **via chat**, use the **AI bookable meeting type** title and duration above — do not invent another duration; FAQ/services must not override it.
 - Before stating any open time: call \`check_availability\`. Only mention \`start\` values returned by the tool. Prefer tool \`display\` strings for dual timezones.
+${slotUiBlock}
 - After \`book_appointment\` or \`reschedule_appointment\`, confirm using the booking \`display\` field (both times when online).
 - Before booking: confirm with the guest (full name, phone, email, chosen time). Then call \`book_appointment\` with \`guestName\`.
 - After a successful \`book_appointment\`, read the one-time \`manageCode\` to the guest clearly (they need it to change the booking later). Do not invent codes.
@@ -294,6 +326,7 @@ async function instructionsForCtx(ctx: {
     serviceMode: ws?.service_mode ?? "onsite",
     guestTimeZone: guestTz.guestTimeZone,
     guestTzSource: guestTz.source,
+    channel: firstAttr(auth?.attributes, "channel"),
   });
   if (staffHandoff) {
     markdown = `${markdown}\n\n${staffHandoff}`;
