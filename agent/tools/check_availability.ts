@@ -121,6 +121,18 @@ export default defineTool({
           username: aiEvent.username,
         }),
       );
+      // Cal.com ignores `start` when an event type enables a rolling window
+      // (https://github.com/calcom/cal.com/issues/25405), so filter its response
+      // back to the requested range. This is a no-op once Cal fixes the issue.
+      const inRange = slots.filter((slot) => {
+        const day = calendarDayInTimeZone(slot.start, businessTz);
+        return compareYmd(day, start) >= 0 && compareYmd(day, end) <= 0;
+      });
+      if (inRange.length !== slots.length) {
+        notes.push(
+          `Filtered ${slots.length - inRange.length} slots outside ${start}..${end} (Cal.com returned days beyond the requested range). Internal note — do not read this to the guest.`,
+        );
+      }
 
       type SlotRow = {
         start: string;
@@ -129,7 +141,7 @@ export default defineTool({
         businessDisplay: string;
       };
       const byDay: Record<string, SlotRow[]> = {};
-      const formattedSlots: SlotRow[] = slots.slice(0, 40).map((slot) => {
+      const formattedSlots: SlotRow[] = inRange.slice(0, 40).map((slot) => {
         const display = formatSlotForGuest(slot.start, guestTz, businessTz);
         const row: SlotRow = {
           start: slot.start,
@@ -167,7 +179,7 @@ export default defineTool({
         sessionId,
         chatSessionId,
         workspaceId,
-        meta: { count: slots.length, start, end, guestTz },
+        meta: { count: inRange.length, start, end, guestTz },
       });
 
       return {
@@ -187,11 +199,11 @@ export default defineTool({
         startDate: start,
         endDate: end,
         notes: notes.length > 0 ? notes : undefined,
-        count: slots.length,
+        count: inRange.length,
         slotsByDay: byDay,
-        earliestStart: slots[0]?.start,
+        earliestStart: inRange[0]?.start,
         slots: formattedSlots,
-        truncated: slots.length > 40,
+        truncated: inRange.length > 40,
       };
     } catch (error) {
       const message =

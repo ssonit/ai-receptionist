@@ -64,15 +64,16 @@ describe("check_availability tool", () => {
         length_minutes: 30,
         minimum_notice_minutes: 120,
         is_ai_booking: true,
+        booking_window: null,
       },
     ]);
 
     const mod = await import("@/lib/calcom");
     const mockGetSlots = vi.mocked(mod.getAvailableSlots);
     mockGetSlots.mockResolvedValue([
-      { start: "2026-08-05T09:00:00.000Z" },
-      { start: "2026-08-05T10:00:00.000Z" },
-      { start: "2026-08-06T09:00:00.000Z" },
+      { start: "2026-12-05T09:00:00.000Z" },
+      { start: "2026-12-05T10:00:00.000Z" },
+      { start: "2026-12-06T09:00:00.000Z" },
     ]);
 
     // Import the tool (which re-exports the defineTool result)
@@ -85,7 +86,7 @@ describe("check_availability tool", () => {
     };
 
     const result = await tool.execute(
-      { startDate: "2026-08-05", endDate: "2026-08-10" },
+      { startDate: "2026-12-05", endDate: "2026-12-10" },
       {
         session: {
           id: "test-session",
@@ -98,9 +99,80 @@ describe("check_availability tool", () => {
     if (result.ok) {
       expect(result.count).toBe(3);
       expect(result.slotsByDay).toBeDefined();
-      expect(Object.keys(result.slotsByDay)).toContain("2026-08-05");
-      expect(Object.keys(result.slotsByDay)).toContain("2026-08-06");
+      expect(Object.keys(result.slotsByDay)).toContain("2026-12-05");
+      expect(Object.keys(result.slotsByDay)).toContain("2026-12-06");
       expect(result.timezone).toBe("Asia/Ho_Chi_Minh");
+    }
+  });
+
+  it("drops slots outside the requested range (cal.com#25405 rolling-window bug)", async () => {
+    supabaseMock.seed("workspaces", [
+      {
+        id: PILOT_ID,
+        name: "Pilot",
+        slug: "pilot",
+        timezone: "Asia/Ho_Chi_Minh",
+        cal_event_type_id: 123,
+        cal_event_type_slug: "consultation-30",
+        cal_username: "test-cal-user",
+        cal_api_key_encrypted: null,
+        service_mode: "onsite",
+      },
+    ]);
+    supabaseMock.seed("workspace_event_types", [
+      {
+        id: "evt-1",
+        workspace_id: PILOT_ID,
+        cal_event_type_id: 123,
+        title: "Consultation",
+        slug: "consultation-30",
+        length_minutes: 30,
+        minimum_notice_minutes: 120,
+        is_ai_booking: true,
+        booking_window: null,
+        raw: null,
+      },
+    ]);
+
+    const mod = await import("@/lib/calcom");
+    // Cal ignores `start` and replies from "today" — the shape of the real bug.
+    vi.mocked(mod.getAvailableSlots).mockResolvedValue([
+      { start: "2026-08-08T02:00:00.000Z" },
+      { start: "2026-08-09T02:00:00.000Z" },
+      { start: "2026-12-09T02:00:00.000Z" },
+      { start: "2026-12-10T02:00:00.000Z" },
+    ]);
+
+    type CheckResult =
+      | {
+          ok: true;
+          count: number;
+          truncated: boolean;
+          slots: Array<{ start: string }>;
+          slotsByDay: Record<string, unknown>;
+        }
+      | { ok: false; error: string };
+
+    const tool = (await import("../../agent/tools/check_availability")).default as {
+      execute: (
+        input: { startDate: string; endDate: string },
+        ctx: unknown,
+      ) => Promise<CheckResult>;
+    };
+
+    const result = await tool.execute(
+      { startDate: "2026-12-09", endDate: "2026-12-10" },
+      { session: { id: "test-session", auth: { current: null, initiator: null } } },
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.count).toBe(2);
+      expect(Object.keys(result.slotsByDay).toSorted()).toEqual([
+        "2026-12-09",
+        "2026-12-10",
+      ]);
+      expect(result.slots.every((s) => s.start.startsWith("2026-12"))).toBe(true);
     }
   });
 
