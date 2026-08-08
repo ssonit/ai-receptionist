@@ -203,11 +203,17 @@ deliberate: the alternative is a second request every tick, and the widget needs
 values together to decide whether to open a turn.
 
 The widget polls every 10s while the document is visible and no turn is streaming, and
-stops when hidden. Supabase Realtime was rejected: guests are anonymous (`visitor_id`,
-no `auth.uid()`), so subscribing them to `chat_messages` would need a permissive anon
-policy, which collides with the standing rule against `using (true)` on tenant tables. A
-dedicated SSE endpoint was rejected as serverless function time held open for every
-guest with a chat window.
+stops when hidden. Supabase Realtime via `postgres_changes` was rejected: guests are
+anonymous (`visitor_id`, no `auth.uid()`), so subscribing them to `chat_messages` would
+need a permissive anon policy, which collides with the standing rule against
+`using (true)` on tenant tables. A dedicated SSE endpoint was rejected as serverless
+function time held open for every guest with a chat window.
+
+This does not rule out Realtime entirely — Broadcast private channels authorize via
+`realtime.messages` RLS instead of the tenant table, sidestepping the collision above.
+Deliberately not built while there are zero customers; see
+[`../guest-chat-realtime.md`](../guest-chat-realtime.md) for the design and the
+conditions that would justify picking it up.
 
 Consequence, accepted: takeover is visible to a web guest up to ~10s late, so one last
 agent reply can still land in that window. Staff see it in the transcript.

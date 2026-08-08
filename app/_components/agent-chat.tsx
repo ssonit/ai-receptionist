@@ -56,6 +56,10 @@ import { buildSlotSelectMessage } from "@/lib/availability-slot-ui";
 import { AgentMessage } from "./agent-message";
 import type { AvailabilitySlotSelection } from "./availability-slot-picker";
 import { ChatUserMenu, type ChatUser } from "./chat-user-menu";
+import {
+  StaffReplyPending,
+} from "./staff-reply-pending";
+import { isAwaitingStaffReply } from "@/lib/staff-reply-pending";
 import { ROUTES } from "@/lib/routes";
 
 const AGENT_NAME = "Eve";
@@ -72,6 +76,12 @@ const CHAT_TURN_IDLE_TIMEOUT_MS = 25_000;
 const CHAT_TURN_MAX_DURATION_MS = 120_000;
 
 type AgentStatus = ReturnType<typeof useEveAgent>["status"];
+type ReplyMode = "ai" | "human";
+
+type HumanPresence = {
+  replyMode: ReplyMode;
+  awaitingStaff: boolean;
+};
 
 type ThreadBootstrap = {
   chatSessionId: string;
@@ -84,6 +94,7 @@ type ThreadBootstrap = {
   hasMore: boolean;
   messageCount: number;
   pollCursor: string | null;
+  initialReplyMode: ReplyMode;
 };
 
 function encodePollCursor(row: Pick<ChatMessageRow, "created_at" | "id">): string {
@@ -91,6 +102,12 @@ function encodePollCursor(row: Pick<ChatMessageRow, "created_at" | "id">): strin
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
+}
+
+function replyModeFromSession(
+  session: Pick<ChatSessionClientRow, "reply_mode"> | null | undefined,
+): ReplyMode {
+  return session?.reply_mode === "human" ? "human" : "ai";
 }
 
 export function AgentChat(props: {
@@ -178,6 +195,10 @@ function AgentChatInner({
   const [bootError, setBootError] = React.useState<string | null>(null);
   const [busyAction, setBusyAction] = React.useState(false);
   const [agentStatus, setAgentStatus] = React.useState<AgentStatus>("ready");
+  const [humanPresence, setHumanPresence] = React.useState<HumanPresence>({
+    replyMode: "ai",
+    awaitingStaff: false,
+  });
 
   const tenantQs = workspaceSlug
     ? `?w=${encodeURIComponent(workspaceSlug)}`
@@ -232,6 +253,7 @@ function AgentChatInner({
         pollCursor: data.messages?.at(-1)
           ? encodePollCursor(data.messages.at(-1)!)
           : null,
+        initialReplyMode: replyModeFromSession(session),
       });
       return "ok";
     },
@@ -254,6 +276,7 @@ function AgentChatInner({
       hasMore: false,
       messageCount: 0,
       pollCursor: null,
+      initialReplyMode: replyModeFromSession(data.session),
     });
   }, [tenantQs]);
 
@@ -299,6 +322,7 @@ function AgentChatInner({
         pollCursor: data.messages?.at(-1)
           ? encodePollCursor(data.messages.at(-1)!)
           : null,
+        initialReplyMode: replyModeFromSession(session),
       });
     } finally {
       setBusyAction(false);
@@ -344,7 +368,11 @@ function AgentChatInner({
         {workspaceName || AGENT_NAME}
       </span>
       <span className="h-3 w-px shrink-0 bg-white/10" aria-hidden />
-      <StatusDot status={agentStatus} />
+      <StatusDot
+        awaitingStaff={humanPresence.awaitingStaff}
+        replyMode={humanPresence.replyMode}
+        status={agentStatus}
+      />
     </div>
   );
 
@@ -457,8 +485,10 @@ function AgentChatInner({
               initialMessageCount={bootstrap.messageCount}
               initialNextCursor={bootstrap.nextCursor}
               initialPollCursor={bootstrap.pollCursor}
+              initialReplyMode={bootstrap.initialReplyMode}
               initialEvents={bootstrap.initialEvents}
               initialSession={bootstrap.initialSession}
+              onHumanPresenceChange={setHumanPresence}
               onRestart={() => void restartActive()}
               onStatusChange={setAgentStatus}
               tenantQs={tenantQs}
@@ -480,8 +510,10 @@ function AgentChatThread({
   initialMessageCount,
   initialNextCursor,
   initialPollCursor,
+  initialReplyMode,
   initialSession,
   initialEvents,
+  onHumanPresenceChange,
   onRestart,
   onStatusChange,
   tenantQs,
@@ -495,8 +527,10 @@ function AgentChatThread({
   initialMessageCount: number;
   initialNextCursor: string | null;
   initialPollCursor: string | null;
+  initialReplyMode: ReplyMode;
   initialSession?: SessionState;
   initialEvents?: readonly unknown[];
+  onHumanPresenceChange?: (presence: HumanPresence) => void;
   onRestart: () => void;
   onStatusChange?: (status: AgentStatus) => void;
   tenantQs: string;
@@ -520,8 +554,14 @@ function AgentChatThread({
   // A staff-mode send skips the agent, so agent.error never fires for it —
   // without this the guest would watch their message vanish in silence.
   const [sendError, setSendError] = React.useState<"rateLimited" | null>(null);
-  const replyModeRef = React.useRef<"ai" | "human">("ai");
+  const [replyMode, setReplyMode] = React.useState<ReplyMode>(initialReplyMode);
+  const replyModeRef = React.useRef<ReplyMode>(initialReplyMode);
   const pollCursorRef = React.useRef<string | null>(initialPollCursor);
+
+  const applyReplyMode = (mode: ReplyMode) => {
+    replyModeRef.current = mode;
+    setReplyMode(mode);
+  };
 
   const tenantHeaders = React.useCallback((): Record<string, string> => {
     const headers: Record<string, string> = {
@@ -713,7 +753,7 @@ function AgentChatThread({
         };
         if (cancelled) return;
 
-        replyModeRef.current = data.replyMode === "human" ? "human" : "ai";
+        applyReplyMode(data.replyMode === "human" ? "human" : "ai");
         pollCursorRef.current = data.cursor;
         const incoming = chatMessageRowsToEveMessages(data.messages ?? []);
         setHistory((prev) => {
@@ -787,6 +827,12 @@ function AgentChatThread({
 
   const isBusy = agent.status === "submitted" || agent.status === "streaming";
   const isEmpty = displayMessages.length === 0 && !isBusy;
+  const awaitingStaff =
+    !isBusy && isAwaitingStaffReply(replyMode, displayMessages);
+
+  React.useEffect(() => {
+    onHumanPresenceChange?.({ replyMode, awaitingStaff });
+  }, [awaitingStaff, onHumanPresenceChange, replyMode]);
 
   if (agent.error) {
     console.error("[eve chat]", agent.error);
@@ -856,7 +902,7 @@ function AgentChatThread({
         // Staff handed the conversation back somewhere between our last poll
         // and this send, and the server stored nothing. Fall through to the
         // agent so the guest is not left talking into an empty room.
-        replyModeRef.current = data.replyMode === "human" ? "human" : "ai";
+        applyReplyMode(data.replyMode === "human" ? "human" : "ai");
       }
 
       if (message.files.length === 0) {
@@ -1022,7 +1068,7 @@ function AgentChatThread({
           ) : null}
           <VirtualConversation
             itemCount={displayMessages.length}
-            scrollToBottomKey={`${lastMessageId}-${agent.status}`}
+            scrollToBottomKey={`${lastMessageId}-${agent.status}-${awaitingStaff ? "w" : "a"}`}
           >
             {(index) => {
               const message = displayMessages[index]!;
@@ -1065,6 +1111,9 @@ function AgentChatThread({
               );
             }}
           </VirtualConversation>
+          {awaitingStaff ? (
+            <StaffReplyPending className="shrink-0 pb-2 pt-1" />
+          ) : null}
         </div>
       )}
 
@@ -1114,30 +1163,46 @@ function AgentChatThread({
   );
 }
 
-function StatusDot({ status }: { readonly status: AgentStatus }) {
+function StatusDot({
+  awaitingStaff,
+  replyMode,
+  status,
+}: {
+  readonly awaitingStaff: boolean;
+  readonly replyMode: ReplyMode;
+  readonly status: AgentStatus;
+}) {
   const t = useTranslations();
   const isLive = status === "submitted" || status === "streaming";
-  const label =
-    status === "error"
+  const isStaff = replyMode === "human";
+  const label = isStaff
+    ? awaitingStaff
+      ? t("chat.statusStaffWaiting")
+      : t("chat.statusStaff")
+    : status === "error"
       ? t("chat.statusError")
       : isLive
         ? t("chat.statusTyping")
         : status === "ready"
           ? t("chat.statusOnline")
           : t("chat.statusIdle");
-  const tone =
-    status === "error"
+  const tone = isStaff
+    ? awaitingStaff
+      ? "bg-amber-300"
+      : "bg-sky-300"
+    : status === "error"
       ? "bg-red-400"
       : isLive
         ? "bg-emerald-400"
         : status === "ready"
           ? "bg-teal-300"
           : "bg-zinc-600";
+  const pulse = isLive || (isStaff && awaitingStaff);
 
   return (
     <span className="inline-flex shrink-0 items-center gap-1.5">
       <span className="relative flex size-1.5">
-        {isLive ? (
+        {pulse ? (
           <span
             className={cn(
               "absolute inline-flex size-full animate-ping rounded-full opacity-75",

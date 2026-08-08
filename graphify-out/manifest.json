@@ -45,8 +45,8 @@
     "semantic_hash": ""
   },
   "app/_components/agent-chat.tsx": {
-    "mtime": 1786171345.4202774,
-    "ast_hash": "d278a78e63805c450d9a5e4d6fcda342",
+    "mtime": 1786172558.2041419,
+    "ast_hash": "614803e855226e80edf501557c8976e0",
     "semantic_hash": ""
   },
   "app/_components/agent-message.tsx": {
@@ -1035,13 +1035,13 @@
     "semantic_hash": ""
   },
   "messages/en.json": {
-    "mtime": 1786171345.4553728,
-    "ast_hash": "4f848b8725ab10703c7b2268f74befb2",
+    "mtime": 1786172186.8642347,
+    "ast_hash": "3c6fbb462f22e0adcb682ba6c41f6fd0",
     "semantic_hash": ""
   },
   "messages/vi.json": {
-    "mtime": 1786171345.4553728,
-    "ast_hash": "e68fb10d6b960ba058e226a1e727b9b5",
+    "mtime": 1786172187.197446,
+    "ast_hash": "5eb2c6f169bea448c26bb24500b31b37",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000004_slugify_vietnamese.sql": {
@@ -3110,8 +3110,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-08-03-staff-reply-handoff-design.md": {
-    "mtime": 1785812717.4086719,
-    "ast_hash": "0d2dc33c6cecc5ba6111b131b647187e",
+    "mtime": 1786172051.894111,
+    "ast_hash": "2ab0e628933bb477b591bd3d36985f04",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-08-03-staff-reply-handoff.md": {
@@ -3757,6 +3757,26 @@
   "docs/superpowers/far-date-availability-chat-scenarios.md": {
     "mtime": 1786171345.4227836,
     "ast_hash": "79424f5d98e5e0efc1be3d4fa94a9cf9",
+    "semantic_hash": ""
+  },
+  "app/_components/staff-reply-pending.tsx": {
+    "mtime": 1786172557.2731304,
+    "ast_hash": "eb4db011b7ca8b3a32df7e8bc27c99d5",
+    "semantic_hash": ""
+  },
+  "lib/staff-reply-pending.test.ts": {
+    "mtime": 1786172559.8760037,
+    "ast_hash": "e1153453f53700564e876fe3aaf7cc97",
+    "semantic_hash": ""
+  },
+  "lib/staff-reply-pending.ts": {
+    "mtime": 1786172556.7603126,
+    "ast_hash": "8ea42adcbfb6bff5d9630925e82d9d8a",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/guest-chat-realtime.md": {
+    "mtime": 1786172039.1624699,
+    "ast_hash": "00808361c1e88e1727ec165e03907d78",
     "semantic_hash": ""
   }
 }
