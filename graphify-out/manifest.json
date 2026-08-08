@@ -15,8 +15,8 @@
     "semantic_hash": "1eac378aa1c8511c8e4118fefbcbb61e"
   },
   "agent/instructions.ts": {
-    "mtime": 1785812717.3966098,
-    "ast_hash": "55c7aeb0a16364ab215acdfd53d31db1",
+    "mtime": 1786163502.8973699,
+    "ast_hash": "f5eff2472d7086e171817a277425d663",
     "semantic_hash": ""
   },
   "agent/sandbox.ts": {
@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "agent/tools/check_availability.ts": {
-    "mtime": 1786071019.2168343,
-    "ast_hash": "ecb584e2ea0eb091fbb0cd7abc93bc1e",
+    "mtime": 1786163268.758216,
+    "ast_hash": "37388347a611e19681e381fc60be76ec",
     "semantic_hash": ""
   },
   "agent/tools/log_lead.ts": {
@@ -45,13 +45,13 @@
     "semantic_hash": ""
   },
   "app/_components/agent-chat.tsx": {
-    "mtime": 1786099455.7645113,
-    "ast_hash": "b7b81a34ed8dcc6bbd89b3c06f7f21d5",
+    "mtime": 1786159662.9624457,
+    "ast_hash": "d278a78e63805c450d9a5e4d6fcda342",
     "semantic_hash": ""
   },
   "app/_components/agent-message.tsx": {
-    "mtime": 1785839776.7902427,
-    "ast_hash": "8a4c840dc2ffb0128a72ba751f7a5774",
+    "mtime": 1786159633.4497435,
+    "ast_hash": "3c822959839da30b111b46fd2c97635d",
     "semantic_hash": ""
   },
   "app/_components/auth-shell.tsx": {
@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "lib/calcom.ts": {
-    "mtime": 1786096238.0920136,
-    "ast_hash": "42d277965c6d46f99d8f21b1d09ffa09",
+    "mtime": 1786162308.6137307,
+    "ast_hash": "0638db8d08bdf59747e37e8190e2379a",
     "semantic_hash": ""
   },
   "lib/dashboard-user.ts": {
@@ -725,8 +725,8 @@
     "semantic_hash": ""
   },
   "agent/skills/booking_intake.md": {
-    "mtime": 1785839709.0121608,
-    "ast_hash": "dd444df74d87342204b452b2e290ebd7",
+    "mtime": 1786160628.822683,
+    "ast_hash": "144e51c7783ebcd8a329046bb43e8fd5",
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
@@ -745,8 +745,8 @@
     "semantic_hash": ""
   },
   "lib/workspace-cal.ts": {
-    "mtime": 1785815599.78239,
-    "ast_hash": "21792ab1c007abbbe4f1260ca32226f5",
+    "mtime": 1786162629.1807692,
+    "ast_hash": "cc5e57d735406479f77447e484e6ed49",
     "semantic_hash": ""
   },
   "app/_components/workspace-settings-form.tsx": {
@@ -920,8 +920,8 @@
     "semantic_hash": ""
   },
   "app/dashboard/setup/actions.ts": {
-    "mtime": 1786099172.5906603,
-    "ast_hash": "4ef0906d9f806b716b5e3a77c779e08a",
+    "mtime": 1786162608.1656892,
+    "ast_hash": "7a2afc6f703ba492e5eeb5b1bbbdc10d",
     "semantic_hash": ""
   },
   "app/dashboard/setup/page.tsx": {
@@ -1035,13 +1035,13 @@
     "semantic_hash": ""
   },
   "messages/en.json": {
-    "mtime": 1786158325.7251196,
-    "ast_hash": "570b13259b2d4bdf66202cade9e27cc4",
+    "mtime": 1786160613.767126,
+    "ast_hash": "4f848b8725ab10703c7b2268f74befb2",
     "semantic_hash": ""
   },
   "messages/vi.json": {
-    "mtime": 1786158326.075912,
-    "ast_hash": "5ba42c23d2cd2e4c253de0df705c4236",
+    "mtime": 1786160621.41116,
+    "ast_hash": "e68fb10d6b960ba058e226a1e727b9b5",
     "semantic_hash": ""
   },
   "supabase/migrations/20260724000004_slugify_vietnamese.sql": {
@@ -2275,8 +2275,8 @@
     "semantic_hash": ""
   },
   "lib/analytics-events.ts": {
-    "mtime": 1786095131.6020868,
-    "ast_hash": "db2e112d73a1a392d7880c52821e8f40",
+    "mtime": 1786159599.9475484,
+    "ast_hash": "6efa5c61ea5b865c6b5091df01663007",
     "semantic_hash": ""
   },
   "lib/analytics-server.ts": {
@@ -2585,8 +2585,8 @@
     "semantic_hash": ""
   },
   "lib/calcom.test.ts": {
-    "mtime": 1785556094.4892201,
-    "ast_hash": "658806732ebf4d62446880e6601cc7cd",
+    "mtime": 1786162263.915986,
+    "ast_hash": "a1e28eef63b73e3a702d27d94712b85d",
     "semantic_hash": ""
   },
   "lib/embed.test.ts": {
@@ -2700,8 +2700,8 @@
     "semantic_hash": ""
   },
   "tests/agent-tools/check_availability.test.ts": {
-    "mtime": 1785485905.6600251,
-    "ast_hash": "1c40536fbe074afe38a292b4190803d9",
+    "mtime": 1786163319.7255056,
+    "ast_hash": "61723291da151b598ccf8dc2c9375a19",
     "semantic_hash": ""
   },
   "tests/agent-tools/list_my_appointments.test.ts": {
@@ -3665,8 +3665,8 @@
     "semantic_hash": ""
   },
   "app/dashboard/(main)/meeting-types/actions.ts": {
-    "mtime": 1785384986.37202,
-    "ast_hash": "8d2662e7b1a68caa096129948ce5f787",
+    "mtime": 1786162603.061673,
+    "ast_hash": "855131faf20c0c0383b85314d7e830b2",
     "semantic_hash": ""
   },
   "app/dashboard/(main)/meeting-types/page.tsx": {
@@ -3707,6 +3707,51 @@
   "app/dashboard/(main)/settings/page.tsx": {
     "mtime": 1786158336.150272,
     "ast_hash": "c8282489926ae6d08022ec99a9356a98",
+    "semantic_hash": ""
+  },
+  "app/_components/availability-slot-picker.tsx": {
+    "mtime": 1786160612.626947,
+    "ast_hash": "5f9c6874159423dedb74f3812247198d",
+    "semantic_hash": ""
+  },
+  "lib/availability-slot-ui.test.ts": {
+    "mtime": 1786160621.9317725,
+    "ast_hash": "8d49562615e1aa03c52e0d1d522a7d29",
+    "semantic_hash": ""
+  },
+  "lib/availability-slot-ui.ts": {
+    "mtime": 1786160611.0649133,
+    "ast_hash": "9c79e94f7112eaeb269f2613d882463a",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-08-08-far-date-availability.md": {
+    "mtime": 1786161810.4529905,
+    "ast_hash": "43ef3dc02ca11ef071b882af5f4ecd6a",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-08-far-date-availability-design.md": {
+    "mtime": 1786161463.6585174,
+    "ast_hash": "2d07c4287296706e7a211ff461ca24a0",
+    "semantic_hash": ""
+  },
+  "lib/booking-window.test.ts": {
+    "mtime": 1786162005.5861077,
+    "ast_hash": "00667a109dc2a2acf7d5e984bcb9d020",
+    "semantic_hash": ""
+  },
+  "lib/booking-window.ts": {
+    "mtime": 1786162057.2733428,
+    "ast_hash": "549878e33e87037518f8259260384f97",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20260808000001_workspace_event_types_booking_window.sql": {
+    "mtime": 1786162599.2304688,
+    "ast_hash": "6ddd6ee581f2b292d76053f5899fb5d3",
+    "semantic_hash": ""
+  },
+  "tests/lib/workspace-cal-booking-window.test.ts": {
+    "mtime": 1786162556.6538682,
+    "ast_hash": "db64a5fe3a14ac8d46a4823d5a899ab2",
     "semantic_hash": ""
   }
 }
