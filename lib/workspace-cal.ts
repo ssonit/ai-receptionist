@@ -1,4 +1,6 @@
 import { bookingConfig } from "@/lib/booking-config";
+import { parseBookingWindow } from "@/lib/calcom";
+import type { CalBookingWindow } from "@/lib/booking-window";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type AiBookingEventType = {
@@ -9,6 +11,8 @@ export type AiBookingEventType = {
   title: string;
   lengthMinutes: number;
   minimumNoticeMinutes: number | null;
+  /** Cal.com "Limit future bookings". `null` = unlimited / chưa sync. */
+  bookingWindow: CalBookingWindow | null;
   username: string;
 };
 
@@ -53,11 +57,29 @@ export type WorkspaceEventTypeRow = {
   synced_at: string | null;
   created_at: string;
   updated_at: string;
+  booking_window: unknown | null;
   raw: unknown | null;
 };
 
 /** App-facing alias — Cal.com API says event types; Eve UI says meeting types. */
 export type WorkspaceMeetingTypeRow = WorkspaceEventTypeRow;
+
+/** Cột chuyên dụng trước; `raw` là fallback cho tenant chưa re-sync sau migration. */
+function readBookingWindow(row: {
+  booking_window?: unknown;
+  raw?: unknown;
+}): CalBookingWindow | null {
+  const fromColumn = parseBookingWindow(row.booking_window);
+  if (fromColumn) return fromColumn;
+  const raw = row.raw;
+  if (raw && typeof raw === "object") {
+    const fromRaw = parseBookingWindow(
+      (raw as Record<string, unknown>).bookingWindow,
+    );
+    if (fromRaw) return fromRaw;
+  }
+  return null;
+}
 
 /**
  * Resolve the single meeting type used by AI booking tools.
@@ -76,7 +98,7 @@ export async function getAiBookingEventType(
     supabase
       .from("workspace_event_types")
       .select(
-        "id, workspace_id, cal_event_type_id, slug, title, length_minutes, minimum_notice_minutes, is_ai_booking",
+        "id, workspace_id, cal_event_type_id, slug, title, length_minutes, minimum_notice_minutes, booking_window, raw, is_ai_booking",
       )
       .eq("workspace_id", wsId)
       .eq("is_ai_booking", true)
@@ -100,6 +122,7 @@ export async function getAiBookingEventType(
       title: aiRow.title,
       lengthMinutes: aiRow.length_minutes,
       minimumNoticeMinutes: aiRow.minimum_notice_minutes,
+      bookingWindow: readBookingWindow(aiRow),
       username,
     };
   }
@@ -113,6 +136,7 @@ export async function getAiBookingEventType(
       title: workspace.cal_event_type_slug || "AI booking",
       lengthMinutes: 30,
       minimumNoticeMinutes: bookingConfig.minNoticeHours * 60,
+      bookingWindow: null,
       username,
     };
   }
@@ -128,6 +152,7 @@ export async function getAiBookingEventType(
         title: bookingConfig.cal.eventTypeSlug || "AI booking",
         lengthMinutes: 30,
         minimumNoticeMinutes: bookingConfig.minNoticeHours * 60,
+        bookingWindow: null,
         username: bookingConfig.cal.username,
       };
     }
@@ -141,6 +166,7 @@ export async function getAiBookingEventType(
         title: bookingConfig.cal.eventTypeSlug,
         lengthMinutes: 30,
         minimumNoticeMinutes: bookingConfig.minNoticeHours * 60,
+        bookingWindow: null,
         username: bookingConfig.cal.username,
       };
     }
@@ -162,7 +188,7 @@ export async function listWorkspaceEventTypes(
   const { data, error } = await supabase
     .from("workspace_event_types")
     .select(
-      "id, workspace_id, cal_event_type_id, slug, title, length_minutes, minimum_notice_minutes, is_ai_booking, synced_at, created_at, updated_at, raw",
+      "id, workspace_id, cal_event_type_id, slug, title, length_minutes, minimum_notice_minutes, is_ai_booking, synced_at, created_at, updated_at, booking_window, raw",
     )
     .eq("workspace_id", workspaceId)
     .order("title", { ascending: true });
@@ -180,7 +206,7 @@ export async function getWorkspaceEventTypeById(
   const { data, error } = await supabase
     .from("workspace_event_types")
     .select(
-      "id, workspace_id, cal_event_type_id, slug, title, length_minutes, minimum_notice_minutes, is_ai_booking, synced_at, created_at, updated_at, raw",
+      "id, workspace_id, cal_event_type_id, slug, title, length_minutes, minimum_notice_minutes, is_ai_booking, synced_at, created_at, updated_at, booking_window, raw",
     )
     .eq("workspace_id", workspaceId)
     .eq("id", id)

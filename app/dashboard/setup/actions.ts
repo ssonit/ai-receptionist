@@ -98,6 +98,7 @@ export async function syncSetupMeetingTypesAction(): Promise<SetupActionState> {
       title: et.title,
       length_minutes: et.lengthInMinutes,
       minimum_notice_minutes: et.minimumBookingNotice ?? null,
+      booking_window: et.bookingWindow ?? null,
       raw: et.raw,
       synced_at: new Date().toISOString(),
     }));
