@@ -15,6 +15,7 @@ export const ANALYTICS_EVENT = {
   SETUP_COMPLETED: "setup_completed",
 
   CHAT_MESSAGE_SENT: "chat_message_sent",
+  CHAT_SLOT_SELECTED: "chat_slot_selected",
   BOOKING_CREATED: "booking_created",
   BOOKING_CANCELLED_BY_GUEST: "booking_cancelled_by_guest",
   BOOKING_RESCHEDULED_BY_GUEST: "booking_rescheduled_by_guest",

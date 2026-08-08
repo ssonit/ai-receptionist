@@ -46,6 +46,14 @@
       "hours": { "label": "Business hours", "prompt": "What are today's business hours?" },
       "book": { "label": "Book a visit", "prompt": "I'd like to book an appointment" },
       "services": { "label": "Services", "prompt": "What services do you offer?" }
+    },
+    "slots": {
+      "morning": "Morning",
+      "afternoon": "Afternoon",
+      "evening": "Evening",
+      "moreOnDay": "{count, plural, one {+# more time that day — ask if you need it} other {+# more times that day — ask if you need them}}",
+      "moreDays": "{count, plural, one {+# more day has openings — ask for another date} other {+# more days have openings — ask for another date}}",
+      "truncated": "Showing the earliest openings — ask for another day if you need more."
     }
   },
   "dashboard": {

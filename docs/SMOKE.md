@@ -97,6 +97,7 @@ Wizard có **4 bước**: `1 Profile` → `2 Try agent` → `3 Cal.com` → `4 M
 - [ ] Sửa FAQ ở `/dashboard/faq`; persona/tone/ngôn ngữ trả lời/meeting type ở `/dashboard/agent`
 - [ ] Hỏi giá / dịch vụ → không bịa lời khuyên, giữ trong phạm vi đặt lịch
 - [ ] "Còn trống tuần sau không?" → gọi `check_availability`, chỉ slot thật
+- [ ] Ngày xa / ngoài cửa sổ đặt lịch — kịch bản chi tiết: [`superpowers/far-date-availability-chat-scenarios.md`](./superpowers/far-date-availability-chat-scenarios.md) (chạy trên workspace tenant thật đã nối Cal.com riêng, không phải trên pilot ở đây — pilot dùng chung sandbox, khó chỉnh "Limit future bookings" theo từng kịch bản)
 - [ ] Đặt xong → event lên Cal.com, row vào `bookings`, lead → `booked`
 
 ---

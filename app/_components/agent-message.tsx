@@ -23,6 +23,10 @@ import {
   ToolInput,
   ToolOutput,
 } from "@/components/ai-elements/tool";
+import {
+  AvailabilitySlotPicker,
+  type AvailabilitySlotSelection,
+} from "@/app/_components/availability-slot-picker";
 import { Button } from "@/components/ui/button";
 import { shouldShowAgentToolCalls } from "@/lib/agent-chat-debug";
 import { cn } from "@/lib/utils";
@@ -38,13 +42,17 @@ type EveFilePart = Extract<EveMessagePart, { type: "file" }>;
 export function AgentMessage({
   canRespond,
   isStreaming,
+  locale,
   message,
   onInputResponses,
+  onSelectSlot,
 }: {
   readonly canRespond: boolean;
   readonly isStreaming: boolean;
+  readonly locale?: string;
   readonly message: EveMessage;
   readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
+  readonly onSelectSlot?: (slot: AvailabilitySlotSelection) => void;
 }) {
   const lastTextIndex = message.parts.reduce(
     (last, part, index) => (part.type === "text" ? index : last),
@@ -72,8 +80,10 @@ export function AgentMessage({
           <AgentMessagePart
             canRespond={canRespond}
             key={partKey(part, index)}
+            locale={locale}
             messageRole={message.role}
             onInputResponses={onInputResponses}
+            onSelectSlot={onSelectSlot}
             part={part}
             showCaret={isStreaming && message.role === "assistant" && index === lastTextIndex}
           />
@@ -85,14 +95,18 @@ export function AgentMessage({
 
 function AgentMessagePart({
   canRespond,
+  locale,
   messageRole,
   onInputResponses,
+  onSelectSlot,
   part,
   showCaret,
 }: {
   readonly canRespond: boolean;
+  readonly locale?: string;
   readonly messageRole: EveMessage["role"];
   readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
+  readonly onSelectSlot?: (slot: AvailabilitySlotSelection) => void;
   readonly part: EveMessagePart;
   readonly showCaret: boolean;
 }) {
@@ -124,31 +138,49 @@ function AgentMessagePart({
       return <AttachmentPart part={part} />;
     case "authorization":
       return <AuthorizationPrompt part={part} />;
-    case "dynamic-tool":
-      if (!shouldShowAgentToolCalls()) {
-        return null;
-      }
-      return (
-        <Tool
-          defaultOpen={part.state === "approval-requested" || part.state === "approval-responded"}
-        >
-          <ToolHeader
-            state={part.state}
-            title={part.toolName}
-            toolName={part.toolName}
-            type="dynamic-tool"
+    case "dynamic-tool": {
+      const slotPicker =
+        part.toolName === "check_availability" &&
+        part.state === "output-available" ? (
+          <AvailabilitySlotPicker
+            canSelect={canRespond}
+            locale={locale}
+            onSelect={onSelectSlot}
+            output={part.output}
           />
-          <ToolContent>
-            <ToolInput input={part.input} />
-            <InputRequestActions
-              canRespond={canRespond}
-              part={part}
-              onInputResponses={onInputResponses}
+        ) : null;
+
+      if (!shouldShowAgentToolCalls()) {
+        return slotPicker;
+      }
+
+      return (
+        <>
+          {slotPicker}
+          <Tool
+            defaultOpen={
+              part.state === "approval-requested" || part.state === "approval-responded"
+            }
+          >
+            <ToolHeader
+              state={part.state}
+              title={part.toolName}
+              toolName={part.toolName}
+              type="dynamic-tool"
             />
-            <ToolOutput errorText={part.errorText} output={part.output} />
-          </ToolContent>
-        </Tool>
+            <ToolContent>
+              <ToolInput input={part.input} />
+              <InputRequestActions
+                canRespond={canRespond}
+                part={part}
+                onInputResponses={onInputResponses}
+              />
+              <ToolOutput errorText={part.errorText} output={part.output} />
+            </ToolContent>
+          </Tool>
+        </>
       );
+    }
   }
 }
 

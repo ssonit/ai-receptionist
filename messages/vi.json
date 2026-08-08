@@ -46,6 +46,14 @@
       "hours": { "label": "Giờ mở cửa", "prompt": "Giờ mở cửa hôm nay?" },
       "book": { "label": "Đặt lịch", "prompt": "Tôi muốn đặt lịch hẹn" },
       "services": { "label": "Dịch vụ", "prompt": "Có những dịch vụ nào?" }
+    },
+    "slots": {
+      "morning": "Sáng",
+      "afternoon": "Chiều",
+      "evening": "Tối",
+      "moreOnDay": "{count, plural, other {+# khung giờ nữa trong ngày — hỏi nếu bạn cần}}",
+      "moreDays": "{count, plural, other {+# ngày nữa còn trống — hỏi thêm ngày khác nếu cần}}",
+      "truncated": "Đang hiện các giờ sớm nhất — hỏi thêm ngày khác nếu cần."
     }
   },
   "dashboard": {

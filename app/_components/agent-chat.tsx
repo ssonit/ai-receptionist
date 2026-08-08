@@ -52,7 +52,9 @@ import {
 import { cn } from "@/lib/utils";
 import { ANALYTICS_EVENT } from "@/lib/analytics-events";
 import { track } from "@/lib/analytics-client";
+import { buildSlotSelectMessage } from "@/lib/availability-slot-ui";
 import { AgentMessage } from "./agent-message";
+import type { AvailabilitySlotSelection } from "./availability-slot-picker";
 import { ChatUserMenu, type ChatUser } from "./chat-user-menu";
 import { ROUTES } from "@/lib/routes";
 
@@ -900,6 +902,19 @@ function AgentChatThread({
     }
   };
 
+  const sendSlotSelection = async (slot: AvailabilitySlotSelection) => {
+    if (isBusy) return;
+    const message = buildSlotSelectMessage(slot);
+    try {
+      await agent.send({ message });
+      track(ANALYTICS_EVENT.CHAT_SLOT_SELECTED, {
+        workspaceSlug: workspaceSlug ?? undefined,
+      });
+    } catch (error) {
+      console.error("[eve chat] slot select failed", error);
+    }
+  };
+
   const composer = (
     <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/85 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.95)] backdrop-blur-xl">
       <BorderBeam
@@ -1038,10 +1053,14 @@ function AgentChatThread({
                     index === displayMessages.length - 1
                   }
                   key={message.id}
+                  locale={locale}
                   message={message}
                   onInputResponses={(inputResponses) =>
                     agent.send({ inputResponses })
                   }
+                  onSelectSlot={(slot) => {
+                    void sendSlotSelection(slot);
+                  }}
                 />
               );
             }}
