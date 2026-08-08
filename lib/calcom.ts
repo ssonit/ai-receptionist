@@ -18,6 +18,7 @@
  */
 import { AsyncLocalStorage } from "node:async_hooks";
 import { bookingConfig } from "@/lib/booking-config";
+import type { CalBookingWindow } from "@/lib/booking-window";
 import {
   CAL_BOOKING_LIST_FILTERS,
   getCalBookingView,
@@ -25,6 +26,8 @@ import {
   type CalBookingListFilter,
 } from "@/lib/booking-status";
 import pRetry from "p-retry";
+
+export type { CalBookingWindow };
 
 const SLOTS_API_VERSION = "2024-09-04";
 const BOOKINGS_API_VERSION = "2024-08-13";
@@ -75,6 +78,8 @@ export type CalEventType = {
   lengthInMinutes: number;
   minimumBookingNotice?: number;
   description?: string;
+  /** Cal.com "Limit future bookings". `undefined` = UNLIMITED. */
+  bookingWindow?: CalBookingWindow;
   raw: unknown;
 };
 
@@ -490,6 +495,31 @@ export async function rescheduleCalBooking(input: {
   return parseBookingPayload(body, startUtc);
 }
 
+/**
+ * API v2 returns `bookingWindow` as an array (oneOf 3 schemas). Accept a bare
+ * object too in case the shape changes. Unrecognized values mean UNLIMITED.
+ */
+export function parseBookingWindow(input: unknown): CalBookingWindow | undefined {
+  const candidate = Array.isArray(input) ? input[0] : input;
+  if (!candidate || typeof candidate !== "object") return undefined;
+  const row = candidate as Record<string, unknown>;
+
+  if (row.type === "range") {
+    const startDate = typeof row.startDate === "string" ? row.startDate : "";
+    const endDate = typeof row.endDate === "string" ? row.endDate : "";
+    if (!startDate || !endDate) return undefined;
+    return { type: "range", startDate, endDate };
+  }
+
+  if (row.type === "businessDays" || row.type === "calendarDays") {
+    const value = Number(row.value);
+    if (!Number.isFinite(value) || value <= 0) return undefined;
+    return { type: row.type, value, rolling: row.rolling === true };
+  }
+
+  return undefined;
+}
+
 function parseCalEventType(item: Record<string, unknown>): CalEventType | null {
   const id = Number(item.id);
   if (!Number.isFinite(id) || id <= 0) return null;
@@ -510,6 +540,7 @@ function parseCalEventType(item: Record<string, unknown>): CalEventType | null {
     minimumBookingNotice:
       typeof notice === "number" && Number.isFinite(notice) ? notice : undefined,
     description: typeof item.description === "string" ? item.description : undefined,
+    bookingWindow: parseBookingWindow(item.bookingWindow),
     raw: item,
   };
 }

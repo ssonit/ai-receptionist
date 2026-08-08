@@ -92,6 +92,48 @@ describe("calcom", () => {
     });
   });
 
+  describe("parseBookingWindow", () => {
+    it("parses a calendarDays window from the API array", async () => {
+      const { parseBookingWindow } = await import("./calcom");
+      expect(
+        parseBookingWindow([{ type: "calendarDays", value: 60, rolling: true }]),
+      ).toEqual({ type: "calendarDays", value: 60, rolling: true });
+    });
+
+    it("parses a businessDays window", async () => {
+      const { parseBookingWindow } = await import("./calcom");
+      expect(
+        parseBookingWindow([{ type: "businessDays", value: 30, rolling: false }]),
+      ).toEqual({ type: "businessDays", value: 30, rolling: false });
+    });
+
+    it("parses a range window", async () => {
+      const { parseBookingWindow } = await import("./calcom");
+      expect(
+        parseBookingWindow([
+          { type: "range", startDate: "2026-09-01", endDate: "2026-09-30" },
+        ]),
+      ).toEqual({ type: "range", startDate: "2026-09-01", endDate: "2026-09-30" });
+    });
+
+    it("accepts a bare object, not just an array", async () => {
+      const { parseBookingWindow } = await import("./calcom");
+      expect(
+        parseBookingWindow({ type: "calendarDays", value: 15, rolling: true }),
+      ).toEqual({ type: "calendarDays", value: 15, rolling: true });
+    });
+
+    it("returns undefined for unlimited / empty / malformed input", async () => {
+      const { parseBookingWindow } = await import("./calcom");
+      expect(parseBookingWindow(undefined)).toBeUndefined();
+      expect(parseBookingWindow(null)).toBeUndefined();
+      expect(parseBookingWindow([])).toBeUndefined();
+      expect(parseBookingWindow([{ type: "nonsense", value: 5 }])).toBeUndefined();
+      expect(parseBookingWindow([{ type: "calendarDays", value: 0 }])).toBeUndefined();
+      expect(parseBookingWindow([{ type: "range", startDate: "2026-09-01" }])).toBeUndefined();
+    });
+  });
+
   describe("toUtcBookingStart", () => {
     it("converts ISO with offset to UTC", async () => {
       const { toUtcBookingStart } = await import("./calcom");
