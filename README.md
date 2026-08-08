@@ -22,6 +22,7 @@ Eve + Next.js agent that answers FAQ, checks Cal.com availability, and creates b
 **Ops:** `/chat` (Eve Pilot) uses `CALCOM_API_KEY` / event type from **env** (your sandbox). Real workspaces use their own API key from Setup — never the shared env key.
 
 Migrations / baseline / seed workflow: [`docs/MIGRATIONS.md`](docs/MIGRATIONS.md).
+Deploy lên production: [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## Env
 

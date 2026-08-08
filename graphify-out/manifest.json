@@ -45,7 +45,7 @@
     "semantic_hash": ""
   },
   "app/_components/agent-chat.tsx": {
-    "mtime": 1786172558.2041419,
+    "mtime": 1786174931.4514537,
     "ast_hash": "614803e855226e80edf501557c8976e0",
     "semantic_hash": ""
   },
@@ -720,8 +720,8 @@
     "semantic_hash": "0993982d636b4e1d1ed22d41e51594b3"
   },
   "README.md": {
-    "mtime": 1784801604.8238406,
-    "ast_hash": "dc05cfb136531783defc2d6ec82474a4",
+    "mtime": 1786176794.2560909,
+    "ast_hash": "9c0c6166c3869bbd4448962b3c31f20b",
     "semantic_hash": ""
   },
   "agent/skills/booking_intake.md": {
@@ -730,7 +730,7 @@
     "semantic_hash": ""
   },
   "docs/SMOKE.md": {
-    "mtime": 1786171345.4227836,
+    "mtime": 1786174931.4514537,
     "ast_hash": "15cd8014962e701a144f230f77d1e099",
     "semantic_hash": ""
   },
@@ -1040,7 +1040,7 @@
     "semantic_hash": ""
   },
   "messages/vi.json": {
-    "mtime": 1786172187.197446,
+    "mtime": 1786174931.4514537,
     "ast_hash": "5eb2c6f169bea448c26bb24500b31b37",
     "semantic_hash": ""
   },
@@ -2230,7 +2230,7 @@
     "semantic_hash": ""
   },
   "docs/superpowers/outbound-reminders.md": {
-    "mtime": 1786099455.7589867,
+    "mtime": 1786174931.4514537,
     "ast_hash": "d8ae2d5c4379c3f850ba6da7808acd6c",
     "semantic_hash": ""
   },
@@ -2410,8 +2410,8 @@
     "semantic_hash": ""
   },
   "docs/ops/production-env.md": {
-    "mtime": 1785058642.057019,
-    "ast_hash": "4c5bb135e9125db8f679fa0050e64601",
+    "mtime": 1786176785.66558,
+    "ast_hash": "f2e42a1d1b656dc0d901642babb15329",
     "semantic_hash": ""
   },
   "app/robots.ts": {
@@ -3045,7 +3045,7 @@
     "semantic_hash": ""
   },
   "lib/zalo.ts": {
-    "mtime": 1786099455.7645113,
+    "mtime": 1786174931.4524536,
     "ast_hash": "3ffa80ab949660f879b4c53fc08d2bff",
     "semantic_hash": ""
   },
@@ -3690,7 +3690,7 @@
     "semantic_hash": ""
   },
   "app/dashboard/(main)/settings/actions.test.ts": {
-    "mtime": 1786158359.5641763,
+    "mtime": 1786174931.4514537,
     "ast_hash": "3a9038236720dc4232d40c10adbd142c",
     "semantic_hash": ""
   },
@@ -3705,7 +3705,7 @@
     "semantic_hash": ""
   },
   "app/dashboard/(main)/settings/page.tsx": {
-    "mtime": 1786158336.150272,
+    "mtime": 1786174931.4514537,
     "ast_hash": "c8282489926ae6d08022ec99a9356a98",
     "semantic_hash": ""
   },
@@ -3777,6 +3777,11 @@
   "docs/superpowers/guest-chat-realtime.md": {
     "mtime": 1786172039.1624699,
     "ast_hash": "00808361c1e88e1727ec165e03907d78",
+    "semantic_hash": ""
+  },
+  "docs/DEPLOY.md": {
+    "mtime": 1786176790.6782193,
+    "ast_hash": "02a3bf70c0b01493c7bf8dc0d9384023",
     "semantic_hash": ""
   }
 }

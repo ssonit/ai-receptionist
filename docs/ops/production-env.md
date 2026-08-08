@@ -3,16 +3,16 @@
 Chạy trước lần deploy công khai đầu tiên và sau mỗi lần xoay khoá.
 Nguồn danh sách đầy đủ: [`.env.example`](../../.env.example).
 
-Đối chiếu với code ngày 2026-07-26 (`main`). Mọi dòng “hỏng thế nào” trỏ về file đã kiểm chứng.
+Đối chiếu với code ngày 2026-08-08, `main` @ `45a1e91`. Mọi dòng “hỏng thế nào” trỏ về file đã kiểm chứng.
 
 ## Bắt buộc (thiếu là hỏng hoặc mất an toàn)
 
 | Biến | Vì sao quan trọng | Hỏng thế nào nếu thiếu |
 |------|-------------------|------------------------|
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | auth cho client + proxy | [`proxy.ts:49-52`](../../proxy.ts) return sớm → **bỏ qua toàn bộ kiểm tra auth**, route dashboard hết redirect |
-| `SUPABASE_SERVICE_ROLE_KEY` | admin client cho cron, agent tools | [`lib/supabase/admin.ts`](../../lib/supabase/admin.ts) throw nếu thiếu → cron tick và ghi dữ liệu từ tool đều fail |
-| `WORKSPACE_SECRETS_KEY` | mã hoá Cal key theo workspace | [`lib/workspace-secrets.ts:9-12`](../../lib/workspace-secrets.ts) **fallback về `SUPABASE_SERVICE_ROLE_KEY`** (rồi chuỗi dev cố định) — đặt tường minh để xoay service-role không làm mồ côi Cal key đã lưu |
-| `BOOKING_MANAGE_CODE_PEPPER` | hash mã quản lý của khách | [`lib/booking-manage-code.ts:12-13`](../../lib/booking-manage-code.ts) fallback về `WORKSPACE_SECRETS_KEY`; cùng bẫy xoay khoá |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | auth cho client + proxy | [`proxy.ts:80-83`](../../proxy.ts) return sớm → **bỏ qua toàn bộ kiểm tra auth**, route dashboard hết redirect. Tên cũ `NEXT_PUBLIC_SUPABASE_ANON_KEY` vẫn fallback được, xem [`lib/supabase/keys.ts`](../../lib/supabase/keys.ts) |
+| `SUPABASE_SECRET_KEY` | admin client cho cron, agent tools | [`lib/supabase/admin.ts`](../../lib/supabase/admin.ts) throw nếu thiếu → cron tick và ghi dữ liệu từ tool đều fail. Tên cũ `SUPABASE_SERVICE_ROLE_KEY` vẫn fallback được |
+| `WORKSPACE_SECRETS_KEY` | mã hoá Cal key theo workspace | [`lib/workspace-secrets.ts:9-13`](../../lib/workspace-secrets.ts) **fallback về `SUPABASE_SECRET_KEY` → `SUPABASE_SERVICE_ROLE_KEY`** (rồi chuỗi dev cố định) — đặt tường minh để xoay service-role/secret key không làm mồ côi Cal key đã lưu |
+| `BOOKING_MANAGE_CODE_PEPPER` | hash mã quản lý của khách | [`lib/booking-manage-code.ts:11-14`](../../lib/booking-manage-code.ts) fallback về `WORKSPACE_SECRETS_KEY`; cùng bẫy xoay khoá |
 | `CRON_SECRET` | xác thực `/api/cron/tick` | [`app/api/cron/tick/route.ts:9-13`](../../app/api/cron/tick/route.ts) — thiếu secret → `authorize()` trả `false` cho **mọi** request → nhắc lịch và Cal sync dừng lặng lẽ (401) |
 | Ít nhất một trong `DEEPSEEK_API_KEY` / `GOOGLE_GENERATIVE_AI_API_KEY` / `ANTHROPIC_API_KEY` | lượt chat của agent | chat không trả lời được |
 
@@ -64,9 +64,9 @@ curl -sI https://YOUR_DOMAIN/ | grep -i -E "x-frame-options|content-security-pol
 curl -sI https://YOUR_DOMAIN/embed/eve-pilot | grep -i content-security-policy
 # mong đợi: frame-ancestors *
 
-# 5. robots.txt được phục vụ (sau khi plan seo-robots land)
+# 5. robots.txt được phục vụ
 curl -s https://YOUR_DOMAIN/robots.txt
-# mong đợi: Disallow: /dashboard/ (và các path nhạy cảm khác)
+# mong đợi: Disallow: /api/, /dashboard/, /console/, /embed/, /invite/ (xem app/robots.ts)
 ```
 
 Sau đó kiểm tra Vercel → Crons: `/api/cron/tick` có lần chạy thành công trong vòng 15 phút (lịch `*/15 * * * *`, xem [`vercel.json`](../../vercel.json)). Gói Hobby có giới hạn tần suất cron — xác nhận gói của project chạy được lịch 15 phút; không thì nới ra (ví dụ `0 * * * *`) và chấp nhận nhắc lịch kém chính xác hơn.
